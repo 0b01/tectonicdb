@@ -4,14 +4,13 @@ use self::postgres::{Connection, TlsMode};
 
 #[derive(Debug)]
 pub struct OrderBookUpdate {
-    id: i32,
-    seq: i32,
-    is_trade: bool,
-    is_bid: bool,
-    price: f64,
-    size: f64,
-    ts: f64,
-    order_type: i32
+    pub id: i32,
+    pub seq: i32,
+    pub is_trade: bool,
+    pub is_bid: bool,
+    pub price: f64,
+    pub size: f64,
+    pub ts: f64
 }
 
 pub fn run(cnx_str : &String) -> Vec<OrderBookUpdate> {
@@ -27,8 +26,8 @@ pub fn run(cnx_str : &String) -> Vec<OrderBookUpdate> {
             price: row.get(4),
             size: row.get(5),
             ts: row.get(6),
-            // -- trade_id: null,
-            order_type: row.get(8)
+            // -- trade_id: row.get(7)  -- always null,
+            // -- order_type: row.get(8)  -- sometimes null
         };
         // println!("{:?}", up);
         v.push(up);

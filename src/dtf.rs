@@ -2,8 +2,8 @@
 
 // File Type:
 // Offset 00: ([u8; 5]) magic value 0x4454469001
-// Offset 05: ([u8; 8]) Symbol
-// Offset 13: (u64) number of records
+// Offset 05: ([u8; 9]) Symbol
+// Offset 14: (u64) number of records
 // Offset 21: (u32) max ts
 // Offset 80: -- records - see below --
 
@@ -36,17 +36,21 @@ use std::io::{
 };
 
 static MAGIC_VALUE : &[u8] = &[0x44, 0x54, 0x46, 0x90, 0x01]; // DTF9001
+const SYMBOL_LEN : usize = 9;
+static SYMBOL_OFFSET : u64 = 5;
+static LEN_OFFSET : u64 = 14;
+static MAX_TS_OFFSET : u64 = 22;
 static MAIN_OFFSET : u64 = 80; // main section start at 80
 static ITEM_OFFSET : u64 = 22; // each item has 22 bytes
 
 #[derive(Debug)]
 pub struct Update {
-    ts: u64,
-    seq: u32,
-    is_trade: bool,
-    is_bid: bool,
-    price: f32,
-    size: f32,
+    pub ts: u64,
+    pub seq: u32,
+    pub is_trade: bool,
+    pub is_bid: bool,
+    pub price: f32,
+    pub size: f32,
 }
 
 impl Ord for Update {
@@ -109,9 +113,9 @@ pub fn encode(fname : &String, symbol : &String, ups : &Vec<Update>) {
     writer.write(MAGIC_VALUE).unwrap();
 
     // write symbol
-    assert!(symbol.len() <= 8);
-    let padded_symbol = format!("{:8}", symbol);
-    assert!(padded_symbol.len() == 8);
+    assert!(symbol.len() <= SYMBOL_LEN);
+    let padded_symbol = format!("{:9}", symbol);
+    assert!(padded_symbol.len() == SYMBOL_LEN);
     writer.write(padded_symbol.as_bytes()).unwrap();
 
     // number of records
@@ -172,10 +176,10 @@ fn file_reader(fname: &String) -> BufReader<File> {
     rdr 
 }
 pub fn read_symbol(rdr : &mut BufReader<File>) -> String {
-    rdr.seek(SeekFrom::Start(5));
+    rdr.seek(SeekFrom::Start(SYMBOL_OFFSET));
 
     // read symbol
-    let mut buffer = [0; 8];
+    let mut buffer = [0; SYMBOL_LEN];
     rdr.read_exact(&mut buffer).unwrap();
     let symbol = str::from_utf8(&buffer).unwrap().to_owned();
 
@@ -183,7 +187,7 @@ pub fn read_symbol(rdr : &mut BufReader<File>) -> String {
 }
 
 pub fn read_len(rdr : &mut BufReader<File>) -> u64 {
-    rdr.seek(SeekFrom::Start(13));
+    rdr.seek(SeekFrom::Start(LEN_OFFSET));
     rdr.read_u64::<BigEndian>().expect("length of records")
 }
 
@@ -192,7 +196,7 @@ pub fn read_min_ts(mut rdr: &mut BufReader<File>) -> u64 {
 }
 
 pub fn read_max_ts(rdr : &mut BufReader<File>) -> u64 {
-    rdr.seek(SeekFrom::Start(21));
+    rdr.seek(SeekFrom::Start(MAX_TS_OFFSET));
     rdr.read_u64::<BigEndian>().expect("maximum timestamp")
 }
 
@@ -275,7 +279,7 @@ fn should_return_correct_symbol() {
     let fname = "test.bin".to_owned();
     let mut rdr = file_reader(&fname);
     let sym = read_symbol(&mut rdr);
-    assert_eq!(sym, "NEO_BTC ");
+    assert_eq!(sym, "NEO_BTC  ");
 }
 
 #[test]
