@@ -70,7 +70,7 @@ impl Update {
 
 impl Ord for Update {
     fn cmp(&self, other: &Update) -> Ordering {
-        return self.partial_cmp(&other).unwrap();
+        return self.partial_cmp(other).unwrap();
     }
 }
 
@@ -121,7 +121,7 @@ fn write_metadata(wtr: &mut BufWriter<File>, ups : &[Update]) {
     wtr.write_u64::<BigEndian>(ups.len() as u64).expect("length of records");
 
     // max ts
-    let max_ts = get_max_ts(&ups);
+    let max_ts = get_max_ts(ups);
     wtr.write_u32::<BigEndian>(max_ts).expect("maximum timestamp");
 }
 
@@ -167,8 +167,8 @@ pub fn encode(fname : &str, symbol : &str, ups : &[Update]) {
     let mut wtr = file_writer(fname);
 
     write_magic_value(&mut wtr);
-    write_symbol(&mut wtr, &symbol);
-    write_metadata(&mut wtr, &ups);
+    write_symbol(&mut wtr, symbol);
+    write_metadata(&mut wtr, ups);
     write_main(&mut wtr, ups);
 
     wtr.flush().expect("FAILURE TO FLUSH");
