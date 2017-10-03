@@ -17,22 +17,23 @@ use std::io::{BufReader, BufWriter, Write, BufRead};
 
 
 fn main() {
-    // let conf = get_config();
-    // let cxn_str : &String = conf.get("connection_string").unwrap();
-
-    // let updates : Vec<OrderBookUpdate> = db::run(&cxn_str);
-    // let mut mapped = updates.iter().map(|d| d.to_update()).collect();
-
-    // println!("{:?}", mapped);
-
-    // let fname = "real.bin".to_owned();
-    // let symbol = "NEO_BTC".to_owned();
-    // encode(&fname, &symbol, &mut mapped);
+    let conf = get_config();
+    let cxn_str : &String = &conf["connection_string"];
 
 
+    let updates : Vec<OrderBookUpdate> = db::run(&cxn_str);
+    let mut mapped : Vec<Update> = updates.iter().map(|d| d.to_update()).collect();
 
-    // server
-    thread::spawn(start_server);
+    println!("{:?}", mapped);
+
+    let fname = "real.bin".to_owned();
+    let symbol = "NEO_BTC".to_owned();
+    encode(&fname, &symbol, &mut mapped);
+
+
+
+    // // server
+    // thread::spawn(start_server);
 
     // let player_stream = TcpStream::connect("127.0.0.1:8000").expect("Couldn't connect");
 

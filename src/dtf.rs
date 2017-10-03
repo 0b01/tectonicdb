@@ -58,13 +58,12 @@ impl Update {
 
     fn serialize(&self, ref_ts : u32, ref_seq : u16) -> Vec<u8> {
         let mut buf : Vec<u8> = Vec::new();
-        println!("{} - {}", self.ts, ref_ts);
-        buf.write_u16::<BigEndian>((self.ts - ref_ts) as u16).unwrap();
-        buf.write_u8((self.seq - ref_seq) as u8).unwrap();
-        buf.write_u8(self.is_trade as u8).unwrap();
-        buf.write_u8(self.is_bid as u8).unwrap();
-        buf.write_f32::<BigEndian>(self.price).unwrap();
-        buf.write_f32::<BigEndian>(self.size).unwrap();
+        let _ = buf.write_u16::<BigEndian>((self.ts - ref_ts) as u16);
+        let _ = buf.write_u8((self.seq - ref_seq) as u8);
+        let _ = buf.write_u8(self.is_trade as u8);
+        let _ = buf.write_u8(self.is_bid as u8);
+        let _ = buf.write_f32::<BigEndian>(self.price);
+        let _ = buf.write_f32::<BigEndian>(self.size);
         buf
     }
 }
@@ -89,7 +88,7 @@ impl PartialOrd for Update {
     }
 }
 
-pub fn get_max_ts(updates : &Vec<Update>) -> u32 {
+pub fn get_max_ts(updates : &[Update]) -> u32 {
     let mut max = 0;
     for update in updates.iter() {
         let current = update.ts;
@@ -107,17 +106,17 @@ fn file_writer(fname : &str) -> BufWriter<File> {
 }
 
 fn write_magic_value(wtr: &mut BufWriter<File>) {
-    wtr.write(MAGIC_VALUE).unwrap();
+    let _ = wtr.write(MAGIC_VALUE);
 }
 
 fn write_symbol(wtr: &mut BufWriter<File>, symbol : &str) {
     assert!(symbol.len() <= SYMBOL_LEN);
     let padded_symbol = format!("{:width$}", symbol, width = SYMBOL_LEN); // right pad w/ space
     assert_eq!(padded_symbol.len(), SYMBOL_LEN);
-    wtr.write(padded_symbol.as_bytes()).unwrap();
+    let _ = wtr.write(padded_symbol.as_bytes());
 }
 
-fn write_metadata(wtr: &mut BufWriter<File>, ups : &Vec<Update>) {
+fn write_metadata(wtr: &mut BufWriter<File>, ups : &[Update]) {
     // number of records
     wtr.write_u64::<BigEndian>(ups.len() as u64).expect("length of records");
 
@@ -127,14 +126,14 @@ fn write_metadata(wtr: &mut BufWriter<File>, ups : &Vec<Update>) {
 }
 
 fn write_reference(wtr: &mut Write, ref_ts: u32, ref_seq: u16, len: u16) {
-    wtr.write_u8(true as u8).unwrap();
-    wtr.write_u32::<BigEndian>(ref_ts).unwrap();
-    wtr.write_u16::<BigEndian>(ref_seq).unwrap();
-    wtr.write_u16::<BigEndian>(len).unwrap();
+    let _ = wtr.write_u8(true as u8);
+    let _ = wtr.write_u32::<BigEndian>(ref_ts);
+    let _ = wtr.write_u16::<BigEndian>(ref_seq);
+    let _ = wtr.write_u16::<BigEndian>(len);
 }
 
-fn write_main(mut wtr: &mut BufWriter<File>, ups : &Vec<Update>) {
-    wtr.seek(SeekFrom::Start(MAIN_OFFSET)).unwrap();
+fn write_main(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
+    let _ = wtr.seek(SeekFrom::Start(MAIN_OFFSET));
 
     let mut buf : Vec<u8> = Vec::new();
 
@@ -145,7 +144,7 @@ fn write_main(mut wtr: &mut BufWriter<File>, ups : &Vec<Update>) {
     for elem in ups.iter() {
         if count != 0 && elem.ts >= ref_ts + 65535 || elem.seq >= ref_seq + 255 {
             write_reference(&mut wtr, ref_ts, ref_seq, count);
-            wtr.write(buf.as_slice()).unwrap();
+            let _ = wtr.write(buf.as_slice());
             buf.clear();
 
             ref_ts = elem.ts;
@@ -154,8 +153,8 @@ fn write_main(mut wtr: &mut BufWriter<File>, ups : &Vec<Update>) {
         }
 
         let serialized = elem.serialize(ref_ts, ref_seq);
-        buf.write_u8(false as u8).unwrap();
-        buf.write(serialized.as_slice()).unwrap();
+        let _ = buf.write_u8(false as u8);
+        let _ = buf.write(serialized.as_slice());
 
         count += 1;
     }
@@ -164,7 +163,7 @@ fn write_main(mut wtr: &mut BufWriter<File>, ups : &Vec<Update>) {
     wtr.write(buf.as_slice()).unwrap();
 }
 
-pub fn encode(fname : &str, symbol : &str, ups : &Vec<Update>) {
+pub fn encode(fname : &str, symbol : &str, ups : &[Update]) {
     let mut wtr = file_writer(&fname);
 
     write_magic_value(&mut wtr);
@@ -181,9 +180,9 @@ fn file_reader(fname: &str) -> BufReader<File> {
     let mut rdr = BufReader::new(file);
 
     // magic value
-    rdr.seek(SeekFrom::Start(0));
+    let _ = rdr.seek(SeekFrom::Start(0));
     let mut buf = vec![0u8; 5];
-    rdr.read_exact(&mut buf).unwrap();
+    let _ = rdr.read_exact(&mut buf);
     if buf != MAGIC_VALUE {
         panic!("MAGIC VALUE INCORRECT");
     }
@@ -193,9 +192,8 @@ fn file_reader(fname: &str) -> BufReader<File> {
 fn read_symbol(rdr : &mut BufReader<File>) -> String {
     rdr.seek(SeekFrom::Start(SYMBOL_OFFSET));
 
-    // read symbol
     let mut buffer = [0; SYMBOL_LEN];
-    rdr.read_exact(&mut buffer).unwrap();
+    let _ = rdr.read_exact(&mut buffer);
     let symbol = str::from_utf8(&buffer).unwrap().to_owned();
 
     symbol
@@ -258,7 +256,7 @@ fn read_first(mut rdr: &mut BufReader<File>) -> Update {
 
 pub fn decode(fname: &str) -> Vec<Update> {
     let mut v : Vec<Update> = Vec::new();
-    let mut rdr = file_reader(&fname);
+    let mut rdr = file_reader(fname);
     let _symbol = read_symbol(&mut rdr); 
     let _nums = read_len(&mut rdr);
     let _max_ts = read_max_ts(&mut rdr);
