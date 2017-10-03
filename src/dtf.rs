@@ -264,6 +264,7 @@ pub fn read_one_batch(rdr: &mut BufReader<File>) -> Vec<Update> {
         ref_ts = rdr.read_u32::<BigEndian>().unwrap();
         ref_seq = rdr.read_u16::<BigEndian>().unwrap();
         how_many = rdr.read_u16::<BigEndian>().unwrap();
+        println!("WILL READ: COUNT {}", how_many);
     }
 
     for _i in 0..how_many {
