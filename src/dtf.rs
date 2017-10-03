@@ -15,8 +15,8 @@
 //        2 bytes (u16): how many records between this snapshot and the next snapshot
 //        
 // 2. if is record
-//        dts (u8): $ts - reference ts$
-//        dseq (u8): $seq - reference seq$ 
+//        dts (u16): $ts - reference ts$, 2^16 = 65536 - ~65 seconds
+//        dseq (u8) $seq - reference seq$ , 2^8 = 256
 //        is_trade: (u8):
 //        is_bid: (u8)
 //        price: (f32)
@@ -41,16 +41,30 @@ static SYMBOL_OFFSET : u64 = 5;
 static LEN_OFFSET : u64 = 14;
 static MAX_TS_OFFSET : u64 = 22;
 static MAIN_OFFSET : u64 = 80; // main section start at 80
-static ITEM_OFFSET : u64 = 22; // each item has 22 bytes
+static ITEM_OFFSET : u64 = 13; // each item has 13 bytes
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Update {
-    pub ts: u64,
-    pub seq: u32,
+    pub ts: u32,
+    pub seq: u16,
     pub is_trade: bool,
     pub is_bid: bool,
     pub price: f32,
     pub size: f32,
+}
+
+impl Update {
+
+    fn serialize_update(&self, ref_ts : u32, ref_seq : u16) -> Vec<u8> {
+        let mut buf : Vec<u8> = Vec::new();
+        buf.write_u16::<BigEndian>((self.ts - ref_ts) as u16).unwrap();
+        buf.write_u8((self.seq - ref_seq) as u8).unwrap();
+        buf.write_u8(self.is_trade as u8).unwrap();
+        buf.write_u8(self.is_bid as u8).unwrap();
+        buf.write_f32::<BigEndian>(self.price).unwrap();
+        buf.write_f32::<BigEndian>(self.size).unwrap();
+        buf
+    }
 }
 
 impl Ord for Update {
@@ -84,18 +98,8 @@ impl PartialEq for Update {
     }
 }
 
-pub fn serialize_update(update : &Update) -> Vec<u8> {
-    let mut buf : Vec<u8> = Vec::new();
-    buf.write_u64::<BigEndian>(update.ts).unwrap();
-    buf.write_u32::<BigEndian>(update.seq).unwrap();
-    buf.write_u8(update.is_trade as u8).unwrap();
-    buf.write_u8(update.is_bid as u8).unwrap();
-    buf.write_f32::<BigEndian>(update.price).unwrap();
-    buf.write_f32::<BigEndian>(update.size).unwrap();
-    buf
-}
 
-pub fn get_max_ts(updates : &Vec<Update>) -> u64 {
+pub fn get_max_ts(updates : &Vec<Update>) -> u32 {
     let mut max = 0;
     for update in updates.iter() {
         let current = update.ts;
@@ -108,8 +112,8 @@ pub fn get_max_ts(updates : &Vec<Update>) -> u64 {
 
 fn file_writer(fname : &String) -> BufWriter<File> {
     let new_file = File::create(fname).unwrap();
-    let mut writer = BufWriter::new(new_file);
-    writer
+    let mut wtr = BufWriter::new(new_file);
+    wtr
 }
 
 fn write_magic_value(wtr: &mut BufWriter<File>) {
@@ -130,18 +134,49 @@ fn write_metadata(wtr: &mut BufWriter<File>, ups : &Vec<Update>) {
 
     // max ts
     let max_ts = get_max_ts(&ups);
-    wtr.write_u64::<BigEndian>(max_ts).expect("maximum timestamp");
+    wtr.write_u32::<BigEndian>(max_ts).expect("maximum timestamp");
 }
 
-fn write_main(wtr: &mut BufWriter<File>, ups : &Vec<Update>) {
+fn write_reference(wtr: &mut Write, ref_ts: u32, ref_seq: u16, len: u16) {
+    wtr.write_u8(true as u8).unwrap();
+    wtr.write_u32::<BigEndian>(ref_ts).unwrap();
+    wtr.write_u16::<BigEndian>(ref_seq).unwrap();
+    wtr.write_u16::<BigEndian>(len).unwrap();
+}
+
+fn write_main(mut wtr: &mut BufWriter<File>, ups : &Vec<Update>) {
     wtr.seek(SeekFrom::Start(MAIN_OFFSET)).unwrap();
-    for elem in ups.into_iter() {
-        let serialized = serialize_update(&elem);
-        wtr.write(serialized.as_slice()).unwrap();
+
+    let mut buf : Vec<u8> = Vec::new();
+
+    let mut ref_ts = ups[0].ts;
+    let mut ref_seq = ups[0].seq;
+    let mut count = 0;
+
+    for elem in ups.iter() {
+        if count != 0 && elem.ts >= ref_ts + 65535 || elem.seq >= ref_seq + 255 {
+            write_reference(&mut wtr, ref_ts, ref_seq, count);
+            wtr.write(buf.as_slice()).unwrap();
+            buf.clear();
+
+            ref_ts = elem.ts;
+            ref_seq = elem.seq;
+            count = 0;
+        }
+
+        let serialized = elem.serialize_update(ref_ts, ref_seq);
+        buf.write_u8(false as u8).unwrap();
+        buf.write(serialized.as_slice()).unwrap();
+
+        count += 1;
     }
+
+    write_reference(&mut wtr, ref_ts, ref_seq, count);
+    wtr.write(buf.as_slice()).unwrap();
 }
 
-pub fn encode(fname : &String, symbol : &String, ups : &Vec<Update>) {
+pub fn encode(fname : &String, symbol : &String, ups : &mut Vec<Update>) {
+    ups.sort();
     let mut wtr = file_writer(&fname);
 
     write_magic_value(&mut wtr);
@@ -170,10 +205,6 @@ pub fn append(fname: &String, ups : &mut Vec<Update>) {
         }
         new_max
     };
-
-
-
-
 
 }
 
@@ -210,45 +241,77 @@ pub fn read_len(rdr : &mut BufReader<File>) -> u64 {
     rdr.read_u64::<BigEndian>().expect("length of records")
 }
 
-pub fn read_min_ts(mut rdr: &mut BufReader<File>) -> u64 {
+pub fn read_min_ts(mut rdr: &mut BufReader<File>) -> u32 {
     read_first(&mut rdr).ts
 }
 
-pub fn read_max_ts(rdr : &mut BufReader<File>) -> u64 {
+pub fn read_max_ts(rdr : &mut BufReader<File>) -> u32 {
     rdr.seek(SeekFrom::Start(MAX_TS_OFFSET));
-    rdr.read_u64::<BigEndian>().expect("maximum timestamp")
+    rdr.read_u32::<BigEndian>().expect("maximum timestamp")
 }
 
-pub fn read_one(rdr: &mut BufReader<File>) -> Update {
+pub fn read_one_batch(rdr: &mut BufReader<File>) -> Vec<Update> {
+    let is_ref = rdr.read_u8().expect("is_ref") == 0x00000001;
+    let mut ref_ts = 0;
+    let mut ref_seq = 0;
+    let mut how_many = 0;
+    let mut v : Vec<Update> = Vec::new();
 
-    let current_update = Update {
-        ts: rdr.read_u64::<BigEndian>().expect("ts"),
-        seq: rdr.read_u32::<BigEndian>().expect("seq"),
-        is_trade: rdr.read_u8().expect("is_trade") == 0x00000001,
-        is_bid: rdr.read_u8().expect("is_bid") == 0x00000001,
-        price: rdr.read_f32::<BigEndian>().expect("price"),
-        size: rdr.read_f32::<BigEndian>().expect("size")
-    };
+    if is_ref {
+        ref_ts = rdr.read_u32::<BigEndian>().unwrap();
+        ref_seq = rdr.read_u16::<BigEndian>().unwrap();
+        how_many = rdr.read_u16::<BigEndian>().unwrap();
+    }
 
-    current_update
+    for _i in 0..how_many {
+        assert!(rdr.read_u8().expect("is_ref") == 0x00000000);
+        let current_update = Update {
+            ts: rdr.read_u16::<BigEndian>().expect("ts") as u32 + ref_ts,
+            seq: rdr.read_u8().expect("seq") as u16 + ref_seq,
+            is_trade: rdr.read_u8().expect("is_trade") == 0x00000001,
+            is_bid: rdr.read_u8().expect("is_bid") == 0x00000001,
+            price: rdr.read_f32::<BigEndian>().expect("price"),
+            size: rdr.read_f32::<BigEndian>().expect("size")
+        };
+        v.push(current_update);
+    }
+
+    v
+}
+
+pub fn read_first_batch(mut rdr: &mut BufReader<File>) -> Vec<Update> {
+    rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
+    read_one_batch(&mut rdr)
 }
 
 pub fn read_first(mut rdr: &mut BufReader<File>) -> Update {
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
-    read_one(&mut rdr)
+    let batch = read_one_batch(&mut rdr);
+    batch[0].clone()
 }
 
 pub fn decode(fname: &String) -> Vec<Update> {
     let mut v : Vec<Update> = Vec::new();
     let mut rdr = file_reader(&fname);
     let _symbol = read_symbol(&mut rdr); 
-    let nums = read_len(&mut rdr);
+    let _nums = read_len(&mut rdr);
     let _max_ts = read_max_ts(&mut rdr);
-    for n in 0..nums {
-        rdr.seek(SeekFrom::Start(MAIN_OFFSET + n * ITEM_OFFSET)).expect("SEEKING");
-        v.push(read_one(&mut rdr));
-    }
 
+    rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
+
+    loop {
+        match rdr.read_u8() {
+            Ok(is_ref) => {
+                if is_ref == 0x00000001 {
+                    rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
+                    v.extend(read_one_batch(&mut rdr));
+                }
+            }
+            Err(_err) => {
+                break;
+            }
+        }
+    }
     v
 }
 
@@ -256,15 +319,23 @@ pub fn decode(fname: &String) -> Vec<Update> {
 fn init () -> Vec<Update> {
     let mut ts : Vec<Update> = vec![];
     let t = Update {
-        ts: 9,
-        seq: 143,
+        ts: 100,
+        seq: 113,
         is_trade: false,
         is_bid: false,
         price: 5100.01,
         size: 1.14564564645,
     };
+    let t1 = Update {
+        ts: 101,
+        seq: 113,
+        is_trade: false,
+        is_bid: false,
+        price: 5100.01,
+        size: 2.14564564645,
+    };
     let t2 = Update {
-        ts: 0,
+        ts: 1000000,
         seq: 123,
         is_trade: true,
         is_bid: false,
@@ -272,6 +343,7 @@ fn init () -> Vec<Update> {
         size: 1.123465,
     };
     ts.push(t);
+    ts.push(t1);
     ts.push(t2);
 
     ts.sort();
@@ -280,7 +352,8 @@ fn init () -> Vec<Update> {
     let fname = "test.bin".to_owned();
     let symbol = "NEO_BTC".to_owned();
 
-    encode(&fname, &symbol, &ts);
+    encode(&fname, &symbol, &mut ts);
+
     ts
 }
 

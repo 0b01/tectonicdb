@@ -13,8 +13,8 @@ fn db_to_update(db_ups: &Vec<OrderBookUpdate>) -> Vec<Update> {
         is_trade: up.is_trade as bool,
         price: up.price as f32,
         size: up.size as f32,
-        seq: up.seq as u32,
-        ts: (up.ts * 1000.) as u64
+        seq: up.seq as u16,
+        ts: (up.ts * 1000.) as u32
     }).collect()
 }
 
@@ -24,12 +24,12 @@ fn main() {
     let cxn_str : &String = conf.get("connection_string").unwrap();
 
     let updates : Vec<OrderBookUpdate> = db::run(&cxn_str);
-    let mapped = db_to_update(&updates);
+    let mut mapped = db_to_update(&updates);
     println!("{:?}", mapped);
 
     let fname = "real.bin".to_owned();
     let symbol = "NEO_BTC".to_owned();
-    encode(&fname, &symbol, &mapped);
+    encode(&fname, &symbol, &mut mapped);
 
     // let fname = "test.bin".to_owned();
     // let vs = decode(&fname);
