@@ -164,12 +164,12 @@ fn write_main(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
 }
 
 pub fn encode(fname : &str, symbol : &str, ups : &[Update]) {
-    let mut wtr = file_writer(&fname);
+    let mut wtr = file_writer(fname);
 
     write_magic_value(&mut wtr);
     write_symbol(&mut wtr, &symbol);
     write_metadata(&mut wtr, &ups);
-    write_main(&mut wtr, &ups);
+    write_main(&mut wtr, ups);
 
     wtr.flush().expect("FAILURE TO FLUSH");
 }
@@ -276,7 +276,7 @@ pub fn decode(fname: &str) -> Vec<Update> {
 //TODO:
 pub fn append(fname: &str, ups : &mut Vec<Update>) {
     let new_max = {
-        let mut rdr = file_reader(&fname);
+        let mut rdr = file_reader(fname);
         let _symbol = read_symbol(&mut rdr);
 
         let max_ts = read_max_ts(&mut rdr);
@@ -328,10 +328,10 @@ fn init () -> Vec<Update> {
     ts.sort();
 
 
-    let fname = "test.bin".to_owned();
-    let symbol = "NEO_BTC".to_owned();
+    let fname = "test.bin";
+    let symbol = "NEO_BTC";
 
-    encode(&fname, &symbol, &mut ts);
+    encode(fname, symbol, &mut ts);
 
     ts
 }
@@ -339,16 +339,16 @@ fn init () -> Vec<Update> {
 #[test]
 fn should_encode_and_decode_file() {
     let ts = init();
-    let fname = "test.bin".to_owned();
-    let decoded_updates = decode(&fname);
+    let fname = "test.bin";
+    let decoded_updates = decode(fname);
     assert_eq!(decoded_updates, ts);
 }
 
 #[test]
 fn should_return_correct_symbol() {
     init();
-    let fname = "test.bin".to_owned();
-    let mut rdr = file_reader(&fname);
+    let fname = "test.bin";
+    let mut rdr = file_reader(fname);
     let sym = read_symbol(&mut rdr);
     assert_eq!(sym, "NEO_BTC  ");
 }
@@ -356,8 +356,8 @@ fn should_return_correct_symbol() {
 #[test]
 fn should_return_first_record() {
     let vs = init();
-    let fname = "test.bin".to_owned();
-    let mut rdr = file_reader(&fname);
+    let fname = "test.bin";
+    let mut rdr = file_reader(fname);
     let v = read_first(&mut rdr);
     assert_eq!(vs[0], v);
 }
@@ -365,8 +365,8 @@ fn should_return_first_record() {
 #[test]
 fn should_return_correct_num_of_items() {
     let vs = init();
-    let fname = "test.bin".to_owned();
-    let mut rdr = file_reader(&fname);
+    let fname = "test.bin";
+    let mut rdr = file_reader(fname);
     let len = read_len(&mut rdr);
     assert_eq!(vs.len() as u64, len);
 }
@@ -374,8 +374,8 @@ fn should_return_correct_num_of_items() {
 #[test]
 fn should_return_max_ts() {
     let vs = init();
-    let fname = "test.bin".to_owned();
-    let mut rdr = file_reader(&fname);
+    let fname = "test.bin";
+    let mut rdr = file_reader(fname);
     let max_ts = read_max_ts(&mut rdr);
     assert_eq!(max_ts, get_max_ts(&vs));
 }
@@ -393,10 +393,10 @@ fn init_real_data() -> Vec<Update> {
 #[test]
 fn should_work_with_real_data() {
     let mut vs = init_real_data();
-    let fname = "real.dtf".to_owned();
-    let symbol = "NEO_BTC".to_owned();
-    encode(&fname, &symbol, &mut vs);
-    let decoded_updates = decode(&fname);
+    let fname = "real.dtf";
+    let symbol = "NEO_BTC";
+    encode(fname, symbol, &mut vs);
+    let decoded_updates = decode(fname);
     assert_eq!(decoded_updates, vs);
 }
 
