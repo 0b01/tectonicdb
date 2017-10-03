@@ -106,31 +106,50 @@ pub fn get_max_ts(updates : &Vec<Update>) -> u64 {
     max
 }
 
-pub fn encode(fname : &String, symbol : &String, ups : &Vec<Update>) {
+fn file_writer(fname : &String) -> BufWriter<File> {
     let new_file = File::create(fname).unwrap();
     let mut writer = BufWriter::new(new_file);
-    // headers
-    writer.write(MAGIC_VALUE).unwrap();
+    writer
+}
 
-    // write symbol
+fn write_magic_value(wtr: &mut BufWriter<File>) {
+    wtr.write(MAGIC_VALUE).unwrap();
+}
+
+
+fn write_symbol(wtr: &mut BufWriter<File>, symbol : &String) {
     assert!(symbol.len() <= SYMBOL_LEN);
-    let padded_symbol = format!("{:9}", symbol);
+    let padded_symbol = format!("{:width$}", symbol, width = SYMBOL_LEN); // right pad w/ space
     assert!(padded_symbol.len() == SYMBOL_LEN);
-    writer.write(padded_symbol.as_bytes()).unwrap();
+    wtr.write(padded_symbol.as_bytes()).unwrap();
+}
 
+fn write_metadata(wtr: &mut BufWriter<File>, ups : &Vec<Update>) {
     // number of records
-    writer.write_u64::<BigEndian>(ups.len() as u64).expect("length of records");
+    wtr.write_u64::<BigEndian>(ups.len() as u64).expect("length of records");
 
     // max ts
     let max_ts = get_max_ts(&ups);
-    writer.write_u64::<BigEndian>(max_ts).expect("maximum timestamp");
+    wtr.write_u64::<BigEndian>(max_ts).expect("maximum timestamp");
+}
 
-    writer.seek(SeekFrom::Start(MAIN_OFFSET)).unwrap();
+fn write_main(wtr: &mut BufWriter<File>, ups : &Vec<Update>) {
+    wtr.seek(SeekFrom::Start(MAIN_OFFSET)).unwrap();
     for elem in ups.into_iter() {
         let serialized = serialize_update(&elem);
-        writer.write(serialized.as_slice()).unwrap();
+        wtr.write(serialized.as_slice()).unwrap();
     }
-    writer.flush().expect("FAILURE TO FLUSH");
+}
+
+pub fn encode(fname : &String, symbol : &String, ups : &Vec<Update>) {
+    let mut wtr = file_writer(&fname);
+
+    write_magic_value(&mut wtr);
+    write_symbol(&mut wtr, &symbol);
+    write_metadata(&mut wtr, &ups);
+    write_main(&mut wtr, &ups);
+
+    wtr.flush().expect("FAILURE TO FLUSH");
 }
 
 //TODO:
