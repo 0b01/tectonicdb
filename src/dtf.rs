@@ -130,9 +130,27 @@ pub fn encode(fname : &String, symbol : &String, ups : &Vec<Update>) {
 }
 
 //TODO:
-pub fn append(fname: &String, ups : &Vec<Update>) {
-    let mut rdr = file_reader(&fname);
-    let symbol = read_symbol(&mut rdr);
+pub fn append(fname: &String, ups : &mut Vec<Update>) {
+    let new_max = {
+        let mut rdr = file_reader(&fname);
+        let _symbol = read_symbol(&mut rdr);
+
+        let max_ts = read_max_ts(&mut rdr);
+        let max_ts = read_min_ts(&mut rdr);
+
+        ups.sort();
+        let new_min = ups[0].ts;
+        let new_max = ups[ups.len()-1].ts;
+
+        if new_min <= max_ts {
+            panic!("Cannot append data!(not implemented)");
+        }
+        new_max
+    };
+
+
+
+
 
 }
 
@@ -144,6 +162,7 @@ fn file_reader(fname: &String) -> BufReader<File> {
     let mut rdr = BufReader::new(file);
 
     // magic value
+    rdr.seek(SeekFrom::Start(0));
     let mut buf = vec![0u8; 5];
     rdr.read_exact(&mut buf).unwrap();
     if buf != MAGIC_VALUE {
@@ -166,6 +185,10 @@ pub fn read_symbol(rdr : &mut BufReader<File>) -> String {
 pub fn read_len(rdr : &mut BufReader<File>) -> u64 {
     rdr.seek(SeekFrom::Start(13));
     rdr.read_u64::<BigEndian>().expect("length of records")
+}
+
+pub fn read_min_ts(mut rdr: &mut BufReader<File>) -> u64 {
+    read_first(&mut rdr).ts
 }
 
 pub fn read_max_ts(rdr : &mut BufReader<File>) -> u64 {
