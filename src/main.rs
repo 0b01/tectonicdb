@@ -1,14 +1,35 @@
 // File format for Dense Tick Format (DTF)
 
 // File Type:
-// Offset 00: magic value 0x4454469001
-// Offset 05: Symbol
-// Offset 13: how many records
-// Offset 21: latest ts //TODO:implement
-// Offset 80: columns
+// Offset 00: ([u8; 5]) magic value 0x4454469001
+// Offset 05: ([u8; 8]) Symbol
+// Offset 13: (u64) how many records
+// Offset 21: (u32) max ts
+// Offset 80: -- records(see below) --
+
+// Record Spec:
+// Offset 81: bool for is_snapshot
+// 1. if is_snapshot
+//        4 bytes (u32): reference ts
+//        2 bytes (u16): reference seq
+//        2 bytes (u16): how many records between this snapshot and the next snapshot
+//        
+// 2. if ! is_snapshot
+//        1 byte (u8): ts - reference ts
+//        1 byte (u8): seq - reference seq 
+//        is_trade: (u8):
+//        is_bid: (u8)
+//        price: (f32)
+//        size: (f32)
 
 
 extern crate byteorder;
+
+mod db;
+use db::*;
+
+mod conf;
+use conf::get_config;
 
 use std::str;
 use std::cmp::Ordering;
@@ -181,12 +202,20 @@ pub fn decode(fname: &String) -> Vec<Update> {
         };
         v.push(current_update);
     }
+
     v
 }
 
 fn main() {
-    let fname = "test.bin".to_owned();
-    decode(&fname);
+
+    let conf = get_config();
+    let cxn_str : &String = conf.get("connection_string").unwrap();
+
+    let updates : Vec<OrderBookUpdate> = db::run(&cxn_str);
+    println!("{:?}", updates);
+
+    // let fname = "test.bin".to_owned();
+    // decode(&fname);
 }
 
 #[cfg(test)]

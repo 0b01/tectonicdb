@@ -5,3 +5,5 @@ authors = ["Ricky Han <rickylqhan@gmail.com>"]
 
 [dependencies]
 byteorder = "1.1.0"
+postgres = "0.15"
+config = "0.6"
