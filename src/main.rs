@@ -19,9 +19,9 @@ fn main() {
     // let mut mapped : Vec<Update> = updates.iter().map(|d| d.to_update()).collect();
     // mapped.sort(); // important
     // // println!("{:?}", mapped);
-    // let fname = "real.bin".to_owned();
-    // let symbol = "NEO_BTC".to_owned();
-    // encode(&fname, &symbol, &mut mapped);
+    // let fname = "real.dtf";
+    // let symbol = "NEO_BTC";
+    // encode(fname, symbol, &mut mapped);
 
     
     run_server();
