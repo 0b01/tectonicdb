@@ -1,5 +1,6 @@
 extern crate postgres;
 use self::postgres::{Connection, TlsMode};
+use dtf;
 
 
 #[derive(Debug)]
@@ -13,11 +14,26 @@ pub struct OrderBookUpdate {
     pub ts: f64
 }
 
+impl OrderBookUpdate {
+
+    pub fn to_update(&self) -> dtf::Update {
+        dtf::Update {
+            is_bid: self.is_bid as bool,
+            is_trade: self.is_trade as bool,
+            price: self.price as f32,
+            size: self.size as f32,
+            seq: self.seq as u16,
+            ts: (self.ts * 1000.) as u32
+        }
+    }
+
+}
+
 pub fn run(cnx_str : &String) -> Vec<OrderBookUpdate> {
     let conn = Connection::connect(cnx_str.to_string(), TlsMode::None).unwrap();
     let mut v : Vec<OrderBookUpdate> = Vec::new();
 
-    for row in &conn.query("select * FROM orderbook_btc_neo ORDER BY id DESC LIMIT 1;", &[]).unwrap() {
+    for row in &conn.query("select * FROM orderbook_btc_neo ORDER BY id DESC LIMIT 1000;", &[]).unwrap() {
         let up = OrderBookUpdate {
             id: row.get(0),
             seq: row.get(1),

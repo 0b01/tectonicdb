@@ -22,6 +22,9 @@
 //        price: (f32)
 //        size: (f32)
 
+use conf;
+use db;
+
 use std::str;
 use std::cmp::Ordering;
 use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
@@ -399,4 +402,29 @@ fn should_return_max_ts() {
     let mut rdr = file_reader(&fname);
     let max_ts = read_max_ts(&mut rdr);
     assert_eq!(max_ts, get_max_ts(&vs));
+}
+
+#[cfg(test)]
+fn init_real_data() -> Vec<Update> {
+    let conf = conf::get_config();
+    let cxn_str : &String = conf.get("connection_string").unwrap();
+
+    let updates : Vec<db::OrderBookUpdate> = db::run(&cxn_str);
+    let mut mapped = updates.iter().map(|d| d.to_update()).collect();
+    mapped
+}
+
+#[test]
+fn should_work_with_real_data() {
+    let mut vs = init_real_data();
+
+    let fname = "test.bin".to_owned();
+    let symbol = "NEO_BTC".to_owned();
+    encode(&fname, &symbol, &mut vs);
+    let decoded_updates = decode(&fname);
+    assert_eq!(decoded_updates, vs);
+}
+
+#[test]
+fn should_append() {
 }
