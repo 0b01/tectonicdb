@@ -18,12 +18,12 @@ impl OrderBookUpdate {
 
     pub fn to_update(&self) -> dtf::Update {
         dtf::Update {
+            ts: (self.ts * 1000.) as u64,
+            seq: self.seq as u32,
             is_bid: self.is_bid as bool,
             is_trade: self.is_trade as bool,
             price: self.price as f32,
             size: self.size as f32,
-            seq: self.seq as u16,
-            ts: (self.ts * 1000.) as u32
         }
     }
 

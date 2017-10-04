@@ -9,7 +9,7 @@
 /// Offset 81: bool for is_snapshot
 /// 1. if is true
 ///        4 bytes (u32): reference ts
-///        2 bytes (u16): reference seq
+///        2 bytes (u32): reference seq
 ///        2 bytes (u16): how many records between this snapshot and the next snapshot
 ///        
 /// 2. record
@@ -43,12 +43,12 @@ static SYMBOL_OFFSET : u64 = 5;
 static LEN_OFFSET : u64 = 14;
 static MAX_TS_OFFSET : u64 = 22;
 static MAIN_OFFSET : u64 = 80; // main section start at 80
-static ITEM_OFFSET : u64 = 13; // each item has 13 bytes
+// static ITEM_OFFSET : u64 = 13; // each item has 13 bytes
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Update {
-    pub ts: u32,
-    pub seq: u16,
+    pub ts: u64,
+    pub seq: u32,
     pub is_trade: bool,
     pub is_bid: bool,
     pub price: f32,
@@ -57,7 +57,7 @@ pub struct Update {
 
 impl Update {
 
-    fn serialize(&self, ref_ts : u32, ref_seq : u16) -> Vec<u8> {
+    fn serialize(&self, ref_ts : u64, ref_seq : u32) -> Vec<u8> {
         let mut buf : Vec<u8> = Vec::new();
         let _ = buf.write_u16::<BigEndian>((self.ts - ref_ts) as u16);
         let _ = buf.write_u8((self.seq - ref_seq) as u8);
@@ -89,7 +89,7 @@ impl PartialOrd for Update {
     }
 }
 
-pub fn get_max_ts(updates : &[Update]) -> u32 {
+pub fn get_max_ts(updates : &[Update]) -> u64 {
     let mut max = 0;
     for update in updates.iter() {
         let current = update.ts;
@@ -127,9 +127,9 @@ fn write_len(wtr: &mut BufWriter<File>, len : u64) {
     wtr.write_u64::<BigEndian>(len).expect("length of records");
 }
 
-fn write_max_ts(wtr: &mut BufWriter<File>, max_ts : u32) {
+fn write_max_ts(wtr: &mut BufWriter<File>, max_ts : u64) {
     let _ = wtr.seek(SeekFrom::Start(MAX_TS_OFFSET));
-    wtr.write_u32::<BigEndian>(max_ts).expect("maximum timestamp");
+    wtr.write_u64::<BigEndian>(max_ts).expect("maximum timestamp");
 }
 
 fn write_metadata(wtr: &mut BufWriter<File>, ups : &[Update]) {
@@ -137,10 +137,10 @@ fn write_metadata(wtr: &mut BufWriter<File>, ups : &[Update]) {
     write_max_ts(wtr, get_max_ts(ups));
 }
 
-fn write_reference(wtr: &mut Write, ref_ts: u32, ref_seq: u16, len: u16) {
+fn write_reference(wtr: &mut Write, ref_ts: u64, ref_seq: u32, len: u16) {
     let _ = wtr.write_u8(true as u8);
-    let _ = wtr.write_u32::<BigEndian>(ref_ts);
-    let _ = wtr.write_u16::<BigEndian>(ref_seq);
+    let _ = wtr.write_u64::<BigEndian>(ref_ts);
+    let _ = wtr.write_u32::<BigEndian>(ref_seq);
     let _ = wtr.write_u16::<BigEndian>(len);
 }
 
@@ -220,13 +220,13 @@ fn read_len(rdr : &mut BufReader<File>) -> u64 {
     rdr.read_u64::<BigEndian>().expect("length of records")
 }
 
-fn read_min_ts(mut rdr: &mut BufReader<File>) -> u32 {
+fn read_min_ts(mut rdr: &mut BufReader<File>) -> u64 {
     read_first(&mut rdr).ts
 }
 
-fn read_max_ts(rdr : &mut BufReader<File>) -> u32 {
-    rdr.seek(SeekFrom::Start(MAX_TS_OFFSET));
-    rdr.read_u32::<BigEndian>().expect("maximum timestamp")
+fn read_max_ts(rdr : &mut BufReader<File>) -> u64 {
+    let _ = rdr.seek(SeekFrom::Start(MAX_TS_OFFSET));
+    rdr.read_u64::<BigEndian>().expect("maximum timestamp")
 }
 
 fn read_one_batch(rdr: &mut BufReader<File>) -> Vec<Update> {
@@ -237,16 +237,16 @@ fn read_one_batch(rdr: &mut BufReader<File>) -> Vec<Update> {
     let mut v : Vec<Update> = Vec::new();
 
     if is_ref {
-        ref_ts = rdr.read_u32::<BigEndian>().unwrap();
-        ref_seq = rdr.read_u16::<BigEndian>().unwrap();
+        ref_ts = rdr.read_u64::<BigEndian>().unwrap();
+        ref_seq = rdr.read_u32::<BigEndian>().unwrap();
         how_many = rdr.read_u16::<BigEndian>().unwrap();
         println!("WILL READ: COUNT {}", how_many);
     }
 
     for _i in 0..how_many {
         let current_update = Update {
-            ts: rdr.read_u16::<BigEndian>().expect("ts") as u32 + ref_ts,
-            seq: rdr.read_u8().expect("seq") as u16 + ref_seq,
+            ts: rdr.read_u16::<BigEndian>().expect("ts") as u64 + ref_ts,
+            seq: rdr.read_u8().expect("seq") as u32 + ref_seq,
             is_trade: rdr.read_u8().expect("is_trade") == 0x00000001,
             is_bid: rdr.read_u8().expect("is_bid") == 0x00000001,
             price: rdr.read_f32::<BigEndian>().expect("price"),
