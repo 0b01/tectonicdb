@@ -67,6 +67,11 @@ impl Update {
         let _ = buf.write_f32::<BigEndian>(self.size);
         buf
     }
+
+    pub fn to_json(&self) -> String {
+        format!(r#"{{"ts":{},"seq":{},"is_trade":{},"is_bid":{},"price":{},"size":{}}}"#,
+                  (self.ts as f64) / 1000_f64, self.seq, self.is_trade, self.is_bid, self.price, self.size)
+    }
 }
 
 impl Ord for Update {
@@ -523,4 +528,17 @@ fn should_append() {
     let decoded = decode(&fname);
     assert_eq!(all_the_data, decoded);
     
+}
+
+#[test]
+fn should_to_json() {
+    let t1 = Update {
+        ts: 20000001,
+        seq: 113,
+        is_trade: false,
+        is_bid: false,
+        price: 5100.01,
+        size: 1.14564564645,
+    };
+    assert_eq!(r#"{"ts":20000.001,"seq":113,"is_trade":false,"is_bid":false,"price":5100.01,"size":1.1456456}"#, t1.to_json());
 }
