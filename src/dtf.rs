@@ -315,7 +315,6 @@ pub fn append(fname: &str, ups : &Vec<Update>) {
     write_len(&mut wtr, new_len);
     write_max_ts(&mut wtr, new_max_ts);
 
-    
     wtr.seek(SeekFrom::End(0)).unwrap();
     write_batch(&mut wtr, ups);
     wtr.flush().unwrap();
@@ -342,7 +341,7 @@ fn sample_data() -> Vec<Update> {
     };
     let t2 = Update {
         ts: 1000000,
-        seq: 123,
+        seq: 113,
         is_trade: true,
         is_bid: false,
         price: 5100.01,
@@ -518,10 +517,9 @@ fn should_append() {
     let len = read_len(&mut rdr);
     assert_eq!(new_size as u64, len);
 
-    let mut all_the_data = init();
+    let mut all_the_data = sample_data();
     all_the_data.extend(append_data);
     all_the_data.sort();
-
     let decoded = decode(&fname);
     assert_eq!(all_the_data, decoded);
     
