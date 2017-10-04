@@ -51,12 +51,12 @@ fn parse_line(string : &str) -> Option<dtf::Update> {
         } else if ch == ',' || ch == ';' {
             println!("{}", buf);
             match count {
-                0 => { u.ts       = match buf.parse::<u64>() {Ok(ts) => ts, Err(err) => return None}},
-                1 => { u.seq      = match buf.parse::<u32>() {Ok(seq) => seq, Err(err) => return None}},
+                0 => { u.ts       = match buf.parse::<u64>() {Ok(ts) => ts, Err(_) => return None}},
+                1 => { u.seq      = match buf.parse::<u32>() {Ok(seq) => seq, Err(_) => return None}},
                 2 => { u.is_trade = most_current_bool; },
                 3 => { u.is_bid   = most_current_bool; },
-                4 => { u.price    = match buf.parse::<f32>() {Ok(price) => price, Err(err) => return None} },
-                5 => { u.size     = match buf.parse::<f32>() {Ok(size) => size, Err(err) => return None}},
+                4 => { u.price    = match buf.parse::<f32>() {Ok(price) => price, Err(_) => return None} },
+                5 => { u.size     = match buf.parse::<f32>() {Ok(size) => size, Err(_) => return None}},
                 _ => panic!("IMPOSSIBLE")
             }
             count += 1;
@@ -112,7 +112,7 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
     match string {
         "" => Some("".to_owned()),
         "PING" => Some("PONG.\n".to_owned()),
-        "INFO" => Some(format!("DB: {}", state.db)),
+        "INFO" => Some(format!("DB: {}. Buffer items: {}\n", state.db, state.v.len())),
         _ => {
             if state.is_adding {
                 let parsed = parse_line(string);
@@ -130,7 +130,12 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
             } else
 
             if string.starts_with("ADD") {
-                Some("".to_owned())
+                let data_string : &str = &string[3..];
+                match parse_line(&data_string) {
+                    Some(up) => state.v.push(up),
+                    None => return None
+                }
+                Some("OK.\n".to_owned())
             } else 
 
             if string.starts_with("GET") {
