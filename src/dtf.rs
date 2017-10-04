@@ -24,6 +24,7 @@ use conf;
 use db;
 
 use std::str;
+use std::fs;
 use std::cmp::Ordering;
 use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
 use std::fs::File;
@@ -99,8 +100,13 @@ pub fn get_max_ts(updates : &[Update]) -> u32 {
     max
 }
 
-fn file_writer(fname : &str) -> BufWriter<File> {
-    let new_file = File::create(fname).unwrap();
+fn file_writer(fname : &str, create : bool) -> BufWriter<File> {
+    let new_file = if create {
+        File::create(fname).unwrap()
+    } else {
+        fs::OpenOptions::new().write(true).open(fname).unwrap()
+    };
+
     let wtr = BufWriter::new(new_file);
     wtr
 }
@@ -116,13 +122,19 @@ fn write_symbol(wtr: &mut BufWriter<File>, symbol : &str) {
     let _ = wtr.write(padded_symbol.as_bytes());
 }
 
-fn write_metadata(wtr: &mut BufWriter<File>, ups : &[Update]) {
-    // number of records
-    wtr.write_u64::<BigEndian>(ups.len() as u64).expect("length of records");
+fn write_len(wtr: &mut BufWriter<File>, len : u64) {
+    let _ = wtr.seek(SeekFrom::Start(LEN_OFFSET));
+    wtr.write_u64::<BigEndian>(len).expect("length of records");
+}
 
-    // max ts
-    let max_ts = get_max_ts(ups);
+fn write_max_ts(wtr: &mut BufWriter<File>, max_ts : u32) {
+    let _ = wtr.seek(SeekFrom::Start(MAX_TS_OFFSET));
     wtr.write_u32::<BigEndian>(max_ts).expect("maximum timestamp");
+}
+
+fn write_metadata(wtr: &mut BufWriter<File>, ups : &[Update]) {
+    write_len(wtr, ups.len() as u64);
+    write_max_ts(wtr, get_max_ts(ups));
 }
 
 fn write_reference(wtr: &mut Write, ref_ts: u32, ref_seq: u16, len: u16) {
@@ -132,11 +144,8 @@ fn write_reference(wtr: &mut Write, ref_ts: u32, ref_seq: u16, len: u16) {
     let _ = wtr.write_u16::<BigEndian>(len);
 }
 
-fn write_main(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
-    let _ = wtr.seek(SeekFrom::Start(MAIN_OFFSET));
-
+fn write_batch(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
     let mut buf : Vec<u8> = Vec::new();
-
     let mut ref_ts = ups[0].ts;
     let mut ref_seq = ups[0].seq;
     let mut count = 0;
@@ -162,8 +171,13 @@ fn write_main(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
     wtr.write(buf.as_slice()).unwrap();
 }
 
+fn write_main(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
+    let _ = wtr.seek(SeekFrom::Start(MAIN_OFFSET));
+    write_batch(wtr, ups);
+}
+
 pub fn encode(fname : &str, symbol : &str, ups : &[Update]) {
-    let mut wtr = file_writer(fname);
+    let mut wtr = file_writer(fname, true);
 
     write_magic_value(&mut wtr);
     write_symbol(&mut wtr, symbol);
@@ -182,6 +196,9 @@ fn file_reader(fname: &str) -> BufReader<File> {
     let _ = rdr.seek(SeekFrom::Start(0));
     let mut buf = vec![0u8; 5];
     let _ = rdr.read_exact(&mut buf);
+    
+    println!("{:?}", buf);
+
     if buf != MAGIC_VALUE {
         panic!("MAGIC VALUE INCORRECT");
     }
@@ -272,28 +289,40 @@ pub fn decode(fname: &str) -> Vec<Update> {
 }
 
 //TODO:
-pub fn append(fname: &str, ups : &mut Vec<Update>) {
-    let new_max = {
+pub fn append(fname: &str, ups : &Vec<Update>) {
+    let (new_max, cur_len) = {
         let mut rdr = file_reader(fname);
         let _symbol = read_symbol(&mut rdr);
 
         let max_ts = read_max_ts(&mut rdr);
         let max_ts = read_min_ts(&mut rdr);
 
-        ups.sort();
         let new_min = ups[0].ts;
         let new_max = ups[ups.len()-1].ts;
 
         if new_min <= max_ts {
             panic!("Cannot append data!(not implemented)");
         }
-        new_max
+
+        let cur_len = read_len(&mut rdr);
+        (new_max, cur_len)
     };
+
+    let new_max_ts = get_max_ts(ups);
+    let new_len = cur_len + ups.len() as u64;
+
+    let mut wtr = file_writer(fname, false);
+    write_len(&mut wtr, new_len);
+    write_max_ts(&mut wtr, new_max_ts);
+
+    
+    wtr.seek(SeekFrom::End(0)).unwrap();
+    write_batch(&mut wtr, ups);
+    wtr.flush().unwrap();
 }
 
-
 #[cfg(test)]
-fn init () -> Vec<Update> {
+fn sample_data() -> Vec<Update> {
     let mut ts : Vec<Update> = vec![];
     let t = Update {
         ts: 100,
@@ -324,20 +353,86 @@ fn init () -> Vec<Update> {
     ts.push(t2);
 
     ts.sort();
+    ts
+}
+
+#[cfg(test)]
+fn sample_data_one_item() -> Vec<Update> {
+    let mut ts : Vec<Update> = vec![];
+    let t = Update {
+        ts: 100,
+        seq: 113,
+        is_trade: false,
+        is_bid: false,
+        price: 5100.01,
+        size: 1.14564564645,
+    };
+    ts.push(t);
+
+    ts.sort();
+    ts
+}
 
 
-    let fname = "test.bin";
+#[cfg(test)]
+fn sample_data_append() -> Vec<Update> {
+    let mut ts : Vec<Update> = vec![];
+    let t2 = Update {
+        ts: 20000002,
+        seq: 113,
+        is_trade: false,
+        is_bid: false,
+        price: 5100.01,
+        size: 1.14564564645,
+    };
+    let t1 = Update {
+        ts: 20000001,
+        seq: 113,
+        is_trade: false,
+        is_bid: false,
+        price: 5100.01,
+        size: 1.14564564645,
+    };
+    let t = Update {
+        ts: 20000000,
+        seq: 113,
+        is_trade: false,
+        is_bid: false,
+        price: 5100.01,
+        size: 1.14564564645,
+    };
+    ts.push(t);
+    ts.push(t1);
+    ts.push(t2);
+    ts.sort();
+    ts
+}
+#[cfg(test)]
+fn init () -> Vec<Update> {
+    let ts = sample_data();
+
+    let fname = "test.dtf";
     let symbol = "NEO_BTC";
 
-    encode(fname, symbol, &mut ts);
+    encode(fname, symbol, &ts);
 
     ts
 }
 
 #[test]
+fn should_encode_decode_one_item() {
+    let ts = sample_data_one_item();
+    let fname = "test.dtf";
+    let symbol = "NEO_BTC";
+    encode(fname, symbol, &ts);
+    let decoded_updates = decode(fname);
+    assert_eq!(decoded_updates, ts);
+}
+
+#[test]
 fn should_encode_and_decode_file() {
     let ts = init();
-    let fname = "test.bin";
+    let fname = "test.dtf";
     let decoded_updates = decode(fname);
     assert_eq!(decoded_updates, ts);
 }
@@ -345,7 +440,7 @@ fn should_encode_and_decode_file() {
 #[test]
 fn should_return_correct_symbol() {
     init();
-    let fname = "test.bin";
+    let fname = "test.dtf";
     let mut rdr = file_reader(fname);
     let sym = read_symbol(&mut rdr);
     assert_eq!(sym, "NEO_BTC  ");
@@ -354,7 +449,7 @@ fn should_return_correct_symbol() {
 #[test]
 fn should_return_first_record() {
     let vs = init();
-    let fname = "test.bin";
+    let fname = "test.dtf";
     let mut rdr = file_reader(fname);
     let v = read_first(&mut rdr);
     assert_eq!(vs[0], v);
@@ -363,7 +458,7 @@ fn should_return_first_record() {
 #[test]
 fn should_return_correct_num_of_items() {
     let vs = init();
-    let fname = "test.bin";
+    let fname = "test.dtf";
     let mut rdr = file_reader(fname);
     let len = read_len(&mut rdr);
     assert_eq!(vs.len() as u64, len);
@@ -372,33 +467,62 @@ fn should_return_correct_num_of_items() {
 #[test]
 fn should_return_max_ts() {
     let vs = init();
-    let fname = "test.bin";
+    let fname = "test.dtf";
     let mut rdr = file_reader(fname);
     let max_ts = read_max_ts(&mut rdr);
     assert_eq!(max_ts, get_max_ts(&vs));
 }
 
-#[cfg(test)]
-fn init_real_data() -> Vec<Update> {
-    let conf = conf::get_config();
-    let cxn_str : &String = conf.get("connection_string").unwrap();
-    let updates : Vec<db::OrderBookUpdate> = db::run(&cxn_str);
-    let mut mapped : Vec<Update> = updates.iter().map(|d| d.to_update()).collect();
-    mapped.sort();
-    mapped
-}
+// #[cfg(test)]
+// fn init_real_data() -> Vec<Update> {
+//     let conf = conf::get_config();
+//     let cxn_str : &String = conf.get("connection_string").unwrap();
+//     let updates : Vec<db::OrderBookUpdate> = db::run(&cxn_str);
+//     let mut mapped : Vec<Update> = updates.iter().map(|d| d.to_update()).collect();
+//     mapped.sort();
+//     mapped
+// }
 
-#[test]
-fn should_work_with_real_data() {
-    let mut vs = init_real_data();
-    let fname = "real.dtf";
-    let symbol = "NEO_BTC";
-    encode(fname, symbol, &mut vs);
-    let decoded_updates = decode(fname);
-    assert_eq!(decoded_updates, vs);
-}
+// #[test]
+// fn should_work_with_real_data() {
+//     let mut vs = init_real_data();
+//     let fname = "real.dtf";
+//     let symbol = "NEO_BTC";
+//     encode(fname, symbol, &mut vs);
+//     let decoded_updates = decode(fname);
+//     assert_eq!(decoded_updates, vs);
+// }
 
 #[test]
 fn should_append() {
+    should_encode_and_decode_file();
 
+    println!("----DONE----");
+
+    let fname = "test.dtf";
+    let append_data = sample_data_append();
+    let new_size = append_data.len() + init().len();
+
+    append(fname, &append_data);
+
+    println!("----APPENDED----");
+
+    let mut rdr = file_reader(fname);
+
+    // max_ts
+    let max_ts = read_max_ts(&mut rdr);
+    assert_eq!(max_ts, get_max_ts(&append_data));
+
+    // total len
+    let mut rdr = file_reader(fname);
+    let len = read_len(&mut rdr);
+    assert_eq!(new_size as u64, len);
+
+    let mut all_the_data = init();
+    all_the_data.extend(append_data);
+    all_the_data.sort();
+
+    let decoded = decode(&fname);
+    assert_eq!(all_the_data, decoded);
+    
 }

@@ -26,28 +26,40 @@ struct State {
 }
 
 fn gen_response(string : &str, state: &mut State) -> String {
-    if string == "" {
-        "".to_owned()
-    } else if string == "PING" {
-        "+PONG.\n".to_owned()
 
-    } else if string.starts_with("DB") {
-        let dbname : &str = &string[3..];
-        state.db = dbname.to_owned();
-        format!("+SWITCHED TO DB `{}`.\n", &dbname)
-    } else if string.starts_with("ADD") {
-        "".to_owned()
-    } else if string.starts_with("GET") {
-        "".to_owned()
-    } else if string.starts_with("BULKADD") {
-        "".to_owned()
-    } else {
-        format!("CURRENT DB: {} -ERR unknown command '{}'.\n", state.db ,&string)
+    match string {
+        "" => "".to_owned(),
+        "PING" => "PONG.\n".to_owned(),
+        _ => {
+            if string.starts_with("DB") {
+                let dbname : &str = &string[3..];
+                state.db = dbname.to_owned();
+                format!("SWITCHED TO DB `{}`.\n", &dbname)
+            } else
+
+            if string.starts_with("ADD") {
+                "".to_owned()
+            } else 
+
+            if string.starts_with("GET") {
+                "".to_owned()
+            } else
+
+
+            if string.starts_with("BULKADD") {
+                "".to_owned()
+            }
+
+            else {
+                format!("CURRENT DB: {} -ERR unknown command '{}'.\n", state.db ,&string)
+            }
+        }
     }
 }
 
 fn handle_client(mut stream: TcpStream) {
     let mut buf = [0; 512];
+
     let mut state = State {
         db: "".to_owned(),
     };
