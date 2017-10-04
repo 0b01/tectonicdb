@@ -7,12 +7,12 @@
 /// Offset 80: -- records - see below --
 /// Record Spec:
 /// Offset 81: bool for is_snapshot
-/// 1. if is snapshot
+/// 1. if is true
 ///        4 bytes (u32): reference ts
 ///        2 bytes (u16): reference seq
 ///        2 bytes (u16): how many records between this snapshot and the next snapshot
 ///        
-/// 2. if is record
+/// 2. record
 ///        dts (u16): $ts - reference ts$, 2^16 = 65536 - ~65 seconds
 ///        dseq (u8) $seq - reference seq$ , 2^8 = 256
 ///        is_trade: (u8):
@@ -153,7 +153,6 @@ fn write_main(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
         }
 
         let serialized = elem.serialize(ref_ts, ref_seq);
-        let _ = buf.write_u8(false as u8);
         let _ = buf.write(serialized.as_slice());
 
         count += 1;
@@ -228,7 +227,6 @@ fn read_one_batch(rdr: &mut BufReader<File>) -> Vec<Update> {
     }
 
     for _i in 0..how_many {
-        assert_eq!(rdr.read_u8().expect("is_ref"), 0x00000000);
         let current_update = Update {
             ts: rdr.read_u16::<BigEndian>().expect("ts") as u32 + ref_ts,
             seq: rdr.read_u8().expect("seq") as u16 + ref_seq,
