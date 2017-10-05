@@ -15,7 +15,6 @@ pub struct OrderBookUpdate {
 }
 
 impl OrderBookUpdate {
-
     pub fn to_update(&self) -> dtf::Update {
         dtf::Update {
             ts: (self.ts * 1000.) as u64,
@@ -26,7 +25,6 @@ impl OrderBookUpdate {
             size: self.size as f32,
         }
     }
-
 }
 
 pub fn run(cnx_str : &String) -> Vec<OrderBookUpdate> {

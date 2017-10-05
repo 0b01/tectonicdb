@@ -23,8 +23,6 @@
 ///        price: (f32)
 ///        size: (f32)
 
-use conf;
-use db;
 
 use std::str;
 use std::fs;
@@ -206,8 +204,6 @@ fn file_reader(fname: &str) -> BufReader<File> {
     let _ = rdr.seek(SeekFrom::Start(0));
     let mut buf = vec![0u8; 5];
     let _ = rdr.read_exact(&mut buf);
-    
-    println!("{:?}", buf);
 
     if buf != MAGIC_VALUE {
         panic!("MAGIC VALUE INCORRECT");
@@ -217,7 +213,7 @@ fn file_reader(fname: &str) -> BufReader<File> {
 }
 
 fn read_symbol(rdr : &mut BufReader<File>) -> String {
-    rdr.seek(SeekFrom::Start(SYMBOL_OFFSET));
+    rdr.seek(SeekFrom::Start(SYMBOL_OFFSET)).unwrap();
 
     let mut buffer = [0; SYMBOL_LEN];
     let _ = rdr.read_exact(&mut buffer);
@@ -251,7 +247,6 @@ fn read_one_batch(rdr: &mut BufReader<File>) -> Vec<Update> {
         ref_ts = rdr.read_u64::<BigEndian>().unwrap();
         ref_seq = rdr.read_u32::<BigEndian>().unwrap();
         how_many = rdr.read_u16::<BigEndian>().unwrap();
-        println!("WILL READ: COUNT {}", how_many);
     }
 
     for _i in 0..how_many {
@@ -275,9 +270,15 @@ fn read_first_batch(mut rdr: &mut BufReader<File>) -> Vec<Update> {
 }
 
 fn read_first(mut rdr: &mut BufReader<File>) -> Update {
-    rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
-    let batch = read_one_batch(&mut rdr);
+    let batch = read_first_batch(&mut rdr);
     batch[0].clone()
+}
+
+pub fn get_size(fname: &str) -> u64 {
+    let mut rdr = file_reader(fname);
+    let _symbol = read_symbol(&mut rdr); 
+    let nums = read_len(&mut rdr);
+    nums
 }
 
 pub fn decode(fname: &str) -> Vec<Update> {
@@ -307,11 +308,13 @@ pub fn append(fname: &str, ups : &Vec<Update>) {
         let _symbol = read_symbol(&mut rdr);
 
         let old_max_ts = read_max_ts(&mut rdr);
-        let _min_ts = read_min_ts(&mut rdr);
 
         let ups : Vec<Update> = ups.clone().into_iter()
                                     .filter(|up| up.ts > old_max_ts)
                                     .collect();
+        if ups.len() == 0 {
+            return;
+        }
 
         let new_min_ts = ups[0].ts;
         let new_max_ts = ups[ups.len()-1].ts;
@@ -330,7 +333,11 @@ pub fn append(fname: &str, ups : &Vec<Update>) {
     write_len(&mut wtr, new_len);
     write_max_ts(&mut wtr, new_max_ts);
 
-    wtr.seek(SeekFrom::End(0)).unwrap();
+    if cur_len == 0 {
+        wtr.seek(SeekFrom::Start(MAIN_OFFSET)).unwrap();
+    } else {
+        wtr.seek(SeekFrom::End(0)).unwrap();
+    }
     write_batches(&mut wtr, &ups);
     wtr.flush().unwrap();
 }
@@ -487,25 +494,27 @@ fn should_return_max_ts() {
     assert_eq!(max_ts, get_max_ts(&vs));
 }
 
-// #[cfg(test)]
-// fn init_real_data() -> Vec<Update> {
-//     let conf = conf::get_config();
-//     let cxn_str : &String = conf.get("connection_string").unwrap();
-//     let updates : Vec<db::OrderBookUpdate> = db::run(&cxn_str);
-//     let mut mapped : Vec<Update> = updates.iter().map(|d| d.to_update()).collect();
-//     mapped.sort();
-//     mapped
-// }
+#[cfg(test)]
+fn init_real_data() -> Vec<Update> {
+    use conf;
+    use db;
+    let conf = conf::get_config();
+    let cxn_str : &String = conf.get("connection_string").unwrap();
+    let updates : Vec<db::OrderBookUpdate> = db::run(&cxn_str);
+    let mut mapped : Vec<Update> = updates.iter().map(|d| d.to_update()).collect();
+    mapped.sort();
+    mapped
+}
 
-// #[test]
-// fn should_work_with_real_data() {
-//     let mut vs = init_real_data();
-//     let fname = "real.dtf";
-//     let symbol = "NEO_BTC";
-//     encode(fname, symbol, &mut vs);
-//     let decoded_updates = decode(fname);
-//     assert_eq!(decoded_updates, vs);
-// }
+#[test]
+fn should_work_with_real_data() {
+    let mut vs = init_real_data();
+    let fname = "real.dtf";
+    let symbol = "NEO_BTC";
+    encode(fname, symbol, &mut vs);
+    let decoded_updates = decode(fname);
+    assert_eq!(decoded_updates, vs);
+}
 
 #[test]
 fn should_append_filtered_data() {

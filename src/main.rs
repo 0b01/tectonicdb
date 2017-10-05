@@ -23,6 +23,5 @@ fn main() {
     // let symbol = "NEO_BTC";
     // encode(fname, symbol, &mut mapped);
 
-    
     run_server();
 }

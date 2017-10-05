@@ -31,6 +31,7 @@
 /// BULKADD ...; DDAKLUB
 /// FLUSH, FLUSHALL, GET ALL, GET [count], CLEAR
 
+use conf;
 
 use std::collections::HashMap;
 use std::io::{Read, Write};
@@ -39,12 +40,15 @@ use std::net::TcpStream;
 use std::path::Path;
 use std::thread;
 use std::str;
+use std::fs;
 
 use dtf;
 
 struct Store {
     name: String,
-    v: Vec<dtf::Update>
+    size: u64,
+    v: Vec<dtf::Update>,
+    in_memory: bool
 }
 
 impl Store {
@@ -61,16 +65,22 @@ impl Store {
         format!("[{}]\n", objects.join(","))
     }
 
-    fn flush(&self) -> Option<bool> {
-        let fname = format!("{}.dtf", self.name);
+    fn flush(&self, dtf_folder : &str) -> Option<bool> {
+        let fname = format!("{}/{}.dtf", dtf_folder, self.name);
+        if Path::new(&fname).exists() {
+            dtf::append(&fname, &self.v);
+            return Some(true);
+        }
         dtf::encode(&fname, &self.name, &self.v);
         Some(true)
     }
 
-    fn load(&mut self) -> Option<bool> {
-        let fname = format!("{}.dtf", self.name);
+    fn load(&mut self, dtf_folder : &str) -> Option<bool> {
+        let fname = format!("{}/{}.dtf", dtf_folder, self.name);
         if Path::new(&fname).exists() {
             self.v = dtf::decode(&fname);
+            self.size = self.v.len() as u64;
+            self.in_memory = true;
             return Some(true);
         }
         None
@@ -84,7 +94,8 @@ impl Store {
 struct State {
     is_adding: bool,
     store: HashMap<String, Store>,
-    current_store_name: String
+    current_store_name: String,
+    dtf_folder: String
 }
 
 fn parse_line(string : &str) -> Option<dtf::Update> {
@@ -167,10 +178,11 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
         "PING" => Some("PONG.\n".to_owned()),
         "HELP" => Some("PING, INFO, USE [db], CREATE [db],\nADD [ts],[seq],[is_trade],[is_bid],[price],[size];\nBULKADD ... DDAKLUB, HELP\nFLUSHALL, GET ALL, GET [count]\n".to_owned()),
         "INFO" => {
-            let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
-            let mut json = format!(r#"{{"name": "{}", "count": {}}}"#, state.current_store_name, current_store.v.len());
-            json.push('\n');
-            Some(json)
+            let info_vec : Vec<String> = state.store.values().map(|store| {
+                format!(r#"{{"name": "{}", "count": {}}}"#, store.name, store.size)
+            }).collect();
+
+            Some(format!("[{}]\n", info_vec.join(", ")))
         },
         "BULKADD" => {
             state.is_adding = true;
@@ -178,7 +190,7 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
         },
         "DDAKLUB" => {
             state.is_adding = false;
-            Some("OK.\n".to_owned())
+            Some("1\n".to_owned())
         },
         "GET ALL" => {
             Some(state.store.get_mut(&state.current_store_name).unwrap().to_string(-1))
@@ -186,18 +198,24 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
         "CLEAR" => {
             let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
             current_store.clear();
-            Some("OK.\n".to_owned())
+            Some("1\n".to_owned())
         },
         "FLUSH" => {
             let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
-            current_store.flush();
-            Some("OK\n".to_owned())
+            current_store.flush(&state.dtf_folder);
+            Some("1\n".to_owned())
         },
         "FLUSHALL" => {
             for store in state.store.values() {
-                store.flush();
+                store.flush(&state.dtf_folder);
             }
-            Some("OK.\n".to_owned())
+            Some("1\n".to_owned())
+        },
+        "DBS" => {
+            let keys_vec: Vec<String> = state.store.keys().cloned().collect();
+            let mut keys = keys_vec.join(", ");
+            keys.push('\n');
+            Some(keys)
         },
         _ => {
             // bulkadd and add
@@ -222,13 +240,13 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
                     }
                     None => return None
                 }
-                Some("OK.\n".to_owned())
+                Some("1\n".to_owned())
             } else 
 
             // db commands
             if string.starts_with("CREATE ") {
                 let dbname : &str = &string[7..];
-                state.store.insert(dbname.to_owned(), Store {name: dbname.to_owned(), v: Vec::new()});
+                state.store.insert(dbname.to_owned(), Store {name: dbname.to_owned(), v: Vec::new(), size: 0, in_memory: false});
                 Some(format!("CREATED DB `{}`.\n", &dbname))
             } else
 
@@ -237,7 +255,7 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
                 if state.store.contains_key(dbname) {
                     state.current_store_name = dbname.to_owned();
                     let current_store = state.store.get_mut(&state.current_store_name).unwrap();
-                    current_store.load();
+                    current_store.load(&state.dtf_folder);
                     Some(format!("SWITCHED TO DB `{}`.\n", &dbname))
                 } else {
                     Some(format!("ERR unknown DB `{}`.\n", &dbname))
@@ -259,22 +277,58 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
     }
 }
 
+fn get_dtf_folder() -> String {
+    let configs = conf::get_config();
+    let dtf_folder = configs.get("dtf_folder").unwrap();
+    dtf_folder.to_owned()
+}
+
+fn create_dir_if_not_exist(dtf_folder : &str) {
+    if !Path::new(dtf_folder).exists() {
+        fs::create_dir(dtf_folder).unwrap();
+    }
+}
+
+fn init_dbs(dtf_folder : &str, state: &mut State) {
+    for dtf_file in fs::read_dir(&dtf_folder).unwrap() {
+        let dtf_file = dtf_file.unwrap();
+        let fname_os = dtf_file.file_name();
+        let fname = fname_os.to_str().unwrap();
+        if fname.ends_with(".dtf") {
+            let name = Path::new(&fname_os).file_stem().unwrap().to_str().unwrap();
+            let header_size = dtf::get_size(&format!("{}/{}", dtf_folder, fname));
+            state.store.insert(name.to_owned(), Store {
+                name: name.to_owned(),
+                v: Vec::new(),
+                size: header_size,
+                in_memory: false
+            });
+        }
+    }
+}
+
 fn handle_client(mut stream: TcpStream) {
-    let mut buf = [0; 2048];
+    let dtf_folder = get_dtf_folder();
+    create_dir_if_not_exist(&dtf_folder);
+
 
     let mut state = State {
         current_store_name: "default".to_owned(),
         is_adding: false,
-        store: HashMap::new()
+        store: HashMap::new(),
+        dtf_folder: dtf_folder.to_owned()
     };
-    state.store.insert("default".to_owned(), Store {name: "default".to_owned(), v: Vec::new()});
+    state.store.insert("default".to_owned(), Store {name: "default".to_owned(), v: Vec::new(), size: 0, in_memory: false});
 
+    init_dbs(&dtf_folder, &mut state);
+
+    let mut buf = [0; 2048];
     loop {
         let bytes_read = stream.read(&mut buf).unwrap();
         if bytes_read == 0 { break }
-        let ping = str::from_utf8(&buf[..(bytes_read-1)]).unwrap();
+        let req = str::from_utf8(&buf[..(bytes_read-1)]).unwrap();
 
-        let resp = gen_response(&ping, &mut state);
+        let resp = gen_response(&req, &mut state);
         match resp {
             Some(str_resp) => {
                 stream.write(str_resp.as_bytes()).unwrap()
@@ -291,7 +345,7 @@ pub fn run_server() {
     println!("Listening on addr: {}", addr);
 
     for stream in listener.incoming() {
-        let mut stream = stream.unwrap();
+        let stream = stream.unwrap();
         thread::spawn(move || {
 //             stream.write(b"
 // Tectonic Shell v0.0.1
