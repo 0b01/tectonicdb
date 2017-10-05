@@ -276,7 +276,6 @@ fn read_first(mut rdr: &mut BufReader<File>) -> Update {
 
 pub fn get_size(fname: &str) -> u64 {
     let mut rdr = file_reader(fname);
-    let _symbol = read_symbol(&mut rdr); 
     let nums = read_len(&mut rdr);
     nums
 }
