@@ -11,7 +11,6 @@
 /// ADD 1505177459.658, 139010, t, t, 0.0703629, 7.65064249;
 /// 
 /// GET ALL
-/// 
 /// GET 1
 /// 
 /// BULKADD
@@ -21,19 +20,23 @@
 /// 1505177459.658, 139010, t, t, 0.0703629, 7.65064249;
 /// DDAKLUB
 /// 
+/// FLUSH
 /// FLUSHALL
+/// 
+/// CLEAR
 /// 
 /// -------------------------------------------
 /// PING, INFO, USE [db], CREATE [db],
 /// ADD [ts],[seq],[is_trade],[is_bid],[price],[size];
 /// BULKADD ...; DDAKLUB
-/// FLUSHALL, GET ALL, GET [count]
+/// FLUSH, FLUSHALL, GET ALL, GET [count], CLEAR
 
 
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::net::TcpStream;
+use std::path::Path;
 use std::thread;
 use std::str;
 
@@ -52,10 +55,29 @@ impl Store {
     fn to_string(&self, count:i32) -> String {
         let objects : Vec<String> = match count {
             -1 => self.v.clone().into_iter().map(|up| up.to_json()).collect(),
-            i => self.v.clone().into_iter().take(i as usize).map(|up| up.to_json()).collect()
+            n => self.v.clone().into_iter().take(n as usize).map(|up| up.to_json()).collect()
         };
 
         format!("[{}]\n", objects.join(","))
+    }
+
+    fn flush(&self) -> Option<bool> {
+        let fname = format!("{}.dtf", self.name);
+        dtf::encode(&fname, &self.name, &self.v);
+        Some(true)
+    }
+
+    fn load(&mut self) -> Option<bool> {
+        let fname = format!("{}.dtf", self.name);
+        if Path::new(&fname).exists() {
+            self.v = dtf::decode(&fname);
+            return Some(true);
+        }
+        None
+    }
+
+    fn clear(&mut self) {
+        self.v.clear();
     }
 }
 
@@ -161,6 +183,22 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
         "GET ALL" => {
             Some(state.store.get_mut(&state.current_store_name).unwrap().to_string(-1))
         },
+        "CLEAR" => {
+            let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
+            current_store.clear();
+            Some("OK.\n".to_owned())
+        },
+        "FLUSH" => {
+            let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
+            current_store.flush();
+            Some("OK\n".to_owned())
+        },
+        "FLUSHALL" => {
+            for store in state.store.values() {
+                store.flush();
+            }
+            Some("OK.\n".to_owned())
+        },
         _ => {
             // bulkadd and add
             if state.is_adding {
@@ -198,6 +236,8 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
                 let dbname : &str = &string[4..];
                 if state.store.contains_key(dbname) {
                     state.current_store_name = dbname.to_owned();
+                    let current_store = state.store.get_mut(&state.current_store_name).unwrap();
+                    current_store.load();
                     Some(format!("SWITCHED TO DB `{}`.\n", &dbname))
                 } else {
                     Some(format!("ERR unknown DB `{}`.\n", &dbname))

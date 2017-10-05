@@ -62,7 +62,7 @@ impl Update {
 
     fn serialize(&self, ref_ts : u64, ref_seq : u32) -> Vec<u8> {
         let mut buf : Vec<u8> = Vec::new();
-        let _ = buf.write_u16::<BigEndian>((self.ts - ref_ts) as u16);
+        let _ = buf.write_u16::<BigEndian>((self.ts- ref_ts) as u16);
         let _ = buf.write_u8((self.seq - ref_seq) as u8);
         let _ = buf.write_u8(self.is_trade as u8);
         let _ = buf.write_u8(self.is_bid as u8);
@@ -152,7 +152,7 @@ fn write_reference(wtr: &mut Write, ref_ts: u64, ref_seq: u32, len: u16) {
     let _ = wtr.write_u16::<BigEndian>(len);
 }
 
-fn write_batch(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
+fn write_batches(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
     let mut buf : Vec<u8> = Vec::new();
     let mut ref_ts = ups[0].ts;
     let mut ref_seq = ups[0].seq;
@@ -179,9 +179,11 @@ fn write_batch(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
     wtr.write(buf.as_slice()).unwrap();
 }
 
-fn write_main(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
+fn write_main(wtr: &mut BufWriter<File>, ups : &[Update]) {
     let _ = wtr.seek(SeekFrom::Start(MAIN_OFFSET));
-    write_batch(wtr, ups);
+    if ups.len() > 0 {
+        write_batches(wtr, ups);
+    }
 }
 
 pub fn encode(fname : &str, symbol : &str, ups : &[Update]) {
@@ -213,6 +215,7 @@ fn file_reader(fname: &str) -> BufReader<File> {
 
     rdr 
 }
+
 fn read_symbol(rdr : &mut BufReader<File>) -> String {
     rdr.seek(SeekFrom::Start(SYMBOL_OFFSET));
 
@@ -224,7 +227,7 @@ fn read_symbol(rdr : &mut BufReader<File>) -> String {
 }
 
 fn read_len(rdr : &mut BufReader<File>) -> u64 {
-    rdr.seek(SeekFrom::Start(LEN_OFFSET));
+    rdr.seek(SeekFrom::Start(LEN_OFFSET)).unwrap();
     rdr.read_u64::<BigEndian>().expect("length of records")
 }
 
@@ -298,25 +301,29 @@ pub fn decode(fname: &str) -> Vec<Update> {
 
 //TODO:
 pub fn append(fname: &str, ups : &Vec<Update>) {
-    let (new_max, cur_len) = {
+
+    let (ups, new_max_ts, cur_len) = {
         let mut rdr = file_reader(fname);
         let _symbol = read_symbol(&mut rdr);
 
-        let max_ts = read_max_ts(&mut rdr);
-        let max_ts = read_min_ts(&mut rdr);
+        let old_max_ts = read_max_ts(&mut rdr);
+        let _min_ts = read_min_ts(&mut rdr);
 
-        let new_min = ups[0].ts;
-        let new_max = ups[ups.len()-1].ts;
+        let ups : Vec<Update> = ups.clone().into_iter()
+                                    .filter(|up| up.ts > old_max_ts)
+                                    .collect();
 
-        if new_min <= max_ts {
+        let new_min_ts = ups[0].ts;
+        let new_max_ts = ups[ups.len()-1].ts;
+
+        if new_min_ts <= old_max_ts {
             panic!("Cannot append data!(not implemented)");
         }
 
         let cur_len = read_len(&mut rdr);
-        (new_max, cur_len)
+        (ups, new_max_ts, cur_len)
     };
 
-    let new_max_ts = get_max_ts(ups);
     let new_len = cur_len + ups.len() as u64;
 
     let mut wtr = file_writer(fname, false);
@@ -324,7 +331,7 @@ pub fn append(fname: &str, ups : &Vec<Update>) {
     write_max_ts(&mut wtr, new_max_ts);
 
     wtr.seek(SeekFrom::End(0)).unwrap();
-    write_batch(&mut wtr, ups);
+    write_batches(&mut wtr, &ups);
     wtr.flush().unwrap();
 }
 
@@ -385,7 +392,7 @@ fn sample_data_one_item() -> Vec<Update> {
 fn sample_data_append() -> Vec<Update> {
     let mut ts : Vec<Update> = vec![];
     let t2 = Update {
-        ts: 20000002,
+        ts: 00000002,
         seq: 113,
         is_trade: false,
         is_bid: false,
@@ -501,14 +508,16 @@ fn should_return_max_ts() {
 // }
 
 #[test]
-fn should_append() {
+fn should_append_filtered_data() {
     should_encode_and_decode_file();
 
     println!("----DONE----");
 
     let fname = "test.dtf";
-    let append_data = sample_data_append();
-    let new_size = append_data.len() + init().len();
+    let old_data = sample_data();
+    let old_max_ts = get_max_ts(&old_data);
+    let append_data : Vec<Update> = sample_data_append().into_iter().filter(|up| up.ts >= old_max_ts).collect();
+    let new_size = append_data.len() + old_data.len();
 
     append(fname, &append_data);
 
@@ -534,7 +543,7 @@ fn should_append() {
 }
 
 #[test]
-fn should_to_json() {
+fn should_speak_json() {
     let t1 = Update {
         ts: 20000001,
         seq: 113,
