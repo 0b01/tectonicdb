@@ -59,6 +59,11 @@ pub struct Update {
 impl Update {
 
     fn serialize(&self, ref_ts : u64, ref_seq : u32) -> Vec<u8> {
+        if self.seq < ref_seq {
+            println!("{:?}", ref_seq);
+            println!("{:?}", self);
+            /* TODO */
+        }
         let mut buf : Vec<u8> = Vec::new();
         let _ = buf.write_u16::<BigEndian>((self.ts- ref_ts) as u16);
         let _ = buf.write_u8((self.seq - ref_seq) as u8);
@@ -85,9 +90,9 @@ impl Eq for Update {}
 
 impl PartialOrd for Update {
     fn partial_cmp(&self, other : &Update) -> Option<Ordering> {
-        if self.seq > other.seq {
+        if self.ts > other.ts {
             return Some(Ordering::Greater);
-        } else if self.seq == other.seq {
+        } else if self.ts == other.ts {
             return Some(Ordering::Equal);
         } else {
             return Some(Ordering::Less);
@@ -157,7 +162,7 @@ fn write_batches(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
     let mut count = 0;
 
     for elem in ups.iter() {
-        if count != 0 && elem.ts >= ref_ts + 65535 || elem.seq >= ref_seq + 255 {
+        if count != 0 && (elem.ts >= ref_ts + 65535 || elem.seq >= ref_seq + 255 || elem.seq < ref_seq) {
             write_reference(&mut wtr, ref_ts, ref_seq, count);
             let _ = wtr.write(buf.as_slice());
             buf.clear();

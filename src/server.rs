@@ -359,14 +359,6 @@ pub fn run_server() {
 #[test]
 fn should_parse_string_not_okay() {
     let string = "1505177459.658, 139010,,, f, t, 0.0703629, 7.65064249;";
-    let target = dtf::Update {
-        ts: 1505177459658,
-        seq: 139010,
-        is_trade: false,
-        is_bid: true,
-        price: 0.0703629,
-        size: 7.65064249
-    };
     assert!(parse_line(&string).is_none());
 }
 

@@ -31,7 +31,7 @@ pub fn run(cnx_str : &String) -> Vec<OrderBookUpdate> {
     let conn = Connection::connect(cnx_str.to_string(), TlsMode::None).unwrap();
     let mut v : Vec<OrderBookUpdate> = Vec::new();
 
-    for row in &conn.query("select * FROM orderbook_btc_neo ORDER BY id DESC LIMIT 1000;", &[]).unwrap() {
+    for row in &conn.query("select * FROM orderbook_btc_eth ORDER BY id DESC LIMIT 500000;", &[]).unwrap() {
         let up = OrderBookUpdate {
             id: row.get(0),
             seq: row.get(1),
