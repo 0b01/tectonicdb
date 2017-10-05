@@ -1,17 +1,20 @@
 /// File format for Dense Tick Format (DTF)
+/// 
+/// 
 /// File Spec:
 /// Offset 00: ([u8; 5]) magic value 0x4454469001
 /// Offset 05: ([u8; 9]) Symbol
 /// Offset 14: (u64) number of records
 /// Offset 21: (u32) max ts
 /// Offset 80: -- records - see below --
+/// 
+/// 
 /// Record Spec:
 /// Offset 81: bool for is_snapshot
 /// 1. if is true
 ///        4 bytes (u32): reference ts
 ///        2 bytes (u32): reference seq
 ///        2 bytes (u16): how many records between this snapshot and the next snapshot
-///        
 /// 2. record
 ///        dts (u16): $ts - reference ts$, 2^16 = 65536 - ~65 seconds
 ///        dseq (u8) $seq - reference seq$ , 2^8 = 256

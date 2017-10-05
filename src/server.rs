@@ -237,8 +237,8 @@ fn handle_client(mut stream: TcpStream) {
         let resp = gen_response(&ping, &mut state);
         match resp {
             Some(str_resp) => {
-                stream.write(str_resp.as_bytes()).unwrap();
-                stream.write(b">>> ").unwrap()
+                stream.write(str_resp.as_bytes()).unwrap()
+                // stream.write(b">>> ").unwrap()
             }
             None => stream.write("ERR.".as_bytes()).unwrap()
         };
@@ -253,10 +253,10 @@ pub fn run_server() {
     for stream in listener.incoming() {
         let mut stream = stream.unwrap();
         thread::spawn(move || {
-            stream.write(b"
-Tectonic Shell v0.0.1
-Enter `HELP` for more options.
->>> ").unwrap();
+//             stream.write(b"
+// Tectonic Shell v0.0.1
+// Enter `HELP` for more options.
+// >>> ").unwrap();
             handle_client(stream);
         });
     }
