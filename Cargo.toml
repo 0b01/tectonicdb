@@ -8,14 +8,15 @@ name = "dtf"
 path = "src/lib/dtf.rs"
 
 [[bin]]
-name = "server"
+name = "tectonic-server"
 path = "src/bin/server/main.rs"
 
 [[bin]]
-name = "cli"
-path = "src/bin/client/main.rs"
+name = "tectonic-cli"
+path = "src/bin/cli/main.rs"
 
 [dependencies]
 byteorder = "1.1.0"
 postgres = "0.15"
 config = "0.6"
+clap = "~2.26"

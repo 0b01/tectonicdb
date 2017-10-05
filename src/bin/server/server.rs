@@ -9,7 +9,9 @@ BULKADD ...; DDAKLUB
 FLUSH, FLUSHALL, GETALL, GET [count], CLEAR
 ";
 
+use byteorder::{BigEndian, WriteBytesExt, /*ReadBytesExt*/};
 
+use std::error::Error;
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::net::TcpListener;
@@ -331,26 +333,33 @@ fn handle_client(mut stream: TcpStream) {
         let resp = gen_response(&req, &mut state);
         match resp {
             Some(str_resp) => {
+                stream.write_u64::<BigEndian>(str_resp.len() as u64).unwrap();
                 stream.write(str_resp.as_bytes()).unwrap()
-                // stream.write(b">>> ").unwrap()
             }
             None => stream.write("ERR.".as_bytes()).unwrap()
         };
     }
 }
 
-pub fn run_server() {
-    let addr = "127.0.0.1:9001";
-    let listener = TcpListener::bind(addr).unwrap();
-    println!("Listening on addr: {}", addr);
+pub fn run_server(host : &str, port : &str, verbosity : u64) {
+    let addr = format!("{}:{}", host, port);
+
+    if verbosity > 1 {
+        println!("Trying to bind to addr: {}", addr);
+    }
+
+    let listener = match TcpListener::bind(&addr) {
+        Ok(l) => l,
+        Err(e) => panic!(format!("{:?}", e.description()))
+    };
+
+    if verbosity > 0 {
+        println!("Listening on addr: {}", addr);
+    }
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         thread::spawn(move || {
-//             stream.write(b"
-// Tectonic Shell v0.0.1
-// Enter `HELP` for more options.
-// >>> ").unwrap();
             handle_client(stream);
         });
     }
