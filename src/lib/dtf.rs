@@ -24,6 +24,8 @@
 ///        size: (f32)
 
 
+extern crate byteorder;
+
 use std::str;
 use std::fs;
 use std::cmp::Ordering;
@@ -498,27 +500,27 @@ fn should_return_max_ts() {
     assert_eq!(max_ts, get_max_ts(&vs));
 }
 
-#[cfg(test)]
-fn init_real_data() -> Vec<Update> {
-    use conf;
-    use db;
-    let conf = conf::get_config();
-    let cxn_str : &String = conf.get("connection_string").unwrap();
-    let updates : Vec<db::OrderBookUpdate> = db::run(&cxn_str);
-    let mut mapped : Vec<Update> = updates.iter().map(|d| d.to_update()).collect();
-    mapped.sort();
-    mapped
-}
+// #[cfg(test)]
+// fn init_real_data() -> Vec<Update> {
+//     use conf;
+//     use db;
+//     let conf = conf::get_config();
+//     let cxn_str : &String = conf.get("connection_string").unwrap();
+//     let updates : Vec<db::OrderBookUpdate> = db::run(&cxn_str);
+//     let mut mapped : Vec<Update> = updates.iter().map(|d| d.to_update()).collect();
+//     mapped.sort();
+//     mapped
+// }
 
-#[test]
-fn should_work_with_real_data() {
-    let mut vs = init_real_data();
-    let fname = "real.dtf";
-    let symbol = "NEO_BTC";
-    encode(fname, symbol, &mut vs);
-    let decoded_updates = decode(fname);
-    assert_eq!(decoded_updates, vs);
-}
+// #[test]
+// fn should_work_with_real_data() {
+//     let mut vs = init_real_data();
+//     let fname = "real.dtf";
+//     let symbol = "NEO_BTC";
+//     encode(fname, symbol, &mut vs);
+//     let decoded_updates = decode(fname);
+//     assert_eq!(decoded_updates, vs);
+// }
 
 #[test]
 fn should_append_filtered_data() {

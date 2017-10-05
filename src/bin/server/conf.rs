@@ -1,5 +1,4 @@
 extern crate config;
-
 use std::collections::HashMap;
 
 pub fn get_config() -> HashMap<String, String> {

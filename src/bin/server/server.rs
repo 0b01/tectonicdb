@@ -9,7 +9,6 @@ BULKADD ...; DDAKLUB
 FLUSH, FLUSHALL, GETALL, GET [count], CLEAR
 ";
 
-use conf;
 
 use std::collections::HashMap;
 use std::io::{Read, Write};
@@ -21,26 +20,27 @@ use std::str;
 use std::fs;
 
 use dtf;
+use conf;
 
 /// name: *should* be the filename
 /// in_memory: are the updates read into memory?
 /// size: true number of items
 /// v: vector of updates
-/// 
-/// 
+///
+///
 /// When client connects, the following happens:
-/// 
+///
 /// 1. server creates a State
 /// 2. initialize 'default' data store
 /// 3. reads filenames under dtf_folder
 /// 4. loads metadata but not updates
 /// 5. client can retrieve server status using INFO command
-/// 
+///
 /// When client adds some updates using ADD or BULKADD,
 /// size increments and updates are added to memory
 /// finally, call FLUSH to commit to disk the current store or FLUSHALL to commit all available stores.
 /// the client can free the updates from memory using CLEAR or CLEARALL
-/// 
+///
 struct Store {
     name: String,
     folder: String,
@@ -57,7 +57,7 @@ impl Store {
     }
 
     /// Map vec of updates into JSON lists of objects
-    /// 
+    ///
     /// example:
     /// [{"ts":1505177459.658,"seq":139010,"is_trade":true,"is_bid":true,"price":0.0703629,"size":7.6506424}]
     fn to_string(&self, count:i32) -> String {
