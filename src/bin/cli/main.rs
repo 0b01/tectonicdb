@@ -1,7 +1,5 @@
 extern crate clap;
 extern crate byteorder;
-// mod db;
-mod conf;
 
 use clap::{Arg, App};
 use std::net::TcpStream;
