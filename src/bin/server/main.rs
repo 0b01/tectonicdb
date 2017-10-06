@@ -3,8 +3,6 @@ extern crate clap;
 extern crate byteorder;
 
 mod server;
-mod conf;
-
 use clap::{Arg, App};
 
 fn main() {
@@ -24,15 +22,31 @@ fn main() {
                             .value_name("PORT")
                             .help("Sets the port to connect to (default 9001)")
                             .takes_value(true))
+                        .arg(Arg::with_name("dtf_folder")
+                            .short("f")
+                            .long("dtf_folder")
+                            .value_name("FOLDER")
+                            .help("Sets the folder to serve dtf files")
+                            .takes_value(true))
                         .arg(Arg::with_name("v")
                             .short("v")
                             .multiple(true)
                             .help("Sets the level of verbosity"))
+                        .arg(Arg::with_name("autoflush")
+                            .short("a")
+                            .help("Sets autoflush"))
                         .get_matches();
 
     let host = matches.value_of("host").unwrap_or("0.0.0.0");
     let port = matches.value_of("port").unwrap_or("9001");
+    let dtf_folder = matches.value_of("dtf_folder").unwrap_or("db");
     let verbosity = matches.occurrences_of("v");
+    let autoflush = matches.is_present("autoflush");
 
-    server::run_server(&host, &port, verbosity);
+    let settings = server::Settings {
+        autoflush: autoflush,
+        dtf_folder: dtf_folder.to_owned()
+    };
+
+    server::run_server(&host, &port, verbosity, &settings);
 }

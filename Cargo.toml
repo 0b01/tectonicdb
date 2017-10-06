@@ -15,6 +15,10 @@ path = "src/bin/server/main.rs"
 name = "tectonic-cli"
 path = "src/bin/cli/main.rs"
 
+[[bin]]
+name = "gen_dtfs"
+path = "src/bin/gen_dtfs/main.rs"
+
 [dependencies]
 byteorder = "1.1.0"
 postgres = "0.15"

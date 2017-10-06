@@ -3,9 +3,9 @@
 /// 
 /// File Spec:
 /// Offset 00: ([u8; 5]) magic value 0x4454469001
-/// Offset 05: ([u8; 9]) Symbol
-/// Offset 14: (u64) number of records
-/// Offset 21: (u32) max ts
+/// Offset 05: ([u8; 20]) Symbol
+/// Offset 25: (u64) number of records
+/// Offset 33: (u32) max ts
 /// Offset 80: -- records - see below --
 /// 
 /// 
@@ -43,8 +43,8 @@ use std::io::{
 static MAGIC_VALUE : &[u8] = &[0x44, 0x54, 0x46, 0x90, 0x01]; // DTF9001
 const SYMBOL_LEN : usize = 9;
 static SYMBOL_OFFSET : u64 = 5;
-static LEN_OFFSET : u64 = 14;
-static MAX_TS_OFFSET : u64 = 22;
+static LEN_OFFSET : u64 = 25;
+static MAX_TS_OFFSET : u64 = 33;
 static MAIN_OFFSET : u64 = 80; // main section start at 80
 // static ITEM_OFFSET : u64 = 13; // each item has 13 bytes
 

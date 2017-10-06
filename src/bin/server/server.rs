@@ -22,7 +22,6 @@ use std::str;
 use std::fs;
 
 use dtf;
-use conf;
 
 /// name: *should* be the filename
 /// in_memory: are the updates read into memory?
@@ -48,7 +47,7 @@ struct Store {
     folder: String,
     in_memory: bool,
     size: u64,
-    v: Vec<dtf::Update>,
+    v: Vec<dtf::Update>
 }
 
 impl Store {
@@ -56,19 +55,6 @@ impl Store {
     fn add(&mut self, new_vec : dtf::Update) {
         self.v.push(new_vec);
         self.size += 1;
-    }
-
-    /// Map vec of updates into JSON lists of objects
-    ///
-    /// example:
-    /// [{"ts":1505177459.658,"seq":139010,"is_trade":true,"is_bid":true,"price":0.0703629,"size":7.6506424}]
-    fn to_string(&self, count:i32) -> String {
-        let objects : Vec<String> = match count {
-            -1 => self.v.clone().into_iter().map(|up| up.to_json()).collect(),
-            n => self.v.clone().into_iter().take(n as usize).map(|up| up.to_json()).collect()
-        };
-
-        format!("[{}]\n", objects.join(","))
     }
 
     /// write items stored in memory into file
@@ -81,8 +67,9 @@ impl Store {
         if Path::new(&fname).exists() {
             dtf::append(&fname, &self.v);
             return Some(true);
+        } else {
+            dtf::encode(&fname, &self.name /*XXX*/, &self.v);
         }
-        dtf::encode(&fname, &self.name /*XXX*/, &self.v);
         Some(true)
     }
 
@@ -116,7 +103,7 @@ struct State {
     is_adding: bool,
     store: HashMap<String, Store>,
     current_store_name: String,
-    dtf_folder: String
+    settings: Settings
 }
 
 /// Parses a line that looks like 
@@ -213,6 +200,9 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                     Some(up) => {
                         let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
                         current_store.add(up);
+                        if state.settings.autoflush && current_store.size % 100 == 0 { // TODO: change 100 to configurable.
+                            current_store.flush();
+                        }
                     }
                     None => return (None, None)
                 }
@@ -239,7 +229,7 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                     v: Vec::new(),
                     size: 0,
                     in_memory: false,
-                    folder: state.dtf_folder.clone()
+                    folder: state.settings.dtf_folder.clone()
                 });
                 (Some(format!("Created DB `{}`.\n", &dbname)), None)
             } else
@@ -273,14 +263,6 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
     }
 }
 
-/// Read config file and get folder name
-/// dtf_folder is a folder in which the dtf files live
-fn get_dtf_folder() -> String {
-    let configs = conf::get_config();
-    let dtf_folder = configs.get("dtf_folder").unwrap();
-    dtf_folder.to_owned()
-}
-
 fn create_dir_if_not_exist(dtf_folder : &str) {
     if !Path::new(dtf_folder).exists() {
         fs::create_dir(dtf_folder).unwrap();
@@ -308,23 +290,22 @@ fn init_dbs(dtf_folder : &str, state: &mut State) {
     }
 }
 
-fn handle_client(mut stream: TcpStream) {
-    let dtf_folder = get_dtf_folder();
+fn handle_client(mut stream: TcpStream, settings : &Settings) {
+    let dtf_folder = &settings.dtf_folder;
     create_dir_if_not_exist(&dtf_folder);
-
 
     let mut state = State {
         current_store_name: "default".to_owned(),
         is_adding: false,
         store: HashMap::new(),
-        dtf_folder: dtf_folder.to_owned()
+        settings: settings.clone()
     };
     state.store.insert("default".to_owned(), Store {
         name: "default".to_owned(),
         v: Vec::new(),
         size: 0,
         in_memory: false,
-        folder: dtf_folder.to_owned()
+        folder: dtf_folder.to_owned(),
     });
 
     init_dbs(&dtf_folder, &mut state);
@@ -350,7 +331,13 @@ fn handle_client(mut stream: TcpStream) {
     }
 }
 
-pub fn run_server(host : &str, port : &str, verbosity : u64) {
+#[derive(Clone)]
+pub struct Settings {
+    pub autoflush: bool,
+    pub dtf_folder: String
+}
+
+pub fn run_server(host : &str, port : &str, verbosity : u64, settings: &Settings) {
     let addr = format!("{}:{}", host, port);
 
     if verbosity > 1 {
@@ -368,8 +355,9 @@ pub fn run_server(host : &str, port : &str, verbosity : u64) {
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
+        let settings_copy = settings.clone();
         thread::spawn(move || {
-            handle_client(stream);
+            handle_client(stream, &settings_copy);
         });
     }
 }

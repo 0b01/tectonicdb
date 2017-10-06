@@ -5,7 +5,7 @@ extern crate dtf;
 use clap::{Arg, App};
 use std::net::TcpStream;
 use std::str;
-use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
+use byteorder::{BigEndian, /*WriteBytesExt, */ ReadBytesExt};
 use std::io::{self, Read, Write};
 
 struct Cxn {
@@ -18,8 +18,7 @@ impl Cxn {
         let _ = self.stream.write(command.as_bytes());
         if command.starts_with("GET") {
             let vecs = dtf::read_one_batch(&mut self.stream);
-            let objects : Vec<String> = vecs.clone().into_iter().map(|up| up.to_json()).collect();
-            format!("[{}]\n", objects.join(","))
+            format!("[{}]\n", update_vec_to_json(&vecs))
         } else {
             let size = self.stream.read_u64::<BigEndian>().unwrap();
             let mut buf = vec![0; size as usize];
@@ -27,6 +26,11 @@ impl Cxn {
             str::from_utf8(&buf).unwrap().to_owned()
         }
     }
+}
+
+fn update_vec_to_json(vecs: &Vec<dtf::Update>) -> String {
+    let objects : Vec<String> = vecs.clone().into_iter().map(|up| up.to_json()).collect();
+    objects.join(", ")
 }
 
 fn main() {
@@ -53,7 +57,6 @@ fn main() {
                           .get_matches();
     let host = matches.value_of("host").unwrap_or("0.0.0.0");
     let port = matches.value_of("port").unwrap_or("9001");
-
     let verbosity = matches.occurrences_of("v");
 
     let mut cxn = connect(host, port, verbosity);
@@ -69,14 +72,15 @@ fn main() {
 
 fn connect(host : &str, port : &str, verbosity : u64) -> Cxn {
     let addr = format!("{}:{}", host, port);
+
     if verbosity > 0 {
         println!("Connecting to {}", addr);
     }
 
-    let db = Cxn{
+    let cxn = Cxn{
         stream : TcpStream::connect(&addr).unwrap(),
         addr
     };
 
-    db
+    cxn
 }
