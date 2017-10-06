@@ -1,5 +1,6 @@
 extern crate clap;
 extern crate byteorder;
+extern crate dtf;
 
 use clap::{Arg, App};
 use std::net::TcpStream;
@@ -15,10 +16,16 @@ struct Cxn {
 impl Cxn {
     fn cmd(&mut self, command : &str) -> String {
         let _ = self.stream.write(command.as_bytes());
-        let size = self.stream.read_u64::<BigEndian>().unwrap();
-        let mut buf = vec![0; size as usize];
-        let _ = self.stream.read_exact(&mut buf);
-        str::from_utf8(&buf).unwrap().to_owned()
+        if command.starts_with("GET") {
+            let vecs = dtf::read_one_batch(&mut self.stream);
+            let objects : Vec<String> = vecs.clone().into_iter().map(|up| up.to_json()).collect();
+            format!("[{}]\n", objects.join(","))
+        } else {
+            let size = self.stream.read_u64::<BigEndian>().unwrap();
+            let mut buf = vec![0; size as usize];
+            let _ = self.stream.read_exact(&mut buf);
+            str::from_utf8(&buf).unwrap().to_owned()
+        }
     }
 }
 
@@ -66,7 +73,7 @@ fn connect(host : &str, port : &str, verbosity : u64) -> Cxn {
         println!("Connecting to {}", addr);
     }
 
-    let mut db = Cxn{
+    let db = Cxn{
         stream : TcpStream::connect(&addr).unwrap(),
         addr
     };

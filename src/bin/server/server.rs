@@ -157,50 +157,53 @@ fn parse_line(string : &str) -> Option<dtf::Update> {
     Some(u)
 }
 
-fn gen_response(string : &str, state: &mut State) -> Option<String> {
+fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec<u8>>) {
     match string {
-        "" => Some("".to_owned()),
-        "PING" => Some("PONG.\n".to_owned()),
-        "HELP" => Some(HELP_STR.to_owned()),
+        "" => (Some("".to_owned()), None),
+        "PING" => (Some("PONG.\n".to_owned()), None),
+        "HELP" => (Some(HELP_STR.to_owned()), None),
         "INFO" => {
             let info_vec : Vec<String> = state.store.values().map(|store| {
                 format!(r#"{{"name": "{}", "in_memory": {}, "count": {}}}"#, store.name, store.in_memory, store.size)
             }).collect();
 
-            Some(format!("[{}]\n", info_vec.join(", ")))
+            (Some(format!("[{}]\n", info_vec.join(", "))), None)
         },
         "BULKADD" => {
             state.is_adding = true;
-            Some("".to_owned())
+            (Some("".to_owned()), None)
         },
         "DDAKLUB" => {
             state.is_adding = false;
-            Some("1\n".to_owned())
+            (Some("1\n".to_owned()), None)
         },
         "GETALL" => {
-            Some(state.store.get_mut(&state.current_store_name).unwrap().to_string(-1))
+            let current_store = state.store.get_mut(&state.current_store_name).unwrap();
+            let mut bytes : Vec<u8> = Vec::new();
+            dtf::write_batches(&mut bytes, &current_store.v);
+            (None, Some(bytes))
         },
         "CLEAR" => {
             let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
             current_store.clear();
-            Some("1\n".to_owned())
+            (Some("1\n".to_owned()), None)
         },
         "CLEARALL" => {
             for store in state.store.values_mut() {
                 store.clear();
             }
-            Some("1\n".to_owned())
+            (Some("1\n".to_owned()), None)
         },
         "FLUSH" => {
             let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
             current_store.flush();
-            Some("1\n".to_owned())
+            (Some("1\n".to_owned()), None)
         },
         "FLUSHALL" => {
             for store in state.store.values() {
                 store.flush();
             }
-            Some("1\n".to_owned())
+            (Some("1\n".to_owned()), None)
         },
         _ => {
             // bulkadd and add
@@ -211,9 +214,9 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
                         let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
                         current_store.add(up);
                     }
-                    None => return None
+                    None => return (None, None)
                 }
-                Some("".to_owned())
+                (Some("".to_owned()), None)
             } else
 
             if string.starts_with("ADD ") {
@@ -223,9 +226,9 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
                         let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
                         current_store.v.push(up);
                     }
-                    None => return None
+                    None => return (None, None)
                 }
-                Some("1\n".to_owned())
+                (Some("1\n".to_owned()), None)
             } else 
 
             // db commands
@@ -238,7 +241,7 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
                     in_memory: false,
                     folder: state.dtf_folder.clone()
                 });
-                Some(format!("Created DB `{}`.\n", &dbname))
+                (Some(format!("Created DB `{}`.\n", &dbname)), None)
             } else
 
             if string.starts_with("USE ") {
@@ -247,9 +250,9 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
                     state.current_store_name = dbname.to_owned();
                     let current_store = state.store.get_mut(&state.current_store_name).unwrap();
                     current_store.load();
-                    Some(format!("SWITCHED TO DB `{}`.\n", &dbname))
+                    (Some(format!("SWITCHED TO DB `{}`.\n", &dbname)), None)
                 } else {
-                    Some(format!("ERR unknown DB `{}`.\n", &dbname))
+                    (Some(format!("ERR unknown DB `{}`.\n", &dbname)), None)
                 }
             } else
 
@@ -258,11 +261,13 @@ fn gen_response(string : &str, state: &mut State) -> Option<String> {
                 let num : &str = &string[4..];
                 let count = num.parse::<i32>().unwrap();
                 let current_store = state.store.get_mut(&state.current_store_name).unwrap();
-                Some(current_store.to_string(count))
+                let mut bytes : Vec<u8> = Vec::new();
+                dtf::write_batches(&mut bytes, &current_store.v[..count as usize]);
+                (None, Some(bytes))
             }
 
             else {
-                Some(format!("ERR unknown command '{}'.\n", &string))
+                (Some(format!("ERR unknown command '{}'.\n", &string)), None)
             }
         }
     }
@@ -332,11 +337,15 @@ fn handle_client(mut stream: TcpStream) {
 
         let resp = gen_response(&req, &mut state);
         match resp {
-            Some(str_resp) => {
+            (Some(str_resp), None) => {
                 stream.write_u64::<BigEndian>(str_resp.len() as u64).unwrap();
                 stream.write(str_resp.as_bytes()).unwrap()
             }
-            None => stream.write("ERR.".as_bytes()).unwrap()
+            (None, None) => stream.write("ERR.".as_bytes()).unwrap(),
+            (None, Some(bytes)) => {
+                stream.write(&bytes).unwrap()
+            }
+            _ => panic!("IMPOSSIBLE")
         };
     }
 }

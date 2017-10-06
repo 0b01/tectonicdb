@@ -124,11 +124,11 @@ fn file_writer(fname : &str, create : bool) -> BufWriter<File> {
     wtr
 }
 
-fn write_magic_value(wtr: &mut BufWriter<File>) {
+fn write_magic_value(wtr: &mut Write) {
     let _ = wtr.write(MAGIC_VALUE);
 }
 
-fn write_symbol(wtr: &mut BufWriter<File>, symbol : &str) {
+fn write_symbol(wtr: &mut Write, symbol : &str) {
     assert!(symbol.len() <= SYMBOL_LEN);
     let padded_symbol = format!("{:width$}", symbol, width = SYMBOL_LEN); // right pad w/ space
     assert_eq!(padded_symbol.len(), SYMBOL_LEN);
@@ -157,7 +157,7 @@ fn write_reference(wtr: &mut Write, ref_ts: u64, ref_seq: u32, len: u16) {
     let _ = wtr.write_u16::<BigEndian>(len);
 }
 
-fn write_batches(mut wtr: &mut BufWriter<File>, ups : &[Update]) {
+pub fn write_batches(mut wtr: &mut Write, ups : &[Update]) {
     let mut buf : Vec<u8> = Vec::new();
     let mut ref_ts = ups[0].ts;
     let mut ref_seq = ups[0].seq;
@@ -243,7 +243,7 @@ fn read_max_ts(rdr : &mut BufReader<File>) -> u64 {
     rdr.read_u64::<BigEndian>().expect("maximum timestamp")
 }
 
-fn read_one_batch(rdr: &mut BufReader<File>) -> Vec<Update> {
+pub fn read_one_batch(rdr: &mut Read) -> Vec<Update> {
     let is_ref = rdr.read_u8().expect("is_ref") == 0x00000001;
     let mut ref_ts = 0;
     let mut ref_seq = 0;
