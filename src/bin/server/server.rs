@@ -42,6 +42,8 @@ use dtf;
 /// finally, call FLUSH to commit to disk the current store or FLUSHALL to commit all available stores.
 /// the client can free the updates from memory using CLEAR or CLEARALL
 ///
+
+#[derive(Debug)]
 struct Store {
     name: String,
     folder: String,
@@ -53,8 +55,8 @@ struct Store {
 impl Store {
     /// Push a new `Update` into the vec
     fn add(&mut self, new_vec : dtf::Update) {
+        self.size = self.size + 1;
         self.v.push(new_vec);
-        self.size += 1;
     }
 
     /// write items stored in memory into file
@@ -141,8 +143,9 @@ fn parse_line(string : &str) -> Option<dtf::Update> {
             buf.clear();
         }
     }
+
     if u.price < 0. || u.size < 0. {
-        None //BUG!!!!!
+        None
     } else {
         Some(u)
     }
@@ -154,6 +157,7 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
         "PING" => (Some("PONG.\n".to_owned()), None),
         "HELP" => (Some(HELP_STR.to_owned()), None),
         "INFO" => {
+            println!("{:?}", state.store.values());
             let info_vec : Vec<String> = state.store.values().map(|store| {
                 format!(r#"{{"name": "{}", "in_memory": {}, "count": {}}}"#, store.name, store.in_memory, store.size)
             }).collect();
@@ -218,9 +222,8 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                 let data_string : &str = &string[3..];
                 match parse_line(&data_string) {
                     Some(up) => {
-                        println!("OK");
                         let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
-                        current_store.v.push(up);
+                        current_store.add(up);
                         (Some("1\n".to_owned()), None)
                     }
                     None => return (None, None)
@@ -306,11 +309,13 @@ fn handle_client(mut stream: TcpStream, settings : &Settings) {
         store: HashMap::new(),
         settings: settings.clone()
     };
+    let default_file = format!("{}/default.dtf", settings.dtf_folder);
+    let default_in_memory = !Path::new(&default_file).exists();
     state.store.insert("default".to_owned(), Store {
         name: "default".to_owned(),
         v: Vec::new(),
         size: 0,
-        in_memory: false,
+        in_memory: default_in_memory,
         folder: dtf_folder.to_owned(),
     });
 
@@ -328,7 +333,11 @@ fn handle_client(mut stream: TcpStream, settings : &Settings) {
                 stream.write_u64::<BigEndian>(str_resp.len() as u64).unwrap();
                 stream.write(str_resp.as_bytes()).unwrap()
             }
-            (None, None) => stream.write("ERR.".as_bytes()).unwrap(),
+            (None, None) => {
+                let ret = "ERR.\n";
+                stream.write_u64::<BigEndian>(ret.len() as u64).unwrap();
+                stream.write(ret.as_bytes()).unwrap()
+            },
             (None, Some(bytes)) => {
                 stream.write(&bytes).unwrap()
             }
@@ -376,6 +385,10 @@ pub fn run_server(host : &str, port : &str, verbosity : u64, settings: &Settings
 fn should_parse_string_not_okay() {
     let string = "1505177459.658, 139010,,, f, t, 0.0703629, 7.65064249;";
     assert!(parse_line(&string).is_none());
+    let string = "150517;";
+    assert!(parse_line(&string).is_none());
+    let string = "something;";
+    assert!(parse_line(&string).is_none());
 }
 
 #[test]
@@ -390,6 +403,7 @@ fn should_parse_string_okay() {
         size: 7.65064249
     };
     assert_eq!(target, parse_line(&string).unwrap());
+
 
     let string1 = "1505177459.650, 139010, t, f, 0.0703620, 7.65064240;";
     let target1 = dtf::Update {
