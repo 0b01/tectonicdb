@@ -2,6 +2,15 @@
 name = "tectonic"
 version = "0.1.0"
 authors = ["Ricky Han <rickylqhan@gmail.com>"]
+description = "fast datastore server for contiguous order book ticks"
+repository = "https://github.com/rickyhan/tectonic"
+keywords = ["finance", "datastore", "database", "financial"]
+license = "MIT"
+readme = "README.md"
+exclude = [
+    "db/*",
+]
+
 
 [lib]
 name = "dtf"
