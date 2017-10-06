@@ -66,6 +66,7 @@ impl Store {
     /// TODO: Need to figure out how to specify symbol (and exchange name).
     fn flush(&self) -> Option<bool> {
         let fname = format!("{}/{}.dtf", self.folder, self.name);
+        create_dir_if_not_exist(&self.folder);
         if Path::new(&fname).exists() {
             dtf::append(&fname, &self.v);
             return Some(true);
@@ -87,7 +88,7 @@ impl Store {
 
     /// load size from file
     fn load_size_from_file(&mut self) {
-        let header_size = dtf::get_size(&format!("{}/{}", self.folder, self.name));
+        let header_size = dtf::get_size(&format!("{}/{}.dtf", self.folder, self.name));
         self.size = header_size;
     }
 
@@ -106,6 +107,23 @@ struct State {
     store: HashMap<String, Store>,
     current_store_name: String,
     settings: Settings
+}
+impl State {
+
+    fn add (&mut self, up: dtf::Update) {
+        let current_store = self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
+        current_store.add(up);
+    }
+
+    fn autoflush(&mut self) {
+        let current_store = self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
+        if self.settings.autoflush && current_store.size % self.settings.flush_interval as u64 == 0 {
+            println!("(AUTO) FLUSHING!");
+            current_store.flush();
+            current_store.load_size_from_file();
+        }
+    }
+
 }
 
 /// Parses a line that looks like 
@@ -157,7 +175,6 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
         "PING" => (Some("PONG.\n".to_owned()), None),
         "HELP" => (Some(HELP_STR.to_owned()), None),
         "INFO" => {
-            println!("{:?}", state.store.values());
             let info_vec : Vec<String> = state.store.values().map(|store| {
                 format!(r#"{{"name": "{}", "in_memory": {}, "count": {}}}"#, store.name, store.in_memory, store.size)
             }).collect();
@@ -206,12 +223,8 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                 let parsed = parse_line(string);
                 match parsed {
                     Some(up) => {
-                        let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
-                        current_store.add(up);
-                        if state.settings.autoflush && current_store.size % state.settings.flush_interval as u64 == 0 {
-                            println!("(AUTO) FLUSHING!");
-                            current_store.flush();
-                        }
+                        state.add(up);
+                        state.autoflush();
                     }
                     None => return (None, None)
                 }
@@ -222,8 +235,8 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                 let data_string : &str = &string[3..];
                 match parse_line(&data_string) {
                     Some(up) => {
-                        let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
-                        current_store.add(up);
+                        state.add(up);
+                        state.autoflush();
                         (Some("1\n".to_owned()), None)
                     }
                     None => return (None, None)
