@@ -141,7 +141,11 @@ fn parse_line(string : &str) -> Option<dtf::Update> {
             buf.clear();
         }
     }
-    Some(u)
+    if u.price < 0. || u.size < 0. {
+        None //BUG!!!!!
+    } else {
+        Some(u)
+    }
 }
 
 fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec<u8>>) {
@@ -200,7 +204,8 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                     Some(up) => {
                         let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
                         current_store.add(up);
-                        if state.settings.autoflush && current_store.size % 100 == 0 { // TODO: change 100 to configurable.
+                        if state.settings.autoflush && current_store.size % state.settings.flush_interval as u64 == 0 {
+                            println!("(AUTO) FLUSHING!");
                             current_store.flush();
                         }
                     }
@@ -213,12 +218,13 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                 let data_string : &str = &string[3..];
                 match parse_line(&data_string) {
                     Some(up) => {
+                        println!("OK");
                         let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
                         current_store.v.push(up);
+                        (Some("1\n".to_owned()), None)
                     }
                     None => return (None, None)
                 }
-                (Some("1\n".to_owned()), None)
             } else 
 
             // db commands
@@ -334,14 +340,18 @@ fn handle_client(mut stream: TcpStream, settings : &Settings) {
 #[derive(Clone)]
 pub struct Settings {
     pub autoflush: bool,
-    pub dtf_folder: String
+    pub dtf_folder: String,
+    pub flush_interval: u32,
 }
 
 pub fn run_server(host : &str, port : &str, verbosity : u64, settings: &Settings) {
     let addr = format!("{}:{}", host, port);
 
     if verbosity > 1 {
-        println!("Trying to bind to addr: {}", addr);
+        println!("[DEBUG] Trying to bind to addr: {}", addr);
+        if settings.autoflush {
+            println!("[DEBUG] Autoflush is true: every {} inserts.", settings.flush_interval);
+        }
     }
 
     let listener = match TcpListener::bind(&addr) {
