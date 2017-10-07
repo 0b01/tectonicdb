@@ -66,11 +66,14 @@ Operating system:
 Language bindings:
 
 [*] Rust
+
 [ ] Python
+
 [ ] JavaScript
 
 
 ## Additional Features
 
 [ ] Usage statistics like Cloud SQL
+
 [ ] Query by timestamp
