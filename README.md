@@ -5,19 +5,19 @@
 
 tectonicdb is a very fast, highly compressed standalone datastore and streaming protocol for order book ticks. Achieves ~50x compression on disk usage, ~100x compression on bandwidth usage compared to PostgreSQL. Easily scale to billions of records since file read is cheap and fast.
 
-## Raison d'etre
+## Reason 
 
 This software is motivated by reducing expenditure. 1TB stored on Google Cloud PostgreSQL was too expensive and too slow. Since financial data is usually read and stored in bulk, it is possible to convert into a more efficient format.
 
 * Uses a simple binary file format: Dense Tick Format(DTF) ...
 
-* ... to store order book tick data tuple of shape: `(timestamp, seq, is\_trade, is\_bid, price, size)`.
+* Stores order book tick data tuple of shape: `(timestamp, seq, is\_trade, is\_bid, price, size)`.
 
-* Automatically sorted by seq/timestamp
+* Sorted by seq/timestamp
 
-* 13 bytes per row or ...
+* 12 bytes per row
 
-* 12.5MB per 1 million row
+* 11.5MB per 1 million row
 
 ## Installation
 
@@ -35,7 +35,7 @@ Requires Rust. Once you have Rust installed, simply run:
 
 This will download and compile `tectonic-server` and `tectonic-cli`.
 
-3. **From GitHub**
+3. **GitHub**
 
 To contribute you will need the copy of the source code on your local machine.
 
