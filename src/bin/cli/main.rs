@@ -16,7 +16,8 @@ struct Cxn {
 impl Cxn {
     fn cmd(&mut self, command : &str) -> String {
         let _ = self.stream.write(command.as_bytes());
-        if command.starts_with("GET") {
+        let success = self.stream.read_u8().unwrap() == 0x00000001;
+        if command.starts_with("GET") && success {
             let vecs = dtf::read_one_batch(&mut self.stream);
             format!("[{}]\n", update_vec_to_json(&vecs))
         } else {
@@ -62,6 +63,9 @@ fn main() {
     let mut cxn = connect(host, port, verbosity);
 
     loop {
+        print!("--> ");
+        io::stdout().flush().ok().expect("Could not flush stdout"); // manually flush stdout
+
         let mut cmd = String::new();
         io::stdin().read_line(&mut cmd).unwrap();
         let res = cxn.cmd(&cmd);

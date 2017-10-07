@@ -124,6 +124,24 @@ impl State {
         }
     }
 
+    fn get(&self, count : i32) -> Option<Vec<u8>> {
+        let mut bytes : Vec<u8> = Vec::new();
+        let current_store = self.store.get(&self.current_store_name).unwrap();
+        if (current_store.size as i32) < count || current_store.size == 0 {
+            None
+        } else {
+            match count {
+                -1 => {
+                    dtf::write_batches(&mut bytes, &current_store.v);
+                },
+                _ => {
+                    dtf::write_batches(&mut bytes, &current_store.v[..count as usize]);
+                }
+            }
+            Some(bytes)
+        }
+    }
+
 }
 
 /// Parses a line that looks like 
@@ -189,11 +207,17 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
             state.is_adding = false;
             (Some("1\n".to_owned()), None)
         },
+        "GET ALL" => {
+            match state.get(-1) {
+                Some(bytes) => (None, Some(bytes)),
+                None => (None, None) 
+            }
+        },
         "GETALL" => {
-            let current_store = state.store.get_mut(&state.current_store_name).unwrap();
-            let mut bytes : Vec<u8> = Vec::new();
-            dtf::write_batches(&mut bytes, &current_store.v);
-            (None, Some(bytes))
+            match state.get(-1) {
+                Some(bytes) => (None, Some(bytes)),
+                None => (None, None) 
+            }
         },
         "CLEAR" => {
             let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
@@ -272,10 +296,11 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
             if string.starts_with("GET ") {
                 let num : &str = &string[4..];
                 let count = num.parse::<i32>().unwrap();
-                let current_store = state.store.get_mut(&state.current_store_name).unwrap();
-                let mut bytes : Vec<u8> = Vec::new();
-                dtf::write_batches(&mut bytes, &current_store.v[..count as usize]);
-                (None, Some(bytes))
+
+                match state.get(count) {
+                    Some(bytes) => (None, Some(bytes)),
+                    None => (None, None)
+                }
             }
 
             else {
@@ -343,17 +368,20 @@ fn handle_client(mut stream: TcpStream, settings : &Settings) {
         let resp = gen_response(&req, &mut state);
         match resp {
             (Some(str_resp), None) => {
+                stream.write_u8(0x00000001).unwrap();
                 stream.write_u64::<BigEndian>(str_resp.len() as u64).unwrap();
                 stream.write(str_resp.as_bytes()).unwrap()
-            }
+            },
+            (None, Some(bytes)) => {
+                stream.write_u8(0x00000001).unwrap();
+                stream.write(&bytes).unwrap()
+            },
             (None, None) => {
+                stream.write_u8(0x00000000).unwrap();
                 let ret = "ERR.\n";
                 stream.write_u64::<BigEndian>(ret.len() as u64).unwrap();
                 stream.write(ret.as_bytes()).unwrap()
             },
-            (None, Some(bytes)) => {
-                stream.write(&bytes).unwrap()
-            }
             _ => panic!("IMPOSSIBLE")
         };
     }
