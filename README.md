@@ -65,15 +65,15 @@ Operating system:
 
 Language bindings:
 
-[*] Rust
+- [*] Rust
 
-[ ] Python
+- [ ] Python
 
-[ ] JavaScript
+- [ ] JavaScript
 
 
 ## Additional Features
 
-[ ] Usage statistics like Cloud SQL
+- [ ] Usage statistics like Cloud SQL
 
 [ ] Query by timestamp
