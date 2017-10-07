@@ -14,8 +14,9 @@ fn main() {
     for i in 0..ndays {
         let begin_epoch = start_time + 3600 * 24 * i;
         let end_epoch = start_time + 3600 * 24 * (i+1);
-        let updates = get_updates(begin_epoch, end_epoch, "btc_neo");
-        println!("{:?}", updates);
+        // let updates = get_updates(begin_epoch, end_epoch, "btc_neo");
+        // println!("{:?}", updates);
+        println!("Start: {}, End: {}", begin_epoch, end_epoch); 
     }
 }
 

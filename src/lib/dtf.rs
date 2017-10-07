@@ -18,13 +18,15 @@
 /// 2. record
 ///        dts (u16): $ts - reference ts$, 2^16 = 65536 - ~65 seconds
 ///        dseq (u8) $seq - reference seq$ , 2^8 = 256
-///        is_trade: (u8):
-///        is_bid: (u8)
+///        is_trade & is_bid: (u8): bitwise and to store two bools in one byte
 ///        price: (f32)
 ///        size: (f32)
 
 
 extern crate byteorder;
+
+#[macro_use]
+extern crate bitflags;
 
 use std::str;
 use std::fs;
@@ -58,6 +60,21 @@ pub struct Update {
     pub size: f32,
 }
 
+bitflags! {
+    struct Flags: u8 {
+        const FLAG_EMPTY   = 0b00000000;
+        const FLAG_is_bid   = 0b00000001;
+        const FLAG_is_trade = 0b00000010;
+    }
+}
+
+impl Flags {
+    fn to_bool(&self) -> bool {
+        (self.bits == 0b00000001) || (self.bits == 0b00000010)
+    }
+}
+
+
 impl Update {
 
     fn serialize(&self, ref_ts : u64, ref_seq : u32) -> Vec<u8> {
@@ -69,8 +86,12 @@ impl Update {
         let mut buf : Vec<u8> = Vec::new();
         let _ = buf.write_u16::<BigEndian>((self.ts- ref_ts) as u16);
         let _ = buf.write_u8((self.seq - ref_seq) as u8);
-        let _ = buf.write_u8(self.is_trade as u8);
-        let _ = buf.write_u8(self.is_bid as u8);
+
+        let mut flags = Flags::FLAG_EMPTY;
+        if self.is_bid { flags = flags | Flags::FLAG_is_bid; }
+        if self.is_trade { flags = flags | Flags::FLAG_is_trade; }
+        let _ = buf.write_u8(flags.bits());
+
         let _ = buf.write_f32::<BigEndian>(self.price);
         let _ = buf.write_f32::<BigEndian>(self.size);
         buf
@@ -257,13 +278,15 @@ pub fn read_one_batch(rdr: &mut Read) -> Vec<Update> {
     }
 
     for _i in 0..how_many {
+        let ts = rdr.read_u16::<BigEndian>().expect("ts") as u64 + ref_ts;
+        let seq = rdr.read_u8().expect("seq") as u32 + ref_seq;
+        let flags = rdr.read_u8().expect("is_trade and is_bid");
+        let is_trade = (Flags::from_bits(flags).unwrap() & Flags::FLAG_is_trade).to_bool();
+        let is_bid = (Flags::from_bits(flags).unwrap() & Flags::FLAG_is_bid).to_bool();
+        let price = rdr.read_f32::<BigEndian>().expect("price");
+        let size = rdr.read_f32::<BigEndian>().expect("size");
         let current_update = Update {
-            ts: rdr.read_u16::<BigEndian>().expect("ts") as u64 + ref_ts,
-            seq: rdr.read_u8().expect("seq") as u32 + ref_seq,
-            is_trade: rdr.read_u8().expect("is_trade") == 0x00000001,
-            is_bid: rdr.read_u8().expect("is_bid") == 0x00000001,
-            price: rdr.read_f32::<BigEndian>().expect("price"),
-            size: rdr.read_f32::<BigEndian>().expect("size")
+            ts, seq, is_trade, is_bid, price, size
         };
         v.push(current_update);
     }
