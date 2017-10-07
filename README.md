@@ -65,7 +65,7 @@ Operating system:
 
 Language bindings:
 
-- [*] Rust
+- [x] Rust
 
 - [ ] Python
 
