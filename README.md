@@ -1,6 +1,6 @@
 # tectonicdb
 
-![](https://img.shields.io/crates/v/tectonicdb.svg)
+[![](https://img.shields.io/crates/v/tectonicdb.svg)](https://crates.io/crates/tectonicdb)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/rickyhan/tectonic/blob/master/LICENSE)
 
 tectonicdb is a very fast, highly compressed standalone datastore and streaming protocol for order book ticks. Achieves ~50x compression on disk usage, ~100x compression on bandwidth usage compared to PostgreSQL. Easily scale to billions of records since file read is cheap and fast.
