@@ -1,6 +1,6 @@
 [root]
 name = "tectonicdb"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitflags 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
