@@ -63,8 +63,8 @@ pub struct Update {
 bitflags! {
     struct Flags: u8 {
         const FLAG_EMPTY   = 0b00000000;
-        const FLAG_is_bid   = 0b00000001;
-        const FLAG_is_trade = 0b00000010;
+        const FLAG_IS_BID   = 0b00000001;
+        const FLAG_IS_TRADE = 0b00000010;
     }
 }
 
@@ -88,8 +88,8 @@ impl Update {
         let _ = buf.write_u8((self.seq - ref_seq) as u8);
 
         let mut flags = Flags::FLAG_EMPTY;
-        if self.is_bid { flags = flags | Flags::FLAG_is_bid; }
-        if self.is_trade { flags = flags | Flags::FLAG_is_trade; }
+        if self.is_bid { flags = flags | Flags::FLAG_IS_BID; }
+        if self.is_trade { flags = flags | Flags::FLAG_IS_TRADE; }
         let _ = buf.write_u8(flags.bits());
 
         let _ = buf.write_f32::<BigEndian>(self.price);
@@ -281,8 +281,8 @@ pub fn read_one_batch(rdr: &mut Read) -> Vec<Update> {
         let ts = rdr.read_u16::<BigEndian>().expect("ts") as u64 + ref_ts;
         let seq = rdr.read_u8().expect("seq") as u32 + ref_seq;
         let flags = rdr.read_u8().expect("is_trade and is_bid");
-        let is_trade = (Flags::from_bits(flags).unwrap() & Flags::FLAG_is_trade).to_bool();
-        let is_bid = (Flags::from_bits(flags).unwrap() & Flags::FLAG_is_bid).to_bool();
+        let is_trade = (Flags::from_bits(flags).unwrap() & Flags::FLAG_IS_TRADE).to_bool();
+        let is_bid = (Flags::from_bits(flags).unwrap() & Flags::FLAG_IS_BID).to_bool();
         let price = rdr.read_f32::<BigEndian>().expect("price");
         let size = rdr.read_f32::<BigEndian>().expect("size");
         let current_update = Update {
