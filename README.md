@@ -67,7 +67,7 @@ Language bindings:
 
 - [x] Rust
 
-- [ ] Python
+- [x] Python
 
 - [ ] JavaScript
 

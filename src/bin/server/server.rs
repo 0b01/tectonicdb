@@ -207,13 +207,13 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
             state.is_adding = false;
             (Some("1\n".to_owned()), None)
         },
-        "GET ALL" => {
-            match state.get(-1) {
-                Some(bytes) => (None, Some(bytes)),
-                None => (None, None) 
-            }
+        "GET ALL AS JSON" => {
+            let current_store = state.store.get(&state.current_store_name).unwrap();
+            let json = dtf::update_vec_to_json(&current_store.v);
+            let json = format!("[{}]\n", json);
+            (Some(json), None)
         },
-        "GETALL" => {
+        "GET ALL" => {
             match state.get(-1) {
                 Some(bytes) => (None, Some(bytes)),
                 None => (None, None) 
@@ -224,7 +224,7 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
             current_store.clear();
             (Some("1\n".to_owned()), None)
         },
-        "CLEARALL" => {
+        "CLEAR ALL" => {
             for store in state.store.values_mut() {
                 store.clear();
             }
@@ -235,7 +235,7 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
             current_store.flush();
             (Some("1\n".to_owned()), None)
         },
-        "FLUSHALL" => {
+        "FLUSH ALL" => {
             for store in state.store.values() {
                 store.flush();
             }
@@ -295,11 +295,24 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
             // get
             if string.starts_with("GET ") {
                 let num : &str = &string[4..];
-                let count = num.parse::<i32>().unwrap();
+                let count : Vec<&str> = num.split(" ").collect();
+                let count = count[0].parse::<i32>().unwrap();
 
-                match state.get(count) {
-                    Some(bytes) => (None, Some(bytes)),
-                    None => (None, None)
+                if string.contains("AS JSON") {
+                    let current_store = state.store.get(&state.current_store_name).unwrap();
+
+                    if (current_store.size as i32) <= count || current_store.size == 0 {
+                        (None, None)
+                    } else {
+                        let json = dtf::update_vec_to_json(&current_store.v[..count as usize]);
+                        let json = format!("[{}]\n", json);
+                        (Some(json), None)
+                    }
+                } else {
+                    match state.get(count) {
+                        Some(bytes) => (None, Some(bytes)),
+                        None => (None, None)
+                    }
                 }
             }
 
@@ -337,10 +350,7 @@ fn init_dbs(dtf_folder : &str, state: &mut State) {
     }
 }
 
-fn handle_client(mut stream: TcpStream, settings : &Settings) {
-    let dtf_folder = &settings.dtf_folder;
-    create_dir_if_not_exist(&dtf_folder);
-
+fn init_state(settings: &Settings, dtf_folder: &str) -> State {
     let mut state = State {
         current_store_name: "default".to_owned(),
         is_adding: false,
@@ -356,7 +366,13 @@ fn handle_client(mut stream: TcpStream, settings : &Settings) {
         in_memory: default_in_memory,
         folder: dtf_folder.to_owned(),
     });
+    state
+}
 
+fn handle_client(mut stream: TcpStream, settings : &Settings) {
+    let dtf_folder = &settings.dtf_folder;
+    create_dir_if_not_exist(&dtf_folder);
+    let mut state = init_state(&settings, &dtf_folder);
     init_dbs(&dtf_folder, &mut state);
 
     let mut buf = [0; 2048];
@@ -368,16 +384,16 @@ fn handle_client(mut stream: TcpStream, settings : &Settings) {
         let resp = gen_response(&req, &mut state);
         match resp {
             (Some(str_resp), None) => {
-                stream.write_u8(0x00000001).unwrap();
+                stream.write_u8(0x1).unwrap();
                 stream.write_u64::<BigEndian>(str_resp.len() as u64).unwrap();
                 stream.write(str_resp.as_bytes()).unwrap()
             },
             (None, Some(bytes)) => {
-                stream.write_u8(0x00000001).unwrap();
+                stream.write_u8(0x1).unwrap();
                 stream.write(&bytes).unwrap()
             },
             (None, None) => {
-                stream.write_u8(0x00000000).unwrap();
+                stream.write_u8(0x0).unwrap();
                 let ret = "ERR.\n";
                 stream.write_u64::<BigEndian>(ret.len() as u64).unwrap();
                 stream.write(ret.as_bytes()).unwrap()

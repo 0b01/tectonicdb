@@ -16,10 +16,10 @@ struct Cxn {
 impl Cxn {
     fn cmd(&mut self, command : &str) -> String {
         let _ = self.stream.write(command.as_bytes());
-        let success = self.stream.read_u8().unwrap() == 0x00000001;
-        if command.starts_with("GET") && success {
+        let success = self.stream.read_u8().unwrap() == 0x1;
+        if command.starts_with("GET") && !command.contains("AS JSON") && success {
             let vecs = dtf::read_one_batch(&mut self.stream);
-            format!("[{}]\n", update_vec_to_json(&vecs))
+            format!("[{}]\n", dtf::update_vec_to_json(&vecs))
         } else {
             let size = self.stream.read_u64::<BigEndian>().unwrap();
             let mut buf = vec![0; size as usize];
@@ -27,11 +27,6 @@ impl Cxn {
             str::from_utf8(&buf).unwrap().to_owned()
         }
     }
-}
-
-fn update_vec_to_json(vecs: &Vec<dtf::Update>) -> String {
-    let objects : Vec<String> = vecs.clone().into_iter().map(|up| up.to_json()).collect();
-    objects.join(", ")
 }
 
 fn main() {
