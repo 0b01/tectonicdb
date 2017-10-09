@@ -288,7 +288,7 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                     current_store.load();
                     (Some(format!("SWITCHED TO DB `{}`.\n", &dbname)), None)
                 } else {
-                    (Some(format!("ERR unknown DB `{}`.\n", &dbname)), None)
+                    (None, None)
                 }
             } else
 
@@ -317,7 +317,7 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
             }
 
             else {
-                (Some(format!("ERR unknown command '{}'.\n", &string)), None)
+                (None, None)
             }
         }
     }

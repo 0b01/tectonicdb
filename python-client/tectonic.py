@@ -34,28 +34,18 @@ class TectonicDB():
 
     def add(self, ts, seq, is_trade, is_bid, price, size):
         return self.cmd("ADD {}, {}, {} ,{}, {}, {};"
-                        .format(
-                            ts,
-                            seq,
+                        .format( ts, seq, 
                             't' if is_trade else 'f',
-                            't' if is_bid else 'f',
-                            price,
-                            size
-                        ))
+                            't' if is_bid else 'f', price, size))
     def bulkadd(self, updates):
         self.cmd("BULKADD")
         for update in updates:
             ts, seq, is_trade, is_bid, price, size = update
 
-            elf.cmd("{}, {}, {} ,{}, {}, {};"
-                    .format(
-                        ts,
-                        seq,
-                        't' if is_trade else 'f',
-                        't' if is_bid else 'f',
-                        price,
-                        size
-                    ))
+            self.cmd("{}, {}, {} ,{}, {}, {};"
+                    .format( ts, seq,
+                            't' if is_trade else 'f', 
+                            't' if is_bid else 'f', price, size))
         self.cmd("DDAKLUB")
 
     def getall(self):
