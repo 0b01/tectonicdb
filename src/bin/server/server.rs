@@ -79,7 +79,7 @@ impl Store {
     /// load items from dtf file
     fn load(&mut self) {
         let fname = format!("{}/{}.dtf", self.folder, self.name);
-        if Path::new(&fname).exists() {
+        if Path::new(&fname).exists() && !self.in_memory {
             self.v = dtf::decode(&fname);
             self.size = self.v.len() as u64;
             self.in_memory = true;
@@ -109,8 +109,12 @@ struct State {
     settings: Settings
 }
 impl State {
+    fn insert(&mut self, up: dtf::Update, store_name : &str) {
+        let store = self.store.get_mut(store_name).expect("KEY IS NOT IN HASHMAP");
+        store.add(up);
+    }
 
-    fn add (&mut self, up: dtf::Update) {
+    fn add(&mut self, up: dtf::Update) {
         let current_store = self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
         current_store.add(up);
     }
@@ -187,59 +191,59 @@ fn parse_line(string : &str) -> Option<dtf::Update> {
     }
 }
 
-fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec<u8>>) {
+fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec<u8>>, Option<String>) {
     match string {
-        "" => (Some("".to_owned()), None),
-        "PING" => (Some("PONG.\n".to_owned()), None),
-        "HELP" => (Some(HELP_STR.to_owned()), None),
+        "" => (Some("".to_owned()), None, None),
+        "PING" => (Some("PONG.\n".to_owned()), None, None),
+        "HELP" => (Some(HELP_STR.to_owned()), None, None),
         "INFO" => {
             let info_vec : Vec<String> = state.store.values().map(|store| {
                 format!(r#"{{"name": "{}", "in_memory": {}, "count": {}}}"#, store.name, store.in_memory, store.size)
             }).collect();
 
-            (Some(format!("[{}]\n", info_vec.join(", "))), None)
+            (Some(format!("[{}]\n", info_vec.join(", "))), None, None)
         },
         "BULKADD" => {
             state.is_adding = true;
-            (Some("".to_owned()), None)
+            (Some("".to_owned()), None, None)
         },
         "DDAKLUB" => {
             state.is_adding = false;
-            (Some("1\n".to_owned()), None)
+            (Some("1\n".to_owned()), None, None)
         },
         "GET ALL AS JSON" => {
             let current_store = state.store.get(&state.current_store_name).unwrap();
             let json = dtf::update_vec_to_json(&current_store.v);
             let json = format!("[{}]\n", json);
-            (Some(json), None)
+            (Some(json), None, None)
         },
         "GET ALL" => {
             match state.get(-1) {
-                Some(bytes) => (None, Some(bytes)),
-                None => (None, None) 
+                Some(bytes) => (None, Some(bytes), None),
+                None => (None, None, Some("Failed to GET ALL.".to_owned()))
             }
         },
         "CLEAR" => {
             let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
             current_store.clear();
-            (Some("1\n".to_owned()), None)
+            (Some("1\n".to_owned()), None, None)
         },
         "CLEAR ALL" => {
             for store in state.store.values_mut() {
                 store.clear();
             }
-            (Some("1\n".to_owned()), None)
+            (Some("1\n".to_owned()), None, None)
         },
         "FLUSH" => {
             let current_store = state.store.get_mut(&state.current_store_name).expect("KEY IS NOT IN HASHMAP");
             current_store.flush();
-            (Some("1\n".to_owned()), None)
+            (Some("1\n".to_owned()), None, None)
         },
         "FLUSH ALL" => {
             for store in state.store.values() {
                 store.flush();
             }
-            (Some("1\n".to_owned()), None)
+            (Some("1\n".to_owned()), None, None)
         },
         _ => {
             // bulkadd and add
@@ -250,20 +254,35 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                         state.add(up);
                         state.autoflush();
                     }
-                    None => return (None, None)
+                    None => return (None, None, Some("Unable to parse line in BULKALL".to_owned()))
                 }
-                (Some("".to_owned()), None)
+                (Some("".to_owned()), None, None)
             } else
 
             if string.starts_with("ADD ") {
-                let data_string : &str = &string[3..];
-                match parse_line(&data_string) {
-                    Some(up) => {
-                        state.add(up);
-                        state.autoflush();
-                        (Some("1\n".to_owned()), None)
+                if string.contains(" INTO ") {
+                    let into_indices : Vec<_> = string.match_indices(" INTO ").collect();
+                    let (index, _) = into_indices[0];
+                    let dbname = &string[(index+6)..];
+                    let data_string : &str = &string[3..(index-2)];
+                    match parse_line(&data_string) {
+                        Some(up) => {
+                            state.insert(up, dbname);
+                            state.autoflush();
+                            (Some("1\n".to_owned()), None, None)
+                        },
+                        None => return (None, None, Some("Parse ADD INTO".to_owned()))
                     }
-                    None => return (None, None)
+                } else {
+                    let data_string : &str = &string[3..];
+                    match parse_line(&data_string) {
+                        Some(up) => {
+                            state.add(up);
+                            state.autoflush();
+                            (Some("1\n".to_owned()), None, None)
+                        }
+                        None => return (None, None, Some("Parse ADD".to_owned()))
+                    }
                 }
             } else 
 
@@ -277,7 +296,7 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                     in_memory: false,
                     folder: state.settings.dtf_folder.clone()
                 });
-                (Some(format!("Created DB `{}`.\n", &dbname)), None)
+                (Some(format!("Created DB `{}`.\n", &dbname)), None, None)
             } else
 
             if string.starts_with("USE ") {
@@ -286,9 +305,9 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                     state.current_store_name = dbname.to_owned();
                     let current_store = state.store.get_mut(&state.current_store_name).unwrap();
                     current_store.load();
-                    (Some(format!("SWITCHED TO DB `{}`.\n", &dbname)), None)
+                    (Some(format!("SWITCHED TO DB `{}`.\n", &dbname)), None, None)
                 } else {
-                    (None, None)
+                    (None, None, Some(format!("State does not contain {}", dbname)))
                 }
             } else
 
@@ -302,22 +321,22 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                     let current_store = state.store.get(&state.current_store_name).unwrap();
 
                     if (current_store.size as i32) <= count || current_store.size == 0 {
-                        (None, None)
+                        (None, None, Some("Requested too many".to_owned()))
                     } else {
                         let json = dtf::update_vec_to_json(&current_store.v[..count as usize]);
                         let json = format!("[{}]\n", json);
-                        (Some(json), None)
+                        (Some(json), None, None)
                     }
                 } else {
                     match state.get(count) {
-                        Some(bytes) => (None, Some(bytes)),
-                        None => (None, None)
+                        Some(bytes) => (None, Some(bytes), None),
+                        None => (None, None, Some(format!("Failed to get {}.", count)))
                     }
                 }
             }
 
             else {
-                (None, None)
+                (None, None, Some("Unsupported command.".to_owned()))
             }
         }
     }
@@ -383,18 +402,18 @@ fn handle_client(mut stream: TcpStream, settings : &Settings) {
 
         let resp = gen_response(&req, &mut state);
         match resp {
-            (Some(str_resp), None) => {
+            (Some(str_resp), None, _) => {
                 stream.write_u8(0x1).unwrap();
                 stream.write_u64::<BigEndian>(str_resp.len() as u64).unwrap();
                 stream.write(str_resp.as_bytes()).unwrap()
             },
-            (None, Some(bytes)) => {
+            (None, Some(bytes), _) => {
                 stream.write_u8(0x1).unwrap();
                 stream.write(&bytes).unwrap()
             },
-            (None, None) => {
+            (None, None, Some(msg)) => {
                 stream.write_u8(0x0).unwrap();
-                let ret = "ERR.\n";
+                let ret = format!("ERR: {}\n", msg);
                 stream.write_u64::<BigEndian>(ret.len() as u64).unwrap();
                 stream.write(ret.as_bytes()).unwrap()
             },
