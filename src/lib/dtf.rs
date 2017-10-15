@@ -10,7 +10,7 @@
 /// 
 /// 
 /// Record Spec:
-/// Offset 81: bool for is_snapshot
+/// Offset 81: bool for `is_snapshot`
 /// 1. if is true
 ///        4 bytes (u32): reference ts
 ///        2 bytes (u32): reference seq
@@ -18,7 +18,7 @@
 /// 2. record
 ///        dts (u16): $ts - reference ts$, 2^16 = 65536 - ~65 seconds
 ///        dseq (u8) $seq - reference seq$ , 2^8 = 256
-///        is_trade & is_bid: (u8): bitwise and to store two bools in one byte
+///        `is_trade & is_bid`: (u8): bitwise and to store two bools in one byte
 ///        price: (f32)
 ///        size: (f32)
 
@@ -62,15 +62,15 @@ pub struct Update {
 
 bitflags! {
     struct Flags: u8 {
-        const FLAG_EMPTY   = 0b00000000;
-        const FLAG_IS_BID   = 0b00000001;
-        const FLAG_IS_TRADE = 0b00000010;
+        const FLAG_EMPTY   = 0b0000_0000;
+        const FLAG_IS_BID   = 0b0000_0001;
+        const FLAG_IS_TRADE = 0b0000_0010;
     }
 }
 
 impl Flags {
     fn to_bool(&self) -> bool {
-        (self.bits == 0b00000001) || (self.bits == 0b00000010)
+        (self.bits == 0b0000_0001) || (self.bits == 0b0000_0010)
     }
 }
 
@@ -88,8 +88,8 @@ impl Update {
         let _ = buf.write_u8((self.seq - ref_seq) as u8);
 
         let mut flags = Flags::FLAG_EMPTY;
-        if self.is_bid { flags = flags | Flags::FLAG_IS_BID; }
-        if self.is_trade { flags = flags | Flags::FLAG_IS_TRADE; }
+        if self.is_bid { flags |= Flags::FLAG_IS_BID; }
+        if self.is_trade { flags |= Flags::FLAG_IS_TRADE; }
         let _ = buf.write_u8(flags.bits());
 
         let _ = buf.write_f32::<BigEndian>(self.price);
@@ -104,13 +104,13 @@ impl Update {
 }
 
 pub fn update_vec_to_json(vecs: &[Update]) -> String {
-    let objects : Vec<String> = vecs.clone().into_iter().map(|up| up.to_json()).collect();
+    let objects : Vec<String> = vecs.into_iter().map(|up| up.to_json()).collect();
     objects.join(", ")
 }
 
 impl Ord for Update {
     fn cmp(&self, other: &Update) -> Ordering {
-        return self.partial_cmp(other).unwrap();
+        self.partial_cmp(other).unwrap()
     }
 }
 
@@ -119,11 +119,11 @@ impl Eq for Update {}
 impl PartialOrd for Update {
     fn partial_cmp(&self, other : &Update) -> Option<Ordering> {
         if self.ts > other.ts {
-            return Some(Ordering::Greater);
+            Some(Ordering::Greater)
         } else if self.ts == other.ts {
-            return Some(Ordering::Equal);
+            Some(Ordering::Equal)
         } else {
-            return Some(Ordering::Less);
+            Some(Ordering::Less)
         }
     }
 }
@@ -146,8 +146,7 @@ fn file_writer(fname : &str, create : bool) -> BufWriter<File> {
         fs::OpenOptions::new().write(true).open(fname).unwrap()
     };
 
-    let wtr = BufWriter::new(new_file);
-    wtr
+    BufWriter::new(new_file)
 }
 
 fn write_magic_value(wtr: &mut Write) {
@@ -190,7 +189,7 @@ pub fn write_batches(mut wtr: &mut Write, ups : &[Update]) {
     let mut count = 0;
 
     for elem in ups.iter() {
-        if count != 0 && (elem.ts >= ref_ts + 65535 || elem.seq >= ref_seq + 255 || elem.seq < ref_seq) {
+        if count != 0 && (elem.ts >= ref_ts + 0xFFFF || elem.seq >= ref_seq + 255 || elem.seq < ref_seq) {
             write_reference(&mut wtr, ref_ts, ref_seq, count);
             let _ = wtr.write(buf.as_slice());
             buf.clear();
@@ -207,12 +206,12 @@ pub fn write_batches(mut wtr: &mut Write, ups : &[Update]) {
     }
 
     write_reference(&mut wtr, ref_ts, ref_seq, count);
-    wtr.write(buf.as_slice()).unwrap();
+    wtr.write_all(buf.as_slice()).unwrap();
 }
 
 fn write_main(wtr: &mut BufWriter<File>, ups : &[Update]) {
     let _ = wtr.seek(SeekFrom::Start(MAIN_OFFSET));
-    if ups.len() > 0 {
+    if !ups.is_empty() {
         write_batches(wtr, ups);
     }
 }
@@ -250,9 +249,7 @@ fn read_symbol(rdr : &mut BufReader<File>) -> String {
 
     let mut buffer = [0; SYMBOL_LEN];
     let _ = rdr.read_exact(&mut buffer);
-    let symbol = str::from_utf8(&buffer).unwrap().to_owned();
-
-    symbol
+    str::from_utf8(&buffer).unwrap().to_owned()
 }
 
 fn read_len(rdr : &mut BufReader<File>) -> u64 {
@@ -270,7 +267,7 @@ fn read_max_ts(rdr : &mut BufReader<File>) -> u64 {
 }
 
 pub fn read_one_batch(rdr: &mut Read) -> Vec<Update> {
-    let is_ref = rdr.read_u8().expect("is_ref") == 0x00000001;
+    let is_ref = rdr.read_u8().expect("is_ref") == 0x0000_0001;
     let mut ref_ts = 0;
     let mut ref_seq = 0;
     let mut how_many = 0;
@@ -283,8 +280,8 @@ pub fn read_one_batch(rdr: &mut Read) -> Vec<Update> {
     }
 
     for _i in 0..how_many {
-        let ts = rdr.read_u16::<BigEndian>().expect("ts") as u64 + ref_ts;
-        let seq = rdr.read_u8().expect("seq") as u32 + ref_seq;
+        let ts = u64::from(rdr.read_u16::<BigEndian>().expect("ts")) + ref_ts;
+        let seq = u32::from(rdr.read_u8().expect("seq")) + ref_seq;
         let flags = rdr.read_u8().expect("is_trade and is_bid");
         let is_trade = (Flags::from_bits(flags).unwrap() & Flags::FLAG_IS_TRADE).to_bool();
         let is_bid = (Flags::from_bits(flags).unwrap() & Flags::FLAG_IS_BID).to_bool();
@@ -311,8 +308,7 @@ fn read_first(mut rdr: &mut BufReader<File>) -> Update {
 
 pub fn get_size(fname: &str) -> u64 {
     let mut rdr = file_reader(fname);
-    let nums = read_len(&mut rdr);
-    nums
+    read_len(&mut rdr)
 }
 
 pub fn decode(fname: &str) -> Vec<Update> {
@@ -325,7 +321,7 @@ pub fn decode(fname: &str) -> Vec<Update> {
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
 
     while let Ok(is_ref) = rdr.read_u8() {
-        if is_ref == 0x00000001 {
+        if is_ref == 0x0000_0001 {
             rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
             v.extend(read_one_batch(&mut rdr));
         }
@@ -335,7 +331,7 @@ pub fn decode(fname: &str) -> Vec<Update> {
 }
 
 //TODO:
-pub fn append(fname: &str, ups : &Vec<Update>) {
+pub fn append(fname: &str, ups : &[Update]) {
 
     let (ups, new_max_ts, cur_len) = {
         let mut rdr = file_reader(fname);
@@ -343,10 +339,11 @@ pub fn append(fname: &str, ups : &Vec<Update>) {
 
         let old_max_ts = read_max_ts(&mut rdr);
 
-        let ups : Vec<Update> = ups.clone().into_iter()
+        let ups : Vec<Update> = ups.into_iter()
                                     .filter(|up| up.ts > old_max_ts)
+                                    .cloned()
                                     .collect();
-        if ups.len() == 0 {
+        if ups.is_empty() {
             return;
         }
 
