@@ -69,7 +69,9 @@ Language bindings:
 
 - [x] Python
 
-- [ ] JavaScript
+- [x] JavaScript
+
+- [x] TypeScript
 
 
 ## Additional Features

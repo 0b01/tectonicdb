@@ -98,6 +98,7 @@ impl Store {
         self.in_memory = false;
         self.load_size_from_file();
     }
+
 }
 
 
@@ -109,9 +110,15 @@ struct State {
     settings: Settings
 }
 impl State {
-    fn insert(&mut self, up: dtf::Update, store_name : &str) {
-        let store = self.store.get_mut(store_name).expect("KEY IS NOT IN HASHMAP");
-        store.add(up);
+
+    fn insert(&mut self, up: dtf::Update, store_name : &str) -> Option<bool> {
+        match self.store.get_mut(store_name) {
+            Some(store) => {
+                store.add(up);
+                Some(true)
+            }
+            None => None
+        }
     }
 
     fn add(&mut self, up: dtf::Update) {
@@ -264,14 +271,20 @@ fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec
                     let into_indices : Vec<_> = string.match_indices(" INTO ").collect();
                     let (index, _) = into_indices[0];
                     let dbname = &string[(index+6)..];
-                    let data_string : &str = &string[3..(index-2)];
+                    let data_string : &str = &string[3..(index)];
                     match parse_line(&data_string) {
                         Some(up) => {
-                            state.insert(up, dbname);
-                            state.autoflush();
-                            (Some("1\n".to_owned()), None, None)
+                            match state.insert(up, dbname) {
+                                Some(true) => {
+                                    state.autoflush();
+                                    (Some("1\n".to_owned()), None, None)
+                                }
+                                _ => {
+                                    (None, None, Some(format!("db `{}` not found", dbname)))
+                                }
+                            }
                         },
-                        None => return (None, None, Some("Parse ADD INTO".to_owned()))
+                        None => return (None, None, Some("parsing ADD INTO".to_owned()))
                     }
                 } else {
                     let data_string : &str = &string[3..];
@@ -411,9 +424,9 @@ fn handle_client(mut stream: TcpStream, settings : &Settings) {
                 stream.write_u8(0x1).unwrap();
                 stream.write(&bytes).unwrap()
             },
-            (None, None, Some(msg)) => {
+            (None, None, Some(errmsg)) => {
                 stream.write_u8(0x0).unwrap();
-                let ret = format!("ERR: {}\n", msg);
+                let ret = format!("ERR: {}\n", errmsg);
                 stream.write_u64::<BigEndian>(ret.len() as u64).unwrap();
                 stream.write(ret.as_bytes()).unwrap()
             },
