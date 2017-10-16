@@ -3,6 +3,11 @@ extern crate clap;
 extern crate byteorder;
 
 mod server;
+mod state;
+mod utils;
+mod parser;
+mod handler;
+
 use clap::{Arg, App};
 
 fn main() {
@@ -49,7 +54,7 @@ fn main() {
     let autoflush = matches.is_present("autoflush");
     let flush_interval = matches.value_of("flush_interval").unwrap_or("1000");
 
-    let settings = server::Settings {
+    let settings = state::Settings {
         autoflush: autoflush,
         dtf_folder: dtf_folder.to_owned(),
         flush_interval: flush_interval.parse::<u32>().unwrap()
