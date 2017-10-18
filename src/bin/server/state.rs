@@ -227,3 +227,16 @@ impl State {
         state
     }
 }
+
+#[derive(Debug)]
+pub struct Global {
+    pub connections: u32,
+}
+
+impl Global {
+    pub fn new() -> Global {
+        Global {
+            connections: 0,
+        }
+    }
+}

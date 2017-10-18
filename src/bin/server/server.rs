@@ -16,9 +16,10 @@ use utils;
 use handler;
 use settings::Settings;
 use threadpool::ThreadPool;
+use std::sync::{Arc, RwLock};
 
 
-fn handle_client(mut stream: TcpStream, settings : &Settings) {
+fn handle_client(mut stream: TcpStream, settings : &Settings, global: &Arc<RwLock<Global>>) {
     let dtf_folder = &settings.dtf_folder;
     utils::create_dir_if_not_exist(&dtf_folder);
     let mut state = State::new(&settings, &dtf_folder);
@@ -71,13 +72,31 @@ pub fn run_server(host : &str, port : &str, verbosity : u64, settings: &Settings
         println!("Listening on addr: {}", addr);
     }
 
-    let pool = ThreadPool::new(4);
+    let global = Arc::new(RwLock::new(Global::new())); 
+    let pool = ThreadPool::new(settings.threads);
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
+
         let settings_copy = settings.clone();
+        let global_ = global.clone();
         pool.execute(move || {
-            handle_client(stream, &settings_copy);
+            on_connect(&global_);
+
+            println!("New connection. {} connected.", global_.read().unwrap().connections);
+            handle_client(stream, &settings_copy, &global_);
+
+            on_disconnect(&global_);
         });
     }
+}
+
+fn on_connect(global: &Arc<RwLock<Global>>) {
+    let mut glb_wtr = global.write().unwrap();
+    glb_wtr.connections += 1;
+}
+
+fn on_disconnect(global: &Arc<RwLock<Global>>) {
+    let mut glb_wtr = global.write().unwrap();
+    glb_wtr.connections -= 1;
 }
