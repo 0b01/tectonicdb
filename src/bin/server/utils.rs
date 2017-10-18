@@ -20,12 +20,9 @@ pub fn init_dbs(dtf_folder : &str, state: &mut State) {
             let name = Path::new(&fname_os).file_stem().unwrap().to_str().unwrap();
             let header_size = dtf::get_size(&format!("{}/{}", dtf_folder, fname));
             state.store.insert(name.to_owned(), Store {
-                folder: dtf_folder.to_owned(),
                 name: name.to_owned(),
-                v: Vec::new(),
                 size: header_size,
-                in_memory: false
-
+                in_memory: false,
             });
         }
     }

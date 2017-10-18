@@ -18,7 +18,7 @@ fn main() {
     let host = matches.value_of("host").unwrap_or("0.0.0.0");
     let port = matches.value_of("port").unwrap_or("9001");
     let dtf_folder = matches.value_of("dtf_folder").unwrap_or("db");
-    let verbosity = matches.occurrences_of("v");
+    let verbosity = matches.occurrences_of("v") as u8;
     let autoflush = matches.is_present("autoflush");
     let flush_interval = matches.value_of("flush_interval").unwrap_or("1000");
     let threads = matches.value_of("thread").unwrap_or("50");
@@ -28,9 +28,10 @@ fn main() {
         dtf_folder: dtf_folder.to_owned(),
         flush_interval: flush_interval.parse::<u32>().unwrap(),
         threads: threads.parse::<usize>().unwrap(),
+        verbosity
     };
 
-    server::run_server(&host, &port, verbosity, &settings);
+    server::run_server(&host, &port, &settings);
 }
 
 fn get_matches<'a>() -> ArgMatches<'a> {

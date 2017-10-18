@@ -19,10 +19,10 @@ use threadpool::ThreadPool;
 use std::sync::{Arc, RwLock};
 
 
-fn handle_client(mut stream: TcpStream, settings : &Settings, global: &Arc<RwLock<Global>>) {
+fn handle_client(mut stream: TcpStream, settings : &Settings, global: &Arc<RwLock<SharedState>>) {
     let dtf_folder = &settings.dtf_folder;
     utils::create_dir_if_not_exist(&dtf_folder);
-    let mut state = State::new(&settings, &dtf_folder);
+    let mut state = State::new(global);
     utils::init_dbs(&dtf_folder, &mut state);
 
     let mut buf = [0; 2048];
@@ -31,7 +31,7 @@ fn handle_client(mut stream: TcpStream, settings : &Settings, global: &Arc<RwLoc
         if bytes_read == 0 { break }
         let req = str::from_utf8(&buf[..(bytes_read-1)]).unwrap();
 
-        let resp = handler::gen_response(&req, &mut state);
+        let resp = handler::gen_response(&req, &mut state, &global);
         match resp {
             (Some(str_resp), None, _) => {
                 stream.write_u8(0x1).unwrap();
@@ -53,10 +53,10 @@ fn handle_client(mut stream: TcpStream, settings : &Settings, global: &Arc<RwLoc
     }
 }
 
-pub fn run_server(host : &str, port : &str, verbosity : u64, settings: &Settings) {
+pub fn run_server(host : &str, port : &str, settings: &Settings) {
     let addr = format!("{}:{}", host, port);
 
-    if verbosity > 1 {
+    if settings.verbosity > 1 {
         println!("[DEBUG] Trying to bind to addr: {}", addr);
         if settings.autoflush {
             println!("[DEBUG] Autoflush is true: every {} inserts.", settings.flush_interval);
@@ -68,35 +68,48 @@ pub fn run_server(host : &str, port : &str, verbosity : u64, settings: &Settings
         Err(e) => panic!(format!("{:?}", e.description()))
     };
 
-    if verbosity > 0 {
+    if settings.verbosity > 0 {
         println!("Listening on addr: {}", addr);
     }
 
-    let global = Arc::new(RwLock::new(Global::new())); 
     let pool = ThreadPool::new(settings.threads);
 
+    let shared = Arc::new(RwLock::new(SharedState::new(settings.clone()))); 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
         let settings_copy = settings.clone();
-        let global_ = global.clone();
+        let sharedstate = shared.clone();
+
         pool.execute(move || {
-            on_connect(&global_);
-
-            println!("New connection. {} connected.", global_.read().unwrap().connections);
-            handle_client(stream, &settings_copy, &global_);
-
-            on_disconnect(&global_);
+            on_connect(&sharedstate);
+            handle_client(stream, &settings_copy, &sharedstate);
+            on_disconnect(&sharedstate);
         });
     }
 }
 
-fn on_connect(global: &Arc<RwLock<Global>>) {
-    let mut glb_wtr = global.write().unwrap();
-    glb_wtr.connections += 1;
+fn on_connect(global: &Arc<RwLock<SharedState>>) {
+    {
+        let mut glb_wtr = global.write().unwrap();
+        glb_wtr.connections += 1;
+    }
+
+    let verbose = global.read().unwrap().settings.verbosity;
+    if verbose > 0 {
+        println!("Client connected. Current: {}.", global.read().unwrap().connections);
+    } 
 }
 
-fn on_disconnect(global: &Arc<RwLock<Global>>) {
-    let mut glb_wtr = global.write().unwrap();
-    glb_wtr.connections -= 1;
+fn on_disconnect(global: &Arc<RwLock<SharedState>>) {
+    {
+        let mut glb_wtr = global.write().unwrap();
+        glb_wtr.connections -= 1;
+    }
+
+    let rdr = global.read().unwrap();
+    let verbose = rdr.settings.verbosity;
+    if verbose > 0 {
+        println!("Client connection disconnected. Current: {}.", rdr.connections);
+    } 
 }
