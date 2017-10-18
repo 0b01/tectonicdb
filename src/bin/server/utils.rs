@@ -23,6 +23,7 @@ pub fn init_dbs(dtf_folder : &str, state: &mut State) {
                 name: name.to_owned(),
                 size: header_size,
                 in_memory: false,
+                global: state.global.clone()
             });
         }
     }

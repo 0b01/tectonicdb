@@ -74,17 +74,17 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
 
     let pool = ThreadPool::new(settings.threads);
 
-    let shared = Arc::new(RwLock::new(SharedState::new(settings.clone()))); 
+    let global = Arc::new(RwLock::new(SharedState::new(settings.clone()))); 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
         let settings_copy = settings.clone();
-        let sharedstate = shared.clone();
+        let global_copy = global.clone();
 
         pool.execute(move || {
-            on_connect(&sharedstate);
-            handle_client(stream, &settings_copy, &sharedstate);
-            on_disconnect(&sharedstate);
+            on_connect(&global_copy);
+            handle_client(stream, &settings_copy, &global_copy);
+            on_disconnect(&global_copy);
         });
     }
 }

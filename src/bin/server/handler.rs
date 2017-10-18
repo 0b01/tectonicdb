@@ -12,7 +12,7 @@ fn autoflush(global: &Global, state: &mut State) {
     let rdr = global.read().unwrap();
     let settings = &rdr.settings;
     if settings.autoflush {
-        state.autoflush(settings.flush_interval, global);
+        state.autoflush(settings.flush_interval);
     }
 }
 
@@ -21,27 +21,27 @@ pub fn gen_response(string : &str, state: &mut State, global: &Global) -> (Optio
         "" => (Some("".to_owned()), None, None),
         "PING" => (Some("PONG.\n".to_owned()), None, None),
         "HELP" => (Some(HELP_STR.to_owned()), None, None),
-        "INFO" => (Some(state.info(global)), None, None),
+        "INFO" => (Some(state.info()), None, None),
         "BULKADD" => { state.is_adding = true; (Some("".to_owned()), None, None) },
         "DDAKLUB" => { state.is_adding = false; (Some("1\n".to_owned()), None, None) },
-        "GET ALL AS JSON" => (Some(state.get_all_as_json(global)), None, None),
+        "GET ALL AS JSON" => (Some(state.get_all_as_json()), None, None),
         "GET ALL" =>  {
-            match state.get(-1, global) {
+            match state.get(-1) {
                 Some(bytes) => (None, Some(bytes), None),
                 None => (None, None, Some("Failed to GET ALL.".to_owned()))
             }
         },
-        "CLEAR" => { state.clear(global); (Some("1\n".to_owned()), None, None) },
+        "CLEAR" => { state.clear(); (Some("1\n".to_owned()), None, None) },
         "CLEAR ALL" => {
-            state.clearall(global);
+            state.clearall();
             (Some("1\n".to_owned()), None, None)
         },
         "FLUSH" => {
-            state.flush(global);
+            state.flush();
             (Some("1\n".to_owned()), None, None)
         },
         "FLUSH ALL" => {
-            state.flushall(global);
+            state.flushall();
             (Some("1\n".to_owned()), None, None)
         },
         _ => {
@@ -50,7 +50,7 @@ pub fn gen_response(string : &str, state: &mut State, global: &Global) -> (Optio
                 let parsed = parser::parse_line(string);
                 match parsed {
                     Some(up) => {
-                        state.add(up, global);
+                        state.add(up);
                         autoflush(global, state);
                         (Some("".to_owned()), None, None)
                     }
@@ -71,7 +71,7 @@ pub fn gen_response(string : &str, state: &mut State, global: &Global) -> (Optio
 
                 match parsed {
                     Some((up, dbname)) => {
-                        match state.insert(up, &dbname, global) {
+                        match state.insert(up, &dbname) {
                             Some(()) => {
                                 autoflush(global, state);
                                 (Some("1\n".to_owned()), None, None)
@@ -87,13 +87,13 @@ pub fn gen_response(string : &str, state: &mut State, global: &Global) -> (Optio
 
             if string.starts_with("CREATE ") {
                 let dbname : &str = &string[7..];
-                state.create(dbname, global);
+                state.create(dbname);
                 (Some(format!("Created DB `{}`.\n", &dbname)), None, None)
             } else
 
             if string.starts_with("USE ") {
                 let dbname : &str = &string[4..];
-                match state.use_db(dbname, global) {
+                match state.use_db(dbname) {
                     Some(_) => (Some(format!("SWITCHED TO DB `{}`.\n", &dbname)), None, None),
                     None => (None, None, Some(format!("No db named `{}`", dbname)))
                 }
@@ -105,12 +105,12 @@ pub fn gen_response(string : &str, state: &mut State, global: &Global) -> (Optio
                 let count : Vec<&str> = count.split(" ").collect();
                 let count = count[0].parse::<i32>().unwrap();
                 if string.contains("AS JSON") {
-                    match state.get_n_as_json(count, global) {
+                    match state.get_n_as_json(count) {
                         Some(json) => (Some(json), None, None),
                         None => (None, None, Some(format!("Requested {} items. Too many.", count)))
                     }
                 } else {
-                    match state.get(count, global) {
+                    match state.get(count) {
                         Some(bytes) => (None, Some(bytes), None),
                         None => (None, None, Some(format!("Failed to get {}.", count)))
                     }
