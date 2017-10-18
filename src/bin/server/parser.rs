@@ -43,6 +43,17 @@ pub fn parse_line(string : &str) -> Option<dtf::Update> {
     }
 }
 
+pub fn parse_add_into(string: &str) -> Option<(dtf::Update, String)> {
+    let into_indices : Vec<_> = string.match_indices(" INTO ").collect();
+    let (index, _) = into_indices[0];
+    let dbname = &string[(index+6)..];
+    let data_string : &str = &string[3..(index)];
+    match parse_line(data_string) {
+        Some(up) => Some((up, dbname.to_owned())),
+        None => None
+    }
+}
+
 
 #[test]
 fn should_parse_string_not_okay() {

@@ -2,13 +2,7 @@ use dtf;
 use std::collections::HashMap;
 use utils;
 use std::path::Path;
-
-#[derive(Clone)]
-pub struct Settings {
-    pub autoflush: bool,
-    pub dtf_folder: String,
-    pub flush_interval: u32,
-}
+use settings::Settings;
 
 /// name: *should* be the filename
 /// in_memory: are the updates read into memory?
@@ -96,33 +90,108 @@ pub struct State {
 }
 impl State {
 
-    pub fn insert(&mut self, up: dtf::Update, store_name : &str) -> Option<bool> {
+    pub fn info(&self) -> String {
+        let info_vec : Vec<String> = self.store.values().map(|store| {
+            format!(r#"{{"name": "{}", "in_memory": {}, "count": {}}}"#, store.name, store.in_memory, store.size)
+        }).collect();
+        format!("[{}]\n", info_vec.join(", "))
+    }
+
+    pub fn insert(&mut self, up: dtf::Update, store_name : &str) -> Option<()> {
         match self.store.get_mut(store_name) {
             Some(store) => {
                 store.add(up);
-                Some(true)
+                Some(())
             }
             None => None
         }
     }
 
     pub fn add(&mut self, up: dtf::Update) {
-        let current_store = self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
+        let current_store = self.get_current_store();
         current_store.add(up);
     }
 
     pub fn autoflush(&mut self) {
         let current_store = self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
-        if self.settings.autoflush && current_store.size % self.settings.flush_interval as u64 == 0 {
+        if self.settings.autoflush
+           && current_store.size % u64::from(self.settings.flush_interval) == 0 {
             println!("(AUTO) FLUSHING!");
             current_store.flush();
             current_store.load_size_from_file();
         }
     }
 
-    pub fn get(&self, count : i32) -> Option<Vec<u8>> {
+    pub fn create(&mut self, dbname: &str) {
+        let folder = self.get_folder();
+        self.store.insert(dbname.to_owned(), Store {
+            name: dbname.to_owned(),
+            v: Vec::new(),
+            size: 0,
+            in_memory: false,
+            folder
+        });
+    }
+
+    fn get_folder(&mut self) -> String {
+        self.settings.dtf_folder.clone()
+    }
+
+    pub fn use_db(&mut self, dbname: &str) -> Option<()> {
+        if self.store.contains_key(dbname) {
+            self.current_store_name = dbname.to_owned();
+            let current_store = self.get_current_store();
+            current_store.load();
+            Some(())
+        } else {
+            None
+        }
+    }
+
+    pub fn get_all_as_json(&mut self) -> String {
+        let json = dtf::update_vec_to_json(&self.get_current_store().v);
+        format!("[{}]\n", json)
+    }
+
+    pub fn get_n_as_json(&mut self, count: i32) -> Option<String> {
+        let current_store = self.get_current_store();
+
+        if (current_store.size as i32) <= count || current_store.size == 0 {
+            None
+        } else {
+            let json = dtf::update_vec_to_json(&current_store.v[..count as usize]);
+            let json = format!("[{}]\n", json);
+            Some(json)
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.get_current_store().clear();
+    }
+
+    pub fn clearall(&mut self) {
+        for store in self.store.values_mut() {
+            store.clear();
+        }
+    }
+
+    pub fn flush(&mut self) {
+        self.get_current_store().flush();
+    }
+    
+    pub fn flushall(&mut self) {
+        for store in self.store.values() {
+            store.flush();
+        }
+    }
+
+    fn get_current_store(&mut self) -> &mut Store {
+        self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP")
+    }
+
+    pub fn get(&mut self, count : i32) -> Option<Vec<u8>> {
         let mut bytes : Vec<u8> = Vec::new();
-        let current_store = self.store.get(&self.current_store_name).unwrap();
+        let current_store = self.get_current_store(); 
         if (current_store.size as i32) < count || current_store.size == 0 {
             None
         } else {

@@ -7,6 +7,7 @@ mod state;
 mod utils;
 mod parser;
 mod handler;
+mod settings;
 
 use clap::{Arg, App};
 
@@ -54,7 +55,7 @@ fn main() {
     let autoflush = matches.is_present("autoflush");
     let flush_interval = matches.value_of("flush_interval").unwrap_or("1000");
 
-    let settings = state::Settings {
+    let settings = settings::Settings {
         autoflush: autoflush,
         dtf_folder: dtf_folder.to_owned(),
         flush_interval: flush_interval.parse::<u32>().unwrap()

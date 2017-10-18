@@ -15,6 +15,7 @@ use std::str;
 use state::*;
 use utils;
 use handler;
+use settings::Settings;
 
 
 fn handle_client(mut stream: TcpStream, settings : &Settings) {
