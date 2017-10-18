@@ -12,30 +12,17 @@ pub fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option
         "" => (Some("".to_owned()), None, None),
         "PING" => (Some("PONG.\n".to_owned()), None, None),
         "HELP" => (Some(HELP_STR.to_owned()), None, None),
-        "INFO" => {
-            (Some(state.info()), None, None)
-        },
-        "BULKADD" => {
-            state.is_adding = true;
-            (Some("".to_owned()), None, None)
-        },
-        "DDAKLUB" => {
-            state.is_adding = false;
-            (Some("1\n".to_owned()), None, None)
-        },
-        "GET ALL AS JSON" => {
-            (Some(state.get_all_as_json()), None, None)
-        },
-        "GET ALL" => {
+        "INFO" => (Some(state.info()), None, None),
+        "BULKADD" => { state.is_adding = true; (Some("".to_owned()), None, None) },
+        "DDAKLUB" => { state.is_adding = false; (Some("1\n".to_owned()), None, None) },
+        "GET ALL AS JSON" => (Some(state.get_all_as_json()), None, None),
+        "GET ALL" =>  {
             match state.get(-1) {
                 Some(bytes) => (None, Some(bytes), None),
                 None => (None, None, Some("Failed to GET ALL.".to_owned()))
             }
         },
-        "CLEAR" => {
-            state.clear();
-            (Some("1\n".to_owned()), None, None)
-        },
+        "CLEAR" => { state.clear(); (Some("1\n".to_owned()), None, None) },
         "CLEAR ALL" => {
             state.clearall();
             (Some("1\n".to_owned()), None, None)
@@ -89,7 +76,6 @@ pub fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option
                 }
             } else 
 
-            // db commands
             if string.starts_with("CREATE ") {
                 let dbname : &str = &string[7..];
                 state.create(dbname);

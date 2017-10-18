@@ -43,6 +43,7 @@ pub fn parse_line(string : &str) -> Option<dtf::Update> {
     }
 }
 
+/// returns Option<Update, dbname>
 pub fn parse_add_into(string: &str) -> Option<(dtf::Update, String)> {
     let into_indices : Vec<_> = string.match_indices(" INTO ").collect();
     let (index, _) = into_indices[0];
@@ -55,38 +56,42 @@ pub fn parse_add_into(string: &str) -> Option<(dtf::Update, String)> {
 }
 
 
-#[test]
-fn should_parse_string_not_okay() {
-    let string = "1505177459.658, 139010,,, f, t, 0.0703629, 7.65064249;";
-    assert!(parse_line(&string).is_none());
-    let string = "150517;";
-    assert!(parse_line(&string).is_none());
-    let string = "something;";
-    assert!(parse_line(&string).is_none());
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn should_parse_string_not_okay() {
+        let string = "1505177459.658, 139010,,, f, t, 0.0703629, 7.65064249;";
+        assert!(parse_line(&string).is_none());
+        let string = "150517;";
+        assert!(parse_line(&string).is_none());
+        let string = "something;";
+        assert!(parse_line(&string).is_none());
+    }
 
-#[test]
-fn should_parse_string_okay() {
-    let string = "1505177459.658, 139010, f, t, 0.0703629, 7.65064249;";
-    let target = dtf::Update {
-        ts: 1505177459658,
-        seq: 139010,
-        is_trade: false,
-        is_bid: true,
-        price: 0.0703629,
-        size: 7.65064249
-    };
-    assert_eq!(target, parse_line(&string).unwrap());
+    #[test]
+    fn should_parse_string_okay() {
+        let string = "1505177459.658, 139010, f, t, 0.0703629, 7.65064249;";
+        let target = dtf::Update {
+            ts: 1505177459658,
+            seq: 139010,
+            is_trade: false,
+            is_bid: true,
+            price: 0.0703629,
+            size: 7.65064249
+        };
+        assert_eq!(target, parse_line(&string).unwrap());
 
 
-    let string1 = "1505177459.650, 139010, t, f, 0.0703620, 7.65064240;";
-    let target1 = dtf::Update {
-        ts: 1505177459650,
-        seq: 139010,
-        is_trade: true,
-        is_bid: false,
-        price: 0.0703620,
-        size: 7.65064240
-    };
-    assert_eq!(target1, parse_line(&string1).unwrap());
+        let string1 = "1505177459.650, 139010, t, f, 0.0703620, 7.65064240;";
+        let target1 = dtf::Update {
+            ts: 1505177459650,
+            seq: 139010,
+            is_trade: true,
+            is_bid: false,
+            price: 0.0703620,
+            size: 7.65064240
+        };
+        assert_eq!(target1, parse_line(&string1).unwrap());
+    }
 }

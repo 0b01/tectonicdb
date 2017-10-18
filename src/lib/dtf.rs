@@ -330,7 +330,6 @@ pub fn decode(fname: &str) -> Vec<Update> {
     v
 }
 
-//TODO:
 pub fn append(fname: &str, ups : &[Update]) {
 
     let (ups, new_max_ts, cur_len) = {
@@ -374,223 +373,223 @@ pub fn append(fname: &str, ups : &[Update]) {
 }
 
 #[cfg(test)]
-fn sample_data() -> Vec<Update> {
-    let mut ts : Vec<Update> = vec![];
-    let t = Update {
-        ts: 100,
-        seq: 113,
-        is_trade: false,
-        is_bid: false,
-        price: 5100.01,
-        size: 1.14564564645,
-    };
-    let t1 = Update {
-        ts: 101,
-        seq: 113,
-        is_trade: false,
-        is_bid: false,
-        price: 5100.01,
-        size: 2.14564564645,
-    };
-    let t2 = Update {
-        ts: 1000000,
-        seq: 113,
-        is_trade: true,
-        is_bid: false,
-        price: 5100.01,
-        size: 1.123465,
-    };
-    ts.push(t);
-    ts.push(t1);
-    ts.push(t2);
+mod tests {
+    use super::*;
+    fn sample_data() -> Vec<Update> {
+        let mut ts : Vec<Update> = vec![];
+        let t = Update {
+            ts: 100,
+            seq: 113,
+            is_trade: false,
+            is_bid: false,
+            price: 5100.01,
+            size: 1.14564564645,
+        };
+        let t1 = Update {
+            ts: 101,
+            seq: 113,
+            is_trade: false,
+            is_bid: false,
+            price: 5100.01,
+            size: 2.14564564645,
+        };
+        let t2 = Update {
+            ts: 1000000,
+            seq: 113,
+            is_trade: true,
+            is_bid: false,
+            price: 5100.01,
+            size: 1.123465,
+        };
+        ts.push(t);
+        ts.push(t1);
+        ts.push(t2);
 
-    ts.sort();
-    ts
-}
+        ts.sort();
+        ts
+    }
 
-#[cfg(test)]
-fn sample_data_one_item() -> Vec<Update> {
-    let mut ts : Vec<Update> = vec![];
-    let t = Update {
-        ts: 100,
-        seq: 113,
-        is_trade: false,
-        is_bid: false,
-        price: 5100.01,
-        size: 1.14564564645,
-    };
-    ts.push(t);
+    fn sample_data_one_item() -> Vec<Update> {
+        let mut ts : Vec<Update> = vec![];
+        let t = Update {
+            ts: 100,
+            seq: 113,
+            is_trade: false,
+            is_bid: false,
+            price: 5100.01,
+            size: 1.14564564645,
+        };
+        ts.push(t);
 
-    ts.sort();
-    ts
-}
+        ts.sort();
+        ts
+    }
 
+    fn sample_data_append() -> Vec<Update> {
+        let mut ts : Vec<Update> = vec![];
+        let t2 = Update {
+            ts: 00000002,
+            seq: 113,
+            is_trade: false,
+            is_bid: false,
+            price: 5100.01,
+            size: 1.14564564645,
+        };
+        let t1 = Update {
+            ts: 20000001,
+            seq: 113,
+            is_trade: false,
+            is_bid: false,
+            price: 5100.01,
+            size: 1.14564564645,
+        };
+        let t = Update {
+            ts: 20000000,
+            seq: 113,
+            is_trade: false,
+            is_bid: false,
+            price: 5100.01,
+            size: 1.14564564645,
+        };
+        ts.push(t);
+        ts.push(t1);
+        ts.push(t2);
+        ts.sort();
+        ts
+    }
 
-#[cfg(test)]
-fn sample_data_append() -> Vec<Update> {
-    let mut ts : Vec<Update> = vec![];
-    let t2 = Update {
-        ts: 00000002,
-        seq: 113,
-        is_trade: false,
-        is_bid: false,
-        price: 5100.01,
-        size: 1.14564564645,
-    };
-    let t1 = Update {
-        ts: 20000001,
-        seq: 113,
-        is_trade: false,
-        is_bid: false,
-        price: 5100.01,
-        size: 1.14564564645,
-    };
-    let t = Update {
-        ts: 20000000,
-        seq: 113,
-        is_trade: false,
-        is_bid: false,
-        price: 5100.01,
-        size: 1.14564564645,
-    };
-    ts.push(t);
-    ts.push(t1);
-    ts.push(t2);
-    ts.sort();
-    ts
-}
-#[cfg(test)]
-fn init () -> Vec<Update> {
-    let ts = sample_data();
+    fn init () -> Vec<Update> {
+        let ts = sample_data();
 
-    let fname = "test.dtf";
-    let symbol = "NEO_BTC";
+        let fname = "test.dtf";
+        let symbol = "NEO_BTC";
 
-    encode(fname, symbol, &ts);
+        encode(fname, symbol, &ts);
 
-    ts
-}
+        ts
+    }
 
-#[test]
-fn should_encode_decode_one_item() {
-    let ts = sample_data_one_item();
-    let fname = "test.dtf";
-    let symbol = "NEO_BTC";
-    encode(fname, symbol, &ts);
-    let decoded_updates = decode(fname);
-    assert_eq!(decoded_updates, ts);
-}
+    #[test]
+    fn should_encode_decode_one_item() {
+        let ts = sample_data_one_item();
+        let fname = "test.dtf";
+        let symbol = "NEO_BTC";
+        encode(fname, symbol, &ts);
+        let decoded_updates = decode(fname);
+        assert_eq!(decoded_updates, ts);
+    }
 
-#[test]
-fn should_encode_and_decode_file() {
-    let ts = init();
-    let fname = "test.dtf";
-    let decoded_updates = decode(fname);
-    assert_eq!(decoded_updates, ts);
-}
+    #[test]
+    fn should_encode_and_decode_file() {
+        let ts = init();
+        let fname = "test.dtf";
+        let decoded_updates = decode(fname);
+        assert_eq!(decoded_updates, ts);
+    }
 
-#[test]
-fn should_return_correct_symbol() {
-    init();
-    let fname = "test.dtf";
-    let mut rdr = file_reader(fname);
-    let sym = read_symbol(&mut rdr);
-    assert_eq!(sym, "NEO_BTC  ");
-}
+    #[test]
+    fn should_return_correct_symbol() {
+        init();
+        let fname = "test.dtf";
+        let mut rdr = file_reader(fname);
+        let sym = read_symbol(&mut rdr);
+        assert_eq!(sym, "NEO_BTC  ");
+    }
 
-#[test]
-fn should_return_first_record() {
-    let vs = init();
-    let fname = "test.dtf";
-    let mut rdr = file_reader(fname);
-    let v = read_first(&mut rdr);
-    assert_eq!(vs[0], v);
-}
+    #[test]
+    fn should_return_first_record() {
+        let vs = init();
+        let fname = "test.dtf";
+        let mut rdr = file_reader(fname);
+        let v = read_first(&mut rdr);
+        assert_eq!(vs[0], v);
+    }
 
-#[test]
-fn should_return_correct_num_of_items() {
-    let vs = init();
-    let fname = "test.dtf";
-    let mut rdr = file_reader(fname);
-    let len = read_len(&mut rdr);
-    assert_eq!(vs.len() as u64, len);
-}
+    #[test]
+    fn should_return_correct_num_of_items() {
+        let vs = init();
+        let fname = "test.dtf";
+        let mut rdr = file_reader(fname);
+        let len = read_len(&mut rdr);
+        assert_eq!(vs.len() as u64, len);
+    }
 
-#[test]
-fn should_return_max_ts() {
-    let vs = init();
-    let fname = "test.dtf";
-    let mut rdr = file_reader(fname);
-    let max_ts = read_max_ts(&mut rdr);
-    assert_eq!(max_ts, get_max_ts(&vs));
-}
+    #[test]
+    fn should_return_max_ts() {
+        let vs = init();
+        let fname = "test.dtf";
+        let mut rdr = file_reader(fname);
+        let max_ts = read_max_ts(&mut rdr);
+        assert_eq!(max_ts, get_max_ts(&vs));
+    }
 
-// #[cfg(test)]
-// fn init_real_data() -> Vec<Update> {
-//     use conf;
-//     use db;
-//     let conf = conf::get_config();
-//     let cxn_str : &String = conf.get("connection_string").unwrap();
-//     let updates : Vec<db::OrderBookUpdate> = db::run(&cxn_str);
-//     let mut mapped : Vec<Update> = updates.iter().map(|d| d.to_update()).collect();
-//     mapped.sort();
-//     mapped
-// }
+    // #[cfg(test)]
+    // fn init_real_data() -> Vec<Update> {
+    //     use conf;
+    //     use db;
+    //     let conf = conf::get_config();
+    //     let cxn_str : &String = conf.get("connection_string").unwrap();
+    //     let updates : Vec<db::OrderBookUpdate> = db::run(&cxn_str);
+    //     let mut mapped : Vec<Update> = updates.iter().map(|d| d.to_update()).collect();
+    //     mapped.sort();
+    //     mapped
+    // }
 
-// #[test]
-// fn should_work_with_real_data() {
-//     let mut vs = init_real_data();
-//     let fname = "real.dtf";
-//     let symbol = "NEO_BTC";
-//     encode(fname, symbol, &mut vs);
-//     let decoded_updates = decode(fname);
-//     assert_eq!(decoded_updates, vs);
-// }
+    // #[test]
+    // fn should_work_with_real_data() {
+    //     let mut vs = init_real_data();
+    //     let fname = "real.dtf";
+    //     let symbol = "NEO_BTC";
+    //     encode(fname, symbol, &mut vs);
+    //     let decoded_updates = decode(fname);
+    //     assert_eq!(decoded_updates, vs);
+    // }
 
-#[test]
-fn should_append_filtered_data() {
-    should_encode_and_decode_file();
+    #[test]
+    fn should_append_filtered_data() {
+        should_encode_and_decode_file();
 
-    println!("----DONE----");
+        println!("----DONE----");
 
-    let fname = "test.dtf";
-    let old_data = sample_data();
-    let old_max_ts = get_max_ts(&old_data);
-    let append_data : Vec<Update> = sample_data_append().into_iter().filter(|up| up.ts >= old_max_ts).collect();
-    let new_size = append_data.len() + old_data.len();
+        let fname = "test.dtf";
+        let old_data = sample_data();
+        let old_max_ts = get_max_ts(&old_data);
+        let append_data : Vec<Update> = sample_data_append().into_iter().filter(|up| up.ts >= old_max_ts).collect();
+        let new_size = append_data.len() + old_data.len();
 
-    append(fname, &append_data);
+        append(fname, &append_data);
 
-    println!("----APPENDED----");
+        println!("----APPENDED----");
 
-    let mut rdr = file_reader(fname);
+        let mut rdr = file_reader(fname);
 
-    // max_ts
-    let max_ts = read_max_ts(&mut rdr);
-    assert_eq!(max_ts, get_max_ts(&append_data));
+        // max_ts
+        let max_ts = read_max_ts(&mut rdr);
+        assert_eq!(max_ts, get_max_ts(&append_data));
 
-    // total len
-    let mut rdr = file_reader(fname);
-    let len = read_len(&mut rdr);
-    assert_eq!(new_size as u64, len);
+        // total len
+        let mut rdr = file_reader(fname);
+        let len = read_len(&mut rdr);
+        assert_eq!(new_size as u64, len);
 
-    let mut all_the_data = sample_data();
-    all_the_data.extend(append_data);
-    all_the_data.sort();
-    let decoded = decode(&fname);
-    assert_eq!(all_the_data, decoded);
-    
-}
+        let mut all_the_data = sample_data();
+        all_the_data.extend(append_data);
+        all_the_data.sort();
+        let decoded = decode(&fname);
+        assert_eq!(all_the_data, decoded);
+        
+    }
 
-#[test]
-fn should_speak_json() {
-    let t1 = Update {
-        ts: 20000001,
-        seq: 113,
-        is_trade: false,
-        is_bid: false,
-        price: 5100.01,
-        size: 1.14564564645,
-    };
-    assert_eq!(r#"{"ts":20000.001,"seq":113,"is_trade":false,"is_bid":false,"price":5100.01,"size":1.1456456}"#, t1.to_json());
+    #[test]
+    fn should_speak_json() {
+        let t1 = Update {
+            ts: 20000001,
+            seq: 113,
+            is_trade: false,
+            is_bid: false,
+            price: 5100.01,
+            size: 1.14564564645,
+        };
+        assert_eq!(r#"{"ts":20000.001,"seq":113,"is_trade":false,"is_bid":false,"price":5100.01,"size":1.1456456}"#, t1.to_json());
+    }
 }

@@ -9,19 +9,19 @@ use std::error::Error;
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::net::TcpStream;
-use std::thread;
 use std::str;
 
 use state::*;
 use utils;
 use handler;
 use settings::Settings;
+use threadpool::ThreadPool;
 
 
 fn handle_client(mut stream: TcpStream, settings : &Settings) {
     let dtf_folder = &settings.dtf_folder;
     utils::create_dir_if_not_exist(&dtf_folder);
-    let mut state = init_state(&settings, &dtf_folder);
+    let mut state = State::new(&settings, &dtf_folder);
     utils::init_dbs(&dtf_folder, &mut state);
 
     let mut buf = [0; 2048];
@@ -71,10 +71,12 @@ pub fn run_server(host : &str, port : &str, verbosity : u64, settings: &Settings
         println!("Listening on addr: {}", addr);
     }
 
+    let pool = ThreadPool::new(4);
+
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         let settings_copy = settings.clone();
-        thread::spawn(move || {
+        pool.execute(move || {
             handle_client(stream, &settings_copy);
         });
     }

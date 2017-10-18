@@ -88,6 +88,7 @@ pub struct State {
     pub current_store_name: String,
     pub settings: Settings
 }
+
 impl State {
 
     pub fn info(&self) -> String {
@@ -207,24 +208,22 @@ impl State {
         }
     }
 
-}
-
-
-pub fn init_state(settings: &Settings, dtf_folder: &str) -> State {
-    let mut state = State {
-        current_store_name: "default".to_owned(),
-        is_adding: false,
-        store: HashMap::new(),
-        settings: settings.clone()
-    };
-    let default_file = format!("{}/default.dtf", settings.dtf_folder);
-    let default_in_memory = !Path::new(&default_file).exists();
-    state.store.insert("default".to_owned(), Store {
-        name: "default".to_owned(),
-        v: Vec::new(),
-        size: 0,
-        in_memory: default_in_memory,
-        folder: dtf_folder.to_owned(),
-    });
-    state
+    pub fn new(settings: &Settings, dtf_folder: &str) -> State {
+        let mut state = State {
+            current_store_name: "default".to_owned(),
+            is_adding: false,
+            store: HashMap::new(),
+            settings: settings.clone()
+        };
+        let default_file = format!("{}/default.dtf", settings.dtf_folder);
+        let default_in_memory = !Path::new(&default_file).exists();
+        state.store.insert("default".to_owned(), Store {
+            name: "default".to_owned(),
+            v: Vec::new(),
+            size: 0,
+            in_memory: default_in_memory,
+            folder: dtf_folder.to_owned(),
+        });
+        state
+    }
 }
