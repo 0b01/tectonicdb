@@ -32,6 +32,7 @@ pub struct Store {
     pub global: Global
 }
 
+/// An atomic reference counter for accessing shared data.
 pub type Global = Arc<RwLock<SharedState>>;
 
 impl Store {
@@ -99,16 +100,40 @@ impl Store {
 }
 
 
+
+
 /// Each client gets its own State
 pub struct State {
+    /// Is inside a BULKADD operation?
     pub is_adding: bool,
+
+    /// mapping store_name -> Store
     pub store: HashMap<String, Store>,
+
+    /// the current STORE client is using 
     pub current_store_name: String,
+
+    /// shared data
     pub global: Global
 }
 
 impl State {
-
+    /// Get information about the server
+    /// 
+    /// Returns a JSON string.
+    /// 
+    /// {
+    ///     "meta":
+    ///     {
+    ///         "cxns": 10 // current number of connected clients 
+    ///     },
+    ///     "stores":
+    ///     {
+    ///         "name": "something", // name of the store
+    ///         "in_memory": true, // if the file is read into memory
+    ///         "count": 10 // number of rows in this store
+    ///     }
+    /// }
     pub fn info(&self) -> String {
         let info_vec : Vec<String> = self.store.values().map(|store| {
             format!(r#"{{"name": "{}", "in_memory": {}, "count": {}}}"#, store.name, store.in_memory, store.size)
@@ -120,6 +145,7 @@ impl State {
         ret
     }
 
+    /// Insert a row into store
     pub fn insert(&mut self, up: dtf::Update, store_name : &str) -> Option<()> {
         match self.store.get_mut(store_name) {
             Some(store) => {
@@ -130,11 +156,13 @@ impl State {
         }
     }
 
+    /// Insert a row into current store.
     pub fn add(&mut self, up: dtf::Update) {
         let current_store = self.get_current_store();
         current_store.add(up);
     }
 
+    /// Saves current store into disk after n items is inserted.
     pub fn autoflush(&mut self, flush_interval: u32) {
         let current_store = self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
         if current_store.size % u64::from(flush_interval) == 0 {
@@ -144,22 +172,26 @@ impl State {
         }
     }
 
-    pub fn create(&mut self, dbname: &str) {
+    /// Create a new store
+    pub fn create(&mut self, store_name: &str) {
+        // insert a vector into shared hashmap
         {
             let mut global = self.global.write().unwrap();
-            global.vec_store.insert(dbname.to_owned(), Vec::new());
+            global.vec_store.insert(store_name.to_owned(), Vec::new());
         }
-        self.store.insert(dbname.to_owned(), Store {
-            name: dbname.to_owned(),
+        // insert a store into client state hashmap
+        self.store.insert(store_name.to_owned(), Store {
+            name: store_name.to_owned(),
             size: 0,
             in_memory: false,
             global: self.global.clone()
         });
     }
 
-    pub fn use_db(&mut self, dbname: &str) -> Option<()> {
-        if self.store.contains_key(dbname) {
-            self.current_store_name = dbname.to_owned();
+    /// load a datastore file into memory
+    pub fn use_db(&mut self, store_name: &str) -> Option<()> {
+        if self.store.contains_key(store_name) {
+            self.current_store_name = store_name.to_owned();
             let current_store = self.get_current_store();
             current_store.load();
             Some(())
@@ -168,11 +200,20 @@ impl State {
         }
     }
 
+    fn read_lock<F: FnOnce(&[dtf::Update]) -> String>(&self, f: F) -> String {
+        let shared_state = self.global.read().unwrap();
+        let vecs = shared_state.vec_store
+                    .get(&self.current_store_name)
+                    .expect("Key is not in hashmap");
+        f(vecs)
+    }
+
+    /// returns every row formatted as JSON
     pub fn get_all_as_json(&mut self) -> String {
-        let rdr = self.global.read().unwrap();
-        let vecs = rdr.vec_store.get(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
-        let json = dtf::update_vec_to_json(vecs);
-        format!("[{}]\n", json)
+        self.read_lock(|vecs| {
+            let json = dtf::update_vec_to_json(vecs);
+            format!("[{}]\n", json)
+        })
     }
 
     pub fn get_n_as_json(&mut self, count: i32) -> Option<String> {
@@ -182,10 +223,10 @@ impl State {
                 return None
             }
         }
-        let rdr = self.global.read().unwrap();
-        let vecs = rdr.vec_store.get(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
-        let json = dtf::update_vec_to_json(&vecs[..count as usize]);
-        let json = format!("[{}]\n", json);
+        let json = self.read_lock(|vecs| {
+            let json = dtf::update_vec_to_json(&vecs[..count as usize]);
+            format!("[{}]\n", json)
+        });
         Some(json)
     }
 
@@ -255,11 +296,11 @@ impl State {
         });
 
         let rdr = global.read().unwrap();
-        for (dbname, vec) in &rdr.vec_store {
-            let fname = format!("{}/{}.dtf", dtf_folder, dbname);
+        for (store_name, vec) in &rdr.vec_store {
+            let fname = format!("{}/{}.dtf", dtf_folder, store_name);
             let in_memory = !Path::new(&fname).exists();
-            state.store.insert(dbname.to_owned(), Store {
-                name: dbname.to_owned(),
+            state.store.insert(store_name.to_owned(), Store {
+                name: store_name.to_owned(),
                 size: vec.len() as u64,
                 in_memory: in_memory,
                 global: global.clone()

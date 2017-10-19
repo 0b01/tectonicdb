@@ -1,9 +1,9 @@
 [package]
 name = "tectonicdb"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Ricky Han <rickylqhan@gmail.com>"]
 description = "fast datastore server for contiguous order book ticks"
-repository = "https://github.com/rickyhan/tectonic"
+repository = "https://github.com/rickyhan/tectonicdb"
 keywords = ["finance", "datastore", "database", "financial"]
 category = "Database"
 license = "MIT"
