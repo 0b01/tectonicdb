@@ -7,6 +7,7 @@ use dtf;
 /// into an `Update` struct.
 /// 
 pub fn parse_line(string : &str) -> Option<dtf::Update> {
+    println!("PARSING:\t{}", string);
     let mut u = dtf::Update { ts : 0, seq : 0, is_bid : false, is_trade : false, price : -0.1, size : -0.1 };
     let mut buf : String = String::new();
     let mut count = 0;
@@ -43,11 +44,16 @@ pub fn parse_line(string : &str) -> Option<dtf::Update> {
     }
 }
 
-/// returns Option<Update, dbname>
-pub fn parse_add_into(string: &str) -> Option<(dtf::Update, String)> {
+pub fn parse_dbname(string: &str) -> (usize, &str) {
     let into_indices : Vec<_> = string.match_indices(" INTO ").collect();
     let (index, _) = into_indices[0];
     let dbname = &string[(index+6)..];
+    (index, dbname)
+}
+
+/// returns Option<Update, dbname>
+pub fn parse_add_into(string: &str) -> Option<(dtf::Update, String)> {
+    let (index, dbname) = parse_dbname(string);
     let data_string : &str = &string[3..(index)];
     match parse_line(data_string) {
         Some(up) => Some((up, dbname.to_owned())),

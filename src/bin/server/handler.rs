@@ -7,30 +7,28 @@ BULKADD ...; DDAKLUB
 FLUSH, FLUSHALL, GETALL, GET [count], CLEAR
 ";
 
-
-fn autoflush(global: &Global, state: &mut State) {
-    let rdr = global.read().unwrap();
-    let settings = &rdr.settings;
-    if settings.autoflush {
-        state.autoflush(settings.flush_interval);
-    }
-}
-
-pub fn gen_response(string : &str, state: &mut State, global: &Global) -> (Option<String>, Option<Vec<u8>>, Option<String>) {
+pub fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec<u8>>, Option<String>) {
     match string {
         "" => (Some("".to_owned()), None, None),
         "PING" => (Some("PONG.\n".to_owned()), None, None),
         "HELP" => (Some(HELP_STR.to_owned()), None, None),
         "INFO" => (Some(state.info()), None, None),
-        "BULKADD" => { state.is_adding = true; (Some("".to_owned()), None, None) },
-        "DDAKLUB" => { state.is_adding = false; (Some("1\n".to_owned()), None, None) },
-        "GET ALL AS JSON" => (Some(state.get_all_as_json()), None, None),
+        "BULKADD" => {
+            state.is_adding = true;
+            (Some("".to_owned()), None, None)
+        },
+        "DDAKLUB" => {
+            state.is_adding = false;
+            state.bulkadd_db = None;
+            (Some("1\n".to_owned()), None, None)
+        },
         "GET ALL" =>  {
             match state.get(-1) {
                 Some(bytes) => (None, Some(bytes), None),
                 None => (None, None, Some("Failed to GET ALL.".to_owned()))
             }
         },
+        "GET ALL AS JSON" => (Some(state.get_all_as_json()), None, None),
         "CLEAR" => { state.clear(); (Some("1\n".to_owned()), None, None) },
         "CLEAR ALL" => {
             state.clearall();
@@ -51,12 +49,19 @@ pub fn gen_response(string : &str, state: &mut State, global: &Global) -> (Optio
                 match parsed {
                     Some(up) => {
                         state.add(up);
-                        autoflush(global, state);
+                        state.autoflush();
                         (Some("".to_owned()), None, None)
                     }
                     None => return (None, None, Some("Unable to parse line in BULKALL".to_owned()))
                 }
             } else
+
+            if string.starts_with("BULKADD INTO ") {
+                let (_index, dbname) = parser::parse_dbname(string);
+                state.bulkadd_db = Some(dbname.to_owned());
+                state.is_adding = true;
+                (Some("".to_owned()), None, None)
+            } else 
 
             if string.starts_with("ADD ") {
                 let parsed = if string.contains(" INTO ") {
@@ -73,7 +78,7 @@ pub fn gen_response(string : &str, state: &mut State, global: &Global) -> (Optio
                     Some((up, dbname)) => {
                         match state.insert(up, &dbname) {
                             Some(()) => {
-                                autoflush(global, state);
+                                state.autoflush();
                                 (Some("1\n".to_owned()), None, None)
                             }
                             None => {

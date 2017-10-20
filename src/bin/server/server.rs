@@ -19,19 +19,25 @@ use threadpool::ThreadPool;
 use std::sync::{Arc, RwLock};
 
 
-fn handle_client(mut stream: TcpStream, settings : &Settings, global: &Arc<RwLock<SharedState>>) {
+fn handle_client(mut stream: TcpStream, global: &Arc<RwLock<SharedState>>) {
+    let settings = {
+        let shared_state = global.read().unwrap();
+        &shared_state.settings.clone()
+    };
     let dtf_folder = &settings.dtf_folder;
     utils::create_dir_if_not_exist(&dtf_folder);
+
     let mut state = State::new(global);
-    utils::init_dbs(&dtf_folder, &mut state);
+    utils::init_dbs(&mut state);
 
     let mut buf = [0; 2048];
     loop {
         let bytes_read = stream.read(&mut buf).unwrap();
         if bytes_read == 0 { break }
         let req = str::from_utf8(&buf[..(bytes_read-1)]).unwrap();
+        println!("Received:\t{:?}", req);
 
-        let resp = handler::gen_response(&req, &mut state, &global);
+        let resp = handler::gen_response(&req, &mut state);
         match resp {
             (Some(str_resp), None, _) => {
                 stream.write_u8(0x1).unwrap();
@@ -73,17 +79,14 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
     }
 
     let pool = ThreadPool::new(settings.threads);
-
     let global = Arc::new(RwLock::new(SharedState::new(settings.clone()))); 
+
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-
-        let settings_copy = settings.clone();
         let global_copy = global.clone();
-
         pool.execute(move || {
             on_connect(&global_copy);
-            handle_client(stream, &settings_copy, &global_copy);
+            handle_client(stream, &global_copy);
             on_disconnect(&global_copy);
         });
     }

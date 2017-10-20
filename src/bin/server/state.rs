@@ -28,7 +28,6 @@ use std::sync::{Arc, RwLock};
 pub struct Store {
     pub name: String,
     pub in_memory: bool,
-    pub size: u64,
     pub global: Global
 }
 
@@ -38,10 +37,11 @@ pub type Global = Arc<RwLock<SharedState>>;
 impl Store {
     /// Push a new `Update` into the vec
     pub fn add(&mut self, new_vec : dtf::Update) {
-        self.size += 1;
         let mut rdr = self.global.write().unwrap();
-        let vecs = (*rdr).vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
-        vecs.push(new_vec);
+        let vecs = rdr.vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
+
+        vecs.0.push(new_vec);
+        vecs.1 += 1;
     }
 
     /// write items stored in memory into file
@@ -54,27 +54,27 @@ impl Store {
         let fname = format!("{}/{}.dtf", &folder, self.name);
         utils::create_dir_if_not_exist(&folder);
         if Path::new(&fname).exists() {
-            let mut rdr = self.global.write().unwrap();
-            let vecs = rdr.vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
-            dtf::append(&fname, vecs);
+            let rdr = self.global.read().unwrap();
+            let vecs = rdr.vec_store.get(&self.name).expect("KEY IS NOT IN HASHMAP");
+            dtf::append(&fname, &vecs.0);
             return Some(true);
         } else {
-            let mut rdr = self.global.write().unwrap();
-            let vecs = (*rdr).vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
-            dtf::encode(&fname, &self.name /*XXX*/, vecs);
+            let rdr = self.global.read().unwrap();
+            let vecs = rdr.vec_store.get(&self.name).expect("KEY IS NOT IN HASHMAP");
+            dtf::encode(&fname, &self.name /*XXX*/, &vecs.0);
         }
         Some(true)
     }
 
     /// load items from dtf file
-    pub fn load(&mut self) {
+    fn load(&mut self) {
         let folder = self.global.read().unwrap().settings.dtf_folder.to_owned();
         let fname = format!("{}/{}.dtf", &folder, self.name);
         if Path::new(&fname).exists() && !self.in_memory {
             let ups = dtf::decode(&fname);
-            self.size = ups.len() as u64;
             let mut wtr = self.global.write().unwrap();
-            (*wtr).vec_store.insert(self.name.to_owned(), ups);
+            let size = ups.len() as u64;
+            wtr.vec_store.insert(self.name.to_owned(), (ups, size));
             self.in_memory = true;
         }
     }
@@ -83,8 +83,14 @@ impl Store {
     pub fn load_size_from_file(&mut self) {
         let rdr = self.global.read().unwrap();
         let folder = (*rdr).settings.dtf_folder.to_owned();
-        let header_size = dtf::get_size(&format!("{}/{}.dtf", &folder, self.name));
-        self.size = header_size;
+        let fname = format!("{}/{}.dtf", &folder, self.name);
+        let header_size = dtf::get_size(&fname);
+        
+        let mut wtr = self.global.write().unwrap();
+        wtr.vec_store
+            .get_mut(&self.name)
+            .expect("Key is not in vec_store")
+            .1 = header_size;
     }
 
     /// clear the vector. toggle in_memory. update size
@@ -92,7 +98,7 @@ impl Store {
         {
             let mut rdr = self.global.write().unwrap();
             let vecs = (*rdr).vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
-            vecs.clear();
+            vecs.0.clear();
         }
         self.in_memory = false;
         self.load_size_from_file();
@@ -106,6 +112,9 @@ impl Store {
 pub struct State {
     /// Is inside a BULKADD operation?
     pub is_adding: bool,
+
+    /// Current selected db using `BULKADD INTO [db]`
+    pub bulkadd_db: Option<String>,
 
     /// mapping store_name -> Store
     pub store: HashMap<String, Store>,
@@ -135,8 +144,12 @@ impl State {
     ///     }
     /// }
     pub fn info(&self) -> String {
-        let info_vec : Vec<String> = self.store.values().map(|store| {
-            format!(r#"{{"name": "{}", "in_memory": {}, "count": {}}}"#, store.name, store.in_memory, store.size)
+        let rdr = self.global.read().unwrap();
+        let info_vec : Vec<String> = rdr.vec_store.iter().map(|i| {
+            let (key, value) = i;
+            let vecs = &value.0;
+            let size = value.1;
+            format!(r#"{{"name": "{}", "in_memory": {}, "count": {}}}"#, key, (vecs.len()>0), size)
         }).collect();
         let rdr = self.global.read().unwrap();
         let metadata = format!(r#"{{"cxns": {}}}"#, rdr.connections);
@@ -163,10 +176,20 @@ impl State {
     }
 
     /// Saves current store into disk after n items is inserted.
-    pub fn autoflush(&mut self, flush_interval: u32) {
+    pub fn autoflush(&mut self) {
+        let (is_autoflush, flush_interval, size) = {
+            let shared_state = self.global.read().unwrap();
+            let is_autoflush = shared_state.settings.autoflush;
+            let flush_interval = shared_state.settings.flush_interval;
+            let size = shared_state.vec_store
+                        .get(&self.current_store_name)
+                        .expect("Key is not in vec_store")
+                        .1;
+            (is_autoflush, flush_interval, size)
+        };
         let current_store = self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
-        if current_store.size % u64::from(flush_interval) == 0 {
-            println!("(AUTO) FLUSHING!");
+        if is_autoflush && size % u64::from(flush_interval) == 0 {
+            println!("[DEBUG] (AUTO) FLUSHING!");
             current_store.flush();
             current_store.load_size_from_file();
         }
@@ -177,12 +200,11 @@ impl State {
         // insert a vector into shared hashmap
         {
             let mut global = self.global.write().unwrap();
-            global.vec_store.insert(store_name.to_owned(), Vec::new());
+            global.vec_store.insert(store_name.to_owned(), (Vec::new(), 0));
         }
         // insert a store into client state hashmap
         self.store.insert(store_name.to_owned(), Store {
             name: store_name.to_owned(),
-            size: 0,
             in_memory: false,
             global: self.global.clone()
         });
@@ -200,33 +222,37 @@ impl State {
         }
     }
 
-    fn read_lock<F: FnOnce(&[dtf::Update]) -> String>(&self, f: F) -> String {
-        let shared_state = self.global.read().unwrap();
-        let vecs = shared_state.vec_store
-                    .get(&self.current_store_name)
-                    .expect("Key is not in hashmap");
-        f(vecs)
-    }
-
     /// returns every row formatted as JSON
     pub fn get_all_as_json(&mut self) -> String {
-        self.read_lock(|vecs| {
-            let json = dtf::update_vec_to_json(vecs);
-            format!("[{}]\n", json)
-        })
+        let shared_state = self.global.read().unwrap();
+        let vecs = &shared_state.vec_store
+                    .get(&self.current_store_name)
+                    .expect("Key is not in vec_store")
+                    .0;
+        let json = dtf::update_vec_to_json(vecs);
+        format!("[{}]\n", json)
     }
 
     pub fn get_n_as_json(&mut self, count: i32) -> Option<String> {
         {
-            let current_store = self.get_current_store();
-            if (current_store.size as i32) <= count || current_store.size == 0 {
+            let shared_state = self.global.read().unwrap();
+            let size = shared_state.vec_store
+                        .get(&self.current_store_name)
+                        .expect("Key is not in vec_store")
+                        .1;
+
+            if (size as i32) <= count || size == 0 {
                 return None
             }
         }
-        let json = self.read_lock(|vecs| {
-            let json = dtf::update_vec_to_json(&vecs[..count as usize]);
-            format!("[{}]\n", json)
-        });
+
+        let shared_state = self.global.read().unwrap();
+        let vecs = &shared_state.vec_store
+                    .get(&self.current_store_name)
+                    .expect("Key is not in vec_store")
+                    .0;
+        let json = dtf::update_vec_to_json(&vecs[..count as usize]);
+        let json = format!("[{}]\n", json);
         Some(json)
     }
 
@@ -257,8 +283,13 @@ impl State {
     pub fn get(&mut self, count : i32) -> Option<Vec<u8>> {
         let mut bytes : Vec<u8> = Vec::new();
         {
-            let current_store = self.get_current_store(); 
-            if (current_store.size as i32) < count || current_store.size == 0 {
+            let shared_state = self.global.read().unwrap();
+            let size = shared_state.vec_store
+                        .get(&self.current_store_name)
+                        .expect("Key is not in vec_store")
+                        .1;
+
+            if (size as i32) <= count || size == 0 {
                 return None
             }
         }
@@ -267,10 +298,10 @@ impl State {
         let vecs = rdr.vec_store.get(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
         match count {
             -1 => {
-                dtf::write_batches(&mut bytes, &vecs);
+                dtf::write_batches(&mut bytes, &vecs.0);
             },
             _ => {
-                dtf::write_batches(&mut bytes, &vecs[..count as usize]);
+                dtf::write_batches(&mut bytes, &vecs.0[..count as usize]);
             }
         }
         Some(bytes)
@@ -280,6 +311,7 @@ impl State {
         let dtf_folder: &str = &global.read().unwrap().settings.dtf_folder;
         let mut state = State {
             current_store_name: "default".to_owned(),
+            bulkadd_db: None,
             is_adding: false,
             store: HashMap::new(),
             global: global.clone()
@@ -290,18 +322,16 @@ impl State {
         let default_in_memory = !Path::new(&default_file).exists();
         state.store.insert("default".to_owned(), Store {
             name: "default".to_owned(),
-            size: 0,
             in_memory: default_in_memory,
             global: global.clone()
         });
 
         let rdr = global.read().unwrap();
-        for (store_name, vec) in &rdr.vec_store {
+        for (store_name, _vec) in &rdr.vec_store {
             let fname = format!("{}/{}.dtf", dtf_folder, store_name);
             let in_memory = !Path::new(&fname).exists();
             state.store.insert(store_name.to_owned(), Store {
                 name: store_name.to_owned(),
-                size: vec.len() as u64,
                 in_memory: in_memory,
                 global: global.clone()
             });
@@ -310,17 +340,19 @@ impl State {
     }
 }
 
+pub type VecStore = (Vec<dtf::Update>, u64);
+
 #[derive(Debug)]
 pub struct SharedState {
     pub connections: u16,
     pub settings: Settings,
-    pub vec_store: HashMap<String, Vec<dtf::Update>>,
+    pub vec_store: HashMap<String, VecStore>,
 }
 
 impl SharedState {
     pub fn new(settings: Settings) -> SharedState {
         let mut hashmap = HashMap::new();
-        hashmap.insert("default".to_owned(), Vec::new());
+        hashmap.insert("default".to_owned(), (Vec::new(),0) );
         SharedState {
             connections: 0,
             settings,
