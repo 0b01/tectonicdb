@@ -7,7 +7,9 @@ BULKADD ...; DDAKLUB
 FLUSH, FLUSHALL, GETALL, GET [count], CLEAR
 ";
 
-pub fn gen_response(string : &str, state: &mut State) -> (Option<String>, Option<Vec<u8>>, Option<String>) {
+pub type Response = (Option<String>, Option<Vec<u8>>, Option<String>);
+
+pub fn gen_response(string : &str, state: &mut State) -> Response {
     match string {
         "" => (Some("".to_owned()), None, None),
         "PING" => (Some("PONG.\n".to_owned()), None, None),

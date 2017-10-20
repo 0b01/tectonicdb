@@ -3,7 +3,7 @@
 /// List of commands:
 /// -------------------------------------------
 
-use byteorder::{BigEndian, WriteBytesExt, /*ReadBytesExt*/};
+use byteorder::{WriteBytesExt, NetworkEndian, /*ReadBytesExt*/ };
 
 use std::error::Error;
 use std::io::{Read, Write};
@@ -18,6 +18,26 @@ use settings::Settings;
 use threadpool::ThreadPool;
 use std::sync::{Arc, RwLock};
 
+fn respond(mut stream: &TcpStream, resp: handler::Response) {
+    match resp {
+        (Some(str_resp), None, _) => {
+            stream.write_u8(0x1).unwrap();
+            stream.write_u64::<NetworkEndian>(str_resp.len() as u64).unwrap();
+            stream.write(str_resp.as_bytes()).unwrap()
+        },
+        (None, Some(bytes), _) => {
+            stream.write_u8(0x1).unwrap();
+            stream.write(&bytes).unwrap()
+        },
+        (None, None, Some(errmsg)) => {
+            stream.write_u8(0x0).unwrap();
+            let ret = format!("ERR: {}\n", errmsg);
+            stream.write_u64::<NetworkEndian>(ret.len() as u64).unwrap();
+            stream.write(ret.as_bytes()).unwrap()
+        },
+        _ => panic!("IMPOSSIBLE")
+    };
+}
 
 fn handle_client(mut stream: TcpStream, global: &Arc<RwLock<SharedState>>) {
     let settings = {
@@ -35,27 +55,11 @@ fn handle_client(mut stream: TcpStream, global: &Arc<RwLock<SharedState>>) {
         let bytes_read = stream.read(&mut buf).unwrap();
         if bytes_read == 0 { break }
         let req = str::from_utf8(&buf[..(bytes_read-1)]).unwrap();
-        println!("Received:\t{:?}", req);
-
-        let resp = handler::gen_response(&req, &mut state);
-        match resp {
-            (Some(str_resp), None, _) => {
-                stream.write_u8(0x1).unwrap();
-                stream.write_u64::<BigEndian>(str_resp.len() as u64).unwrap();
-                stream.write(str_resp.as_bytes()).unwrap()
-            },
-            (None, Some(bytes), _) => {
-                stream.write_u8(0x1).unwrap();
-                stream.write(&bytes).unwrap()
-            },
-            (None, None, Some(errmsg)) => {
-                stream.write_u8(0x0).unwrap();
-                let ret = format!("ERR: {}\n", errmsg);
-                stream.write_u64::<BigEndian>(ret.len() as u64).unwrap();
-                stream.write(ret.as_bytes()).unwrap()
-            },
-            _ => panic!("IMPOSSIBLE")
-        };
+        for line in req.split('\n') {
+            println!("Received:\t{:?}", line);
+            let resp = handler::gen_response(&line, &mut state);
+            respond(&stream, resp);
+        }
     }
 }
 
