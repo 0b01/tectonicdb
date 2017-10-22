@@ -11,13 +11,13 @@ pub type Response = (Option<String>, Option<Vec<u8>>, Option<String>);
 
 pub fn gen_response(string : &str, state: &mut State) -> Response {
     match string {
-        "" => (Some("".to_owned()), None, None),
+        "" => (Some("\n".to_owned()), None, None),
         "PING" => (Some("PONG.\n".to_owned()), None, None),
         "HELP" => (Some(HELP_STR.to_owned()), None, None),
         "INFO" => (Some(state.info()), None, None),
         "BULKADD" => {
             state.is_adding = true;
-            (Some("".to_owned()), None, None)
+            (Some("\n".to_owned()), None, None)
         },
         "DDAKLUB" => {
             state.is_adding = false;
@@ -50,11 +50,19 @@ pub fn gen_response(string : &str, state: &mut State) -> Response {
                 let parsed = parser::parse_line(string);
                 match parsed {
                     Some(up) => {
-                        state.add(up);
+                        let current_db = state.bulkadd_db.clone();
+                        match current_db {
+                            Some(ref dbname) => {
+                                state.insert(up, &dbname);
+                            },
+                            None => {
+                                state.add(up);
+                            }
+                        };
                         state.autoflush();
-                        (Some("".to_owned()), None, None)
-                    }
-                    None => return (None, None, Some("Unable to parse line in BULKALL".to_owned()))
+                        (Some("\n".to_owned()), None, None)
+                    },
+                    None => return (None, None, Some("Unable to parse line in BULKADD".to_owned()))
                 }
             } else
 
@@ -62,7 +70,7 @@ pub fn gen_response(string : &str, state: &mut State) -> Response {
                 let (_index, dbname) = parser::parse_dbname(string);
                 state.bulkadd_db = Some(dbname.to_owned());
                 state.is_adding = true;
-                (Some("".to_owned()), None, None)
+                (Some("\n".to_owned()), None, None)
             } else 
 
             if string.starts_with("ADD ") {

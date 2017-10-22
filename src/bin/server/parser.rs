@@ -7,7 +7,6 @@ use dtf;
 /// into an `Update` struct.
 /// 
 pub fn parse_line(string : &str) -> Option<dtf::Update> {
-    println!("PARSING:\t{}", string);
     let mut u = dtf::Update { ts : 0, seq : 0, is_bid : false, is_trade : false, price : -0.1, size : -0.1 };
     let mut buf : String = String::new();
     let mut count = 0;
