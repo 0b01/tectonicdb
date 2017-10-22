@@ -241,7 +241,7 @@ impl State {
                         .expect("Key is not in vec_store")
                         .1;
 
-            if (size as i32) <= count || size == 0 {
+            if (size as i32) < count || size == 0 {
                 return None
             }
         }
@@ -289,7 +289,7 @@ impl State {
                         .expect("Key is not in vec_store")
                         .1;
 
-            if (size as i32) <= count || size == 0 {
+            if (size as i32) < count || size == 0 {
                 return None
             }
         }
