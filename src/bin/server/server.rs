@@ -56,7 +56,7 @@ fn handle_client(mut stream: TcpStream, global: &Arc<RwLock<SharedState>>) {
         if bytes_read == 0 { break }
         let req = str::from_utf8(&buf[..(bytes_read-1)]).unwrap();
         for line in req.split('\n') {
-            println!("Received:\t{:?}", line);
+            // println!("[DEBUG] Received:\t{:?}", line);
             let resp = handler::gen_response(&line, &mut state);
             respond(&stream, resp);
         }

@@ -21,7 +21,7 @@ fn main() {
     let verbosity = matches.occurrences_of("v") as u8;
     let autoflush = matches.is_present("autoflush");
     let flush_interval = matches.value_of("flush_interval").unwrap_or("1000");
-    let threads = matches.value_of("thread").unwrap_or("50");
+    let threads = matches.value_of("threads").unwrap_or("50");
 
     let settings = settings::Settings {
         autoflush: autoflush,

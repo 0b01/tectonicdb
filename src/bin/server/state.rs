@@ -4,6 +4,7 @@ use utils;
 use std::path::Path;
 use settings::Settings;
 use std::sync::{Arc, RwLock};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// name: *should* be the filename
 /// in_memory: are the updates read into memory?
@@ -81,10 +82,12 @@ impl Store {
 
     /// load size from file
     pub fn load_size_from_file(&mut self) {
-        let rdr = self.global.read().unwrap();
-        let folder = (*rdr).settings.dtf_folder.to_owned();
-        let fname = format!("{}/{}.dtf", &folder, self.name);
-        let header_size = dtf::get_size(&fname);
+        let header_size = {
+            let rdr = self.global.read().unwrap();
+            let folder = rdr.settings.dtf_folder.to_owned();
+            let fname = format!("{}/{}.dtf", &folder, self.name);
+            dtf::get_size(&fname)
+        };
         
         let mut wtr = self.global.write().unwrap();
         wtr.vec_store
@@ -99,6 +102,7 @@ impl Store {
             let mut rdr = self.global.write().unwrap();
             let vecs = (*rdr).vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
             vecs.0.clear();
+            vecs.1 = 0;
         }
         self.in_memory = false;
         self.load_size_from_file();
@@ -149,11 +153,42 @@ impl State {
             let (key, value) = i;
             let vecs = &value.0;
             let size = value.1;
-            format!(r#"{{"name": "{}", "in_memory": {}, "count": {}}}"#, key, (vecs.len()>0), size)
+            format!(r#"{{
+    "name": "{}",
+    "in_memory": {},
+    "count": {}
+  }}"#,
+                        key,
+                        !vecs.is_empty(),
+                        size
+                   )
         }).collect();
         let rdr = self.global.read().unwrap();
-        let metadata = format!(r#"{{"cxns": {}}}"#, rdr.connections);
-        let mut ret = format!(r#"{{"meta": {}, "dbs": [{}]}}"#, metadata, info_vec.join(", "));
+        let metadata = format!(r#"{{
+    "cxns": {},
+    "max_threads": {},
+    "ts": {},
+    "autoflush_enabled": {},
+    "autoflush_interval": {},
+    "dtf_folder": "{}"
+  }}"#,
+
+                rdr.connections,
+                rdr.settings.threads,
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .expect("Time went backwards")
+                    .as_secs(),
+                rdr.settings.autoflush,
+                rdr.settings.flush_interval,
+                rdr.settings.dtf_folder,
+            );
+        let mut ret = format!(r#"{{
+  "meta": {},
+  "dbs": [{}]
+}}"#,
+            metadata,
+            info_vec.join(", "));
         ret.push('\n');
         ret
     }
@@ -189,8 +224,9 @@ impl State {
         };
         let current_store = self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
         if is_autoflush && size % u64::from(flush_interval) == 0 {
-            println!("[DEBUG] (AUTO) FLUSHING!");
+            println!("[DEBUG] AUTOFLUSHING!");
             current_store.flush();
+            println!("[DEBUG] AUTOFLUSH OKAY!");
             current_store.load_size_from_file();
         }
     }

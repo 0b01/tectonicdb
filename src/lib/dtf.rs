@@ -189,7 +189,13 @@ pub fn write_batches(mut wtr: &mut Write, ups : &[Update]) {
     let mut count = 0;
 
     for elem in ups.iter() {
-        if count != 0 && (elem.ts >= ref_ts + 0xFFFF || elem.seq >= ref_seq + 255 || elem.seq < ref_seq) {
+        if count != 0 // if we got things to write
+        && (
+             elem.ts >= ref_ts + 0xFFFF // if still addressable (ref_ts is 4 bytes)
+          || elem.seq >= ref_seq + 0xF // ref_seq is 1 byte
+          || elem.seq < ref_seq // sometimes the data is scrambled, just write that line down
+          || elem.ts < ref_ts // ^
+         ) {
             write_reference(&mut wtr, ref_ts, ref_seq, count);
             let _ = wtr.write(buf.as_slice());
             buf.clear();
