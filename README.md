@@ -80,4 +80,4 @@ Language bindings:
 
 - [ ] Query by timestamp
 
-- [ ] Commandline inspection tool for dtf file format
+- [x] Commandline inspection tool for dtf file format
