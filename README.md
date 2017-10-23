@@ -65,13 +65,13 @@ Operating system:
 
 Language bindings:
 
+- [x] TypeScript (reference implementation)
+
 - [x] Rust
 
-- [x] Python
+- [ ] Python
 
-- [x] JavaScript
-
-- [x] TypeScript
+- [ ] JavaScript
 
 
 ## Additional Features

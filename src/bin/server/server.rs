@@ -25,9 +25,9 @@ fn respond(mut stream: &TcpStream, resp: handler::Response) {
             stream.write_u64::<NetworkEndian>(str_resp.len() as u64).unwrap();
             stream.write(str_resp.as_bytes()).unwrap()
         },
-        (None, Some(bytes), _) => {
+        (None, Some(bytes_resp), _) => {
             stream.write_u8(0x1).unwrap();
-            stream.write(&bytes).unwrap()
+            stream.write(&bytes_resp).unwrap()
         },
         (None, None, Some(errmsg)) => {
             stream.write_u8(0x0).unwrap();

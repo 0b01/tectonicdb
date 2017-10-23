@@ -32,6 +32,8 @@ pub fn gen_response(string : &str, state: &mut State) -> Response {
         },
         "GET ALL AS JSON" => (Some(state.get_all_as_json()), None, None),
         "CLEAR" => { state.clear(); (Some("1\n".to_owned()), None, None) },
+        "COUNT" => (Some(format!("{}\n", state.count())), None, None),
+        "COUNT ALL" => (Some(format!("{}\n", state.countall())), None, None),
         "CLEAR ALL" => {
             state.clearall();
             (Some("1\n".to_owned()), None, None)

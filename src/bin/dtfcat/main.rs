@@ -3,10 +3,6 @@ extern crate byteorder;
 extern crate dtf;
 
 use clap::{Arg, App};
-use std::net::TcpStream;
-use std::str;
-use byteorder::{BigEndian, /*WriteBytesExt, */ ReadBytesExt};
-use std::io::{self, Read, Write};
 
 fn main() {
         let matches = App::new("tectonic-cli")

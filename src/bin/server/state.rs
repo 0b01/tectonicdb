@@ -38,11 +38,17 @@ pub type Global = Arc<RwLock<SharedState>>;
 impl Store {
     /// Push a new `Update` into the vec
     pub fn add(&mut self, new_vec : dtf::Update) {
-        let mut rdr = self.global.write().unwrap();
-        let vecs = rdr.vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
+        let mut wtr = self.global.write().unwrap();
+        let vecs = wtr.vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
 
         vecs.0.push(new_vec);
         vecs.1 += 1;
+    }
+
+    pub fn count(&self) -> u64 {
+        let rdr = self.global.read().unwrap();
+        let vecs = rdr.vec_store.get(&self.name).expect("KEY IS NOT IN HASHMAP");
+        vecs.1
     }
 
     /// write items stored in memory into file
@@ -163,14 +169,16 @@ impl State {
                         size
                    )
         }).collect();
-        let rdr = self.global.read().unwrap();
+
+
         let metadata = format!(r#"{{
     "cxns": {},
     "max_threads": {},
     "ts": {},
     "autoflush_enabled": {},
     "autoflush_interval": {},
-    "dtf_folder": "{}"
+    "dtf_folder": "{}",
+    "total_count": {}
   }}"#,
 
                 rdr.connections,
@@ -182,6 +190,7 @@ impl State {
                 rdr.settings.autoflush,
                 rdr.settings.flush_interval,
                 rdr.settings.dtf_folder,
+                rdr.vec_store.iter().fold(0, |acc, (_name, tup)| acc + tup.1)
             );
         let mut ret = format!(r#"{{
   "meta": {},
@@ -266,6 +275,16 @@ impl State {
                     .0;
         let json = dtf::update_vec_to_json(vecs);
         format!("[{}]\n", json)
+    }
+
+    pub fn count(&mut self) -> u64 {
+        let store = self.get_current_store();
+        store.count() 
+    }
+
+    pub fn countall(&self) -> u64 {
+        let rdr = self.global.read().unwrap();
+        rdr.vec_store.iter().fold(0, |acc, (_name, tup)| acc + tup.1)
     }
 
     pub fn get_n_as_json(&mut self, count: i32) -> Option<String> {
