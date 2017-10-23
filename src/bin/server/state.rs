@@ -48,7 +48,7 @@ impl Store {
     /// write items stored in memory into file
     /// If file exists, use append which only appends a filtered set of updates whose timestamp is larger than the old timestamp
     /// If file doesn't exists, simply encode.
-    /// 
+    ///
     /// TODO: Need to figure out how to specify symbol (and exchange name).
     pub fn flush(&self) -> Option<bool> {
         let folder = self.global.read().unwrap().settings.dtf_folder.to_owned();
@@ -88,7 +88,7 @@ impl Store {
             let fname = format!("{}/{}.dtf", &folder, self.name);
             dtf::get_size(&fname)
         };
-        
+
         let mut wtr = self.global.write().unwrap();
         wtr.vec_store
             .get_mut(&self.name)
@@ -123,7 +123,7 @@ pub struct State {
     /// mapping store_name -> Store
     pub store: HashMap<String, Store>,
 
-    /// the current STORE client is using 
+    /// the current STORE client is using
     pub current_store_name: String,
 
     /// shared data
@@ -132,13 +132,13 @@ pub struct State {
 
 impl State {
     /// Get information about the server
-    /// 
+    ///
     /// Returns a JSON string.
-    /// 
+    ///
     /// {
     ///     "meta":
     ///     {
-    ///         "cxns": 10 // current number of connected clients 
+    ///         "cxns": 10 // current number of connected clients
     ///     },
     ///     "stores":
     ///     {
@@ -223,7 +223,7 @@ impl State {
             (is_autoflush, flush_interval, size)
         };
         let current_store = self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
-        if is_autoflush && size % u64::from(flush_interval) == 0 {
+        if is_autoflush && size != 0 && size % u64::from(flush_interval) == 0 {
             println!("[DEBUG] AUTOFLUSHING!");
             current_store.flush();
             println!("[DEBUG] AUTOFLUSH OKAY!");
@@ -305,7 +305,7 @@ impl State {
     pub fn flush(&mut self) {
         self.get_current_store().flush();
     }
-    
+
     pub fn flushall(&mut self) {
         for store in self.store.values() {
             store.flush();
