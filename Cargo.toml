@@ -30,6 +30,11 @@ name = "gen_dtfs"
 publish = false
 path = "src/bin/gen_dtfs/main.rs"
 
+[[bin]]
+name = "dtfcat"
+publish = true
+path = "src/bin/dtfcat/main.rs"
+
 [dependencies]
 byteorder = "1.1.0"
 postgres = "0.15"

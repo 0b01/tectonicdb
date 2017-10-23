@@ -33,6 +33,7 @@ use std::fs;
 use std::cmp::Ordering;
 use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
 use std::fs::File;
+use std::fmt;
 use std::io::{
     Write,
     Read,
@@ -59,6 +60,30 @@ pub struct Update {
     pub price: f32,
     pub size: f32,
 }
+
+pub struct Metadata {
+    pub symbol: String,
+    pub nums: u64,
+    pub max_ts: u64,
+    pub min_ts: u64
+}
+
+impl fmt::Display for Metadata {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, r#"{{
+  "symbol": "{}",
+  "nums": {},
+  "max_ts": {},
+  "min_ts": {}
+}}"#,
+    self.symbol,
+    self.nums,
+    self.max_ts,
+    self.min_ts 
+    )
+    }
+}
+
 
 bitflags! {
     struct Flags: u8 {
@@ -101,6 +126,16 @@ impl Update {
         format!(r#"{{"ts":{},"seq":{},"is_trade":{},"is_bid":{},"price":{},"size":{}}}"#,
                   (self.ts as f64) / 1000_f64, self.seq, self.is_trade, self.is_bid, self.price, self.size)
     }
+
+    pub fn to_csv(&self) -> String {
+        format!(r#"{},{},{},{},{},{}"#,
+                  (self.ts as f64) / 1000_f64, self.seq, self.is_trade, self.is_bid, self.price, self.size)
+    }
+}
+
+pub fn update_vec_to_csv(vecs: &[Update]) -> String {
+    let objects : Vec<String> = vecs.into_iter().map(|up| up.to_csv()).collect();
+    objects.join("\n")
 }
 
 pub fn update_vec_to_json(vecs: &[Update]) -> String {
@@ -317,13 +352,26 @@ pub fn get_size(fname: &str) -> u64 {
     read_len(&mut rdr)
 }
 
+pub fn read_meta(fname: &str) -> Metadata {
+    let mut rdr = file_reader(fname);
+    let symbol = read_symbol(&mut rdr); 
+    let nums = read_len(&mut rdr);
+    let max_ts = read_max_ts(&mut rdr);
+    let min_ts = read_min_ts(&mut rdr);
+
+    Metadata{
+        symbol,
+        nums,
+        max_ts,
+        min_ts
+    }
+
+}
+
 pub fn decode(fname: &str) -> Vec<Update> {
     let mut v : Vec<Update> = Vec::new();
-    let mut rdr = file_reader(fname);
-    let _symbol = read_symbol(&mut rdr); 
-    let _nums = read_len(&mut rdr);
-    let _max_ts = read_max_ts(&mut rdr);
 
+    let mut rdr = file_reader(fname);
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
 
     while let Ok(is_ref) = rdr.read_u8() {
