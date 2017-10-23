@@ -30,6 +30,7 @@ fn respond(mut stream: &TcpStream, resp: handler::Response) {
             stream.write(&bytes_resp).unwrap()
         },
         (None, None, Some(errmsg)) => {
+            error!("{}", errmsg.clone());
             stream.write_u8(0x0).unwrap();
             let ret = format!("ERR: {}\n", errmsg);
             stream.write_u64::<NetworkEndian>(ret.len() as u64).unwrap();
