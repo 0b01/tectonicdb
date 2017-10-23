@@ -202,6 +202,12 @@ impl State {
         ret
     }
 
+    pub fn perf(&self) -> String {
+        let rdr = self.global.read().unwrap();
+        let size_t = &rdr.history;
+        format!("{:?}\n", size_t)
+    }
+
     /// Insert a row into store
     pub fn insert(&mut self, up: dtf::Update, store_name : &str) -> Option<()> {
         match self.store.get_mut(store_name) {
@@ -221,22 +227,28 @@ impl State {
 
     /// Saves current store into disk after n items is inserted.
     pub fn autoflush(&mut self) {
-        let (is_autoflush, flush_interval, size) = {
-            let shared_state = self.global.read().unwrap();
-            let is_autoflush = shared_state.settings.autoflush;
-            let flush_interval = shared_state.settings.flush_interval;
-            let size = shared_state.vec_store
-                        .get(&self.current_store_name)
-                        .expect("Key is not in vec_store")
-                        .1;
-            (is_autoflush, flush_interval, size)
-        };
-        let current_store = self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
-        if is_autoflush && size != 0 && size % u64::from(flush_interval) == 0 {
-            debug!("AUTOFLUSHING!");
-            current_store.flush();
-            current_store.load_size_from_file();
+        let shared_state = self.global.read().unwrap();
+        let is_autoflush = shared_state.settings.autoflush;
+        let flush_interval = shared_state.settings.flush_interval;
+        let sizes : Vec<(&String, u64)> = shared_state.vec_store
+                                            .iter()
+                                            .map(|(k, v)| (k, v.1))
+                                            .collect();
+        for (name, size) in sizes {
+            if is_autoflush
+                && size != 0
+                && size % u64::from(flush_interval) == 0 {
+
+                let st = self.store
+                            .get_mut(name)
+                            .expect("KEY IS NOT IN HASHMAP");
+
+                debug!("AUTOFLUSHING!");
+                st.flush();
+                st.load_size_from_file();
+            }
         }
+
     }
 
     /// Create a new store
@@ -394,13 +406,18 @@ impl State {
     }
 }
 
+/// (updates, count)
 pub type VecStore = (Vec<dtf::Update>, u64);
+
+/// (time, total_count, name to size)
+pub type History= (SystemTime, u64, HashMap<String, u64>);
 
 #[derive(Debug)]
 pub struct SharedState {
     pub connections: u16,
     pub settings: Settings,
     pub vec_store: HashMap<String, VecStore>,
+    pub history: Vec<History>,
 }
 
 impl SharedState {
@@ -411,6 +428,7 @@ impl SharedState {
             connections: 0,
             settings,
             vec_store: hashmap,
+            history: Vec::new(),
         }
     }
 }

@@ -5,11 +5,12 @@
 
 use byteorder::{WriteBytesExt, NetworkEndian, /*ReadBytesExt*/ };
 
+use std::collections::HashMap;
+use std::{str, thread, time};
 use std::error::Error;
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::net::TcpStream;
-use std::str;
 
 use state::*;
 use utils;
@@ -40,7 +41,7 @@ fn respond(mut stream: &TcpStream, resp: handler::Response) {
     };
 }
 
-fn handle_client(mut stream: TcpStream, global: &Arc<RwLock<SharedState>>) {
+fn handle_client(mut stream: TcpStream, global: &LockedGlobal) {
     let settings = {
         let shared_state = global.read().unwrap();
         &shared_state.settings.clone()
@@ -83,6 +84,25 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
     let pool = ThreadPool::new(settings.threads);
     let global = Arc::new(RwLock::new(SharedState::new(settings.clone()))); 
 
+    // Timer for recording history
+    {
+        let global_copy_timer = global.clone();
+        let granularity = settings.hist_granularity.clone();
+        thread::spawn(move || {
+            loop {
+                let (total, sizes) = get_total_sizes(&global_copy_timer);
+                {
+                    let mut wtr = global_copy_timer.write().unwrap();
+                    let current_t = time::SystemTime::now();
+                    wtr.history.push((current_t, total, sizes));
+                }
+
+                info!("Current total count: {}", total);
+                thread::sleep(time::Duration::from_secs(granularity));
+            }
+        });
+    }
+
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         let global_copy = global.clone();
@@ -93,8 +113,20 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
         });
     }
 }
+type LockedGlobal = Arc<RwLock<SharedState>>;
+fn get_total_sizes(global: &LockedGlobal) -> (u64, HashMap<String, u64>) {
+    let rdr = global.read().unwrap();
+    let mut total = 0;
+    let mut sizes: HashMap<String, u64> = HashMap::new();
+    for (name, vec) in rdr.vec_store.iter() {
+        let size = vec.1;
+        total += size;
+        sizes.insert(name.clone(), vec.1);
+    }
+    (total, sizes)
+}
 
-fn on_connect(global: &Arc<RwLock<SharedState>>) {
+fn on_connect(global: &LockedGlobal) {
     {
         let mut glb_wtr = global.write().unwrap();
         glb_wtr.connections += 1;
@@ -103,7 +135,7 @@ fn on_connect(global: &Arc<RwLock<SharedState>>) {
     info!("Client connected. Current: {}.", global.read().unwrap().connections);
 }
 
-fn on_disconnect(global: &Arc<RwLock<SharedState>>) {
+fn on_disconnect(global: &LockedGlobal) {
     {
         let mut glb_wtr = global.write().unwrap();
         glb_wtr.connections -= 1;

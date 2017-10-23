@@ -15,6 +15,7 @@ pub fn gen_response(string : &str, state: &mut State) -> Response {
         "PING" => (Some("PONG.\n".to_owned()), None, None),
         "HELP" => (Some(HELP_STR.to_owned()), None, None),
         "INFO" => (Some(state.info()), None, None),
+        "PERF" => (Some(state.perf()), None, None),
         "BULKADD" => {
             state.is_adding = true;
             (Some("\n".to_owned()), None, None)

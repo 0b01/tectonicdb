@@ -76,7 +76,7 @@ Language bindings:
 
 ## Additional Features
 
-- [ ] Usage statistics like Cloud SQL
+- [x] Usage statistics like Cloud SQL
 
 - [ ] Query by timestamp
 

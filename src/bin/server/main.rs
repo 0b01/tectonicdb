@@ -28,13 +28,15 @@ fn main() {
     let verbosity = matches.occurrences_of("v") as u8;
     let autoflush = matches.is_present("autoflush");
     let flush_interval = matches.value_of("flush_interval").unwrap_or("1000");
+    let hist_granularity = matches.value_of("hist_granularity").unwrap_or("60");
     let threads = matches.value_of("threads").unwrap_or("50");
 
     let settings = settings::Settings {
         autoflush: autoflush,
         dtf_folder: dtf_folder.to_owned(),
         flush_interval: flush_interval.parse::<u32>().unwrap(),
-        threads: threads.parse::<usize>().unwrap()
+        threads: threads.parse::<usize>().unwrap(),
+        hist_granularity: hist_granularity.parse::<u64>().unwrap(),
     };
 
     prepare_logger(verbosity);
@@ -105,5 +107,10 @@ fn get_matches<'a>() -> ArgMatches<'a> {
         .long("threads")
         .value_name("THREAD")
         .help("Sets system thread count to handle the maximum number of client connection. (default 50)"))
+    .arg(Arg::with_name("hist_granularity")
+        .short("g")
+        .long("hist_granularity")
+        .value_name("HIST_GRANULARITY")
+        .help("Sets the history record granularity interval. (default 60s)"))
     .get_matches()
 }
