@@ -79,3 +79,5 @@ Language bindings:
 - [ ] Usage statistics like Cloud SQL
 
 - [ ] Query by timestamp
+
+- [ ] Commandline inspection tool for dtf file format
