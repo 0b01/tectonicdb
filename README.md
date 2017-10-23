@@ -81,3 +81,5 @@ Language bindings:
 - [ ] Query by timestamp
 
 - [x] Commandline inspection tool for dtf file format
+
+- [x] Logging

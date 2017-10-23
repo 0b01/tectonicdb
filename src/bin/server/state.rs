@@ -224,9 +224,8 @@ impl State {
         };
         let current_store = self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
         if is_autoflush && size != 0 && size % u64::from(flush_interval) == 0 {
-            println!("[DEBUG] AUTOFLUSHING!");
+            debug!("AUTOFLUSHING!");
             current_store.flush();
-            println!("[DEBUG] AUTOFLUSH OKAY!");
             current_store.load_size_from_file();
         }
     }

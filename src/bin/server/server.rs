@@ -66,21 +66,18 @@ fn handle_client(mut stream: TcpStream, global: &Arc<RwLock<SharedState>>) {
 pub fn run_server(host : &str, port : &str, settings: &Settings) {
     let addr = format!("{}:{}", host, port);
 
-    if settings.verbosity > 1 {
-        println!("[DEBUG] Trying to bind to addr: {}", addr);
-        if settings.autoflush {
-            println!("[DEBUG] Autoflush is true: every {} inserts.", settings.flush_interval);
-        }
+    info!("Trying to bind to addr: {}", addr);
+    if !settings.autoflush {
+        warn!("Autoflush is off!");
     }
+    debug!("Autoflush is {}: every {} inserts.", settings.autoflush, settings.flush_interval);
 
     let listener = match TcpListener::bind(&addr) {
         Ok(l) => l,
         Err(e) => panic!(format!("{:?}", e.description()))
     };
 
-    if settings.verbosity > 0 {
-        println!("Listening on addr: {}", addr);
-    }
+    info!("Listening on addr: {}", addr);
 
     let pool = ThreadPool::new(settings.threads);
     let global = Arc::new(RwLock::new(SharedState::new(settings.clone()))); 
@@ -102,10 +99,7 @@ fn on_connect(global: &Arc<RwLock<SharedState>>) {
         glb_wtr.connections += 1;
     }
 
-    let verbose = global.read().unwrap().settings.verbosity;
-    if verbose > 0 {
-        println!("Client connected. Current: {}.", global.read().unwrap().connections);
-    } 
+    info!("Client connected. Current: {}.", global.read().unwrap().connections);
 }
 
 fn on_disconnect(global: &Arc<RwLock<SharedState>>) {
@@ -115,8 +109,5 @@ fn on_disconnect(global: &Arc<RwLock<SharedState>>) {
     }
 
     let rdr = global.read().unwrap();
-    let verbose = rdr.settings.verbosity;
-    if verbose > 0 {
-        println!("Client connection disconnected. Current: {}.", rdr.connections);
-    } 
+    info!("Client connection disconnected. Current: {}.", rdr.connections);
 }

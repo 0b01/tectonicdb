@@ -1,0 +1,22 @@
+[2017-10-23][11:35:02][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-23][11:35:02][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-23][11:35:02][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-23][11:36:1508772975][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-23][11:36:1508772975][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-23][11:36:1508772975][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-23][11:39:38:206002967][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-23][11:39:38:206150996][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-23][11:39:38:206252107][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-23][11:40:55:096987503][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-23][11:40:55:097118164][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-23][11:40:55:097212623][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-23][11:41:10:636579133][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-23][11:41:10:636718436][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-23][11:41:10:636804544][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-23][11:41:13:788360392][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-23][11:41:13:788470408][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-23][11:41:13:788547372][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-23][11:41:29:339622638][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-23][11:41:29:339780222][tectonic_server::server][WARN] Autoflush is off!
+[2017-10-23][11:41:29:339861360][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-23][11:41:29:339961115][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001

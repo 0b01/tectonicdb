@@ -1,6 +1,11 @@
 extern crate dtf;
 extern crate clap;
 extern crate byteorder;
+extern crate chrono;
+
+#[macro_use]
+extern crate log;
+extern crate fern;
 
 mod server;
 mod state;
@@ -12,7 +17,9 @@ mod threadpool;
 
 use clap::{Arg, App, ArgMatches};
 
+
 fn main() {
+
     let matches = get_matches();
 
     let host = matches.value_of("host").unwrap_or("0.0.0.0");
@@ -27,11 +34,35 @@ fn main() {
         autoflush: autoflush,
         dtf_folder: dtf_folder.to_owned(),
         flush_interval: flush_interval.parse::<u32>().unwrap(),
-        threads: threads.parse::<usize>().unwrap(),
-        verbosity
+        threads: threads.parse::<usize>().unwrap()
     };
 
+    prepare_logger(verbosity);
     server::run_server(&host, &port, &settings);
+}
+
+fn prepare_logger(verbosity: u8) {
+    let level = match verbosity {
+        0 => log::LogLevelFilter::Error,
+        1 => log::LogLevelFilter::Warn,
+        2 => log::LogLevelFilter::Info,
+        3 => log::LogLevelFilter::Debug,
+        _ => log::LogLevelFilter::max(),
+    };
+    fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "{}[{}][{}] {}",
+                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S:%f]"),
+                record.target(),
+                record.level(),
+                message
+            ))
+        })
+        .level(level)
+        .chain(std::io::stdout())
+        .chain(fern::log_file("output.log").unwrap())
+        .apply().unwrap();
 }
 
 fn get_matches<'a>() -> ArgMatches<'a> {
