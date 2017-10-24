@@ -56,7 +56,6 @@ pub fn gen_response(string : &str, state: &mut State) -> Response {
                                 state.add(up);
                             }
                         };
-                        state.autoflush();
                         (Some("\n".to_owned()), None, None)
                     },
                     None => return (None, None, Some("Unable to parse line in BULKADD".to_owned()))
@@ -85,7 +84,6 @@ pub fn gen_response(string : &str, state: &mut State) -> Response {
                     Some((up, dbname)) => {
                         match state.insert(up, &dbname) {
                             Some(()) => {
-                                state.autoflush();
                                 (Some("1\n".to_owned()), None, None)
                             }
                             None => {

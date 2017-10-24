@@ -36,13 +36,37 @@ pub struct Store {
 pub type Global = Arc<RwLock<SharedState>>;
 
 impl Store {
+
+    /// Saves current store into disk after n items is inserted.
+    pub fn autoflush(&mut self) {
+        let (size, is_autoflush, flush_interval) = {
+            let rdr = self.global.read().unwrap();
+            let size = rdr.vec_store.get(&self.name).expect("KEY IS NOT IN HASHMAP").1;
+            let is_autoflush = rdr.settings.autoflush;
+            let flush_interval = rdr.settings.flush_interval;
+            (size, is_autoflush, flush_interval)
+        };
+
+        if is_autoflush
+            && size != 0
+            && size % u64::from(flush_interval) == 0 {
+
+            debug!("AUTOFLUSHING {}!", self.name);
+            self.flush();
+            self.load_size_from_file();
+        }
+    }
+
     /// Push a new `Update` into the vec
     pub fn add(&mut self, new_vec : dtf::Update) {
-        let mut wtr = self.global.write().unwrap();
-        let vecs = wtr.vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
+        {
+            let mut wtr = self.global.write().unwrap();
+            let vecs = wtr.vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
 
-        vecs.0.push(new_vec);
-        vecs.1 += 1;
+            vecs.0.push(new_vec);
+            vecs.1 += 1;
+        }
+        self.autoflush();
     }
 
     pub fn count(&self) -> u64 {
@@ -225,31 +249,6 @@ impl State {
         current_store.add(up);
     }
 
-    /// Saves current store into disk after n items is inserted.
-    pub fn autoflush(&mut self) {
-        let shared_state = self.global.read().unwrap();
-        let is_autoflush = shared_state.settings.autoflush;
-        let flush_interval = shared_state.settings.flush_interval;
-        let sizes : Vec<(&String, u64)> = shared_state.vec_store
-                                            .iter()
-                                            .map(|(k, v)| (k, v.1))
-                                            .collect();
-        for (name, size) in sizes {
-            if is_autoflush
-                && size != 0
-                && size % u64::from(flush_interval) == 0 {
-
-                let st = self.store
-                            .get_mut(name)
-                            .expect("KEY IS NOT IN HASHMAP");
-
-                debug!("AUTOFLUSHING!");
-                st.flush();
-                st.load_size_from_file();
-            }
-        }
-
-    }
 
     /// Create a new store
     pub fn create(&mut self, store_name: &str) {
