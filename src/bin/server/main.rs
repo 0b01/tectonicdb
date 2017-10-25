@@ -28,8 +28,8 @@ fn main() {
     let verbosity = matches.occurrences_of("v") as u8;
     let autoflush = matches.is_present("autoflush");
     let flush_interval = matches.value_of("flush_interval").unwrap_or("1000");
-    let hist_granularity = matches.value_of("hist_granularity").unwrap_or("60");
-    let threads = matches.value_of("threads").unwrap_or("50");
+    let hist_granularity = matches.value_of("hist_granularity").unwrap_or("30");
+    let threads = matches.value_of("threads").unwrap_or("100");
 
     let settings = settings::Settings {
         autoflush: autoflush,
@@ -51,6 +51,7 @@ fn prepare_logger(verbosity: u8) {
         3 => log::LogLevelFilter::Debug,
         _ => log::LogLevelFilter::max(),
     };
+
     fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(

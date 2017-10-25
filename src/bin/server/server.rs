@@ -19,7 +19,8 @@ use settings::Settings;
 use threadpool::ThreadPool;
 use std::sync::{Arc, RwLock};
 
-fn respond(mut stream: &TcpStream, resp: handler::Response) {
+fn respond(mut stream: &TcpStream, mut state: &mut State, line: &str) {
+    let resp = handler::gen_response(&line, &mut state);
     match resp {
         (Some(str_resp), None, _) => {
             stream.write_u8(0x1).unwrap();
@@ -31,7 +32,10 @@ fn respond(mut stream: &TcpStream, resp: handler::Response) {
             stream.write(&bytes_resp).unwrap()
         },
         (None, None, Some(errmsg)) => {
-            error!("{}", errmsg.clone());
+
+            error!("Req: `{}`", line);
+            error!("Err: `{}`", errmsg.clone());
+
             stream.write_u8(0x0).unwrap();
             let ret = format!("ERR: {}\n", errmsg);
             stream.write_u64::<NetworkEndian>(ret.len() as u64).unwrap();
@@ -59,8 +63,7 @@ fn handle_client(mut stream: TcpStream, global: &LockedGlobal) {
         let req = str::from_utf8(&buf[..(bytes_read-1)]).unwrap();
         for line in req.split('\n') {
             // println!("[DEBUG] Received:\t{:?}", line);
-            let resp = handler::gen_response(&line, &mut state);
-            respond(&stream, resp);
+            respond(&stream, &mut state, &line);
         }
     }
 }
@@ -73,6 +76,8 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
         warn!("Autoflush is off!");
     }
     debug!("Autoflush is {}: every {} inserts.", settings.autoflush, settings.flush_interval);
+    debug!("Maximum connection: {}.", settings.threads);
+    debug!("History granularity: {}.", settings.hist_granularity);
 
     let listener = match TcpListener::bind(&addr) {
         Ok(l) => l,
@@ -80,6 +85,7 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
     };
 
     info!("Listening on addr: {}", addr);
+    info!("-----------------initiated-----------------");
 
     let pool = ThreadPool::new(settings.threads);
     let global = Arc::new(RwLock::new(SharedState::new(settings.clone()))); 

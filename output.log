@@ -3,3 +3,1986 @@
 [2017-10-23][19:19:38:591445170][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
 [2017-10-23][19:19:38:591548680][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
 [2017-10-23][19:19:38:595778808][tectonic_server::server][INFO] Current total count: 0
+[2017-10-25][11:37:08:293817026][tectonic_server::server][ERROR] No db named `btc_neo`
+[2017-10-25][11:37:08:294944540][tectonic_server::server][ERROR] No db named `btc_eth`
+[2017-10-25][11:37:14:408182878][tectonic_server::server][ERROR] db `btc_neo` not found
+[2017-10-25][11:37:29:909960180][tectonic_server::server][ERROR] No db named `btc_neo`
+[2017-10-25][11:37:29:910144236][tectonic_server::server][ERROR] No db named `btc_eth`
+[2017-10-25][11:42:14:134757845][tectonic_server::server][ERROR] Request: klj
+[2017-10-25][11:42:14:135496273][tectonic_server::server][ERROR] Error message: Unsupported command.
+[2017-10-25][11:43:53:842201169][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-25][11:43:53:842624018][tectonic_server::server][WARN] Autoflush is off!
+[2017-10-25][11:43:53:842891516][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-25][11:43:53:843354182][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-25][11:43:53:853651940][tectonic_server::server][INFO] Current total count: 0
+[2017-10-25][11:44:48:890148672][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-25][11:44:48:890295172][tectonic_server::server][WARN] Autoflush is off!
+[2017-10-25][11:44:48:890376370][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-25][11:44:48:890477340][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-25][11:44:48:890558460][tectonic_server::server][INFO] -----------------initiated-----------------
+[2017-10-25][11:44:48:895134055][tectonic_server::server][INFO] Current total count: 0
+[2017-10-25][11:45:48:895599350][tectonic_server::server][INFO] Current total count: 0
+[2017-10-25][11:46:21:581066365][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-25][11:46:21:581276093][tectonic_server::server][WARN] Autoflush is off!
+[2017-10-25][11:46:21:581366014][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-25][11:46:21:581494018][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-25][11:46:21:581567278][tectonic_server::server][INFO] -----------------initiated-----------------
+[2017-10-25][11:46:21:587312378][tectonic_server::server][INFO] Current total count: 0
+[2017-10-25][11:46:26:285943779][tectonic_server::server][INFO] Client connected. Current: 1.
+[2017-10-25][11:46:26:286227646][tectonic_server::server][INFO] Client connected. Current: 2.
+[2017-10-25][11:46:26:286450946][tectonic_server::server][INFO] Client connected. Current: 3.
+[2017-10-25][11:46:26:286604445][tectonic_server::server][INFO] Client connected. Current: 4.
+[2017-10-25][11:46:26:286733732][tectonic_server::server][INFO] Client connected. Current: 5.
+[2017-10-25][11:46:26:286860827][tectonic_server::server][INFO] Client connected. Current: 6.
+[2017-10-25][11:46:26:286992065][tectonic_server::server][INFO] Client connected. Current: 7.
+[2017-10-25][11:46:26:287117880][tectonic_server::server][INFO] Client connected. Current: 8.
+[2017-10-25][11:46:26:287238146][tectonic_server::server][INFO] Client connected. Current: 9.
+[2017-10-25][11:46:26:287380872][tectonic_server::server][INFO] Client connected. Current: 10.
+[2017-10-25][11:46:26:287474085][tectonic_server::server][INFO] Client connected. Current: 12.
+[2017-10-25][11:46:26:287475834][tectonic_server::server][INFO] Client connected. Current: 12.
+[2017-10-25][11:46:26:287662204][tectonic_server::server][INFO] Client connected. Current: 13.
+[2017-10-25][11:46:26:287800515][tectonic_server::server][INFO] Client connected. Current: 14.
+[2017-10-25][11:46:26:287936988][tectonic_server::server][INFO] Client connected. Current: 15.
+[2017-10-25][11:46:26:288064391][tectonic_server::server][INFO] Client connected. Current: 16.
+[2017-10-25][11:46:26:288189327][tectonic_server::server][INFO] Client connected. Current: 17.
+[2017-10-25][11:46:26:288324968][tectonic_server::server][INFO] Client connected. Current: 18.
+[2017-10-25][11:46:26:288456022][tectonic_server::server][INFO] Client connected. Current: 19.
+[2017-10-25][11:46:26:288580207][tectonic_server::server][INFO] Client connected. Current: 20.
+[2017-10-25][11:46:26:288708207][tectonic_server::server][INFO] Client connected. Current: 21.
+[2017-10-25][11:46:26:288831045][tectonic_server::server][INFO] Client connected. Current: 22.
+[2017-10-25][11:46:26:289034358][tectonic_server::server][INFO] Client connected. Current: 23.
+[2017-10-25][11:46:26:289169789][tectonic_server::server][INFO] Client connected. Current: 24.
+[2017-10-25][11:46:26:289294665][tectonic_server::server][INFO] Client connected. Current: 25.
+[2017-10-25][11:46:26:289448539][tectonic_server::server][INFO] Client connected. Current: 26.
+[2017-10-25][11:46:26:289579914][tectonic_server::server][INFO] Client connected. Current: 27.
+[2017-10-25][11:46:26:289726572][tectonic_server::server][INFO] Client connected. Current: 28.
+[2017-10-25][11:46:26:289864433][tectonic_server::server][INFO] Client connected. Current: 29.
+[2017-10-25][11:46:26:289982184][tectonic_server::server][INFO] Client connected. Current: 30.
+[2017-10-25][11:46:26:290116891][tectonic_server::server][INFO] Client connected. Current: 31.
+[2017-10-25][11:46:26:290250595][tectonic_server::server][INFO] Client connected. Current: 32.
+[2017-10-25][11:46:26:290378529][tectonic_server::server][INFO] Client connected. Current: 33.
+[2017-10-25][11:46:26:290465943][tectonic_server::server][INFO] Client connected. Current: 34.
+[2017-10-25][11:46:26:290599362][tectonic_server::server][INFO] Client connected. Current: 35.
+[2017-10-25][11:46:26:290726806][tectonic_server::server][INFO] Client connected. Current: 36.
+[2017-10-25][11:46:26:290850753][tectonic_server::server][INFO] Client connected. Current: 37.
+[2017-10-25][11:46:26:290945326][tectonic_server::server][INFO] Client connected. Current: 38.
+[2017-10-25][11:46:26:291041230][tectonic_server::server][INFO] Client connected. Current: 39.
+[2017-10-25][11:46:26:291171760][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:46:26:291288501][tectonic_server::server][INFO] Client connected. Current: 41.
+[2017-10-25][11:46:26:291390948][tectonic_server::server][INFO] Client connected. Current: 42.
+[2017-10-25][11:46:26:291516351][tectonic_server::server][INFO] Client connected. Current: 43.
+[2017-10-25][11:46:26:291612158][tectonic_server::server][INFO] Client connected. Current: 44.
+[2017-10-25][11:46:26:291701428][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:46:26:291819397][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:46:26:291900768][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:46:26:292000074][tectonic_server::server][INFO] Client connected. Current: 48.
+[2017-10-25][11:46:26:292094236][tectonic_server::server][INFO] Client connected. Current: 49.
+[2017-10-25][11:46:26:292190287][tectonic_server::server][INFO] Client connected. Current: 50.
+[2017-10-25][11:46:26:321742158][tectonic_server::server][ERROR] Req: `USE btc_neo`
+[2017-10-25][11:46:26:322120298][tectonic_server::server][ERROR] Err: `No db named `btc_neo``
+[2017-10-25][11:46:26:322995982][tectonic_server::server][ERROR] Req: `USE btc_eth`
+[2017-10-25][11:46:26:323323564][tectonic_server::server][ERROR] Err: `No db named `btc_eth``
+[2017-10-25][11:46:37:434340674][tectonic_server::server][INFO] Client connection disconnected. Current: 49.
+[2017-10-25][11:46:37:435083139][tectonic_server::server][INFO] Client connection disconnected. Current: 48.
+[2017-10-25][11:46:37:435741930][tectonic_server::server][INFO] Client connected. Current: 49.
+[2017-10-25][11:46:37:437228373][tectonic_server::server][INFO] Client connection disconnected. Current: 48.
+[2017-10-25][11:46:37:438033290][tectonic_server::server][INFO] Client connection disconnected. Current: 48.
+[2017-10-25][11:46:37:438957162][tectonic_server::server][INFO] Client connection disconnected. Current: 47.
+[2017-10-25][11:46:37:438957312][tectonic_server::server][INFO] Client connection disconnected. Current: 47.
+[2017-10-25][11:46:37:440608895][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:46:37:439594290][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:46:37:442195429][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:46:37:443342646][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:46:37:444124091][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:46:37:444135910][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:46:37:446584759][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:46:37:447697339][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:46:37:448484302][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:46:37:449195548][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:46:37:449892293][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:46:37:450849852][tectonic_server::server][INFO] Client connection disconnected. Current: 44.
+[2017-10-25][11:46:37:451542206][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:46:37:452639351][tectonic_server::server][INFO] Client connection disconnected. Current: 44.
+[2017-10-25][11:46:37:453313902][tectonic_server::server][INFO] Client connection disconnected. Current: 42.
+[2017-10-25][11:46:37:453307760][tectonic_server::server][INFO] Client connection disconnected. Current: 42.
+[2017-10-25][11:46:37:453981486][tectonic_server::server][INFO] Client connection disconnected. Current: 42.
+[2017-10-25][11:46:37:456907149][tectonic_server::server][INFO] Client connection disconnected. Current: 41.
+[2017-10-25][11:46:37:457572642][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:46:37:457587474][tectonic_server::server][INFO] Client connection disconnected. Current: 40.
+[2017-10-25][11:46:37:457709995][tectonic_server::server][INFO] Client connection disconnected. Current: 40.
+[2017-10-25][11:46:37:462610883][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:46:37:463654740][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:46:37:465092539][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:46:37:466065197][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:46:37:467240678][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:46:37:467848937][tectonic_server::server][INFO] Client connected. Current: 39.
+[2017-10-25][11:46:37:467850433][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:46:37:469503374][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:46:37:470030797][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:46:37:470713843][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:46:37:473423887][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:46:37:474124575][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:46:37:475046209][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:46:37:475854155][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:46:37:477127545][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:46:37:478083474][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:46:37:479949280][tectonic_server::server][INFO] Client connected. Current: 41.
+[2017-10-25][11:46:37:481233139][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:46:37:481233125][tectonic_server::server][INFO] Client connection disconnected. Current: 40.
+[2017-10-25][11:46:37:481465259][tectonic_server::server][INFO] Client connection disconnected. Current: 40.
+[2017-10-25][11:46:37:483040238][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:46:37:483542013][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:46:37:484086290][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:46:37:484999501][tectonic_server::server][INFO] Client connection disconnected. Current: 38.
+[2017-10-25][11:46:37:485652566][tectonic_server::server][INFO] Client connection disconnected. Current: 37.
+[2017-10-25][11:46:37:486277919][tectonic_server::server][INFO] Client connection disconnected. Current: 36.
+[2017-10-25][11:46:37:487106246][tectonic_server::server][INFO] Client connected. Current: 36.
+[2017-10-25][11:46:37:487106310][tectonic_server::server][INFO] Client connection disconnected. Current: 36.
+[2017-10-25][11:46:37:488435062][tectonic_server::server][INFO] Client connection disconnected. Current: 35.
+[2017-10-25][11:46:37:489096525][tectonic_server::server][INFO] Client connection disconnected. Current: 33.
+[2017-10-25][11:46:37:489098474][tectonic_server::server][INFO] Client connection disconnected. Current: 33.
+[2017-10-25][11:46:37:490168288][tectonic_server::server][INFO] Client connection disconnected. Current: 32.
+[2017-10-25][11:46:37:490700365][tectonic_server::server][INFO] Client connection disconnected. Current: 31.
+[2017-10-25][11:46:37:491838363][tectonic_server::server][INFO] Client connection disconnected. Current: 30.
+[2017-10-25][11:46:37:492477985][tectonic_server::server][INFO] Client connected. Current: 31.
+[2017-10-25][11:46:37:494270544][tectonic_server::server][INFO] Client connection disconnected. Current: 30.
+[2017-10-25][11:46:37:495951324][tectonic_server::server][INFO] Client connected. Current: 31.
+[2017-10-25][11:46:37:497197380][tectonic_server::server][INFO] Client connection disconnected. Current: 30.
+[2017-10-25][11:46:37:497798313][tectonic_server::server][INFO] Client connected. Current: 31.
+[2017-10-25][11:46:37:498351723][tectonic_server::server][INFO] Client connection disconnected. Current: 30.
+[2017-10-25][11:46:37:498988601][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:46:37:499000647][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:46:37:499080258][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:46:37:500957702][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:46:37:500964150][tectonic_server::server][INFO] Client connected. Current: 27.
+[2017-10-25][11:46:37:503490670][tectonic_server::server][INFO] Client connected. Current: 28.
+[2017-10-25][11:46:37:505256866][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:46:37:505978662][tectonic_server::server][INFO] Client connected. Current: 29.
+[2017-10-25][11:46:37:506003927][tectonic_server::server][INFO] Client connected. Current: 29.
+[2017-10-25][11:46:37:505987819][tectonic_server::server][INFO] Client connection disconnected. Current: 29.
+[2017-10-25][11:46:37:506059492][tectonic_server::server][INFO] Client connected. Current: 29.
+[2017-10-25][11:46:37:507207382][tectonic_server::server][INFO] Client connection disconnected. Current: 28.
+[2017-10-25][11:46:37:507611083][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:46:37:507938802][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:46:37:507942884][tectonic_server::server][INFO] Client connected. Current: 27.
+[2017-10-25][11:46:37:508638655][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:46:37:508639662][tectonic_server::server][INFO] Client connected. Current: 27.
+[2017-10-25][11:46:37:509334698][tectonic_server::server][INFO] Client connected. Current: 28.
+[2017-10-25][11:46:37:509690373][tectonic_server::server][INFO] Client connected. Current: 29.
+[2017-10-25][11:46:37:510154773][tectonic_server::server][INFO] Client connection disconnected. Current: 28.
+[2017-10-25][11:46:37:510708384][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:46:37:511076253][tectonic_server::server][INFO] Client connected. Current: 28.
+[2017-10-25][11:46:37:511385295][tectonic_server::server][INFO] Client connected. Current: 29.
+[2017-10-25][11:46:37:511813734][tectonic_server::server][INFO] Client connection disconnected. Current: 28.
+[2017-10-25][11:46:37:512218632][tectonic_server::server][INFO] Client connected. Current: 28.
+[2017-10-25][11:46:37:512227535][tectonic_server::server][INFO] Client connection disconnected. Current: 28.
+[2017-10-25][11:46:37:512755851][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:46:37:512972919][tectonic_server::server][INFO] Client connection disconnected. Current: 26.
+[2017-10-25][11:46:37:513187108][tectonic_server::server][INFO] Client connection disconnected. Current: 25.
+[2017-10-25][11:46:37:513402475][tectonic_server::server][INFO] Client connection disconnected. Current: 24.
+[2017-10-25][11:46:37:513610470][tectonic_server::server][INFO] Client connection disconnected. Current: 23.
+[2017-10-25][11:46:37:513817306][tectonic_server::server][INFO] Client connection disconnected. Current: 22.
+[2017-10-25][11:46:37:514024917][tectonic_server::server][INFO] Client connected. Current: 23.
+[2017-10-25][11:46:37:514267795][tectonic_server::server][INFO] Client connected. Current: 25.
+[2017-10-25][11:46:37:514270286][tectonic_server::server][INFO] Client connected. Current: 25.
+[2017-10-25][11:46:37:514658593][tectonic_server::server][INFO] Client connected. Current: 25.
+[2017-10-25][11:46:37:514659006][tectonic_server::server][INFO] Client connection disconnected. Current: 25.
+[2017-10-25][11:46:37:515110917][tectonic_server::server][INFO] Client connection disconnected. Current: 24.
+[2017-10-25][11:46:37:515506418][tectonic_server::server][INFO] Client connection disconnected. Current: 23.
+[2017-10-25][11:46:37:515763102][tectonic_server::server][INFO] Client connection disconnected. Current: 22.
+[2017-10-25][11:46:37:515959907][tectonic_server::server][INFO] Client connection disconnected. Current: 21.
+[2017-10-25][11:46:37:516176161][tectonic_server::server][INFO] Client connection disconnected. Current: 20.
+[2017-10-25][11:46:37:516454725][tectonic_server::server][INFO] Client connection disconnected. Current: 19.
+[2017-10-25][11:46:37:516665061][tectonic_server::server][INFO] Client connection disconnected. Current: 18.
+[2017-10-25][11:46:37:516872800][tectonic_server::server][INFO] Client connection disconnected. Current: 17.
+[2017-10-25][11:46:37:517078432][tectonic_server::server][INFO] Client connection disconnected. Current: 16.
+[2017-10-25][11:46:37:517285588][tectonic_server::server][INFO] Client connection disconnected. Current: 15.
+[2017-10-25][11:46:37:517499882][tectonic_server::server][INFO] Client connected. Current: 16.
+[2017-10-25][11:46:37:517772019][tectonic_server::server][INFO] Client connected. Current: 18.
+[2017-10-25][11:46:37:517772244][tectonic_server::server][INFO] Client connected. Current: 18.
+[2017-10-25][11:46:37:518292866][tectonic_server::server][INFO] Client connection disconnected. Current: 17.
+[2017-10-25][11:46:37:518643094][tectonic_server::server][INFO] Client connection disconnected. Current: 16.
+[2017-10-25][11:46:37:519234033][tectonic_server::server][INFO] Client connection disconnected. Current: 15.
+[2017-10-25][11:46:37:519475221][tectonic_server::server][INFO] Client connection disconnected. Current: 14.
+[2017-10-25][11:46:37:519693451][tectonic_server::server][INFO] Client connected. Current: 15.
+[2017-10-25][11:46:37:519901707][tectonic_server::server][INFO] Client connection disconnected. Current: 14.
+[2017-10-25][11:46:37:520227396][tectonic_server::server][INFO] Client connected. Current: 15.
+[2017-10-25][11:46:37:520511476][tectonic_server::server][INFO] Client connection disconnected. Current: 14.
+[2017-10-25][11:46:37:520825359][tectonic_server::server][INFO] Client connection disconnected. Current: 13.
+[2017-10-25][11:46:37:521062672][tectonic_server::server][INFO] Client connection disconnected. Current: 12.
+[2017-10-25][11:46:37:521270013][tectonic_server::server][INFO] Client connection disconnected. Current: 11.
+[2017-10-25][11:46:37:521432144][tectonic_server::server][INFO] Client connection disconnected. Current: 10.
+[2017-10-25][11:46:37:521656291][tectonic_server::server][INFO] Client connected. Current: 11.
+[2017-10-25][11:46:37:521854933][tectonic_server::server][INFO] Client connection disconnected. Current: 10.
+[2017-10-25][11:46:37:522043936][tectonic_server::server][INFO] Client connection disconnected. Current: 8.
+[2017-10-25][11:46:37:522052573][tectonic_server::server][INFO] Client connection disconnected. Current: 8.
+[2017-10-25][11:46:37:522395879][tectonic_server::server][INFO] Client connection disconnected. Current: 7.
+[2017-10-25][11:46:37:522554722][tectonic_server::server][INFO] Client connection disconnected. Current: 6.
+[2017-10-25][11:46:37:522713500][tectonic_server::server][INFO] Client connection disconnected. Current: 5.
+[2017-10-25][11:46:37:522884344][tectonic_server::server][INFO] Client connection disconnected. Current: 4.
+[2017-10-25][11:46:37:523048347][tectonic_server::server][INFO] Client connected. Current: 5.
+[2017-10-25][11:46:37:523206986][tectonic_server::server][INFO] Client connection disconnected. Current: 5.
+[2017-10-25][11:46:37:523370227][tectonic_server::server][INFO] Client connection disconnected. Current: 5.
+[2017-10-25][11:46:37:523370187][tectonic_server::server][INFO] Client connected. Current: 5.
+[2017-10-25][11:46:37:523399459][tectonic_server::server][INFO] Client connected. Current: 5.
+[2017-10-25][11:46:37:523922941][tectonic_server::server][INFO] Client connected. Current: 6.
+[2017-10-25][11:46:37:524117836][tectonic_server::server][INFO] Client connection disconnected. Current: 5.
+[2017-10-25][11:46:37:524373710][tectonic_server::server][INFO] Client connection disconnected. Current: 4.
+[2017-10-25][11:46:37:524540617][tectonic_server::server][INFO] Client connection disconnected. Current: 3.
+[2017-10-25][11:46:37:524742362][tectonic_server::server][INFO] Client connection disconnected. Current: 2.
+[2017-10-25][11:46:37:524898883][tectonic_server::server][INFO] Client connection disconnected. Current: 1.
+[2017-10-25][11:46:37:525055039][tectonic_server::server][INFO] Client connection disconnected. Current: 0.
+[2017-10-25][11:46:47:980523375][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-25][11:46:47:980661263][tectonic_server::server][WARN] Autoflush is off!
+[2017-10-25][11:46:47:980740637][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-25][11:46:47:980835509][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-25][11:46:47:980916833][tectonic_server::server][INFO] -----------------initiated-----------------
+[2017-10-25][11:46:47:985762725][tectonic_server::server][INFO] Current total count: 0
+[2017-10-25][11:46:51:169443966][tectonic_server::server][INFO] Client connected. Current: 1.
+[2017-10-25][11:46:51:169661607][tectonic_server::server][INFO] Client connected. Current: 2.
+[2017-10-25][11:46:51:169787523][tectonic_server::server][INFO] Client connected. Current: 3.
+[2017-10-25][11:46:51:169909281][tectonic_server::server][INFO] Client connected. Current: 4.
+[2017-10-25][11:46:51:170004319][tectonic_server::server][INFO] Client connected. Current: 5.
+[2017-10-25][11:46:51:170175042][tectonic_server::server][INFO] Client connected. Current: 6.
+[2017-10-25][11:46:51:170275766][tectonic_server::server][INFO] Client connected. Current: 7.
+[2017-10-25][11:46:51:170418624][tectonic_server::server][INFO] Client connected. Current: 8.
+[2017-10-25][11:46:51:170555497][tectonic_server::server][INFO] Client connected. Current: 9.
+[2017-10-25][11:46:51:170674489][tectonic_server::server][INFO] Client connected. Current: 10.
+[2017-10-25][11:46:51:170755857][tectonic_server::server][INFO] Client connected. Current: 11.
+[2017-10-25][11:46:51:170877073][tectonic_server::server][INFO] Client connected. Current: 13.
+[2017-10-25][11:46:51:170876354][tectonic_server::server][INFO] Client connected. Current: 13.
+[2017-10-25][11:46:51:171100321][tectonic_server::server][INFO] Client connected. Current: 14.
+[2017-10-25][11:46:51:171231188][tectonic_server::server][INFO] Client connected. Current: 15.
+[2017-10-25][11:46:51:171363101][tectonic_server::server][INFO] Client connected. Current: 16.
+[2017-10-25][11:46:51:171490587][tectonic_server::server][INFO] Client connected. Current: 17.
+[2017-10-25][11:46:51:171617442][tectonic_server::server][INFO] Client connected. Current: 18.
+[2017-10-25][11:46:51:171710162][tectonic_server::server][INFO] Client connected. Current: 19.
+[2017-10-25][11:46:51:171796168][tectonic_server::server][INFO] Client connected. Current: 20.
+[2017-10-25][11:46:51:171934316][tectonic_server::server][INFO] Client connected. Current: 21.
+[2017-10-25][11:46:51:172058549][tectonic_server::server][INFO] Client connected. Current: 22.
+[2017-10-25][11:46:51:172182724][tectonic_server::server][INFO] Client connected. Current: 23.
+[2017-10-25][11:46:51:172333121][tectonic_server::server][INFO] Client connected. Current: 24.
+[2017-10-25][11:46:51:172437101][tectonic_server::server][INFO] Client connected. Current: 25.
+[2017-10-25][11:46:51:172558012][tectonic_server::server][INFO] Client connected. Current: 26.
+[2017-10-25][11:46:51:172651163][tectonic_server::server][INFO] Client connected. Current: 28.
+[2017-10-25][11:46:51:172769399][tectonic_server::server][INFO] Client connected. Current: 29.
+[2017-10-25][11:46:51:172786399][tectonic_server::server][INFO] Client connected. Current: 29.
+[2017-10-25][11:46:51:172942372][tectonic_server::server][INFO] Client connected. Current: 30.
+[2017-10-25][11:46:51:173040153][tectonic_server::server][INFO] Client connected. Current: 32.
+[2017-10-25][11:46:51:173041166][tectonic_server::server][INFO] Client connected. Current: 32.
+[2017-10-25][11:46:51:173221180][tectonic_server::server][INFO] Client connected. Current: 33.
+[2017-10-25][11:46:51:173318720][tectonic_server::server][INFO] Client connected. Current: 34.
+[2017-10-25][11:46:51:173453565][tectonic_server::server][INFO] Client connected. Current: 35.
+[2017-10-25][11:46:51:173566273][tectonic_server::server][INFO] Client connected. Current: 37.
+[2017-10-25][11:46:51:173566272][tectonic_server::server][INFO] Client connected. Current: 37.
+[2017-10-25][11:46:51:173778289][tectonic_server::server][INFO] Client connected. Current: 38.
+[2017-10-25][11:46:51:173874301][tectonic_server::server][INFO] Client connected. Current: 39.
+[2017-10-25][11:46:51:174013142][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:46:51:174146115][tectonic_server::server][INFO] Client connected. Current: 42.
+[2017-10-25][11:46:51:174146112][tectonic_server::server][INFO] Client connected. Current: 42.
+[2017-10-25][11:46:51:174290843][tectonic_server::server][INFO] Client connected. Current: 43.
+[2017-10-25][11:46:51:174379330][tectonic_server::server][INFO] Client connected. Current: 44.
+[2017-10-25][11:46:51:174489704][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:46:51:174587203][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:46:51:174696963][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:46:51:174782557][tectonic_server::server][INFO] Client connected. Current: 48.
+[2017-10-25][11:46:51:174887191][tectonic_server::server][INFO] Client connected. Current: 49.
+[2017-10-25][11:46:51:175009611][tectonic_server::server][INFO] Client connected. Current: 50.
+[2017-10-25][11:46:51:186547788][tectonic_server::server][ERROR] Req: `USE btc_neo`
+[2017-10-25][11:46:51:186650759][tectonic_server::server][ERROR] Err: `No db named `btc_neo``
+[2017-10-25][11:46:51:186741085][tectonic_server::server][ERROR] Req: `USE btc_eth`
+[2017-10-25][11:46:51:186810897][tectonic_server::server][ERROR] Err: `No db named `btc_eth``
+[2017-10-25][11:47:19:685792147][tectonic_server::server][INFO] Client connection disconnected. Current: 49.
+[2017-10-25][11:47:19:686466324][tectonic_server::server][INFO] Client connected. Current: 49.
+[2017-10-25][11:47:19:686466339][tectonic_server::server][INFO] Client connection disconnected. Current: 49.
+[2017-10-25][11:47:19:687393546][tectonic_server::server][INFO] Client connected. Current: 50.
+[2017-10-25][11:47:19:688194606][tectonic_server::server][INFO] Client connection disconnected. Current: 48.
+[2017-10-25][11:47:19:688194661][tectonic_server::server][INFO] Client connection disconnected. Current: 48.
+[2017-10-25][11:47:19:691884764][tectonic_server::server][INFO] Client connected. Current: 49.
+[2017-10-25][11:47:19:692526611][tectonic_server::server][INFO] Client connection disconnected. Current: 48.
+[2017-10-25][11:47:19:693047628][tectonic_server::server][INFO] Client connected. Current: 49.
+[2017-10-25][11:47:19:694098550][tectonic_server::server][INFO] Client connection disconnected. Current: 48.
+[2017-10-25][11:47:19:695094270][tectonic_server::server][INFO] Client connected. Current: 49.
+[2017-10-25][11:47:19:696495403][tectonic_server::server][INFO] Client connection disconnected. Current: 47.
+[2017-10-25][11:47:19:697172992][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:47:19:697181485][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:47:19:698009577][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:47:19:698623279][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:47:19:699499540][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:47:19:699996661][tectonic_server::server][INFO] Client connection disconnected. Current: 44.
+[2017-10-25][11:47:19:700866771][tectonic_server::server][INFO] Client connection disconnected. Current: 43.
+[2017-10-25][11:47:19:701634001][tectonic_server::server][INFO] Client connected. Current: 43.
+[2017-10-25][11:47:19:701634021][tectonic_server::server][INFO] Client connection disconnected. Current: 43.
+[2017-10-25][11:47:19:702460694][tectonic_server::server][INFO] Client connected. Current: 44.
+[2017-10-25][11:47:19:703168093][tectonic_server::server][INFO] Client connection disconnected. Current: 43.
+[2017-10-25][11:47:19:703803264][tectonic_server::server][INFO] Client connected. Current: 44.
+[2017-10-25][11:47:19:705121922][tectonic_server::server][INFO] Client connection disconnected. Current: 43.
+[2017-10-25][11:47:19:705868482][tectonic_server::server][INFO] Client connection disconnected. Current: 42.
+[2017-10-25][11:47:19:706521769][tectonic_server::server][INFO] Client connection disconnected. Current: 41.
+[2017-10-25][11:47:19:707076035][tectonic_server::server][INFO] Client connection disconnected. Current: 40.
+[2017-10-25][11:47:19:707640235][tectonic_server::server][INFO] Client connected. Current: 41.
+[2017-10-25][11:47:19:708937467][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:47:19:709589637][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:47:19:710538827][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:47:19:711180164][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:47:19:712251008][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:47:19:712912720][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:47:19:713499840][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:47:19:714906069][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:47:19:716494711][tectonic_server::server][INFO] Client connection disconnected. Current: 40.
+[2017-10-25][11:47:19:716240936][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:47:19:717413326][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:47:19:718740821][tectonic_server::server][INFO] Client connection disconnected. Current: 38.
+[2017-10-25][11:47:19:718629185][tectonic_server::server][INFO] Client connection disconnected. Current: 38.
+[2017-10-25][11:47:19:720644425][tectonic_server::server][INFO] Client connected. Current: 39.
+[2017-10-25][11:47:19:722412513][tectonic_server::server][INFO] Client connection disconnected. Current: 38.
+[2017-10-25][11:47:19:723876912][tectonic_server::server][INFO] Client connected. Current: 39.
+[2017-10-25][11:47:19:725205987][tectonic_server::server][INFO] Client connection disconnected. Current: 38.
+[2017-10-25][11:47:19:726004928][tectonic_server::server][INFO] Client connection disconnected. Current: 37.
+[2017-10-25][11:47:19:726689562][tectonic_server::server][INFO] Client connection disconnected. Current: 35.
+[2017-10-25][11:47:19:726689463][tectonic_server::server][INFO] Client connection disconnected. Current: 35.
+[2017-10-25][11:47:19:728193699][tectonic_server::server][INFO] Client connected. Current: 36.
+[2017-10-25][11:47:19:729290925][tectonic_server::server][INFO] Client connection disconnected. Current: 35.
+[2017-10-25][11:47:19:729816679][tectonic_server::server][INFO] Client connected. Current: 35.
+[2017-10-25][11:47:19:729832216][tectonic_server::server][INFO] Client connection disconnected. Current: 35.
+[2017-10-25][11:47:19:730591151][tectonic_server::server][INFO] Client connection disconnected. Current: 31.
+[2017-10-25][11:47:19:730587081][tectonic_server::server][INFO] Client connection disconnected. Current: 31.
+[2017-10-25][11:47:19:731095708][tectonic_server::server][INFO] Client connection disconnected. Current: 31.
+[2017-10-25][11:47:19:730601137][tectonic_server::server][INFO] Client connection disconnected. Current: 31.
+[2017-10-25][11:47:19:731909295][tectonic_server::server][INFO] Client connection disconnected. Current: 30.
+[2017-10-25][11:47:19:732357517][tectonic_server::server][INFO] Client connected. Current: 30.
+[2017-10-25][11:47:19:732358241][tectonic_server::server][INFO] Client connection disconnected. Current: 30.
+[2017-10-25][11:47:19:733104197][tectonic_server::server][INFO] Client connected. Current: 30.
+[2017-10-25][11:47:19:733105316][tectonic_server::server][INFO] Client connection disconnected. Current: 30.
+[2017-10-25][11:47:19:734418597][tectonic_server::server][INFO] Client connected. Current: 31.
+[2017-10-25][11:47:19:735489419][tectonic_server::server][INFO] Client connected. Current: 32.
+[2017-10-25][11:47:19:736027554][tectonic_server::server][INFO] Client connection disconnected. Current: 31.
+[2017-10-25][11:47:19:736638816][tectonic_server::server][INFO] Client connected. Current: 31.
+[2017-10-25][11:47:19:736630059][tectonic_server::server][INFO] Client connection disconnected. Current: 31.
+[2017-10-25][11:47:19:737408574][tectonic_server::server][INFO] Client connected. Current: 31.
+[2017-10-25][11:47:19:737408693][tectonic_server::server][INFO] Client connection disconnected. Current: 31.
+[2017-10-25][11:47:19:738482334][tectonic_server::server][INFO] Client connected. Current: 32.
+[2017-10-25][11:47:19:738926767][tectonic_server::server][INFO] Client connection disconnected. Current: 31.
+[2017-10-25][11:47:19:739676829][tectonic_server::server][INFO] Client connected. Current: 33.
+[2017-10-25][11:47:19:739676997][tectonic_server::server][INFO] Client connected. Current: 33.
+[2017-10-25][11:47:19:742212377][tectonic_server::server][INFO] Client connected. Current: 34.
+[2017-10-25][11:47:19:743981736][tectonic_server::server][INFO] Client connection disconnected. Current: 33.
+[2017-10-25][11:47:19:745378902][tectonic_server::server][INFO] Client connection disconnected. Current: 32.
+[2017-10-25][11:47:19:745948564][tectonic_server::server][INFO] Client connected. Current: 33.
+[2017-10-25][11:47:19:746562036][tectonic_server::server][INFO] Client connection disconnected. Current: 32.
+[2017-10-25][11:47:19:747539536][tectonic_server::server][INFO] Client connected. Current: 33.
+[2017-10-25][11:47:19:748561075][tectonic_server::server][INFO] Client connection disconnected. Current: 32.
+[2017-10-25][11:47:19:750432500][tectonic_server::server][INFO] Client connected. Current: 33.
+[2017-10-25][11:47:19:751534364][tectonic_server::server][INFO] Client connection disconnected. Current: 32.
+[2017-10-25][11:47:19:752166140][tectonic_server::server][INFO] Client connected. Current: 32.
+[2017-10-25][11:47:19:752168174][tectonic_server::server][INFO] Client connection disconnected. Current: 32.
+[2017-10-25][11:47:19:753299483][tectonic_server::server][INFO] Client connected. Current: 33.
+[2017-10-25][11:47:19:754206657][tectonic_server::server][INFO] Client connection disconnected. Current: 32.
+[2017-10-25][11:47:19:754869885][tectonic_server::server][INFO] Client connection disconnected. Current: 31.
+[2017-10-25][11:47:19:755487016][tectonic_server::server][INFO] Client connection disconnected. Current: 30.
+[2017-10-25][11:47:19:756203310][tectonic_server::server][INFO] Client connected. Current: 31.
+[2017-10-25][11:47:19:756711743][tectonic_server::server][INFO] Client connection disconnected. Current: 30.
+[2017-10-25][11:47:19:757028119][tectonic_server::server][INFO] Client connection disconnected. Current: 29.
+[2017-10-25][11:47:19:757332557][tectonic_server::server][INFO] Client connection disconnected. Current: 28.
+[2017-10-25][11:47:19:757615027][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:47:19:757974754][tectonic_server::server][INFO] Client connection disconnected. Current: 26.
+[2017-10-25][11:47:19:758293120][tectonic_server::server][INFO] Client connection disconnected. Current: 24.
+[2017-10-25][11:47:19:758295161][tectonic_server::server][INFO] Client connection disconnected. Current: 24.
+[2017-10-25][11:47:19:758990367][tectonic_server::server][INFO] Client connection disconnected. Current: 23.
+[2017-10-25][11:47:19:759466456][tectonic_server::server][INFO] Client connected. Current: 24.
+[2017-10-25][11:47:19:759884692][tectonic_server::server][INFO] Client connected. Current: 25.
+[2017-10-25][11:47:19:760759051][tectonic_server::server][INFO] Client connection disconnected. Current: 24.
+[2017-10-25][11:47:19:761184184][tectonic_server::server][INFO] Client connection disconnected. Current: 23.
+[2017-10-25][11:47:19:761711076][tectonic_server::server][INFO] Client connection disconnected. Current: 22.
+[2017-10-25][11:47:19:762019097][tectonic_server::server][INFO] Client connection disconnected. Current: 21.
+[2017-10-25][11:47:19:762428607][tectonic_server::server][INFO] Client connection disconnected. Current: 20.
+[2017-10-25][11:47:19:762748438][tectonic_server::server][INFO] Client connection disconnected. Current: 19.
+[2017-10-25][11:47:19:763114512][tectonic_server::server][INFO] Client connection disconnected. Current: 18.
+[2017-10-25][11:47:19:763475981][tectonic_server::server][INFO] Client connection disconnected. Current: 17.
+[2017-10-25][11:47:19:764390179][tectonic_server::server][INFO] Client connection disconnected. Current: 16.
+[2017-10-25][11:47:19:764688343][tectonic_server::server][INFO] Client connected. Current: 17.
+[2017-10-25][11:47:19:765007744][tectonic_server::server][INFO] Client connected. Current: 18.
+[2017-10-25][11:47:19:765407999][tectonic_server::server][INFO] Client connected. Current: 19.
+[2017-10-25][11:47:19:765819257][tectonic_server::server][INFO] Client connection disconnected. Current: 18.
+[2017-10-25][11:47:19:766286133][tectonic_server::server][INFO] Client connected. Current: 19.
+[2017-10-25][11:47:19:766649152][tectonic_server::server][INFO] Client connection disconnected. Current: 18.
+[2017-10-25][11:47:19:767149005][tectonic_server::server][INFO] Client connection disconnected. Current: 17.
+[2017-10-25][11:47:19:767835784][tectonic_server::server][INFO] Client connection disconnected. Current: 16.
+[2017-10-25][11:47:19:768217706][tectonic_server::server][INFO] Client connected. Current: 17.
+[2017-10-25][11:47:19:768764549][tectonic_server::server][INFO] Client connection disconnected. Current: 19.
+[2017-10-25][11:47:19:768766470][tectonic_server::server][INFO] Client connected. Current: 19.
+[2017-10-25][11:47:19:769592556][tectonic_server::server][INFO] Client connected. Current: 19.
+[2017-10-25][11:47:19:768786386][tectonic_server::server][INFO] Client connected. Current: 19.
+[2017-10-25][11:47:19:770364068][tectonic_server::server][INFO] Client connected. Current: 20.
+[2017-10-25][11:47:19:770362212][tectonic_server::server][INFO] Client connected. Current: 20.
+[2017-10-25][11:47:19:771183071][tectonic_server::server][INFO] Client connection disconnected. Current: 20.
+[2017-10-25][11:47:19:771681325][tectonic_server::server][INFO] Client connected. Current: 21.
+[2017-10-25][11:47:19:772019432][tectonic_server::server][INFO] Client connection disconnected. Current: 20.
+[2017-10-25][11:47:19:772776911][tectonic_server::server][INFO] Client connection disconnected. Current: 19.
+[2017-10-25][11:47:19:773212535][tectonic_server::server][INFO] Client connected. Current: 20.
+[2017-10-25][11:47:19:773932762][tectonic_server::server][INFO] Client connection disconnected. Current: 19.
+[2017-10-25][11:47:19:774361167][tectonic_server::server][INFO] Client connection disconnected. Current: 17.
+[2017-10-25][11:47:19:774361180][tectonic_server::server][INFO] Client connection disconnected. Current: 17.
+[2017-10-25][11:47:19:774768125][tectonic_server::server][INFO] Client connected. Current: 18.
+[2017-10-25][11:47:19:774966816][tectonic_server::server][INFO] Client connection disconnected. Current: 17.
+[2017-10-25][11:47:19:775219989][tectonic_server::server][INFO] Client connection disconnected. Current: 15.
+[2017-10-25][11:47:19:775219994][tectonic_server::server][INFO] Client connection disconnected. Current: 15.
+[2017-10-25][11:47:19:776381683][tectonic_server::server][INFO] Client connection disconnected. Current: 14.
+[2017-10-25][11:47:19:776690614][tectonic_server::server][INFO] Client connection disconnected. Current: 13.
+[2017-10-25][11:47:19:776902460][tectonic_server::server][INFO] Client connection disconnected. Current: 12.
+[2017-10-25][11:47:19:777125008][tectonic_server::server][INFO] Client connection disconnected. Current: 11.
+[2017-10-25][11:47:19:777337595][tectonic_server::server][INFO] Client connection disconnected. Current: 10.
+[2017-10-25][11:47:19:777644925][tectonic_server::server][INFO] Client connection disconnected. Current: 9.
+[2017-10-25][11:47:19:777891697][tectonic_server::server][INFO] Client connected. Current: 10.
+[2017-10-25][11:47:19:778103355][tectonic_server::server][INFO] Client connection disconnected. Current: 9.
+[2017-10-25][11:47:19:778561179][tectonic_server::server][INFO] Client connection disconnected. Current: 7.
+[2017-10-25][11:47:19:778564226][tectonic_server::server][INFO] Client connection disconnected. Current: 7.
+[2017-10-25][11:47:19:779024670][tectonic_server::server][INFO] Client connection disconnected. Current: 6.
+[2017-10-25][11:47:19:780023487][tectonic_server::server][INFO] Client connection disconnected. Current: 5.
+[2017-10-25][11:47:19:780530311][tectonic_server::server][INFO] Client connection disconnected. Current: 4.
+[2017-10-25][11:47:19:781868704][tectonic_server::server][INFO] Client connection disconnected. Current: 3.
+[2017-10-25][11:47:27:812527859][tectonic_server::server][INFO] Client connection disconnected. Current: 2.
+[2017-10-25][11:48:46:372017805][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-25][11:48:46:372180110][tectonic_server::server][WARN] Autoflush is off!
+[2017-10-25][11:48:46:372296560][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-25][11:48:46:372389672][tectonic_server::server][DEBUG] Maximum connection: 50.
+[2017-10-25][11:48:46:372469486][tectonic_server::server][DEBUG] History granularity: 60.
+[2017-10-25][11:48:46:372565021][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-25][11:48:46:372644959][tectonic_server::server][INFO] -----------------initiated-----------------
+[2017-10-25][11:48:46:377973686][tectonic_server::server][INFO] Current total count: 0
+[2017-10-25][11:49:12:845859039][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-25][11:49:12:845998842][tectonic_server::server][WARN] Autoflush is off!
+[2017-10-25][11:49:12:846077383][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-25][11:49:12:846157456][tectonic_server::server][DEBUG] Maximum connection: 50.
+[2017-10-25][11:49:12:846235823][tectonic_server::server][DEBUG] History granularity: 60.
+[2017-10-25][11:49:12:846329268][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-25][11:49:12:846403784][tectonic_server::server][INFO] -----------------initiated-----------------
+[2017-10-25][11:49:12:853280223][tectonic_server::server][INFO] Current total count: 0
+[2017-10-25][11:50:12:853581989][tectonic_server::server][INFO] Current total count: 0
+[2017-10-25][11:50:27:089904746][tectonic_server::server][INFO] Client connected. Current: 1.
+[2017-10-25][11:50:27:090035739][tectonic_server::server][INFO] Client connected. Current: 2.
+[2017-10-25][11:50:27:090206381][tectonic_server::server][INFO] Client connected. Current: 3.
+[2017-10-25][11:50:27:090339362][tectonic_server::server][INFO] Client connected. Current: 4.
+[2017-10-25][11:50:27:090466426][tectonic_server::server][INFO] Client connected. Current: 5.
+[2017-10-25][11:50:27:090586614][tectonic_server::server][INFO] Client connected. Current: 6.
+[2017-10-25][11:50:27:090710530][tectonic_server::server][INFO] Client connected. Current: 7.
+[2017-10-25][11:50:27:090931116][tectonic_server::server][INFO] Client connected. Current: 8.
+[2017-10-25][11:50:27:091033991][tectonic_server::server][INFO] Client connected. Current: 9.
+[2017-10-25][11:50:27:091262245][tectonic_server::server][INFO] Client connected. Current: 10.
+[2017-10-25][11:50:27:091425213][tectonic_server::server][INFO] Client connected. Current: 11.
+[2017-10-25][11:50:27:091546991][tectonic_server::server][INFO] Client connected. Current: 12.
+[2017-10-25][11:50:27:091811361][tectonic_server::server][INFO] Client connected. Current: 13.
+[2017-10-25][11:50:27:092037947][tectonic_server::server][INFO] Client connected. Current: 14.
+[2017-10-25][11:50:27:092220350][tectonic_server::server][INFO] Client connected. Current: 15.
+[2017-10-25][11:50:27:092404514][tectonic_server::server][INFO] Client connected. Current: 18.
+[2017-10-25][11:50:27:092405189][tectonic_server::server][INFO] Client connected. Current: 18.
+[2017-10-25][11:50:27:092554285][tectonic_server::server][INFO] Client connected. Current: 19.
+[2017-10-25][11:50:27:092642379][tectonic_server::server][INFO] Client connected. Current: 20.
+[2017-10-25][11:50:27:092677474][tectonic_server::server][INFO] Client connected. Current: 20.
+[2017-10-25][11:50:27:092786634][tectonic_server::server][INFO] Client connected. Current: 21.
+[2017-10-25][11:50:27:092868482][tectonic_server::server][INFO] Client connected. Current: 22.
+[2017-10-25][11:50:27:092968017][tectonic_server::server][INFO] Client connected. Current: 23.
+[2017-10-25][11:50:27:093047816][tectonic_server::server][INFO] Client connected. Current: 25.
+[2017-10-25][11:50:27:093047607][tectonic_server::server][INFO] Client connected. Current: 25.
+[2017-10-25][11:50:27:093190589][tectonic_server::server][INFO] Client connected. Current: 26.
+[2017-10-25][11:50:27:093268831][tectonic_server::server][INFO] Client connected. Current: 27.
+[2017-10-25][11:50:27:093395343][tectonic_server::server][INFO] Client connected. Current: 28.
+[2017-10-25][11:50:27:093467441][tectonic_server::server][INFO] Client connected. Current: 29.
+[2017-10-25][11:50:27:093561672][tectonic_server::server][INFO] Client connected. Current: 30.
+[2017-10-25][11:50:27:093680463][tectonic_server::server][INFO] Client connected. Current: 31.
+[2017-10-25][11:50:27:093789037][tectonic_server::server][INFO] Client connected. Current: 32.
+[2017-10-25][11:50:27:093866466][tectonic_server::server][INFO] Client connected. Current: 33.
+[2017-10-25][11:50:27:093948261][tectonic_server::server][INFO] Client connected. Current: 34.
+[2017-10-25][11:50:27:094092905][tectonic_server::server][INFO] Client connected. Current: 35.
+[2017-10-25][11:50:27:094190775][tectonic_server::server][INFO] Client connected. Current: 36.
+[2017-10-25][11:50:27:094323589][tectonic_server::server][INFO] Client connected. Current: 37.
+[2017-10-25][11:50:27:094437321][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:50:27:094532603][tectonic_server::server][INFO] Client connected. Current: 41.
+[2017-10-25][11:50:27:094567213][tectonic_server::server][INFO] Client connected. Current: 41.
+[2017-10-25][11:50:27:094664516][tectonic_server::server][INFO] Client connected. Current: 42.
+[2017-10-25][11:50:27:094694934][tectonic_server::server][INFO] Client connected. Current: 42.
+[2017-10-25][11:50:27:094895004][tectonic_server::server][INFO] Client connected. Current: 43.
+[2017-10-25][11:50:27:094969665][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:50:27:094970319][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:50:27:095146560][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:50:27:095147345][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:50:27:095349493][tectonic_server::server][INFO] Client connected. Current: 48.
+[2017-10-25][11:50:27:095475067][tectonic_server::server][INFO] Client connected. Current: 49.
+[2017-10-25][11:50:27:095573378][tectonic_server::server][INFO] Client connected. Current: 50.
+[2017-10-25][11:50:27:236518609][tectonic_server::server][ERROR] Req: `USE btc_aby`
+[2017-10-25][11:50:27:236660134][tectonic_server::server][ERROR] Err: `No db named `btc_aby``
+[2017-10-25][11:50:27:237258518][tectonic_server::server][ERROR] Req: `USE btc_1st`
+[2017-10-25][11:50:27:237376726][tectonic_server::server][ERROR] Err: `No db named `btc_1st``
+[2017-10-25][11:50:27:238989023][tectonic_server::server][ERROR] Req: `USE btc_adt`
+[2017-10-25][11:50:27:239131511][tectonic_server::server][ERROR] Err: `No db named `btc_adt``
+[2017-10-25][11:50:27:240878675][tectonic_server::server][ERROR] Req: `USE btc_aeon`
+[2017-10-25][11:50:27:241003493][tectonic_server::server][ERROR] Err: `No db named `btc_aeon``
+[2017-10-25][11:50:27:242343423][tectonic_server::server][ERROR] Req: `USE btc_amp`
+[2017-10-25][11:50:27:242460092][tectonic_server::server][ERROR] Err: `No db named `btc_amp``
+[2017-10-25][11:50:27:243326394][tectonic_server::server][ERROR] Req: `USE btc_apx`
+[2017-10-25][11:50:27:243444814][tectonic_server::server][ERROR] Err: `No db named `btc_apx``
+[2017-10-25][11:50:27:243813004][tectonic_server::server][ERROR] Req: `USE btc_ark`
+[2017-10-25][11:50:27:243897619][tectonic_server::server][ERROR] Err: `No db named `btc_ark``
+[2017-10-25][11:50:27:244322875][tectonic_server::server][ERROR] Req: `USE btc_bat`
+[2017-10-25][11:50:27:244416622][tectonic_server::server][ERROR] Err: `No db named `btc_bat``
+[2017-10-25][11:50:27:245029359][tectonic_server::server][ERROR] Req: `USE btc_bcc`
+[2017-10-25][11:50:27:245154066][tectonic_server::server][ERROR] Err: `No db named `btc_bcc``
+[2017-10-25][11:50:27:245819886][tectonic_server::server][ERROR] Req: `USE btc_bitb`
+[2017-10-25][11:50:27:245924786][tectonic_server::server][ERROR] Err: `No db named `btc_bitb``
+[2017-10-25][11:50:27:246930497][tectonic_server::server][ERROR] Req: `USE btc_blk`
+[2017-10-25][11:50:27:247056466][tectonic_server::server][ERROR] Err: `No db named `btc_blk``
+[2017-10-25][11:50:27:249019428][tectonic_server::server][ERROR] Req: `USE btc_bnt`
+[2017-10-25][11:50:27:249146040][tectonic_server::server][ERROR] Err: `No db named `btc_bnt``
+[2017-10-25][11:50:27:249527843][tectonic_server::server][ERROR] Req: `USE btc_brx`
+[2017-10-25][11:50:27:249622079][tectonic_server::server][ERROR] Err: `No db named `btc_brx``
+[2017-10-25][11:50:27:249951447][tectonic_server::server][ERROR] Req: `USE btc_btcd`
+[2017-10-25][11:50:27:250042185][tectonic_server::server][ERROR] Err: `No db named `btc_btcd``
+[2017-10-25][11:50:27:250116419][tectonic_server::server][ERROR] Req: `USE btc_burst`
+[2017-10-25][11:50:27:250196657][tectonic_server::server][ERROR] Err: `No db named `btc_burst``
+[2017-10-25][11:50:27:250531418][tectonic_server::server][ERROR] Req: `USE btc_cann`
+[2017-10-25][11:50:27:250631471][tectonic_server::server][ERROR] Err: `No db named `btc_cann``
+[2017-10-25][11:50:27:251694876][tectonic_server::server][ERROR] Req: `USE btc_clam`
+[2017-10-25][11:50:27:251788071][tectonic_server::server][ERROR] Err: `No db named `btc_clam``
+[2017-10-25][11:50:27:251912771][tectonic_server::server][ERROR] Req: `USE btc_club`
+[2017-10-25][11:50:27:251997865][tectonic_server::server][ERROR] Err: `No db named `btc_club``
+[2017-10-25][11:50:27:252118797][tectonic_server::server][ERROR] Req: `USE btc_cpc`
+[2017-10-25][11:50:27:252200311][tectonic_server::server][ERROR] Err: `No db named `btc_cpc``
+[2017-10-25][11:50:27:252357586][tectonic_server::server][ERROR] Req: `USE btc_crw`
+[2017-10-25][11:50:27:252461062][tectonic_server::server][ERROR] Err: `No db named `btc_crw``
+[2017-10-25][11:50:27:252481703][tectonic_server::server][ERROR] Req: `USE btc_cvc`
+[2017-10-25][11:50:27:252632121][tectonic_server::server][ERROR] Req: `USE btc_dcr`
+[2017-10-25][11:50:27:252723478][tectonic_server::server][ERROR] Err: `No db named `btc_dcr``
+[2017-10-25][11:50:27:252651071][tectonic_server::server][ERROR] Err: `No db named `btc_cvc``
+[2017-10-25][11:50:27:252853814][tectonic_server::server][ERROR] Req: `USE btc_dgb`
+[2017-10-25][11:50:27:252941413][tectonic_server::server][ERROR] Err: `No db named `btc_dgb``
+[2017-10-25][11:50:27:253247956][tectonic_server::server][ERROR] Req: `USE btc_dmd`
+[2017-10-25][11:50:27:253339366][tectonic_server::server][ERROR] Err: `No db named `btc_dmd``
+[2017-10-25][11:50:27:253469450][tectonic_server::server][ERROR] Req: `USE btc_doge`
+[2017-10-25][11:50:27:253557265][tectonic_server::server][ERROR] Err: `No db named `btc_doge``
+[2017-10-25][11:50:27:253584429][tectonic_server::server][ERROR] Req: `USE btc_dtb`
+[2017-10-25][11:50:27:253692444][tectonic_server::server][ERROR] Err: `No db named `btc_dtb``
+[2017-10-25][11:50:27:253745190][tectonic_server::server][ERROR] Req: `USE btc_ebst`
+[2017-10-25][11:50:27:253833865][tectonic_server::server][ERROR] Err: `No db named `btc_ebst``
+[2017-10-25][11:50:27:254151453][tectonic_server::server][ERROR] Req: `USE btc_efl`
+[2017-10-25][11:50:27:254228667][tectonic_server::server][ERROR] Err: `No db named `btc_efl``
+[2017-10-25][11:50:27:254334783][tectonic_server::server][ERROR] Req: `USE btc_emc`
+[2017-10-25][11:50:27:254431757][tectonic_server::server][ERROR] Err: `No db named `btc_emc``
+[2017-10-25][11:50:27:255724497][tectonic_server::server][ERROR] Req: `USE btc_enrg`
+[2017-10-25][11:50:27:255845080][tectonic_server::server][ERROR] Err: `No db named `btc_enrg``
+[2017-10-25][11:50:27:255917889][tectonic_server::server][ERROR] Req: `USE btc_etc`
+[2017-10-25][11:50:27:256012731][tectonic_server::server][ERROR] Err: `No db named `btc_etc``
+[2017-10-25][11:50:27:256146828][tectonic_server::server][ERROR] Req: `USE btc_excl`
+[2017-10-25][11:50:27:256234551][tectonic_server::server][ERROR] Err: `No db named `btc_excl``
+[2017-10-25][11:50:27:256237676][tectonic_server::server][ERROR] Req: `USE btc_fair`
+[2017-10-25][11:50:27:256401379][tectonic_server::server][ERROR] Err: `No db named `btc_fair``
+[2017-10-25][11:50:27:256520844][tectonic_server::server][ERROR] Req: `USE btc_fldc`
+[2017-10-25][11:50:27:256606065][tectonic_server::server][ERROR] Err: `No db named `btc_fldc``
+[2017-10-25][11:50:27:257145249][tectonic_server::server][ERROR] Req: `USE btc_ftc`
+[2017-10-25][11:50:27:257267240][tectonic_server::server][ERROR] Err: `No db named `btc_ftc``
+[2017-10-25][11:50:27:257306821][tectonic_server::server][ERROR] Req: `USE btc_gam`
+[2017-10-25][11:50:27:257438286][tectonic_server::server][ERROR] Err: `No db named `btc_gam``
+[2017-10-25][11:50:27:257574686][tectonic_server::server][ERROR] Req: `USE btc_gbg`
+[2017-10-25][11:50:27:257694218][tectonic_server::server][ERROR] Err: `No db named `btc_gbg``
+[2017-10-25][11:50:27:257764273][tectonic_server::server][ERROR] Req: `USE btc_gcr`
+[2017-10-25][11:50:27:257882957][tectonic_server::server][ERROR] Err: `No db named `btc_gcr``
+[2017-10-25][11:50:27:257953346][tectonic_server::server][ERROR] Req: `USE btc_gld`
+[2017-10-25][11:50:27:258046118][tectonic_server::server][ERROR] Err: `No db named `btc_gld``
+[2017-10-25][11:50:27:258162008][tectonic_server::server][ERROR] Req: `USE btc_gnt`
+[2017-10-25][11:50:27:258258713][tectonic_server::server][ERROR] Err: `No db named `btc_gnt``
+[2017-10-25][11:50:27:259162324][tectonic_server::server][ERROR] Req: `USE btc_grc`
+[2017-10-25][11:50:27:259332441][tectonic_server::server][ERROR] Err: `No db named `btc_grc``
+[2017-10-25][11:50:27:259334919][tectonic_server::server][ERROR] Req: `USE btc_gup`
+[2017-10-25][11:50:27:259490592][tectonic_server::server][ERROR] Err: `No db named `btc_gup``
+[2017-10-25][11:50:27:259661332][tectonic_server::server][ERROR] Req: `USE btc_incnt`
+[2017-10-25][11:50:27:259767831][tectonic_server::server][ERROR] Err: `No db named `btc_incnt``
+[2017-10-25][11:50:27:261588833][tectonic_server::server][ERROR] Req: `USE btc_ioc`
+[2017-10-25][11:50:27:261761573][tectonic_server::server][ERROR] Err: `No db named `btc_ioc``
+[2017-10-25][11:50:27:261982490][tectonic_server::server][ERROR] Req: `USE btc_iop`
+[2017-10-25][11:50:27:262098240][tectonic_server::server][ERROR] Err: `No db named `btc_iop``
+[2017-10-25][11:50:27:262660398][tectonic_server::server][ERROR] Req: `USE btc_kore`
+[2017-10-25][11:50:27:262825269][tectonic_server::server][ERROR] Err: `No db named `btc_kore``
+[2017-10-25][11:50:27:263029359][tectonic_server::server][ERROR] Req: `USE btc_lgd`
+[2017-10-25][11:50:27:263138373][tectonic_server::server][ERROR] Err: `No db named `btc_lgd``
+[2017-10-25][11:50:27:263149402][tectonic_server::server][ERROR] Req: `USE btc_lsk`
+[2017-10-25][11:50:27:263376825][tectonic_server::server][ERROR] Err: `No db named `btc_lsk``
+[2017-10-25][11:50:27:263496785][tectonic_server::server][ERROR] Req: `USE btc_lun`
+[2017-10-25][11:50:27:263596130][tectonic_server::server][ERROR] Err: `No db named `btc_lun``
+[2017-10-25][11:50:27:264389736][tectonic_server::server][ERROR] Req: `USE btc_mana`
+[2017-10-25][11:50:27:264604864][tectonic_server::server][ERROR] Err: `No db named `btc_mana``
+[2017-10-25][11:50:27:284823409][tectonic_server::server][ERROR] Req: `USE btc_ada`
+[2017-10-25][11:50:27:284965223][tectonic_server::server][ERROR] Err: `No db named `btc_ada``
+[2017-10-25][11:50:27:285358386][tectonic_server::server][ERROR] Req: `USE btc_2give`
+[2017-10-25][11:50:27:285530914][tectonic_server::server][ERROR] Err: `No db named `btc_2give``
+[2017-10-25][11:50:27:286298055][tectonic_server::server][ERROR] Req: `USE btc_adx`
+[2017-10-25][11:50:27:286441326][tectonic_server::server][ERROR] Err: `No db named `btc_adx``
+[2017-10-25][11:50:27:286574926][tectonic_server::server][ERROR] Req: `USE btc_agrs`
+[2017-10-25][11:50:27:286683414][tectonic_server::server][ERROR] Err: `No db named `btc_agrs``
+[2017-10-25][11:50:27:286798779][tectonic_server::server][ERROR] Req: `USE btc_aur`
+[2017-10-25][11:50:27:286884681][tectonic_server::server][ERROR] Err: `No db named `btc_aur``
+[2017-10-25][11:50:27:286966722][tectonic_server::server][ERROR] Req: `USE btc_ardr`
+[2017-10-25][11:50:27:287025923][tectonic_server::server][ERROR] Err: `No db named `btc_ardr``
+[2017-10-25][11:50:27:287100055][tectonic_server::server][ERROR] Req: `USE btc_bay`
+[2017-10-25][11:50:27:287191894][tectonic_server::server][ERROR] Err: `No db named `btc_bay``
+[2017-10-25][11:50:27:287213120][tectonic_server::server][ERROR] Req: `USE btc_bcy`
+[2017-10-25][11:50:27:287357228][tectonic_server::server][ERROR] Req: `USE btc_blitz`
+[2017-10-25][11:50:27:287116746][tectonic_server::server][ERROR] Req: `USE btc_ant`
+[2017-10-25][11:50:27:287505976][tectonic_server::server][ERROR] Err: `No db named `btc_ant``
+[2017-10-25][11:50:27:287445028][tectonic_server::server][ERROR] Err: `No db named `btc_blitz``
+[2017-10-25][11:50:27:287394168][tectonic_server::server][ERROR] Err: `No db named `btc_bcy``
+[2017-10-25][11:50:27:287665994][tectonic_server::server][ERROR] Req: `USE btc_block`
+[2017-10-25][11:50:27:287755105][tectonic_server::server][ERROR] Err: `No db named `btc_block``
+[2017-10-25][11:50:27:289312597][tectonic_server::server][ERROR] Req: `USE btc_brk`
+[2017-10-25][11:50:27:289449881][tectonic_server::server][ERROR] Err: `No db named `btc_brk``
+[2017-10-25][11:50:27:291678492][tectonic_server::server][ERROR] Req: `USE btc_bsd`
+[2017-10-25][11:50:27:291832766][tectonic_server::server][ERROR] Err: `No db named `btc_bsd``
+[2017-10-25][11:50:27:295161070][tectonic_server::server][ERROR] Req: `USE btc_byc`
+[2017-10-25][11:50:27:295338595][tectonic_server::server][ERROR] Err: `No db named `btc_byc``
+[2017-10-25][11:50:27:296210234][tectonic_server::server][ERROR] Req: `USE btc_bts`
+[2017-10-25][11:50:27:298681646][tectonic_server::server][ERROR] Req: `USE btc_dgd`
+[2017-10-25][11:50:27:298887170][tectonic_server::server][ERROR] Err: `No db named `btc_dgd``
+[2017-10-25][11:50:27:298723205][tectonic_server::server][ERROR] Err: `No db named `btc_bts``
+[2017-10-25][11:50:27:296929973][tectonic_server::server][ERROR] Req: `USE btc_cloak`
+[2017-10-25][11:50:27:300132663][tectonic_server::server][ERROR] Req: `USE btc_dope`
+[2017-10-25][11:50:27:297319363][tectonic_server::server][ERROR] Req: `USE btc_crb`
+[2017-10-25][11:50:27:297499992][tectonic_server::server][ERROR] Req: `USE btc_cure`
+[2017-10-25][11:50:27:297885054][tectonic_server::server][ERROR] Req: `USE btc_dct`
+[2017-10-25][11:50:27:298279891][tectonic_server::server][ERROR] Req: `USE btc_dash`
+[2017-10-25][11:50:27:296646890][tectonic_server::server][ERROR] Req: `USE btc_cfi`
+[2017-10-25][11:50:27:303084862][tectonic_server::server][ERROR] Err: `No db named `btc_cfi``
+[2017-10-25][11:50:27:300197846][tectonic_server::server][ERROR] Err: `No db named `btc_cloak``
+[2017-10-25][11:50:27:300525750][tectonic_server::server][ERROR] Req: `USE btc_dnt`
+[2017-10-25][11:50:27:300983948][tectonic_server::server][ERROR] Err: `No db named `btc_dope``
+[2017-10-25][11:50:27:301317285][tectonic_server::server][ERROR] Err: `No db named `btc_crb``
+[2017-10-25][11:50:27:301454061][tectonic_server::server][ERROR] Req: `USE btc_edg`
+[2017-10-25][11:50:27:303994191][tectonic_server::server][ERROR] Err: `No db named `btc_edg``
+[2017-10-25][11:50:27:304437807][tectonic_server::server][ERROR] Req: `USE btc_erc`
+[2017-10-25][11:50:27:304692679][tectonic_server::server][ERROR] Err: `No db named `btc_erc``
+[2017-10-25][11:50:27:303576110][tectonic_server::server][ERROR] Err: `No db named `btc_dnt``
+[2017-10-25][11:50:27:302893652][tectonic_server::server][ERROR] Req: `USE btc_egc`
+[2017-10-25][11:50:27:305283302][tectonic_server::server][ERROR] Err: `No db named `btc_egc``
+[2017-10-25][11:50:27:301872620][tectonic_server::server][ERROR] Err: `No db named `btc_cure``
+[2017-10-25][11:50:27:302496723][tectonic_server::server][ERROR] Err: `No db named `btc_dct``
+[2017-10-25][11:50:27:302915655][tectonic_server::server][ERROR] Err: `No db named `btc_dash``
+[2017-10-25][11:50:27:303544048][tectonic_server::server][ERROR] Req: `USE btc_emc2`
+[2017-10-25][11:50:27:306172310][tectonic_server::server][ERROR] Err: `No db named `btc_emc2``
+[2017-10-25][11:50:27:297135739][tectonic_server::server][ERROR] Req: `USE btc_coval`
+[2017-10-25][11:50:27:307411735][tectonic_server::server][ERROR] Err: `No db named `btc_coval``
+[2017-10-25][11:50:27:307530024][tectonic_server::server][ERROR] Req: `USE btc_exp`
+[2017-10-25][11:50:27:307741977][tectonic_server::server][ERROR] Err: `No db named `btc_exp``
+[2017-10-25][11:50:27:307311070][tectonic_server::server][ERROR] Req: `USE btc_eth`
+[2017-10-25][11:50:27:308003743][tectonic_server::server][ERROR] Err: `No db named `btc_eth``
+[2017-10-25][11:50:27:308151656][tectonic_server::server][ERROR] Req: `USE btc_dyn`
+[2017-10-25][11:50:27:309309757][tectonic_server::server][ERROR] Err: `No db named `btc_dyn``
+[2017-10-25][11:50:27:310853348][tectonic_server::server][ERROR] Req: `USE btc_game`
+[2017-10-25][11:50:27:308444044][tectonic_server::server][ERROR] Req: `USE btc_fct`
+[2017-10-25][11:50:27:311526732][tectonic_server::server][ERROR] Err: `No db named `btc_fct``
+[2017-10-25][11:50:27:309309813][tectonic_server::server][ERROR] Req: `USE btc_flo`
+[2017-10-25][11:50:27:311309074][tectonic_server::server][ERROR] Req: `USE btc_geo`
+[2017-10-25][11:50:27:312646116][tectonic_server::server][ERROR] Req: `USE btc_hmq`
+[2017-10-25][11:50:27:311651646][tectonic_server::server][ERROR] Req: `USE btc_golos`
+[2017-10-25][11:50:27:311651643][tectonic_server::server][ERROR] Req: `USE btc_gno`
+[2017-10-25][11:50:27:311324331][tectonic_server::server][ERROR] Err: `No db named `btc_game``
+[2017-10-25][11:50:27:313300201][tectonic_server::server][ERROR] Req: `USE btc_kmd`
+[2017-10-25][11:50:27:313690300][tectonic_server::server][ERROR] Req: `USE btc_grs`
+[2017-10-25][11:50:27:315070067][tectonic_server::server][ERROR] Err: `No db named `btc_grs``
+[2017-10-25][11:50:27:312152865][tectonic_server::server][ERROR] Req: `USE btc_gbyte`
+[2017-10-25][11:50:27:315987031][tectonic_server::server][ERROR] Req: `USE eth_cfi`
+[2017-10-25][11:50:27:316050770][tectonic_server::server][ERROR] Err: `No db named `btc_gbyte``
+[2017-10-25][11:50:27:313518143][tectonic_server::server][ERROR] Req: `USE btc_ion`
+[2017-10-25][11:50:27:313924189][tectonic_server::server][ERROR] Req: `USE btc_lmc`
+[2017-10-25][11:50:27:314315441][tectonic_server::server][ERROR] Req: `USE btc_maid`
+[2017-10-25][11:50:27:314432405][tectonic_server::server][ERROR] Err: `No db named `btc_flo``
+[2017-10-25][11:50:27:314502714][tectonic_server::server][ERROR] Req: `USE btc_mco`
+[2017-10-25][11:50:27:314507091][tectonic_server::server][ERROR] Err: `No db named `btc_geo``
+[2017-10-25][11:50:27:309875256][tectonic_server::server][ERROR] Req: `USE btc_fun`
+[2017-10-25][11:50:27:316805554][tectonic_server::server][ERROR] Req: `USE eth_dgb`
+[2017-10-25][11:50:27:316895761][tectonic_server::server][ERROR] Err: `No db named `eth_dgb``
+[2017-10-25][11:50:27:314624135][tectonic_server::server][ERROR] Err: `No db named `btc_golos``
+[2017-10-25][11:50:27:317110349][tectonic_server::server][ERROR] Req: `USE eth_dgd`
+[2017-10-25][11:50:27:317222061][tectonic_server::server][ERROR] Err: `No db named `eth_dgd``
+[2017-10-25][11:50:27:314678702][tectonic_server::server][ERROR] Err: `No db named `btc_gno``
+[2017-10-25][11:50:27:314668614][tectonic_server::server][ERROR] Err: `No db named `btc_hmq``
+[2017-10-25][11:50:27:314835621][tectonic_server::server][ERROR] Err: `No db named `btc_kmd``
+[2017-10-25][11:50:27:315077589][tectonic_server::server][ERROR] Req: `USE eth_bcc`
+[2017-10-25][11:50:27:317612562][tectonic_server::server][ERROR] Err: `No db named `eth_bcc``
+[2017-10-25][11:50:27:313748248][tectonic_server::server][ERROR] Req: `USE btc_lbc`
+[2017-10-25][11:50:27:317763884][tectonic_server::server][ERROR] Err: `No db named `btc_lbc``
+[2017-10-25][11:50:27:315790905][tectonic_server::server][ERROR] Req: `USE eth_bts`
+[2017-10-25][11:50:27:316093962][tectonic_server::server][ERROR] Err: `No db named `eth_cfi``
+[2017-10-25][11:50:27:316221109][tectonic_server::server][ERROR] Err: `No db named `btc_ion``
+[2017-10-25][11:50:27:316303478][tectonic_server::server][ERROR] Req: `USE eth_crb`
+[2017-10-25][11:50:27:316364912][tectonic_server::server][ERROR] Err: `No db named `btc_lmc``
+[2017-10-25][11:50:27:313867875][tectonic_server::server][ERROR] Req: `USE btc_infx`
+[2017-10-25][11:50:27:318198099][tectonic_server::server][ERROR] Err: `No db named `btc_infx``
+[2017-10-25][11:50:27:318223307][tectonic_server::server][ERROR] Req: `USE eth_gno`
+[2017-10-25][11:50:27:316596570][tectonic_server::server][ERROR] Err: `No db named `btc_mco``
+[2017-10-25][11:50:27:316625815][tectonic_server::server][ERROR] Req: `USE eth_dash`
+[2017-10-25][11:50:27:318577117][tectonic_server::server][ERROR] Err: `No db named `eth_dash``
+[2017-10-25][11:50:27:318648867][tectonic_server::server][ERROR] Req: `USE eth_gup`
+[2017-10-25][11:50:27:316834282][tectonic_server::server][ERROR] Err: `No db named `btc_fun``
+[2017-10-25][11:50:27:317281276][tectonic_server::server][ERROR] Req: `USE eth_dnt`
+[2017-10-25][11:50:27:319090250][tectonic_server::server][ERROR] Req: `USE eth_lgd`
+[2017-10-25][11:50:27:319192246][tectonic_server::server][ERROR] Req: `USE eth_hmq`
+[2017-10-25][11:50:27:317529895][tectonic_server::server][ERROR] Req: `USE eth_etc`
+[2017-10-25][11:50:27:319233678][tectonic_server::server][ERROR] Err: `No db named `eth_lgd``
+[2017-10-25][11:50:27:317812616][tectonic_server::server][ERROR] Req: `USE eth_fct`
+[2017-10-25][11:50:27:315613622][tectonic_server::server][ERROR] Req: `USE eth_bnt`
+[2017-10-25][11:50:27:318101048][tectonic_server::server][ERROR] Err: `No db named `eth_crb``
+[2017-10-25][11:50:27:316379272][tectonic_server::server][ERROR] Req: `USE eth_cvc`
+[2017-10-25][11:50:27:318098846][tectonic_server::server][ERROR] Req: `USE eth_fun`
+[2017-10-25][11:50:27:316449781][tectonic_server::server][ERROR] Req: `USE eth_bat`
+[2017-10-25][11:50:27:318364816][tectonic_server::server][ERROR] Err: `No db named `eth_gno``
+[2017-10-25][11:50:27:319896094][tectonic_server::server][ERROR] Req: `USE eth_mco`
+[2017-10-25][11:50:27:320007550][tectonic_server::server][ERROR] Err: `No db named `eth_bat``
+[2017-10-25][11:50:27:318476148][tectonic_server::server][ERROR] Req: `USE eth_gnt`
+[2017-10-25][11:50:27:318742035][tectonic_server::server][ERROR] Err: `No db named `eth_gup``
+[2017-10-25][11:50:27:318927086][tectonic_server::server][ERROR] Err: `No db named `eth_dnt``
+[2017-10-25][11:50:27:320492112][tectonic_server::server][ERROR] Err: `No db named `eth_gnt``
+[2017-10-25][11:50:27:320775615][tectonic_server::server][ERROR] Req: `USE eth_nmr`
+[2017-10-25][11:50:27:320863547][tectonic_server::server][ERROR] Err: `No db named `eth_nmr``
+[2017-10-25][11:50:27:321014518][tectonic_server::server][ERROR] Req: `USE eth_omg`
+[2017-10-25][11:50:27:321115462][tectonic_server::server][ERROR] Err: `No db named `eth_omg``
+[2017-10-25][11:50:27:321242269][tectonic_server::server][ERROR] Req: `USE eth_pay`
+[2017-10-25][11:50:27:321360196][tectonic_server::server][ERROR] Err: `No db named `eth_pay``
+[2017-10-25][11:50:27:321521438][tectonic_server::server][ERROR] Req: `USE eth_qrl`
+[2017-10-25][11:50:27:319359322][tectonic_server::server][ERROR] Err: `No db named `eth_etc``
+[2017-10-25][11:50:27:319479100][tectonic_server::server][ERROR] Err: `No db named `eth_fct``
+[2017-10-25][11:50:27:317927062][tectonic_server::server][ERROR] Err: `No db named `eth_bts``
+[2017-10-25][11:50:27:319577035][tectonic_server::server][ERROR] Err: `No db named `eth_bnt``
+[2017-10-25][11:50:27:319326122][tectonic_server::server][ERROR] Req: `USE eth_ltc`
+[2017-10-25][11:50:27:321940266][tectonic_server::server][ERROR] Err: `No db named `eth_ltc``
+[2017-10-25][11:50:27:319581750][tectonic_server::server][ERROR] Req: `USE eth_mana`
+[2017-10-25][11:50:27:319821651][tectonic_server::server][ERROR] Req: `USE eth_lun`
+[2017-10-25][11:50:27:322181236][tectonic_server::server][ERROR] Err: `No db named `eth_lun``
+[2017-10-25][11:50:27:319289807][tectonic_server::server][ERROR] Err: `No db named `eth_hmq``
+[2017-10-25][11:50:27:320338403][tectonic_server::server][ERROR] Req: `USE eth_mtl`
+[2017-10-25][11:50:27:321577354][tectonic_server::server][ERROR] Req: `USE eth_ptoy`
+[2017-10-25][11:50:27:322469534][tectonic_server::server][ERROR] Err: `No db named `eth_ptoy``
+[2017-10-25][11:50:27:319800353][tectonic_server::server][ERROR] Err: `No db named `eth_cvc``
+[2017-10-25][11:50:27:321667076][tectonic_server::server][ERROR] Req: `USE eth_neo`
+[2017-10-25][11:50:27:322816172][tectonic_server::server][ERROR] Err: `No db named `eth_neo``
+[2017-10-25][11:50:27:320403526][tectonic_server::server][ERROR] Req: `USE eth_myst`
+[2017-10-25][11:50:27:323001273][tectonic_server::server][ERROR] Err: `No db named `eth_myst``
+[2017-10-25][11:50:27:323151051][tectonic_server::server][ERROR] Req: `USE eth_time`
+[2017-10-25][11:50:27:323238233][tectonic_server::server][ERROR] Err: `No db named `eth_time``
+[2017-10-25][11:50:27:316572238][tectonic_server::server][ERROR] Err: `No db named `btc_maid``
+[2017-10-25][11:50:27:314717628][tectonic_server::server][ERROR] Req: `USE btc_ltc`
+[2017-10-25][11:50:27:322129751][tectonic_server::server][ERROR] Err: `No db named `eth_mana``
+[2017-10-25][11:50:27:323497707][tectonic_server::server][ERROR] Err: `No db named `btc_ltc``
+[2017-10-25][11:50:27:322408182][tectonic_server::server][ERROR] Err: `No db named `eth_mtl``
+[2017-10-25][11:50:27:322483829][tectonic_server::server][ERROR] Req: `USE eth_sc`
+[2017-10-25][11:50:27:323736765][tectonic_server::server][ERROR] Err: `No db named `eth_sc``
+[2017-10-25][11:50:27:323542402][tectonic_server::server][ERROR] Req: `USE eth_sngls`
+[2017-10-25][11:50:27:320153647][tectonic_server::server][ERROR] Err: `No db named `eth_mco``
+[2017-10-25][11:50:27:323981517][tectonic_server::server][ERROR] Req: `USE eth_strat`
+[2017-10-25][11:50:27:324089012][tectonic_server::server][ERROR] Err: `No db named `eth_strat``
+[2017-10-25][11:50:27:324339812][tectonic_server::server][ERROR] Req: `USE eth_storj`
+[2017-10-25][11:50:27:324436317][tectonic_server::server][ERROR] Err: `No db named `eth_storj``
+[2017-10-25][11:50:27:321936253][tectonic_server::server][ERROR] Req: `USE eth_qtum`
+[2017-10-25][11:50:27:319941166][tectonic_server::server][ERROR] Err: `No db named `eth_fun``
+[2017-10-25][11:50:27:323752193][tectonic_server::server][ERROR] Req: `USE eth_snt`
+[2017-10-25][11:50:27:323579038][tectonic_server::server][ERROR] Req: `USE eth_rlc`
+[2017-10-25][11:50:27:324548155][tectonic_server::server][ERROR] Req: `USE eth_wings`
+[2017-10-25][11:50:27:325698788][tectonic_server::server][ERROR] Err: `No db named `eth_rlc``
+[2017-10-25][11:50:27:323503060][tectonic_server::server][ERROR] Req: `USE eth_rep`
+[2017-10-25][11:50:27:325850233][tectonic_server::server][ERROR] Req: `USE eth_tkn`
+[2017-10-25][11:50:27:326126203][tectonic_server::server][ERROR] Err: `No db named `eth_tkn``
+[2017-10-25][11:50:27:326313494][tectonic_server::server][ERROR] Req: `USE eth_xmr`
+[2017-10-25][11:50:27:326398150][tectonic_server::server][ERROR] Err: `No db named `eth_xmr``
+[2017-10-25][11:50:27:321634221][tectonic_server::server][ERROR] Err: `No db named `eth_qrl``
+[2017-10-25][11:50:27:323893301][tectonic_server::server][ERROR] Err: `No db named `eth_sngls``
+[2017-10-25][11:50:27:325122947][tectonic_server::server][ERROR] Req: `USE eth_xlm`
+[2017-10-25][11:50:27:325421780][tectonic_server::server][ERROR] Req: `USE eth_xem`
+[2017-10-25][11:50:27:325494167][tectonic_server::server][ERROR] Req: `USE eth_trst`
+[2017-10-25][11:50:27:325628160][tectonic_server::server][ERROR] Err: `No db named `eth_snt``
+[2017-10-25][11:50:27:325696493][tectonic_server::server][ERROR] Req: `USE eth_zec`
+[2017-10-25][11:50:27:325759755][tectonic_server::server][ERROR] Err: `No db named `eth_wings``
+[2017-10-25][11:50:27:327153102][tectonic_server::server][ERROR] Err: `No db named `eth_zec``
+[2017-10-25][11:50:27:325695342][tectonic_server::server][ERROR] Req: `USE eth_salt`
+[2017-10-25][11:50:27:324879351][tectonic_server::server][ERROR] Req: `USE eth_waves`
+[2017-10-25][11:50:27:325868000][tectonic_server::server][ERROR] Err: `No db named `eth_rep``
+[2017-10-25][11:50:27:325978794][tectonic_server::server][ERROR] Req: `USE eth_xrp`
+[2017-10-25][11:50:27:326845067][tectonic_server::server][ERROR] Err: `No db named `eth_xlm``
+[2017-10-25][11:50:27:326892100][tectonic_server::server][ERROR] Err: `No db named `eth_xem``
+[2017-10-25][11:50:27:326948736][tectonic_server::server][ERROR] Err: `No db named `eth_trst``
+[2017-10-25][11:50:27:324609407][tectonic_server::server][ERROR] Err: `No db named `eth_qtum``
+[2017-10-25][11:50:27:327351244][tectonic_server::server][ERROR] Err: `No db named `eth_salt``
+[2017-10-25][11:50:27:327388013][tectonic_server::server][ERROR] Err: `No db named `eth_waves``
+[2017-10-25][11:50:27:327511533][tectonic_server::server][ERROR] Err: `No db named `eth_xrp``
+[2017-10-25][11:50:44:781289638][tectonic_server::server][INFO] Client connection disconnected. Current: 49.
+[2017-10-25][11:50:44:781981683][tectonic_server::server][INFO] Client connected. Current: 49.
+[2017-10-25][11:50:44:781981753][tectonic_server::server][INFO] Client connection disconnected. Current: 49.
+[2017-10-25][11:50:44:789086765][tectonic_server::server][INFO] Client connection disconnected. Current: 48.
+[2017-10-25][11:50:44:789701796][tectonic_server::server][INFO] Client connection disconnected. Current: 47.
+[2017-10-25][11:50:44:789211169][tectonic_server::server][ERROR] Req: `USE btc_meme`
+[2017-10-25][11:50:44:790243420][tectonic_server::server][INFO] Client connected. Current: 48.
+[2017-10-25][11:50:44:791839532][tectonic_server::server][ERROR] Err: `No db named `btc_meme``
+[2017-10-25][11:50:44:795660950][tectonic_server::server][INFO] Client connection disconnected. Current: 47.
+[2017-10-25][11:50:44:795874659][tectonic_server::server][ERROR] Req: `USE btc_mue`
+[2017-10-25][11:50:44:796498710][tectonic_server::server][INFO] Client connected. Current: 48.
+[2017-10-25][11:50:44:796965802][tectonic_server::server][ERROR] Err: `No db named `btc_mue``
+[2017-10-25][11:50:44:802930020][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:50:44:802924415][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:50:44:803047089][tectonic_server::server][ERROR] Req: `USE btc_nbt`
+[2017-10-25][11:50:44:804575815][tectonic_server::server][ERROR] Err: `No db named `btc_nbt``
+[2017-10-25][11:50:44:804229211][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:50:44:810281033][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:50:44:810342847][tectonic_server::server][ERROR] Req: `USE btc_nmr`
+[2017-10-25][11:50:44:810895490][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:50:44:811131594][tectonic_server::server][ERROR] Err: `No db named `btc_nmr``
+[2017-10-25][11:50:44:816114420][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:50:44:816815289][tectonic_server::server][INFO] Client connected. Current: 48.
+[2017-10-25][11:50:44:817111434][tectonic_server::server][ERROR] Req: `USE btc_nxs`
+[2017-10-25][11:50:44:817600558][tectonic_server::server][ERROR] Err: `No db named `btc_nxs``
+[2017-10-25][11:50:44:816817496][tectonic_server::server][INFO] Client connected. Current: 48.
+[2017-10-25][11:50:44:820653221][tectonic_server::server][ERROR] Req: `USE btc_mona`
+[2017-10-25][11:50:44:820870784][tectonic_server::server][INFO] Client connection disconnected. Current: 47.
+[2017-10-25][11:50:44:821514223][tectonic_server::server][ERROR] Err: `No db named `btc_mona``
+[2017-10-25][11:50:44:825103417][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:50:44:825665249][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:50:44:826137415][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:50:44:825146764][tectonic_server::server][ERROR] Req: `USE btc_ok`
+[2017-10-25][11:50:44:829180920][tectonic_server::server][ERROR] Err: `No db named `btc_ok``
+[2017-10-25][11:50:44:829506242][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:50:44:829646240][tectonic_server::server][ERROR] Req: `USE btc_pay`
+[2017-10-25][11:50:44:830093234][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:50:44:830334206][tectonic_server::server][ERROR] Err: `No db named `btc_pay``
+[2017-10-25][11:50:44:834248371][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:50:44:834846625][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:50:44:841409294][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:50:44:841583420][tectonic_server::server][ERROR] Req: `USE btc_ppc`
+[2017-10-25][11:50:44:841808504][tectonic_server::server][ERROR] Req: `USE btc_pkb`
+[2017-10-25][11:50:44:842339000][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:50:44:842634221][tectonic_server::server][ERROR] Err: `No db named `btc_ppc``
+[2017-10-25][11:50:44:843340507][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:50:44:847415939][tectonic_server::server][ERROR] Req: `USE btc_ptoy`
+[2017-10-25][11:50:44:848472911][tectonic_server::server][ERROR] Err: `No db named `btc_ptoy``
+[2017-10-25][11:50:44:843049605][tectonic_server::server][ERROR] Err: `No db named `btc_pkb``
+[2017-10-25][11:50:44:852801338][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:50:44:852802309][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:50:44:854116573][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:50:44:855079895][tectonic_server::server][ERROR] Req: `USE btc_neos`
+[2017-10-25][11:50:44:855587308][tectonic_server::server][ERROR] Err: `No db named `btc_neos``
+[2017-10-25][11:50:44:859813475][tectonic_server::server][ERROR] Req: `USE btc_rads`
+[2017-10-25][11:50:44:859639712][tectonic_server::server][INFO] Client connection disconnected. Current: 44.
+[2017-10-25][11:50:44:861022412][tectonic_server::server][ERROR] Err: `No db named `btc_rads``
+[2017-10-25][11:50:44:859769032][tectonic_server::server][INFO] Client connection disconnected. Current: 44.
+[2017-10-25][11:50:44:863188567][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:50:44:864501849][tectonic_server::server][INFO] Client connection disconnected. Current: 44.
+[2017-10-25][11:50:44:869776985][tectonic_server::server][INFO] Client connection disconnected. Current: 43.
+[2017-10-25][11:50:44:870014155][tectonic_server::server][ERROR] Req: `USE btc_rise`
+[2017-10-25][11:50:44:870593220][tectonic_server::server][INFO] Client connected. Current: 44.
+[2017-10-25][11:50:44:871300693][tectonic_server::server][ERROR] Err: `No db named `btc_rise``
+[2017-10-25][11:50:44:872035496][tectonic_server::server][INFO] Client connection disconnected. Current: 42.
+[2017-10-25][11:50:44:872035635][tectonic_server::server][INFO] Client connection disconnected. Current: 42.
+[2017-10-25][11:50:44:880746277][tectonic_server::server][ERROR] Req: `USE btc_sbd`
+[2017-10-25][11:50:44:881152440][tectonic_server::server][INFO] Client connection disconnected. Current: 41.
+[2017-10-25][11:50:44:881312456][tectonic_server::server][ERROR] Err: `No db named `btc_sbd``
+[2017-10-25][11:50:44:881706492][tectonic_server::server][INFO] Client connected. Current: 42.
+[2017-10-25][11:50:44:884990950][tectonic_server::server][INFO] Client connection disconnected. Current: 40.
+[2017-10-25][11:50:44:884986132][tectonic_server::server][INFO] Client connection disconnected. Current: 40.
+[2017-10-25][11:50:44:885072696][tectonic_server::server][ERROR] Req: `USE btc_sib`
+[2017-10-25][11:50:44:885482113][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:50:44:885485223][tectonic_server::server][INFO] Client connection disconnected. Current: 40.
+[2017-10-25][11:50:44:885662745][tectonic_server::server][ERROR] Err: `No db named `btc_sib``
+[2017-10-25][11:50:44:889136472][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:50:44:889229688][tectonic_server::server][ERROR] Req: `USE btc_sphr`
+[2017-10-25][11:50:44:889649901][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:50:44:889816423][tectonic_server::server][ERROR] Err: `No db named `btc_sphr``
+[2017-10-25][11:50:44:889652118][tectonic_server::server][INFO] Client connected. Current: 39.
+[2017-10-25][11:50:44:892399980][tectonic_server::server][INFO] Client connected. Current: 39.
+[2017-10-25][11:50:44:892402772][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:50:44:892484840][tectonic_server::server][ERROR] Req: `USE btc_storj`
+[2017-10-25][11:50:44:893152908][tectonic_server::server][ERROR] Err: `No db named `btc_storj``
+[2017-10-25][11:50:44:895388068][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:50:44:895409920][tectonic_server::server][INFO] Client connected. Current: 39.
+[2017-10-25][11:50:44:895472986][tectonic_server::server][ERROR] Req: `USE btc_rdd`
+[2017-10-25][11:50:44:896166490][tectonic_server::server][INFO] Client connection disconnected. Current: 38.
+[2017-10-25][11:50:44:896384480][tectonic_server::server][ERROR] Err: `No db named `btc_rdd``
+[2017-10-25][11:50:44:898572365][tectonic_server::server][INFO] Client connection disconnected. Current: 37.
+[2017-10-25][11:50:44:898654877][tectonic_server::server][ERROR] Req: `USE btc_safex`
+[2017-10-25][11:50:44:899046760][tectonic_server::server][INFO] Client connection disconnected. Current: 36.
+[2017-10-25][11:50:44:899139996][tectonic_server::server][ERROR] Err: `No db named `btc_safex``
+[2017-10-25][11:50:44:899404099][tectonic_server::server][INFO] Client connected. Current: 37.
+[2017-10-25][11:50:44:901876046][tectonic_server::server][INFO] Client connected. Current: 37.
+[2017-10-25][11:50:44:901932679][tectonic_server::server][ERROR] Req: `USE btc_trust`
+[2017-10-25][11:50:44:902415270][tectonic_server::server][ERROR] Err: `No db named `btc_trust``
+[2017-10-25][11:50:44:903937024][tectonic_server::server][ERROR] Req: `USE btc_snrg`
+[2017-10-25][11:50:44:904103253][tectonic_server::server][ERROR] Err: `No db named `btc_snrg``
+[2017-10-25][11:50:44:901876050][tectonic_server::server][INFO] Client connection disconnected. Current: 37.
+[2017-10-25][11:50:44:904785560][tectonic_server::server][INFO] Client connected. Current: 38.
+[2017-10-25][11:50:44:905008873][tectonic_server::server][INFO] Client connection disconnected. Current: 37.
+[2017-10-25][11:50:44:906420307][tectonic_server::server][INFO] Client connected. Current: 37.
+[2017-10-25][11:50:44:906447185][tectonic_server::server][INFO] Client connection disconnected. Current: 37.
+[2017-10-25][11:50:44:906468446][tectonic_server::server][ERROR] Req: `USE btc_ubq`
+[2017-10-25][11:50:44:907016019][tectonic_server::server][ERROR] Err: `No db named `btc_ubq``
+[2017-10-25][11:50:44:908402909][tectonic_server::server][INFO] Client connected. Current: 38.
+[2017-10-25][11:50:44:908421420][tectonic_server::server][ERROR] Req: `USE btc_omni`
+[2017-10-25][11:50:44:908730669][tectonic_server::server][ERROR] Err: `No db named `btc_omni``
+[2017-10-25][11:50:44:910046854][tectonic_server::server][INFO] Client connection disconnected. Current: 37.
+[2017-10-25][11:50:44:910112466][tectonic_server::server][ERROR] Req: `USE btc_synx`
+[2017-10-25][11:50:44:910329775][tectonic_server::server][INFO] Client connected. Current: 38.
+[2017-10-25][11:50:44:910643847][tectonic_server::server][INFO] Client connected. Current: 39.
+[2017-10-25][11:50:44:912060221][tectonic_server::server][ERROR] Req: `USE btc_vtc`
+[2017-10-25][11:50:44:912234516][tectonic_server::server][ERROR] Err: `No db named `btc_vtc``
+[2017-10-25][11:50:44:910478824][tectonic_server::server][ERROR] Err: `No db named `btc_synx``
+[2017-10-25][11:50:44:912611345][tectonic_server::server][INFO] Client connection disconnected. Current: 38.
+[2017-10-25][11:50:44:912818196][tectonic_server::server][INFO] Client connected. Current: 39.
+[2017-10-25][11:50:44:914040447][tectonic_server::server][INFO] Client connected. Current: 39.
+[2017-10-25][11:50:44:914040450][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:50:44:914094621][tectonic_server::server][ERROR] Req: `USE btc_trig`
+[2017-10-25][11:50:44:914396041][tectonic_server::server][ERROR] Err: `No db named `btc_trig``
+[2017-10-25][11:50:44:914068236][tectonic_server::server][ERROR] Req: `USE btc_waves`
+[2017-10-25][11:50:44:914914147][tectonic_server::server][ERROR] Err: `No db named `btc_waves``
+[2017-10-25][11:50:44:915413857][tectonic_server::server][INFO] Client connected. Current: 41.
+[2017-10-25][11:50:44:915463059][tectonic_server::server][ERROR] Req: `USE btc_via`
+[2017-10-25][11:50:44:915413889][tectonic_server::server][INFO] Client connected. Current: 41.
+[2017-10-25][11:50:44:915826963][tectonic_server::server][ERROR] Err: `No db named `btc_via``
+[2017-10-25][11:50:44:917331983][tectonic_server::server][ERROR] Req: `USE btc_vrc`
+[2017-10-25][11:50:44:917501383][tectonic_server::server][INFO] Client connected. Current: 42.
+[2017-10-25][11:50:44:917506434][tectonic_server::server][ERROR] Err: `No db named `btc_vrc``
+[2017-10-25][11:50:44:917651188][tectonic_server::server][INFO] Client connection disconnected. Current: 41.
+[2017-10-25][11:50:44:917541562][tectonic_server::server][ERROR] Req: `USE btc_start`
+[2017-10-25][11:50:44:917957919][tectonic_server::server][ERROR] Err: `No db named `btc_start``
+[2017-10-25][11:50:44:918820227][tectonic_server::server][INFO] Client connected. Current: 42.
+[2017-10-25][11:50:44:918819949][tectonic_server::server][INFO] Client connected. Current: 42.
+[2017-10-25][11:50:44:920036910][tectonic_server::server][ERROR] Req: `USE btc_qtum`
+[2017-10-25][11:50:44:918820769][tectonic_server::server][INFO] Client connection disconnected. Current: 42.
+[2017-10-25][11:50:44:918856038][tectonic_server::server][ERROR] Req: `USE btc_tkn`
+[2017-10-25][11:50:44:920367105][tectonic_server::server][INFO] Client connected. Current: 43.
+[2017-10-25][11:50:44:920211391][tectonic_server::server][ERROR] Err: `No db named `btc_qtum``
+[2017-10-25][11:50:44:920431601][tectonic_server::server][ERROR] Err: `No db named `btc_tkn``
+[2017-10-25][11:50:44:921444115][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:50:44:921444112][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:50:44:921471313][tectonic_server::server][ERROR] Req: `USE btc_xem`
+[2017-10-25][11:50:44:921961959][tectonic_server::server][ERROR] Err: `No db named `btc_xem``
+[2017-10-25][11:50:44:920058272][tectonic_server::server][ERROR] Req: `USE btc_myst`
+[2017-10-25][11:50:44:922359746][tectonic_server::server][ERROR] Err: `No db named `btc_myst``
+[2017-10-25][11:50:44:922965598][tectonic_server::server][ERROR] Req: `USE btc_swift`
+[2017-10-25][11:50:44:923026156][tectonic_server::server][ERROR] Req: `USE btc_xaur`
+[2017-10-25][11:50:44:922997713][tectonic_server::server][INFO] Client connection disconnected. Current: 43.
+[2017-10-25][11:50:44:922995743][tectonic_server::server][INFO] Client connection disconnected. Current: 43.
+[2017-10-25][11:50:44:923113018][tectonic_server::server][ERROR] Err: `No db named `btc_swift``
+[2017-10-25][11:50:44:923203589][tectonic_server::server][ERROR] Err: `No db named `btc_xaur``
+[2017-10-25][11:50:44:923345775][tectonic_server::server][INFO] Client connected. Current: 44.
+[2017-10-25][11:50:44:925210600][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:50:44:925247554][tectonic_server::server][ERROR] Req: `USE btc_xdn`
+[2017-10-25][11:50:44:925528629][tectonic_server::server][ERROR] Err: `No db named `btc_xdn``
+[2017-10-25][11:50:44:926613604][tectonic_server::server][INFO] Client connection disconnected. Current: 44.
+[2017-10-25][11:50:44:926649385][tectonic_server::server][ERROR] Req: `USE btc_pink`
+[2017-10-25][11:50:44:926843428][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:50:44:926939713][tectonic_server::server][ERROR] Err: `No db named `btc_pink``
+[2017-10-25][11:50:44:927069246][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:50:44:928160191][tectonic_server::server][ERROR] Req: `USE btc_xst`
+[2017-10-25][11:50:44:928242528][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:50:44:928242548][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:50:44:928298669][tectonic_server::server][ERROR] Req: `USE btc_sls`
+[2017-10-25][11:50:44:928375029][tectonic_server::server][ERROR] Err: `No db named `btc_xst``
+[2017-10-25][11:50:44:929464063][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:50:44:929560610][tectonic_server::server][ERROR] Err: `No db named `btc_sls``
+[2017-10-25][11:50:44:929710369][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:50:44:929710371][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:50:44:929489323][tectonic_server::server][ERROR] Req: `USE btc_xmy`
+[2017-10-25][11:50:44:930178556][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:50:44:930328744][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:50:44:931184341][tectonic_server::server][ERROR] Req: `USE btc_xvg`
+[2017-10-25][11:50:44:931282300][tectonic_server::server][ERROR] Err: `No db named `btc_xvg``
+[2017-10-25][11:50:44:931388042][tectonic_server::server][ERROR] Req: `USE btc_seq`
+[2017-10-25][11:50:44:931738001][tectonic_server::server][ERROR] Err: `No db named `btc_seq``
+[2017-10-25][11:50:44:931364162][tectonic_server::server][INFO] Client connected. Current: 48.
+[2017-10-25][11:50:44:930223744][tectonic_server::server][ERROR] Err: `No db named `btc_xmy``
+[2017-10-25][11:50:44:932479967][tectonic_server::server][ERROR] Req: `USE btc_xzc`
+[2017-10-25][11:50:44:932592755][tectonic_server::server][ERROR] Err: `No db named `btc_xzc``
+[2017-10-25][11:50:44:933396618][tectonic_server::server][INFO] Client connection disconnected. Current: 47.
+[2017-10-25][11:50:44:933419583][tectonic_server::server][ERROR] Req: `USE btc_zec`
+[2017-10-25][11:50:44:933532525][tectonic_server::server][INFO] Client connected. Current: 48.
+[2017-10-25][11:50:44:933584556][tectonic_server::server][ERROR] Err: `No db named `btc_zec``
+[2017-10-25][11:50:44:933643171][tectonic_server::server][INFO] Client connection disconnected. Current: 47.
+[2017-10-25][11:50:44:934670147][tectonic_server::server][INFO] Client connected. Current: 48.
+[2017-10-25][11:50:44:934786532][tectonic_server::server][INFO] Client connected. Current: 49.
+[2017-10-25][11:50:44:935465466][tectonic_server::server][ERROR] Req: `USE eth_adx`
+[2017-10-25][11:50:44:935565484][tectonic_server::server][ERROR] Err: `No db named `eth_adx``
+[2017-10-25][11:50:44:934703223][tectonic_server::server][ERROR] Req: `USE eth_1st`
+[2017-10-25][11:50:44:935757703][tectonic_server::server][ERROR] Err: `No db named `eth_1st``
+[2017-10-25][11:50:44:935784828][tectonic_server::server][ERROR] Req: `USE btc_thc`
+[2017-10-25][11:50:44:935920835][tectonic_server::server][ERROR] Err: `No db named `btc_thc``
+[2017-10-25][11:50:44:935846513][tectonic_server::server][INFO] Client connected. Current: 50.
+[2017-10-25][11:50:44:937637975][tectonic_server::server][ERROR] Req: `USE btc_xmg`
+[2017-10-25][11:50:44:937748512][tectonic_server::server][ERROR] Err: `No db named `btc_xmg``
+[2017-10-25][11:50:54:720393124][tectonic_server::server][INFO] Trying to bind to addr: 0.0.0.0:9001
+[2017-10-25][11:50:54:720518276][tectonic_server::server][WARN] Autoflush is off!
+[2017-10-25][11:50:54:720597573][tectonic_server::server][DEBUG] Autoflush is false: every 1000 inserts.
+[2017-10-25][11:50:54:720675741][tectonic_server::server][DEBUG] Maximum connection: 1000.
+[2017-10-25][11:50:54:720754775][tectonic_server::server][DEBUG] History granularity: 60.
+[2017-10-25][11:50:54:720850516][tectonic_server::server][INFO] Listening on addr: 0.0.0.0:9001
+[2017-10-25][11:50:54:720931809][tectonic_server::server][INFO] -----------------initiated-----------------
+[2017-10-25][11:50:54:742091518][tectonic_server::server][INFO] Current total count: 0
+[2017-10-25][11:51:00:633521813][tectonic_server::server][INFO] Client connected. Current: 1.
+[2017-10-25][11:51:00:633673154][tectonic_server::server][INFO] Client connected. Current: 2.
+[2017-10-25][11:51:00:633823065][tectonic_server::server][INFO] Client connected. Current: 3.
+[2017-10-25][11:51:00:633909065][tectonic_server::server][INFO] Client connected. Current: 4.
+[2017-10-25][11:51:00:634010621][tectonic_server::server][INFO] Client connected. Current: 5.
+[2017-10-25][11:51:00:634099598][tectonic_server::server][INFO] Client connected. Current: 6.
+[2017-10-25][11:51:00:634236375][tectonic_server::server][INFO] Client connected. Current: 7.
+[2017-10-25][11:51:00:634352566][tectonic_server::server][INFO] Client connected. Current: 8.
+[2017-10-25][11:51:00:634501769][tectonic_server::server][INFO] Client connected. Current: 9.
+[2017-10-25][11:51:00:634601884][tectonic_server::server][INFO] Client connected. Current: 10.
+[2017-10-25][11:51:00:634740384][tectonic_server::server][INFO] Client connected. Current: 11.
+[2017-10-25][11:51:00:634838021][tectonic_server::server][INFO] Client connected. Current: 12.
+[2017-10-25][11:51:00:634992719][tectonic_server::server][INFO] Client connected. Current: 13.
+[2017-10-25][11:51:00:635092260][tectonic_server::server][INFO] Client connected. Current: 14.
+[2017-10-25][11:51:00:635227412][tectonic_server::server][INFO] Client connected. Current: 15.
+[2017-10-25][11:51:00:635367853][tectonic_server::server][INFO] Client connected. Current: 16.
+[2017-10-25][11:51:00:635515260][tectonic_server::server][INFO] Client connected. Current: 17.
+[2017-10-25][11:51:00:635624008][tectonic_server::server][INFO] Client connected. Current: 18.
+[2017-10-25][11:51:00:635697314][tectonic_server::server][INFO] Client connected. Current: 19.
+[2017-10-25][11:51:00:635795137][tectonic_server::server][INFO] Client connected. Current: 20.
+[2017-10-25][11:51:00:635876211][tectonic_server::server][INFO] Client connected. Current: 21.
+[2017-10-25][11:51:00:635953885][tectonic_server::server][INFO] Client connected. Current: 22.
+[2017-10-25][11:51:00:636071305][tectonic_server::server][INFO] Client connected. Current: 23.
+[2017-10-25][11:51:00:636167087][tectonic_server::server][INFO] Client connected. Current: 24.
+[2017-10-25][11:51:00:636254665][tectonic_server::server][INFO] Client connected. Current: 25.
+[2017-10-25][11:51:00:636413664][tectonic_server::server][INFO] Client connected. Current: 26.
+[2017-10-25][11:51:00:636510616][tectonic_server::server][INFO] Client connected. Current: 27.
+[2017-10-25][11:51:00:636642449][tectonic_server::server][INFO] Client connected. Current: 28.
+[2017-10-25][11:51:00:636767672][tectonic_server::server][INFO] Client connected. Current: 29.
+[2017-10-25][11:51:00:636858179][tectonic_server::server][INFO] Client connected. Current: 30.
+[2017-10-25][11:51:00:636969287][tectonic_server::server][INFO] Client connected. Current: 32.
+[2017-10-25][11:51:00:636970955][tectonic_server::server][INFO] Client connected. Current: 32.
+[2017-10-25][11:51:00:637126932][tectonic_server::server][INFO] Client connected. Current: 33.
+[2017-10-25][11:51:00:637226186][tectonic_server::server][INFO] Client connected. Current: 34.
+[2017-10-25][11:51:00:637316831][tectonic_server::server][INFO] Client connected. Current: 35.
+[2017-10-25][11:51:00:637440225][tectonic_server::server][INFO] Client connected. Current: 36.
+[2017-10-25][11:51:00:637512341][tectonic_server::server][INFO] Client connected. Current: 37.
+[2017-10-25][11:51:00:637606148][tectonic_server::server][INFO] Client connected. Current: 38.
+[2017-10-25][11:51:00:637707158][tectonic_server::server][INFO] Client connected. Current: 39.
+[2017-10-25][11:51:00:637826613][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:51:00:637948704][tectonic_server::server][INFO] Client connected. Current: 41.
+[2017-10-25][11:51:00:638027366][tectonic_server::server][INFO] Client connected. Current: 42.
+[2017-10-25][11:51:00:638128376][tectonic_server::server][INFO] Client connected. Current: 43.
+[2017-10-25][11:51:00:638238664][tectonic_server::server][INFO] Client connected. Current: 44.
+[2017-10-25][11:51:00:638323800][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:51:00:638417510][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:51:00:638501560][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:51:00:638585204][tectonic_server::server][INFO] Client connected. Current: 48.
+[2017-10-25][11:51:00:638670503][tectonic_server::server][INFO] Client connected. Current: 49.
+[2017-10-25][11:51:00:638745125][tectonic_server::server][INFO] Client connected. Current: 50.
+[2017-10-25][11:51:00:638820594][tectonic_server::server][INFO] Client connected. Current: 51.
+[2017-10-25][11:51:00:638922749][tectonic_server::server][INFO] Client connected. Current: 52.
+[2017-10-25][11:51:00:639015796][tectonic_server::server][INFO] Client connected. Current: 53.
+[2017-10-25][11:51:00:652540683][tectonic_server::server][INFO] Client connected. Current: 54.
+[2017-10-25][11:51:00:653192820][tectonic_server::server][INFO] Client connected. Current: 55.
+[2017-10-25][11:51:00:653453757][tectonic_server::server][INFO] Client connected. Current: 56.
+[2017-10-25][11:51:00:654134412][tectonic_server::server][INFO] Client connected. Current: 57.
+[2017-10-25][11:51:00:654434018][tectonic_server::server][INFO] Client connected. Current: 58.
+[2017-10-25][11:51:00:654721712][tectonic_server::server][INFO] Client connected. Current: 59.
+[2017-10-25][11:51:00:655373682][tectonic_server::server][INFO] Client connected. Current: 60.
+[2017-10-25][11:51:00:655763212][tectonic_server::server][INFO] Client connected. Current: 61.
+[2017-10-25][11:51:00:656096929][tectonic_server::server][INFO] Client connected. Current: 62.
+[2017-10-25][11:51:00:656376482][tectonic_server::server][INFO] Client connected. Current: 63.
+[2017-10-25][11:51:00:656620749][tectonic_server::server][INFO] Client connected. Current: 64.
+[2017-10-25][11:51:00:657055755][tectonic_server::server][INFO] Client connected. Current: 65.
+[2017-10-25][11:51:00:657316205][tectonic_server::server][INFO] Client connected. Current: 66.
+[2017-10-25][11:51:00:657553220][tectonic_server::server][INFO] Client connected. Current: 67.
+[2017-10-25][11:51:00:657893741][tectonic_server::server][INFO] Client connected. Current: 68.
+[2017-10-25][11:51:00:658131528][tectonic_server::server][INFO] Client connected. Current: 69.
+[2017-10-25][11:51:00:658462073][tectonic_server::server][INFO] Client connected. Current: 71.
+[2017-10-25][11:51:00:658463727][tectonic_server::server][INFO] Client connected. Current: 71.
+[2017-10-25][11:51:00:659007987][tectonic_server::server][INFO] Client connected. Current: 73.
+[2017-10-25][11:51:00:659008022][tectonic_server::server][INFO] Client connected. Current: 73.
+[2017-10-25][11:51:00:659385195][tectonic_server::server][INFO] Client connected. Current: 74.
+[2017-10-25][11:51:00:659703065][tectonic_server::server][INFO] Client connected. Current: 75.
+[2017-10-25][11:51:00:659916768][tectonic_server::server][INFO] Client connected. Current: 76.
+[2017-10-25][11:51:00:660145639][tectonic_server::server][INFO] Client connected. Current: 77.
+[2017-10-25][11:51:00:660790664][tectonic_server::server][INFO] Client connected. Current: 78.
+[2017-10-25][11:51:00:661209219][tectonic_server::server][INFO] Client connected. Current: 79.
+[2017-10-25][11:51:00:661648290][tectonic_server::server][INFO] Client connected. Current: 80.
+[2017-10-25][11:51:00:661862104][tectonic_server::server][INFO] Client connected. Current: 81.
+[2017-10-25][11:51:00:662208056][tectonic_server::server][INFO] Client connected. Current: 82.
+[2017-10-25][11:51:00:662557870][tectonic_server::server][INFO] Client connected. Current: 83.
+[2017-10-25][11:51:00:663947992][tectonic_server::server][INFO] Client connected. Current: 84.
+[2017-10-25][11:51:00:664200630][tectonic_server::server][INFO] Client connected. Current: 86.
+[2017-10-25][11:51:00:664197187][tectonic_server::server][INFO] Client connected. Current: 86.
+[2017-10-25][11:51:00:664703664][tectonic_server::server][INFO] Client connected. Current: 87.
+[2017-10-25][11:51:00:664846314][tectonic_server::server][INFO] Client connected. Current: 88.
+[2017-10-25][11:51:00:665195951][tectonic_server::server][INFO] Client connected. Current: 89.
+[2017-10-25][11:51:00:665408326][tectonic_server::server][INFO] Client connected. Current: 90.
+[2017-10-25][11:51:00:665593815][tectonic_server::server][INFO] Client connected. Current: 91.
+[2017-10-25][11:51:00:665801638][tectonic_server::server][INFO] Client connected. Current: 92.
+[2017-10-25][11:51:00:666022617][tectonic_server::server][INFO] Client connected. Current: 93.
+[2017-10-25][11:51:00:666225626][tectonic_server::server][INFO] Client connected. Current: 94.
+[2017-10-25][11:51:00:666386175][tectonic_server::server][INFO] Client connected. Current: 95.
+[2017-10-25][11:51:00:666600660][tectonic_server::server][INFO] Client connected. Current: 96.
+[2017-10-25][11:51:00:666765427][tectonic_server::server][INFO] Client connected. Current: 98.
+[2017-10-25][11:51:00:666765371][tectonic_server::server][INFO] Client connected. Current: 98.
+[2017-10-25][11:51:00:667483781][tectonic_server::server][INFO] Client connected. Current: 99.
+[2017-10-25][11:51:00:667615578][tectonic_server::server][INFO] Client connected. Current: 100.
+[2017-10-25][11:51:00:764049250][tectonic_server::server][ERROR] Req: `USE btc_aby`
+[2017-10-25][11:51:00:764392631][tectonic_server::server][ERROR] Err: `No db named `btc_aby``
+[2017-10-25][11:51:00:764863050][tectonic_server::server][ERROR] Req: `USE btc_1st`
+[2017-10-25][11:51:00:765105898][tectonic_server::server][ERROR] Err: `No db named `btc_1st``
+[2017-10-25][11:51:00:765212117][tectonic_server::server][ERROR] Req: `USE btc_adt`
+[2017-10-25][11:51:00:765449755][tectonic_server::server][ERROR] Err: `No db named `btc_adt``
+[2017-10-25][11:51:00:766584838][tectonic_server::server][ERROR] Req: `USE btc_aeon`
+[2017-10-25][11:51:00:766804407][tectonic_server::server][ERROR] Err: `No db named `btc_aeon``
+[2017-10-25][11:51:00:768073041][tectonic_server::server][ERROR] Req: `USE btc_amp`
+[2017-10-25][11:51:00:768244147][tectonic_server::server][ERROR] Req: `USE btc_apx`
+[2017-10-25][11:51:00:768303848][tectonic_server::server][ERROR] Err: `No db named `btc_amp``
+[2017-10-25][11:51:00:768472081][tectonic_server::server][ERROR] Err: `No db named `btc_apx``
+[2017-10-25][11:51:00:768832159][tectonic_server::server][ERROR] Req: `USE btc_ark`
+[2017-10-25][11:51:00:769010216][tectonic_server::server][ERROR] Err: `No db named `btc_ark``
+[2017-10-25][11:51:00:769139826][tectonic_server::server][ERROR] Req: `USE btc_bat`
+[2017-10-25][11:51:00:769308476][tectonic_server::server][ERROR] Err: `No db named `btc_bat``
+[2017-10-25][11:51:00:769451453][tectonic_server::server][ERROR] Req: `USE btc_bcc`
+[2017-10-25][11:51:00:769640997][tectonic_server::server][ERROR] Err: `No db named `btc_bcc``
+[2017-10-25][11:51:00:769766867][tectonic_server::server][ERROR] Req: `USE btc_bitb`
+[2017-10-25][11:51:00:769945231][tectonic_server::server][ERROR] Err: `No db named `btc_bitb``
+[2017-10-25][11:51:00:770074238][tectonic_server::server][ERROR] Req: `USE btc_blk`
+[2017-10-25][11:51:00:770243524][tectonic_server::server][ERROR] Err: `No db named `btc_blk``
+[2017-10-25][11:51:00:770378521][tectonic_server::server][ERROR] Req: `USE btc_bnt`
+[2017-10-25][11:51:00:770543777][tectonic_server::server][ERROR] Err: `No db named `btc_bnt``
+[2017-10-25][11:51:00:770673036][tectonic_server::server][ERROR] Req: `USE btc_brx`
+[2017-10-25][11:51:00:770843965][tectonic_server::server][ERROR] Err: `No db named `btc_brx``
+[2017-10-25][11:51:00:771597810][tectonic_server::server][ERROR] Req: `USE btc_btcd`
+[2017-10-25][11:51:00:771776690][tectonic_server::server][ERROR] Err: `No db named `btc_btcd``
+[2017-10-25][11:51:00:771932620][tectonic_server::server][ERROR] Req: `USE btc_cann`
+[2017-10-25][11:51:00:771995408][tectonic_server::server][ERROR] Req: `USE btc_burst`
+[2017-10-25][11:51:00:772189651][tectonic_server::server][ERROR] Err: `No db named `btc_burst``
+[2017-10-25][11:51:00:772109638][tectonic_server::server][ERROR] Err: `No db named `btc_cann``
+[2017-10-25][11:51:00:773998662][tectonic_server::server][ERROR] Req: `USE btc_clam`
+[2017-10-25][11:51:00:774177205][tectonic_server::server][ERROR] Err: `No db named `btc_clam``
+[2017-10-25][11:51:00:774244456][tectonic_server::server][ERROR] Req: `USE btc_club`
+[2017-10-25][11:51:00:774393701][tectonic_server::server][ERROR] Err: `No db named `btc_club``
+[2017-10-25][11:51:00:774608601][tectonic_server::server][ERROR] Req: `USE btc_cpc`
+[2017-10-25][11:51:00:774750301][tectonic_server::server][ERROR] Err: `No db named `btc_cpc``
+[2017-10-25][11:51:00:774751132][tectonic_server::server][ERROR] Req: `USE btc_crw`
+[2017-10-25][11:51:00:775029628][tectonic_server::server][ERROR] Req: `USE btc_cvc`
+[2017-10-25][11:51:00:775047797][tectonic_server::server][ERROR] Err: `No db named `btc_crw``
+[2017-10-25][11:51:00:775176773][tectonic_server::server][ERROR] Err: `No db named `btc_cvc``
+[2017-10-25][11:51:00:775545557][tectonic_server::server][ERROR] Req: `USE btc_dcr`
+[2017-10-25][11:51:00:775690269][tectonic_server::server][ERROR] Err: `No db named `btc_dcr``
+[2017-10-25][11:51:00:776405809][tectonic_server::server][ERROR] Req: `USE btc_dmd`
+[2017-10-25][11:51:00:776554563][tectonic_server::server][ERROR] Err: `No db named `btc_dmd``
+[2017-10-25][11:51:00:776733563][tectonic_server::server][ERROR] Req: `USE btc_doge`
+[2017-10-25][11:51:00:776850046][tectonic_server::server][ERROR] Err: `No db named `btc_doge``
+[2017-10-25][11:51:00:777010262][tectonic_server::server][ERROR] Req: `USE btc_dtb`
+[2017-10-25][11:51:00:777127208][tectonic_server::server][ERROR] Err: `No db named `btc_dtb``
+[2017-10-25][11:51:00:777413852][tectonic_server::server][ERROR] Req: `USE btc_ebst`
+[2017-10-25][11:51:00:777514725][tectonic_server::server][ERROR] Req: `USE btc_dgb`
+[2017-10-25][11:51:00:777644175][tectonic_server::server][ERROR] Err: `No db named `btc_dgb``
+[2017-10-25][11:51:00:777511711][tectonic_server::server][ERROR] Req: `USE btc_efl`
+[2017-10-25][11:51:00:777823525][tectonic_server::server][ERROR] Req: `USE btc_emc`
+[2017-10-25][11:51:00:777904242][tectonic_server::server][ERROR] Err: `No db named `btc_efl``
+[2017-10-25][11:51:00:777537325][tectonic_server::server][ERROR] Err: `No db named `btc_ebst``
+[2017-10-25][11:51:00:778048820][tectonic_server::server][ERROR] Req: `USE btc_enrg`
+[2017-10-25][11:51:00:778210622][tectonic_server::server][ERROR] Err: `No db named `btc_enrg``
+[2017-10-25][11:51:00:777969882][tectonic_server::server][ERROR] Err: `No db named `btc_emc``
+[2017-10-25][11:51:00:778721983][tectonic_server::server][ERROR] Req: `USE btc_excl`
+[2017-10-25][11:51:00:778848598][tectonic_server::server][ERROR] Err: `No db named `btc_excl``
+[2017-10-25][11:51:00:778960579][tectonic_server::server][ERROR] Req: `USE btc_fair`
+[2017-10-25][11:51:00:779086757][tectonic_server::server][ERROR] Err: `No db named `btc_fair``
+[2017-10-25][11:51:00:779162462][tectonic_server::server][ERROR] Req: `USE btc_etc`
+[2017-10-25][11:51:00:779286814][tectonic_server::server][ERROR] Err: `No db named `btc_etc``
+[2017-10-25][11:51:00:779741177][tectonic_server::server][ERROR] Req: `USE btc_ftc`
+[2017-10-25][11:51:00:779862039][tectonic_server::server][ERROR] Err: `No db named `btc_ftc``
+[2017-10-25][11:51:00:779928058][tectonic_server::server][ERROR] Req: `USE btc_fldc`
+[2017-10-25][11:51:00:780063238][tectonic_server::server][ERROR] Err: `No db named `btc_fldc``
+[2017-10-25][11:51:00:781617830][tectonic_server::server][ERROR] Req: `USE btc_gam`
+[2017-10-25][11:51:00:781765791][tectonic_server::server][ERROR] Err: `No db named `btc_gam``
+[2017-10-25][11:51:00:781924288][tectonic_server::server][ERROR] Req: `USE btc_gcr`
+[2017-10-25][11:51:00:782022225][tectonic_server::server][ERROR] Err: `No db named `btc_gcr``
+[2017-10-25][11:51:00:782190909][tectonic_server::server][ERROR] Req: `USE btc_gnt`
+[2017-10-25][11:51:00:782288708][tectonic_server::server][ERROR] Err: `No db named `btc_gnt``
+[2017-10-25][11:51:00:782369879][tectonic_server::server][ERROR] Req: `USE btc_grc`
+[2017-10-25][11:51:00:782440716][tectonic_server::server][ERROR] Req: `USE btc_gbg`
+[2017-10-25][11:51:00:782471253][tectonic_server::server][ERROR] Err: `No db named `btc_grc``
+[2017-10-25][11:51:00:782560292][tectonic_server::server][ERROR] Err: `No db named `btc_gbg``
+[2017-10-25][11:51:00:782629668][tectonic_server::server][ERROR] Req: `USE btc_gld`
+[2017-10-25][11:51:00:782753895][tectonic_server::server][ERROR] Err: `No db named `btc_gld``
+[2017-10-25][11:51:00:782908972][tectonic_server::server][ERROR] Req: `USE btc_gup`
+[2017-10-25][11:51:00:783012527][tectonic_server::server][ERROR] Err: `No db named `btc_gup``
+[2017-10-25][11:51:00:783061821][tectonic_server::server][ERROR] Req: `USE btc_incnt`
+[2017-10-25][11:51:00:783226415][tectonic_server::server][ERROR] Err: `No db named `btc_incnt``
+[2017-10-25][11:51:00:784086051][tectonic_server::server][ERROR] Req: `USE btc_ioc`
+[2017-10-25][11:51:00:784220265][tectonic_server::server][ERROR] Err: `No db named `btc_ioc``
+[2017-10-25][11:51:00:784397551][tectonic_server::server][ERROR] Req: `USE btc_iop`
+[2017-10-25][11:51:00:784498062][tectonic_server::server][ERROR] Err: `No db named `btc_iop``
+[2017-10-25][11:51:00:784580931][tectonic_server::server][ERROR] Req: `USE btc_kore`
+[2017-10-25][11:51:00:784689066][tectonic_server::server][ERROR] Err: `No db named `btc_kore``
+[2017-10-25][11:51:00:785404869][tectonic_server::server][ERROR] Req: `USE btc_lgd`
+[2017-10-25][11:51:00:785585324][tectonic_server::server][ERROR] Err: `No db named `btc_lgd``
+[2017-10-25][11:51:00:786387431][tectonic_server::server][ERROR] Req: `USE btc_lsk`
+[2017-10-25][11:51:00:786579629][tectonic_server::server][ERROR] Err: `No db named `btc_lsk``
+[2017-10-25][11:51:00:786789214][tectonic_server::server][ERROR] Req: `USE btc_lun`
+[2017-10-25][11:51:00:786898820][tectonic_server::server][ERROR] Err: `No db named `btc_lun``
+[2017-10-25][11:51:00:787082267][tectonic_server::server][ERROR] Req: `USE btc_meme`
+[2017-10-25][11:51:00:787082113][tectonic_server::server][ERROR] Req: `USE btc_mana`
+[2017-10-25][11:51:00:787284924][tectonic_server::server][ERROR] Err: `No db named `btc_mana``
+[2017-10-25][11:51:00:787222855][tectonic_server::server][ERROR] Err: `No db named `btc_meme``
+[2017-10-25][11:51:00:787779594][tectonic_server::server][ERROR] Req: `USE btc_mona`
+[2017-10-25][11:51:00:787958071][tectonic_server::server][ERROR] Err: `No db named `btc_mona``
+[2017-10-25][11:51:00:788098211][tectonic_server::server][ERROR] Req: `USE btc_mue`
+[2017-10-25][11:51:00:788231786][tectonic_server::server][ERROR] Err: `No db named `btc_mue``
+[2017-10-25][11:51:00:789482041][tectonic_server::server][ERROR] Req: `USE btc_myst`
+[2017-10-25][11:51:00:789762367][tectonic_server::server][ERROR] Err: `No db named `btc_myst``
+[2017-10-25][11:51:00:789953906][tectonic_server::server][ERROR] Req: `USE btc_nbt`
+[2017-10-25][11:51:00:790138598][tectonic_server::server][ERROR] Err: `No db named `btc_nbt``
+[2017-10-25][11:51:00:790564308][tectonic_server::server][ERROR] Req: `USE btc_neos`
+[2017-10-25][11:51:00:790821903][tectonic_server::server][ERROR] Err: `No db named `btc_neos``
+[2017-10-25][11:51:00:791206921][tectonic_server::server][ERROR] Req: `USE btc_nmr`
+[2017-10-25][11:51:00:791486811][tectonic_server::server][ERROR] Err: `No db named `btc_nmr``
+[2017-10-25][11:51:00:792714054][tectonic_server::server][ERROR] Req: `USE btc_nxs`
+[2017-10-25][11:51:00:792976235][tectonic_server::server][ERROR] Err: `No db named `btc_nxs``
+[2017-10-25][11:51:00:795880751][tectonic_server::server][ERROR] Req: `USE btc_ok`
+[2017-10-25][11:51:00:796035707][tectonic_server::server][ERROR] Err: `No db named `btc_ok``
+[2017-10-25][11:51:00:798624108][tectonic_server::server][ERROR] Req: `USE btc_omni`
+[2017-10-25][11:51:00:799947342][tectonic_server::server][ERROR] Req: `USE btc_pkb`
+[2017-10-25][11:51:00:799544182][tectonic_server::server][ERROR] Req: `USE btc_pink`
+[2017-10-25][11:51:00:799935243][tectonic_server::server][ERROR] Req: `USE btc_ppc`
+[2017-10-25][11:51:00:800033733][tectonic_server::server][ERROR] Err: `No db named `btc_omni``
+[2017-10-25][11:51:00:800087947][tectonic_server::server][ERROR] Err: `No db named `btc_pkb``
+[2017-10-25][11:51:00:799424679][tectonic_server::server][ERROR] Req: `USE btc_pay`
+[2017-10-25][11:51:00:800160826][tectonic_server::server][ERROR] Err: `No db named `btc_pink``
+[2017-10-25][11:51:00:801120294][tectonic_server::server][ERROR] Err: `No db named `btc_pay``
+[2017-10-25][11:51:00:800539752][tectonic_server::server][ERROR] Req: `USE btc_ptoy`
+[2017-10-25][11:51:00:800221928][tectonic_server::server][ERROR] Err: `No db named `btc_ppc``
+[2017-10-25][11:51:00:801322328][tectonic_server::server][ERROR] Err: `No db named `btc_ptoy``
+[2017-10-25][11:51:00:801546114][tectonic_server::server][ERROR] Req: `USE btc_qtum`
+[2017-10-25][11:51:00:801643078][tectonic_server::server][ERROR] Err: `No db named `btc_qtum``
+[2017-10-25][11:51:00:804365518][tectonic_server::server][ERROR] Req: `USE btc_rads`
+[2017-10-25][11:51:00:804589607][tectonic_server::server][ERROR] Req: `USE btc_rdd`
+[2017-10-25][11:51:00:804910645][tectonic_server::server][ERROR] Err: `No db named `btc_rads``
+[2017-10-25][11:51:00:804934621][tectonic_server::server][ERROR] Req: `USE btc_rise`
+[2017-10-25][11:51:00:805454091][tectonic_server::server][ERROR] Err: `No db named `btc_rise``
+[2017-10-25][11:51:00:805019881][tectonic_server::server][ERROR] Err: `No db named `btc_rdd``
+[2017-10-25][11:51:00:805120890][tectonic_server::server][ERROR] Req: `USE btc_safex`
+[2017-10-25][11:51:00:805256643][tectonic_server::server][ERROR] Req: `USE btc_sbd`
+[2017-10-25][11:51:00:805655161][tectonic_server::server][ERROR] Req: `USE btc_seq`
+[2017-10-25][11:51:00:805697308][tectonic_server::server][ERROR] Req: `USE btc_sib`
+[2017-10-25][11:51:00:805791691][tectonic_server::server][ERROR] Err: `No db named `btc_sbd``
+[2017-10-25][11:51:00:805976910][tectonic_server::server][ERROR] Req: `USE btc_sls`
+[2017-10-25][11:51:00:805953312][tectonic_server::server][ERROR] Err: `No db named `btc_sib``
+[2017-10-25][11:51:00:805889300][tectonic_server::server][ERROR] Err: `No db named `btc_seq``
+[2017-10-25][11:51:00:805717800][tectonic_server::server][ERROR] Err: `No db named `btc_safex``
+[2017-10-25][11:51:00:806246010][tectonic_server::server][ERROR] Err: `No db named `btc_sls``
+[2017-10-25][11:51:00:806596779][tectonic_server::server][ERROR] Req: `USE btc_start`
+[2017-10-25][11:51:00:806415824][tectonic_server::server][ERROR] Req: `USE btc_sphr`
+[2017-10-25][11:51:00:806290915][tectonic_server::server][ERROR] Req: `USE btc_snrg`
+[2017-10-25][11:51:00:806746652][tectonic_server::server][ERROR] Req: `USE btc_storj`
+[2017-10-25][11:51:00:806839831][tectonic_server::server][ERROR] Err: `No db named `btc_start``
+[2017-10-25][11:51:00:806975896][tectonic_server::server][ERROR] Err: `No db named `btc_sphr``
+[2017-10-25][11:51:00:807041705][tectonic_server::server][ERROR] Err: `No db named `btc_snrg``
+[2017-10-25][11:51:00:807034150][tectonic_server::server][ERROR] Req: `USE btc_swift`
+[2017-10-25][11:51:00:807611428][tectonic_server::server][ERROR] Err: `No db named `btc_swift``
+[2017-10-25][11:51:00:807442578][tectonic_server::server][ERROR] Req: `USE btc_thc`
+[2017-10-25][11:51:00:807728861][tectonic_server::server][ERROR] Req: `USE btc_tkn`
+[2017-10-25][11:51:00:807779959][tectonic_server::server][ERROR] Err: `No db named `btc_thc``
+[2017-10-25][11:51:00:807211988][tectonic_server::server][ERROR] Req: `USE btc_synx`
+[2017-10-25][11:51:00:807999626][tectonic_server::server][ERROR] Err: `No db named `btc_synx``
+[2017-10-25][11:51:00:807842378][tectonic_server::server][ERROR] Err: `No db named `btc_tkn``
+[2017-10-25][11:51:00:808138351][tectonic_server::server][ERROR] Req: `USE btc_trig`
+[2017-10-25][11:51:00:808319939][tectonic_server::server][ERROR] Err: `No db named `btc_trig``
+[2017-10-25][11:51:00:807118991][tectonic_server::server][ERROR] Err: `No db named `btc_storj``
+[2017-10-25][11:51:00:808460183][tectonic_server::server][ERROR] Req: `USE btc_trust`
+[2017-10-25][11:51:00:808581230][tectonic_server::server][ERROR] Err: `No db named `btc_trust``
+[2017-10-25][11:51:00:808609454][tectonic_server::server][ERROR] Req: `USE btc_ubq`
+[2017-10-25][11:51:00:808767200][tectonic_server::server][ERROR] Err: `No db named `btc_ubq``
+[2017-10-25][11:51:00:808921572][tectonic_server::server][ERROR] Req: `USE btc_via`
+[2017-10-25][11:51:00:809037952][tectonic_server::server][ERROR] Err: `No db named `btc_via``
+[2017-10-25][11:51:00:808943875][tectonic_server::server][ERROR] Req: `USE btc_vrc`
+[2017-10-25][11:51:00:809259520][tectonic_server::server][ERROR] Err: `No db named `btc_vrc``
+[2017-10-25][11:51:00:809373451][tectonic_server::server][ERROR] Req: `USE btc_vtc`
+[2017-10-25][11:51:00:809456742][tectonic_server::server][ERROR] Err: `No db named `btc_vtc``
+[2017-10-25][11:51:00:809790853][tectonic_server::server][ERROR] Req: `USE btc_waves`
+[2017-10-25][11:51:00:809915957][tectonic_server::server][ERROR] Err: `No db named `btc_waves``
+[2017-10-25][11:51:00:810269034][tectonic_server::server][ERROR] Req: `USE btc_xaur`
+[2017-10-25][11:51:00:810350743][tectonic_server::server][ERROR] Req: `USE btc_xdn`
+[2017-10-25][11:51:00:810459208][tectonic_server::server][ERROR] Err: `No db named `btc_xdn``
+[2017-10-25][11:51:00:810386866][tectonic_server::server][ERROR] Err: `No db named `btc_xaur``
+[2017-10-25][11:51:00:810645803][tectonic_server::server][ERROR] Req: `USE btc_xem`
+[2017-10-25][11:51:00:810741765][tectonic_server::server][ERROR] Err: `No db named `btc_xem``
+[2017-10-25][11:51:00:810785951][tectonic_server::server][ERROR] Req: `USE btc_xmg`
+[2017-10-25][11:51:00:810874787][tectonic_server::server][ERROR] Err: `No db named `btc_xmg``
+[2017-10-25][11:51:00:811101984][tectonic_server::server][ERROR] Req: `USE btc_xmy`
+[2017-10-25][11:51:00:811187531][tectonic_server::server][ERROR] Req: `USE btc_xst`
+[2017-10-25][11:51:00:811195531][tectonic_server::server][ERROR] Err: `No db named `btc_xmy``
+[2017-10-25][11:51:00:811352305][tectonic_server::server][ERROR] Req: `USE btc_xvg`
+[2017-10-25][11:51:00:811287942][tectonic_server::server][ERROR] Err: `No db named `btc_xst``
+[2017-10-25][11:51:00:811439980][tectonic_server::server][ERROR] Err: `No db named `btc_xvg``
+[2017-10-25][11:51:00:811506273][tectonic_server::server][ERROR] Req: `USE btc_xzc`
+[2017-10-25][11:51:00:811617021][tectonic_server::server][ERROR] Req: `USE btc_zec`
+[2017-10-25][11:51:00:811691927][tectonic_server::server][ERROR] Err: `No db named `btc_xzc``
+[2017-10-25][11:51:00:811752307][tectonic_server::server][ERROR] Err: `No db named `btc_zec``
+[2017-10-25][11:51:00:811759943][tectonic_server::server][ERROR] Req: `USE eth_1st`
+[2017-10-25][11:51:00:811962928][tectonic_server::server][ERROR] Err: `No db named `eth_1st``
+[2017-10-25][11:51:00:812089906][tectonic_server::server][ERROR] Req: `USE eth_adx`
+[2017-10-25][11:51:00:812195723][tectonic_server::server][ERROR] Err: `No db named `eth_adx``
+[2017-10-25][11:51:00:819006657][tectonic_server::server][ERROR] Req: `USE btc_ada`
+[2017-10-25][11:51:00:819166620][tectonic_server::server][ERROR] Err: `No db named `btc_ada``
+[2017-10-25][11:51:00:819825065][tectonic_server::server][ERROR] Req: `USE btc_2give`
+[2017-10-25][11:51:00:820013775][tectonic_server::server][ERROR] Err: `No db named `btc_2give``
+[2017-10-25][11:51:00:820246317][tectonic_server::server][ERROR] Req: `USE btc_adx`
+[2017-10-25][11:51:00:820450552][tectonic_server::server][ERROR] Err: `No db named `btc_adx``
+[2017-10-25][11:51:00:820563175][tectonic_server::server][ERROR] Req: `USE btc_agrs`
+[2017-10-25][11:51:00:820674254][tectonic_server::server][ERROR] Err: `No db named `btc_agrs``
+[2017-10-25][11:51:00:820833364][tectonic_server::server][ERROR] Req: `USE btc_ant`
+[2017-10-25][11:51:00:820943632][tectonic_server::server][ERROR] Err: `No db named `btc_ant``
+[2017-10-25][11:51:00:821599542][tectonic_server::server][ERROR] Req: `USE btc_aur`
+[2017-10-25][11:51:00:821694618][tectonic_server::server][ERROR] Req: `USE btc_ardr`
+[2017-10-25][11:51:00:821926298][tectonic_server::server][ERROR] Req: `USE btc_bay`
+[2017-10-25][11:51:00:822021462][tectonic_server::server][ERROR] Err: `No db named `btc_ardr``
+[2017-10-25][11:51:00:822092291][tectonic_server::server][ERROR] Err: `No db named `btc_bay``
+[2017-10-25][11:51:00:821931391][tectonic_server::server][ERROR] Err: `No db named `btc_aur``
+[2017-10-25][11:51:00:822274539][tectonic_server::server][ERROR] Req: `USE btc_bcy`
+[2017-10-25][11:51:00:822381220][tectonic_server::server][ERROR] Req: `USE btc_blitz`
+[2017-10-25][11:51:00:822384741][tectonic_server::server][ERROR] Err: `No db named `btc_bcy``
+[2017-10-25][11:51:00:822514179][tectonic_server::server][ERROR] Err: `No db named `btc_blitz``
+[2017-10-25][11:51:00:822770259][tectonic_server::server][ERROR] Req: `USE btc_block`
+[2017-10-25][11:51:00:822927156][tectonic_server::server][ERROR] Err: `No db named `btc_block``
+[2017-10-25][11:51:00:824780046][tectonic_server::server][ERROR] Req: `USE btc_brk`
+[2017-10-25][11:51:00:825031392][tectonic_server::server][ERROR] Err: `No db named `btc_brk``
+[2017-10-25][11:51:00:827117689][tectonic_server::server][ERROR] Req: `USE btc_bsd`
+[2017-10-25][11:51:00:827388761][tectonic_server::server][ERROR] Err: `No db named `btc_bsd``
+[2017-10-25][11:51:00:829769289][tectonic_server::server][ERROR] Req: `USE btc_bts`
+[2017-10-25][11:51:00:829875055][tectonic_server::server][ERROR] Err: `No db named `btc_bts``
+[2017-10-25][11:51:00:829967168][tectonic_server::server][ERROR] Req: `USE btc_byc`
+[2017-10-25][11:51:00:830052862][tectonic_server::server][ERROR] Err: `No db named `btc_byc``
+[2017-10-25][11:51:00:830489186][tectonic_server::server][ERROR] Req: `USE btc_cfi`
+[2017-10-25][11:51:00:830590825][tectonic_server::server][ERROR] Err: `No db named `btc_cfi``
+[2017-10-25][11:51:00:830715671][tectonic_server::server][ERROR] Req: `USE btc_cloak`
+[2017-10-25][11:51:00:830799979][tectonic_server::server][ERROR] Err: `No db named `btc_cloak``
+[2017-10-25][11:51:00:831631636][tectonic_server::server][ERROR] Req: `USE btc_cure`
+[2017-10-25][11:51:00:831745712][tectonic_server::server][ERROR] Err: `No db named `btc_cure``
+[2017-10-25][11:51:00:832091205][tectonic_server::server][ERROR] Req: `USE btc_dash`
+[2017-10-25][11:51:00:832183252][tectonic_server::server][ERROR] Err: `No db named `btc_dash``
+[2017-10-25][11:51:00:832407521][tectonic_server::server][ERROR] Req: `USE btc_dct`
+[2017-10-25][11:51:00:832528328][tectonic_server::server][ERROR] Err: `No db named `btc_dct``
+[2017-10-25][11:51:00:833084334][tectonic_server::server][ERROR] Req: `USE btc_dnt`
+[2017-10-25][11:51:00:833131749][tectonic_server::server][ERROR] Req: `USE btc_coval`
+[2017-10-25][11:51:00:832056987][tectonic_server::server][ERROR] Req: `USE btc_crb`
+[2017-10-25][11:51:00:833280504][tectonic_server::server][ERROR] Err: `No db named `btc_dnt``
+[2017-10-25][11:51:00:833343323][tectonic_server::server][ERROR] Err: `No db named `btc_coval``
+[2017-10-25][11:51:00:833639006][tectonic_server::server][ERROR] Err: `No db named `btc_crb``
+[2017-10-25][11:51:00:834087160][tectonic_server::server][ERROR] Req: `USE btc_dope`
+[2017-10-25][11:51:00:834284770][tectonic_server::server][ERROR] Req: `USE btc_dyn`
+[2017-10-25][11:51:00:834508837][tectonic_server::server][ERROR] Req: `USE btc_dgd`
+[2017-10-25][11:51:00:834782070][tectonic_server::server][ERROR] Err: `No db named `btc_dyn``
+[2017-10-25][11:51:00:834979095][tectonic_server::server][ERROR] Req: `USE btc_egc`
+[2017-10-25][11:51:00:835259183][tectonic_server::server][ERROR] Err: `No db named `btc_egc``
+[2017-10-25][11:51:00:835104050][tectonic_server::server][ERROR] Err: `No db named `btc_dgd``
+[2017-10-25][11:51:00:835115303][tectonic_server::server][ERROR] Err: `No db named `btc_dope``
+[2017-10-25][11:51:00:835593531][tectonic_server::server][ERROR] Req: `USE btc_edg`
+[2017-10-25][11:51:00:835716653][tectonic_server::server][ERROR] Err: `No db named `btc_edg``
+[2017-10-25][11:51:00:836173450][tectonic_server::server][ERROR] Req: `USE btc_erc`
+[2017-10-25][11:51:00:836314808][tectonic_server::server][ERROR] Err: `No db named `btc_erc``
+[2017-10-25][11:51:00:836425543][tectonic_server::server][ERROR] Req: `USE btc_emc2`
+[2017-10-25][11:51:00:836516433][tectonic_server::server][ERROR] Err: `No db named `btc_emc2``
+[2017-10-25][11:51:00:836627183][tectonic_server::server][ERROR] Req: `USE btc_exp`
+[2017-10-25][11:51:00:836696963][tectonic_server::server][ERROR] Err: `No db named `btc_exp``
+[2017-10-25][11:51:00:837073342][tectonic_server::server][ERROR] Req: `USE btc_fct`
+[2017-10-25][11:51:00:837219509][tectonic_server::server][ERROR] Err: `No db named `btc_fct``
+[2017-10-25][11:51:00:837508668][tectonic_server::server][ERROR] Req: `USE btc_eth`
+[2017-10-25][11:51:00:837611605][tectonic_server::server][ERROR] Err: `No db named `btc_eth``
+[2017-10-25][11:51:00:838179044][tectonic_server::server][ERROR] Req: `USE btc_fun`
+[2017-10-25][11:51:00:838311309][tectonic_server::server][ERROR] Err: `No db named `btc_fun``
+[2017-10-25][11:51:00:839719654][tectonic_server::server][ERROR] Req: `USE btc_flo`
+[2017-10-25][11:51:00:839854363][tectonic_server::server][ERROR] Err: `No db named `btc_flo``
+[2017-10-25][11:51:00:840864540][tectonic_server::server][ERROR] Req: `USE btc_game`
+[2017-10-25][11:51:00:841001225][tectonic_server::server][ERROR] Err: `No db named `btc_game``
+[2017-10-25][11:51:00:841409953][tectonic_server::server][ERROR] Req: `USE btc_grs`
+[2017-10-25][11:51:00:841550639][tectonic_server::server][ERROR] Err: `No db named `btc_grs``
+[2017-10-25][11:51:00:841692283][tectonic_server::server][ERROR] Req: `USE btc_gbyte`
+[2017-10-25][11:51:00:841806079][tectonic_server::server][ERROR] Err: `No db named `btc_gbyte``
+[2017-10-25][11:51:00:841982312][tectonic_server::server][ERROR] Req: `USE btc_gno`
+[2017-10-25][11:51:00:842083536][tectonic_server::server][ERROR] Err: `No db named `btc_gno``
+[2017-10-25][11:51:00:842106525][tectonic_server::server][ERROR] Req: `USE btc_golos`
+[2017-10-25][11:51:00:842227215][tectonic_server::server][ERROR] Err: `No db named `btc_golos``
+[2017-10-25][11:51:00:842130896][tectonic_server::server][ERROR] Req: `USE btc_geo`
+[2017-10-25][11:51:00:842343270][tectonic_server::server][ERROR] Err: `No db named `btc_geo``
+[2017-10-25][11:51:00:842341927][tectonic_server::server][ERROR] Req: `USE btc_infx`
+[2017-10-25][11:51:00:842477444][tectonic_server::server][ERROR] Err: `No db named `btc_infx``
+[2017-10-25][11:51:00:842538687][tectonic_server::server][ERROR] Req: `USE btc_ion`
+[2017-10-25][11:51:00:842234246][tectonic_server::server][ERROR] Req: `USE btc_hmq`
+[2017-10-25][11:51:00:842704836][tectonic_server::server][ERROR] Req: `USE btc_kmd`
+[2017-10-25][11:51:00:842689932][tectonic_server::server][ERROR] Err: `No db named `btc_ion``
+[2017-10-25][11:51:00:842892940][tectonic_server::server][ERROR] Req: `USE btc_lbc`
+[2017-10-25][11:51:00:843049722][tectonic_server::server][ERROR] Err: `No db named `btc_lbc``
+[2017-10-25][11:51:00:842910964][tectonic_server::server][ERROR] Err: `No db named `btc_kmd``
+[2017-10-25][11:51:00:842922810][tectonic_server::server][ERROR] Err: `No db named `btc_hmq``
+[2017-10-25][11:51:00:843386586][tectonic_server::server][ERROR] Req: `USE btc_ltc`
+[2017-10-25][11:51:00:843487202][tectonic_server::server][ERROR] Err: `No db named `btc_ltc``
+[2017-10-25][11:51:00:843625605][tectonic_server::server][ERROR] Req: `USE btc_maid`
+[2017-10-25][11:51:00:843180978][tectonic_server::server][ERROR] Req: `USE btc_lmc`
+[2017-10-25][11:51:00:843719841][tectonic_server::server][ERROR] Err: `No db named `btc_maid``
+[2017-10-25][11:51:00:843773240][tectonic_server::server][ERROR] Err: `No db named `btc_lmc``
+[2017-10-25][11:51:00:843864475][tectonic_server::server][ERROR] Req: `USE btc_mln`
+[2017-10-25][11:51:00:843923018][tectonic_server::server][ERROR] Req: `USE btc_mco`
+[2017-10-25][11:51:00:844018570][tectonic_server::server][ERROR] Err: `No db named `btc_mln``
+[2017-10-25][11:51:00:844215869][tectonic_server::server][ERROR] Req: `USE btc_music`
+[2017-10-25][11:51:00:844165703][tectonic_server::server][ERROR] Err: `No db named `btc_mco``
+[2017-10-25][11:51:00:844125964][tectonic_server::server][ERROR] Req: `USE btc_mtl`
+[2017-10-25][11:51:00:844532509][tectonic_server::server][ERROR] Req: `USE btc_nav`
+[2017-10-25][11:51:00:844648803][tectonic_server::server][ERROR] Err: `No db named `btc_mtl``
+[2017-10-25][11:51:00:844494298][tectonic_server::server][ERROR] Err: `No db named `btc_music``
+[2017-10-25][11:51:00:845148415][tectonic_server::server][ERROR] Req: `USE btc_nxt`
+[2017-10-25][11:51:00:845237220][tectonic_server::server][ERROR] Err: `No db named `btc_nxt``
+[2017-10-25][11:51:00:844830249][tectonic_server::server][ERROR] Req: `USE btc_nlg`
+[2017-10-25][11:51:00:845691325][tectonic_server::server][ERROR] Err: `No db named `btc_nlg``
+[2017-10-25][11:51:00:844968074][tectonic_server::server][ERROR] Req: `USE btc_nxc`
+[2017-10-25][11:51:00:845868952][tectonic_server::server][ERROR] Err: `No db named `btc_nxc``
+[2017-10-25][11:51:00:845999232][tectonic_server::server][ERROR] Req: `USE btc_part`
+[2017-10-25][11:51:00:846085761][tectonic_server::server][ERROR] Err: `No db named `btc_part``
+[2017-10-25][11:51:00:844686046][tectonic_server::server][ERROR] Req: `USE btc_neo`
+[2017-10-25][11:51:00:845609289][tectonic_server::server][ERROR] Req: `USE btc_omg`
+[2017-10-25][11:51:00:846245126][tectonic_server::server][ERROR] Err: `No db named `btc_neo``
+[2017-10-25][11:51:00:845018190][tectonic_server::server][ERROR] Err: `No db named `btc_nav``
+[2017-10-25][11:51:00:846839785][tectonic_server::server][ERROR] Req: `USE btc_qrl`
+[2017-10-25][11:51:00:846303626][tectonic_server::server][ERROR] Req: `USE btc_pivx`
+[2017-10-25][11:51:00:846414950][tectonic_server::server][ERROR] Err: `No db named `btc_omg``
+[2017-10-25][11:51:00:846430587][tectonic_server::server][ERROR] Req: `USE btc_pdc`
+[2017-10-25][11:51:00:847072457][tectonic_server::server][ERROR] Req: `USE btc_rlc`
+[2017-10-25][11:51:00:847118944][tectonic_server::server][ERROR] Err: `No db named `btc_pdc``
+[2017-10-25][11:51:00:846764370][tectonic_server::server][ERROR] Req: `USE btc_qwark`
+[2017-10-25][11:51:00:847219103][tectonic_server::server][ERROR] Req: `USE btc_rep`
+[2017-10-25][11:51:00:846132331][tectonic_server::server][ERROR] Req: `USE btc_pot`
+[2017-10-25][11:51:00:846922295][tectonic_server::server][ERROR] Err: `No db named `btc_qrl``
+[2017-10-25][11:51:00:846949308][tectonic_server::server][ERROR] Req: `USE btc_rby`
+[2017-10-25][11:51:00:847161874][tectonic_server::server][ERROR] Err: `No db named `btc_rlc``
+[2017-10-25][11:51:00:846578083][tectonic_server::server][ERROR] Req: `USE btc_ptc`
+[2017-10-25][11:51:00:847269270][tectonic_server::server][ERROR] Err: `No db named `btc_qwark``
+[2017-10-25][11:51:00:847305947][tectonic_server::server][ERROR] Err: `No db named `btc_rep``
+[2017-10-25][11:51:00:847453400][tectonic_server::server][ERROR] Err: `No db named `btc_pot``
+[2017-10-25][11:51:00:847518602][tectonic_server::server][ERROR] Req: `USE btc_slr`
+[2017-10-25][11:51:00:848951721][tectonic_server::server][ERROR] Err: `No db named `btc_slr``
+[2017-10-25][11:51:00:849150836][tectonic_server::server][ERROR] Req: `USE btc_steem`
+[2017-10-25][11:51:00:846976089][tectonic_server::server][ERROR] Err: `No db named `btc_pivx``
+[2017-10-25][11:51:00:848046005][tectonic_server::server][ERROR] Err: `No db named `btc_rby``
+[2017-10-25][11:51:00:848182423][tectonic_server::server][ERROR] Req: `USE btc_salt`
+[2017-10-25][11:51:00:848483002][tectonic_server::server][ERROR] Err: `No db named `btc_ptc``
+[2017-10-25][11:51:00:848692917][tectonic_server::server][ERROR] Req: `USE btc_sngls`
+[2017-10-25][11:51:00:849306331][tectonic_server::server][ERROR] Err: `No db named `btc_steem``
+[2017-10-25][11:51:00:847763163][tectonic_server::server][ERROR] Req: `USE btc_shift`
+[2017-10-25][11:51:00:847426688][tectonic_server::server][ERROR] Req: `USE btc_sc`
+[2017-10-25][11:51:00:850645654][tectonic_server::server][ERROR] Err: `No db named `btc_sc``
+[2017-10-25][11:51:00:849675477][tectonic_server::server][ERROR] Err: `No db named `btc_salt``
+[2017-10-25][11:51:00:849753217][tectonic_server::server][ERROR] Req: `USE btc_spr`
+[2017-10-25][11:51:00:849778148][tectonic_server::server][ERROR] Err: `No db named `btc_sngls``
+[2017-10-25][11:51:00:850252506][tectonic_server::server][ERROR] Err: `No db named `btc_shift``
+[2017-10-25][11:51:00:850345748][tectonic_server::server][ERROR] Req: `USE btc_snt`
+[2017-10-25][11:51:00:851015564][tectonic_server::server][ERROR] Err: `No db named `btc_spr``
+[2017-10-25][11:51:00:851283039][tectonic_server::server][ERROR] Err: `No db named `btc_snt``
+[2017-10-25][11:51:00:852214293][tectonic_server::server][ERROR] Req: `USE btc_tks`
+[2017-10-25][11:51:00:852510385][tectonic_server::server][ERROR] Req: `USE btc_sys`
+[2017-10-25][11:51:00:852645451][tectonic_server::server][ERROR] Err: `No db named `btc_sys``
+[2017-10-25][11:51:00:852845384][tectonic_server::server][ERROR] Req: `USE btc_trst`
+[2017-10-25][11:51:00:852956874][tectonic_server::server][ERROR] Err: `No db named `btc_trst``
+[2017-10-25][11:51:00:853009129][tectonic_server::server][ERROR] Req: `USE btc_strat`
+[2017-10-25][11:51:00:853125698][tectonic_server::server][ERROR] Err: `No db named `btc_strat``
+[2017-10-25][11:51:00:852512666][tectonic_server::server][ERROR] Err: `No db named `btc_tks``
+[2017-10-25][11:51:00:851194026][tectonic_server::server][ERROR] Req: `USE btc_swt`
+[2017-10-25][11:51:00:853520036][tectonic_server::server][ERROR] Err: `No db named `btc_swt``
+[2017-10-25][11:51:00:853998455][tectonic_server::server][ERROR] Req: `USE btc_vox`
+[2017-10-25][11:51:00:854168154][tectonic_server::server][ERROR] Err: `No db named `btc_vox``
+[2017-10-25][11:51:00:854620203][tectonic_server::server][ERROR] Req: `USE btc_vtr`
+[2017-10-25][11:51:00:854823297][tectonic_server::server][ERROR] Err: `No db named `btc_vtr``
+[2017-10-25][11:51:00:855034912][tectonic_server::server][ERROR] Req: `USE btc_vrm`
+[2017-10-25][11:51:00:855165227][tectonic_server::server][ERROR] Err: `No db named `btc_vrm``
+[2017-10-25][11:51:00:855367632][tectonic_server::server][ERROR] Req: `USE btc_unb`
+[2017-10-25][11:51:00:855474780][tectonic_server::server][ERROR] Err: `No db named `btc_unb``
+[2017-10-25][11:51:00:855666091][tectonic_server::server][ERROR] Req: `USE btc_tx`
+[2017-10-25][11:51:00:855782455][tectonic_server::server][ERROR] Err: `No db named `btc_tx``
+[2017-10-25][11:51:00:855932090][tectonic_server::server][ERROR] Req: `USE btc_xel`
+[2017-10-25][11:51:00:856046460][tectonic_server::server][ERROR] Err: `No db named `btc_xel``
+[2017-10-25][11:51:00:851419750][tectonic_server::server][ERROR] Req: `USE btc_time`
+[2017-10-25][11:51:00:856343140][tectonic_server::server][ERROR] Err: `No db named `btc_time``
+[2017-10-25][11:51:00:856743180][tectonic_server::server][ERROR] Req: `USE btc_xlm`
+[2017-10-25][11:51:00:856977182][tectonic_server::server][ERROR] Err: `No db named `btc_xlm``
+[2017-10-25][11:51:00:857496816][tectonic_server::server][ERROR] Req: `USE btc_xmr`
+[2017-10-25][11:51:00:857782543][tectonic_server::server][ERROR] Err: `No db named `btc_xmr``
+[2017-10-25][11:51:00:858148871][tectonic_server::server][ERROR] Req: `USE btc_xrp`
+[2017-10-25][11:51:00:856209235][tectonic_server::server][ERROR] Req: `USE btc_xcp`
+[2017-10-25][11:51:00:858544400][tectonic_server::server][ERROR] Err: `No db named `btc_xcp``
+[2017-10-25][11:51:00:858447777][tectonic_server::server][ERROR] Req: `USE btc_wings`
+[2017-10-25][11:51:00:858786605][tectonic_server::server][ERROR] Err: `No db named `btc_wings``
+[2017-10-25][11:51:00:859047376][tectonic_server::server][ERROR] Req: `USE btc_xwc`
+[2017-10-25][11:51:00:859670984][tectonic_server::server][ERROR] Err: `No db named `btc_xwc``
+[2017-10-25][11:51:00:858786227][tectonic_server::server][ERROR] Req: `USE btc_xvc`
+[2017-10-25][11:51:00:859841587][tectonic_server::server][ERROR] Req: `USE btc_zen`
+[2017-10-25][11:51:00:859951845][tectonic_server::server][ERROR] Err: `No db named `btc_xvc``
+[2017-10-25][11:51:00:860039077][tectonic_server::server][ERROR] Err: `No db named `btc_zen``
+[2017-10-25][11:51:00:858443256][tectonic_server::server][ERROR] Err: `No db named `btc_xrp``
+[2017-10-25][11:51:00:860449014][tectonic_server::server][ERROR] Req: `USE eth_adt`
+[2017-10-25][11:51:00:860689925][tectonic_server::server][ERROR] Err: `No db named `eth_adt``
+[2017-10-25][11:51:00:859466628][tectonic_server::server][ERROR] Req: `USE btc_zcl`
+[2017-10-25][11:51:00:861333764][tectonic_server::server][ERROR] Err: `No db named `btc_zcl``
+[2017-10-25][11:51:00:861160909][tectonic_server::server][ERROR] Req: `USE eth_ant`
+[2017-10-25][11:51:00:861703405][tectonic_server::server][ERROR] Req: `USE eth_bcc`
+[2017-10-25][11:51:00:861794682][tectonic_server::server][ERROR] Err: `No db named `eth_bcc``
+[2017-10-25][11:51:00:861705633][tectonic_server::server][ERROR] Err: `No db named `eth_ant``
+[2017-10-25][11:51:00:862049908][tectonic_server::server][ERROR] Req: `USE eth_bnt`
+[2017-10-25][11:51:00:862297920][tectonic_server::server][ERROR] Err: `No db named `eth_bnt``
+[2017-10-25][11:51:00:862301816][tectonic_server::server][ERROR] Req: `USE eth_bts`
+[2017-10-25][11:51:00:862872453][tectonic_server::server][ERROR] Req: `USE eth_cfi`
+[2017-10-25][11:51:00:862578400][tectonic_server::server][ERROR] Req: `USE eth_crb`
+[2017-10-25][11:51:00:862772462][tectonic_server::server][ERROR] Req: `USE eth_dash`
+[2017-10-25][11:51:00:862906744][tectonic_server::server][ERROR] Req: `USE eth_dgb`
+[2017-10-25][11:51:00:862629689][tectonic_server::server][ERROR] Req: `USE eth_cvc`
+[2017-10-25][11:51:00:863568354][tectonic_server::server][ERROR] Req: `USE eth_dnt`
+[2017-10-25][11:51:00:864730662][tectonic_server::server][ERROR] Err: `No db named `eth_dnt``
+[2017-10-25][11:51:00:864857231][tectonic_server::server][ERROR] Req: `USE eth_lun`
+[2017-10-25][11:51:00:864948038][tectonic_server::server][ERROR] Err: `No db named `eth_lun``
+[2017-10-25][11:51:00:864979721][tectonic_server::server][ERROR] Req: `USE eth_mana`
+[2017-10-25][11:51:00:865078522][tectonic_server::server][ERROR] Req: `USE eth_ltc`
+[2017-10-25][11:51:00:865164807][tectonic_server::server][ERROR] Err: `No db named `eth_ltc``
+[2017-10-25][11:51:00:865272049][tectonic_server::server][ERROR] Req: `USE eth_etc`
+[2017-10-25][11:51:00:865362797][tectonic_server::server][ERROR] Err: `No db named `eth_etc``
+[2017-10-25][11:51:00:864067591][tectonic_server::server][ERROR] Err: `No db named `eth_dgb``
+[2017-10-25][11:51:00:863860595][tectonic_server::server][ERROR] Err: `No db named `eth_crb``
+[2017-10-25][11:51:00:866362097][tectonic_server::server][ERROR] Req: `USE eth_omg`
+[2017-10-25][11:51:00:866483530][tectonic_server::server][ERROR] Err: `No db named `eth_omg``
+[2017-10-25][11:51:00:866644637][tectonic_server::server][ERROR] Req: `USE eth_nmr`
+[2017-10-25][11:51:00:864136067][tectonic_server::server][ERROR] Err: `No db named `eth_cvc``
+[2017-10-25][11:51:00:866750720][tectonic_server::server][ERROR] Err: `No db named `eth_nmr``
+[2017-10-25][11:51:00:862329591][tectonic_server::server][ERROR] Req: `USE eth_bat`
+[2017-10-25][11:51:00:869051573][tectonic_server::server][ERROR] Err: `No db named `eth_bat``
+[2017-10-25][11:51:00:864554839][tectonic_server::server][ERROR] Req: `USE eth_lgd`
+[2017-10-25][11:51:00:869296945][tectonic_server::server][ERROR] Err: `No db named `eth_lgd``
+[2017-10-25][11:51:00:864637093][tectonic_server::server][ERROR] Req: `USE eth_gno`
+[2017-10-25][11:51:00:869508078][tectonic_server::server][ERROR] Err: `No db named `eth_gno``
+[2017-10-25][11:51:00:863117379][tectonic_server::server][ERROR] Req: `USE eth_dgd`
+[2017-10-25][11:51:00:865099060][tectonic_server::server][ERROR] Err: `No db named `eth_mana``
+[2017-10-25][11:51:00:869731612][tectonic_server::server][ERROR] Err: `No db named `eth_dgd``
+[2017-10-25][11:51:00:863620947][tectonic_server::server][ERROR] Err: `No db named `eth_cfi``
+[2017-10-25][11:51:00:865492240][tectonic_server::server][ERROR] Req: `USE eth_myst`
+[2017-10-25][11:51:00:869981354][tectonic_server::server][ERROR] Err: `No db named `eth_myst``
+[2017-10-25][11:51:00:865523758][tectonic_server::server][ERROR] Req: `USE eth_mtl`
+[2017-10-25][11:51:00:870173982][tectonic_server::server][ERROR] Err: `No db named `eth_mtl``
+[2017-10-25][11:51:00:870689506][tectonic_server::server][ERROR] Req: `USE eth_salt`
+[2017-10-25][11:51:00:870822377][tectonic_server::server][ERROR] Err: `No db named `eth_salt``
+[2017-10-25][11:51:00:871410721][tectonic_server::server][ERROR] Req: `USE eth_rlc`
+[2017-10-25][11:51:00:866132586][tectonic_server::server][ERROR] Req: `USE eth_mco`
+[2017-10-25][11:51:00:866123587][tectonic_server::server][ERROR] Req: `USE eth_gup`
+[2017-10-25][11:51:00:866165158][tectonic_server::server][ERROR] Req: `USE eth_neo`
+[2017-10-25][11:51:00:871723592][tectonic_server::server][ERROR] Err: `No db named `eth_neo``
+[2017-10-25][11:51:00:866195862][tectonic_server::server][ERROR] Req: `USE eth_hmq`
+[2017-10-25][11:51:00:867424984][tectonic_server::server][ERROR] Req: `USE eth_qtum`
+[2017-10-25][11:51:00:872729930][tectonic_server::server][ERROR] Err: `No db named `eth_qtum``
+[2017-10-25][11:51:00:872496145][tectonic_server::server][ERROR] Err: `No db named `eth_hmq``
+[2017-10-25][11:51:00:864222233][tectonic_server::server][ERROR] Req: `USE eth_fct`
+[2017-10-25][11:51:00:873032031][tectonic_server::server][ERROR] Err: `No db named `eth_fct``
+[2017-10-25][11:51:00:873216971][tectonic_server::server][ERROR] Req: `USE eth_time`
+[2017-10-25][11:51:00:866807824][tectonic_server::server][ERROR] Req: `USE eth_ptoy`
+[2017-10-25][11:51:00:868091387][tectonic_server::server][ERROR] Req: `USE eth_pay`
+[2017-10-25][11:51:00:868541417][tectonic_server::server][ERROR] Req: `USE eth_rep`
+[2017-10-25][11:51:00:869546620][tectonic_server::server][ERROR] Req: `USE eth_qrl`
+[2017-10-25][11:51:00:873845633][tectonic_server::server][ERROR] Err: `No db named `eth_time``
+[2017-10-25][11:51:00:874127960][tectonic_server::server][ERROR] Req: `USE eth_tkn`
+[2017-10-25][11:51:00:874251179][tectonic_server::server][ERROR] Err: `No db named `eth_tkn``
+[2017-10-25][11:51:00:874385498][tectonic_server::server][ERROR] Req: `USE eth_trst`
+[2017-10-25][11:51:00:874508107][tectonic_server::server][ERROR] Err: `No db named `eth_trst``
+[2017-10-25][11:51:00:874663218][tectonic_server::server][ERROR] Req: `USE eth_waves`
+[2017-10-25][11:51:00:874761523][tectonic_server::server][ERROR] Err: `No db named `eth_waves``
+[2017-10-25][11:51:00:874994142][tectonic_server::server][ERROR] Req: `USE eth_xem`
+[2017-10-25][11:51:00:875096941][tectonic_server::server][ERROR] Err: `No db named `eth_xem``
+[2017-10-25][11:51:00:873928107][tectonic_server::server][ERROR] Err: `No db named `eth_rep``
+[2017-10-25][11:51:00:873925594][tectonic_server::server][ERROR] Req: `USE eth_storj`
+[2017-10-25][11:51:00:875415706][tectonic_server::server][ERROR] Err: `No db named `eth_storj``
+[2017-10-25][11:51:00:873997261][tectonic_server::server][ERROR] Err: `No db named `eth_qrl``
+[2017-10-25][11:51:00:875597097][tectonic_server::server][ERROR] Req: `USE eth_xlm`
+[2017-10-25][11:51:00:875624108][tectonic_server::server][ERROR] Req: `USE eth_xmr`
+[2017-10-25][11:51:00:875768479][tectonic_server::server][ERROR] Err: `No db named `eth_xmr``
+[2017-10-25][11:51:00:871410724][tectonic_server::server][ERROR] Req: `USE eth_sc`
+[2017-10-25][11:51:00:871562781][tectonic_server::server][ERROR] Err: `No db named `eth_rlc``
+[2017-10-25][11:51:00:871617609][tectonic_server::server][ERROR] Err: `No db named `eth_mco``
+[2017-10-25][11:51:00:866165164][tectonic_server::server][ERROR] Req: `USE eth_gnt`
+[2017-10-25][11:51:00:871669717][tectonic_server::server][ERROR] Err: `No db named `eth_gup``
+[2017-10-25][11:51:00:866187644][tectonic_server::server][ERROR] Req: `USE eth_fun`
+[2017-10-25][11:51:00:872341981][tectonic_server::server][ERROR] Req: `USE eth_snt`
+[2017-10-25][11:51:00:873461049][tectonic_server::server][ERROR] Req: `USE eth_sngls`
+[2017-10-25][11:51:00:873476569][tectonic_server::server][ERROR] Req: `USE eth_strat`
+[2017-10-25][11:51:00:873768423][tectonic_server::server][ERROR] Err: `No db named `eth_ptoy``
+[2017-10-25][11:51:00:874869159][tectonic_server::server][ERROR] Req: `USE eth_wings`
+[2017-10-25][11:51:00:875842948][tectonic_server::server][ERROR] Req: `USE eth_zec`
+[2017-10-25][11:51:00:873871608][tectonic_server::server][ERROR] Err: `No db named `eth_pay``
+[2017-10-25][11:51:00:875972263][tectonic_server::server][ERROR] Req: `USE usdt_bcc`
+[2017-10-25][11:51:00:876075571][tectonic_server::server][ERROR] Err: `No db named `eth_sc``
+[2017-10-25][11:51:00:876155042][tectonic_server::server][ERROR] Req: `USE usdt_btc`
+[2017-10-25][11:51:00:875608347][tectonic_server::server][ERROR] Req: `USE eth_xrp`
+[2017-10-25][11:51:00:876575593][tectonic_server::server][ERROR] Err: `No db named `eth_fun``
+[2017-10-25][11:51:00:863940630][tectonic_server::server][ERROR] Err: `No db named `eth_dash``
+[2017-10-25][11:51:00:876652720][tectonic_server::server][ERROR] Err: `No db named `eth_snt``
+[2017-10-25][11:51:00:875693830][tectonic_server::server][ERROR] Err: `No db named `eth_xlm``
+[2017-10-25][11:51:00:863313479][tectonic_server::server][ERROR] Err: `No db named `eth_bts``
+[2017-10-25][11:51:00:877581164][tectonic_server::server][ERROR] Req: `USE usdt_dash`
+[2017-10-25][11:51:00:877167923][tectonic_server::server][ERROR] Req: `USE usdt_ltc`
+[2017-10-25][11:51:00:877625951][tectonic_server::server][ERROR] Err: `No db named `usdt_bcc``
+[2017-10-25][11:51:00:879173937][tectonic_server::server][ERROR] Req: `USE usdt_neo`
+[2017-10-25][11:51:00:876749338][tectonic_server::server][ERROR] Err: `No db named `eth_sngls``
+[2017-10-25][11:51:00:879937252][tectonic_server::server][ERROR] Req: `USE usdt_xrp`
+[2017-10-25][11:51:00:877642759][tectonic_server::server][ERROR] Req: `USE usdt_eth`
+[2017-10-25][11:51:00:879818765][tectonic_server::server][ERROR] Err: `No db named `usdt_neo``
+[2017-10-25][11:51:00:880184357][tectonic_server::server][ERROR] Err: `No db named `usdt_eth``
+[2017-10-25][11:51:00:879594196][tectonic_server::server][ERROR] Err: `No db named `usdt_dash``
+[2017-10-25][11:51:00:877673174][tectonic_server::server][ERROR] Req: `USE usdt_etc`
+[2017-10-25][11:51:00:878471952][tectonic_server::server][ERROR] Err: `No db named `eth_xrp``
+[2017-10-25][11:51:00:877306567][tectonic_server::server][ERROR] Err: `No db named `eth_zec``
+[2017-10-25][11:51:00:876436479][tectonic_server::server][ERROR] Err: `No db named `eth_gnt``
+[2017-10-25][11:51:00:879170592][tectonic_server::server][ERROR] Req: `USE usdt_omg`
+[2017-10-25][11:51:00:881480285][tectonic_server::server][ERROR] Err: `No db named `usdt_omg``
+[2017-10-25][11:51:00:878295151][tectonic_server::server][ERROR] Err: `No db named `usdt_btc``
+[2017-10-25][11:51:00:880079857][tectonic_server::server][ERROR] Err: `No db named `usdt_xrp``
+[2017-10-25][11:51:00:876860691][tectonic_server::server][ERROR] Err: `No db named `eth_strat``
+[2017-10-25][11:51:00:877184481][tectonic_server::server][ERROR] Err: `No db named `eth_wings``
+[2017-10-25][11:51:00:879695819][tectonic_server::server][ERROR] Err: `No db named `usdt_ltc``
+[2017-10-25][11:51:00:881865524][tectonic_server::server][ERROR] Req: `USE usdt_zec`
+[2017-10-25][11:51:00:882300847][tectonic_server::server][ERROR] Err: `No db named `usdt_zec``
+[2017-10-25][11:51:00:880747930][tectonic_server::server][ERROR] Err: `No db named `usdt_etc``
+[2017-10-25][11:51:00:879987739][tectonic_server::server][ERROR] Req: `USE usdt_xmr`
+[2017-10-25][11:51:00:882976974][tectonic_server::server][ERROR] Err: `No db named `usdt_xmr``
+[2017-10-25][11:51:01:132833896][tectonic_server::server][ERROR] Req: `USE eth_ant`
+[2017-10-25][11:51:01:133038150][tectonic_server::server][ERROR] Err: `No db named `eth_ant``
+[2017-10-25][11:51:01:172830032][tectonic_server::server][ERROR] Req: `USE eth_rlc`
+[2017-10-25][11:51:01:173010742][tectonic_server::server][ERROR] Err: `No db named `eth_rlc``
+[2017-10-25][11:51:01:173297199][tectonic_server::server][ERROR] Req: `USE eth_lun`
+[2017-10-25][11:51:01:173434532][tectonic_server::server][ERROR] Err: `No db named `eth_lun``
+[2017-10-25][11:51:01:172889784][tectonic_server::server][ERROR] Req: `USE eth_neo`
+[2017-10-25][11:51:01:173648893][tectonic_server::server][ERROR] Err: `No db named `eth_neo``
+[2017-10-25][11:51:01:174547265][tectonic_server::server][ERROR] Req: `USE eth_salt`
+[2017-10-25][11:51:01:174765342][tectonic_server::server][ERROR] Err: `No db named `eth_salt``
+[2017-10-25][11:51:01:175457856][tectonic_server::server][ERROR] Req: `USE eth_omg`
+[2017-10-25][11:51:01:175524739][tectonic_server::server][ERROR] Req: `USE eth_ltc`
+[2017-10-25][11:51:01:175633368][tectonic_server::server][ERROR] Err: `No db named `eth_omg``
+[2017-10-25][11:51:01:175751475][tectonic_server::server][ERROR] Req: `USE eth_etc`
+[2017-10-25][11:51:01:176242242][tectonic_server::server][ERROR] Err: `No db named `eth_etc``
+[2017-10-25][11:51:01:176594552][tectonic_server::server][ERROR] Req: `USE eth_storj`
+[2017-10-25][11:51:01:176706903][tectonic_server::server][ERROR] Err: `No db named `eth_storj``
+[2017-10-25][11:51:01:175712560][tectonic_server::server][ERROR] Err: `No db named `eth_ltc``
+[2017-10-25][11:51:01:177181675][tectonic_server::server][ERROR] Req: `USE usdt_xmr`
+[2017-10-25][11:51:01:177373959][tectonic_server::server][ERROR] Err: `No db named `usdt_xmr``
+[2017-10-25][11:51:01:177740999][tectonic_server::server][ERROR] Req: `USE usdt_zec`
+[2017-10-25][11:51:01:177818215][tectonic_server::server][ERROR] Req: `USE usdt_bcc`
+[2017-10-25][11:51:01:177906069][tectonic_server::server][ERROR] Err: `No db named `usdt_zec``
+[2017-10-25][11:51:01:177980313][tectonic_server::server][ERROR] Err: `No db named `usdt_bcc``
+[2017-10-25][11:51:01:178459401][tectonic_server::server][ERROR] Req: `USE eth_wings`
+[2017-10-25][11:51:01:178629383][tectonic_server::server][ERROR] Err: `No db named `eth_wings``
+[2017-10-25][11:51:01:179027577][tectonic_server::server][ERROR] Req: `USE usdt_xrp`
+[2017-10-25][11:51:01:179098723][tectonic_server::server][ERROR] Req: `USE usdt_omg`
+[2017-10-25][11:51:01:179196725][tectonic_server::server][ERROR] Req: `USE usdt_neo`
+[2017-10-25][11:51:01:179273945][tectonic_server::server][ERROR] Err: `No db named `usdt_xrp``
+[2017-10-25][11:51:01:179358625][tectonic_server::server][ERROR] Req: `USE usdt_eth`
+[2017-10-25][11:51:01:179452347][tectonic_server::server][ERROR] Err: `No db named `usdt_neo``
+[2017-10-25][11:51:01:179983921][tectonic_server::server][ERROR] Err: `No db named `usdt_eth``
+[2017-10-25][11:51:01:179500308][tectonic_server::server][ERROR] Req: `USE usdt_ltc`
+[2017-10-25][11:51:01:180096900][tectonic_server::server][ERROR] Req: `USE usdt_etc`
+[2017-10-25][11:51:01:179358650][tectonic_server::server][ERROR] Err: `No db named `usdt_omg``
+[2017-10-25][11:51:01:179532808][tectonic_server::server][ERROR] Req: `USE eth_xem`
+[2017-10-25][11:51:01:179465067][tectonic_server::server][ERROR] Req: `USE eth_xmr`
+[2017-10-25][11:51:01:180652784][tectonic_server::server][ERROR] Err: `No db named `eth_xem``
+[2017-10-25][11:51:01:180727281][tectonic_server::server][ERROR] Err: `No db named `eth_xmr``
+[2017-10-25][11:51:01:180375790][tectonic_server::server][ERROR] Err: `No db named `usdt_ltc``
+[2017-10-25][11:51:01:180473959][tectonic_server::server][ERROR] Err: `No db named `usdt_etc``
+[2017-10-25][11:51:01:188587234][tectonic_server::server][ERROR] Req: `USE usdt_btc`
+[2017-10-25][11:51:01:188773990][tectonic_server::server][ERROR] Err: `No db named `usdt_btc``
+[2017-10-25][11:51:05:894731431][tectonic_server::server][INFO] Client connection disconnected. Current: 99.
+[2017-10-25][11:51:05:895414471][tectonic_server::server][INFO] Client connection disconnected. Current: 98.
+[2017-10-25][11:51:05:895891905][tectonic_server::server][INFO] Client connection disconnected. Current: 97.
+[2017-10-25][11:51:05:896511628][tectonic_server::server][INFO] Client connection disconnected. Current: 96.
+[2017-10-25][11:51:05:897037869][tectonic_server::server][INFO] Client connection disconnected. Current: 95.
+[2017-10-25][11:51:05:897523476][tectonic_server::server][INFO] Client connection disconnected. Current: 94.
+[2017-10-25][11:51:05:898055282][tectonic_server::server][INFO] Client connection disconnected. Current: 93.
+[2017-10-25][11:51:05:898576633][tectonic_server::server][INFO] Client connection disconnected. Current: 92.
+[2017-10-25][11:51:05:899083658][tectonic_server::server][INFO] Client connection disconnected. Current: 91.
+[2017-10-25][11:51:05:899623119][tectonic_server::server][INFO] Client connection disconnected. Current: 90.
+[2017-10-25][11:51:05:900198893][tectonic_server::server][INFO] Client connection disconnected. Current: 87.
+[2017-10-25][11:51:05:900201810][tectonic_server::server][INFO] Client connection disconnected. Current: 87.
+[2017-10-25][11:51:05:902159138][tectonic_server::server][INFO] Client connection disconnected. Current: 86.
+[2017-10-25][11:51:05:903025477][tectonic_server::server][INFO] Client connection disconnected. Current: 85.
+[2017-10-25][11:51:05:904319317][tectonic_server::server][INFO] Client connection disconnected. Current: 84.
+[2017-10-25][11:51:05:905359395][tectonic_server::server][INFO] Client connection disconnected. Current: 83.
+[2017-10-25][11:51:05:905684292][tectonic_server::server][INFO] Client connection disconnected. Current: 83.
+[2017-10-25][11:51:05:906344365][tectonic_server::server][INFO] Client connection disconnected. Current: 82.
+[2017-10-25][11:51:05:906935299][tectonic_server::server][INFO] Client connection disconnected. Current: 81.
+[2017-10-25][11:51:05:907522577][tectonic_server::server][INFO] Client connection disconnected. Current: 80.
+[2017-10-25][11:51:05:908113026][tectonic_server::server][INFO] Client connection disconnected. Current: 79.
+[2017-10-25][11:51:05:908783863][tectonic_server::server][INFO] Client connection disconnected. Current: 78.
+[2017-10-25][11:51:05:909351027][tectonic_server::server][INFO] Client connection disconnected. Current: 77.
+[2017-10-25][11:51:05:909907090][tectonic_server::server][INFO] Client connection disconnected. Current: 76.
+[2017-10-25][11:51:05:910580568][tectonic_server::server][INFO] Client connection disconnected. Current: 75.
+[2017-10-25][11:51:05:911177732][tectonic_server::server][INFO] Client connection disconnected. Current: 74.
+[2017-10-25][11:51:05:911734379][tectonic_server::server][INFO] Client connection disconnected. Current: 73.
+[2017-10-25][11:51:05:912421389][tectonic_server::server][INFO] Client connection disconnected. Current: 72.
+[2017-10-25][11:51:05:913053858][tectonic_server::server][INFO] Client connection disconnected. Current: 71.
+[2017-10-25][11:51:05:914639179][tectonic_server::server][INFO] Client connection disconnected. Current: 70.
+[2017-10-25][11:51:05:915446746][tectonic_server::server][INFO] Client connection disconnected. Current: 69.
+[2017-10-25][11:51:05:916391732][tectonic_server::server][INFO] Client connection disconnected. Current: 68.
+[2017-10-25][11:51:05:917232846][tectonic_server::server][INFO] Client connection disconnected. Current: 67.
+[2017-10-25][11:51:05:918023434][tectonic_server::server][INFO] Client connection disconnected. Current: 66.
+[2017-10-25][11:51:05:918845220][tectonic_server::server][INFO] Client connection disconnected. Current: 65.
+[2017-10-25][11:51:05:919434258][tectonic_server::server][INFO] Client connection disconnected. Current: 64.
+[2017-10-25][11:51:05:920007934][tectonic_server::server][INFO] Client connection disconnected. Current: 63.
+[2017-10-25][11:51:05:920679264][tectonic_server::server][INFO] Client connection disconnected. Current: 62.
+[2017-10-25][11:51:05:921202662][tectonic_server::server][INFO] Client connection disconnected. Current: 61.
+[2017-10-25][11:51:05:921736546][tectonic_server::server][INFO] Client connection disconnected. Current: 60.
+[2017-10-25][11:51:05:922250918][tectonic_server::server][INFO] Client connection disconnected. Current: 59.
+[2017-10-25][11:51:05:922769364][tectonic_server::server][INFO] Client connection disconnected. Current: 58.
+[2017-10-25][11:51:05:923294782][tectonic_server::server][INFO] Client connection disconnected. Current: 57.
+[2017-10-25][11:51:05:923833583][tectonic_server::server][INFO] Client connection disconnected. Current: 56.
+[2017-10-25][11:51:05:927729883][tectonic_server::server][INFO] Client connection disconnected. Current: 55.
+[2017-10-25][11:51:05:928432083][tectonic_server::server][INFO] Client connection disconnected. Current: 54.
+[2017-10-25][11:51:05:928965400][tectonic_server::server][INFO] Client connection disconnected. Current: 53.
+[2017-10-25][11:51:05:929503809][tectonic_server::server][INFO] Client connection disconnected. Current: 51.
+[2017-10-25][11:51:05:929506289][tectonic_server::server][INFO] Client connection disconnected. Current: 51.
+[2017-10-25][11:51:05:930704830][tectonic_server::server][INFO] Client connection disconnected. Current: 50.
+[2017-10-25][11:51:05:931262896][tectonic_server::server][INFO] Client connection disconnected. Current: 49.
+[2017-10-25][11:51:05:931688017][tectonic_server::server][INFO] Client connection disconnected. Current: 48.
+[2017-10-25][11:51:05:932140534][tectonic_server::server][INFO] Client connection disconnected. Current: 47.
+[2017-10-25][11:51:05:932747754][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:51:05:933174515][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:51:05:933568375][tectonic_server::server][INFO] Client connection disconnected. Current: 44.
+[2017-10-25][11:51:05:933965675][tectonic_server::server][INFO] Client connection disconnected. Current: 43.
+[2017-10-25][11:51:05:934370121][tectonic_server::server][INFO] Client connection disconnected. Current: 42.
+[2017-10-25][11:51:05:934849076][tectonic_server::server][INFO] Client connection disconnected. Current: 41.
+[2017-10-25][11:51:05:935459920][tectonic_server::server][INFO] Client connection disconnected. Current: 40.
+[2017-10-25][11:51:05:936051221][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:51:05:936793411][tectonic_server::server][INFO] Client connection disconnected. Current: 38.
+[2017-10-25][11:51:05:937229733][tectonic_server::server][INFO] Client connection disconnected. Current: 37.
+[2017-10-25][11:51:05:937655835][tectonic_server::server][INFO] Client connection disconnected. Current: 36.
+[2017-10-25][11:51:05:938099635][tectonic_server::server][INFO] Client connection disconnected. Current: 35.
+[2017-10-25][11:51:05:938517760][tectonic_server::server][INFO] Client connection disconnected. Current: 34.
+[2017-10-25][11:51:05:938983243][tectonic_server::server][INFO] Client connection disconnected. Current: 32.
+[2017-10-25][11:51:05:939034460][tectonic_server::server][INFO] Client connection disconnected. Current: 32.
+[2017-10-25][11:51:05:939686719][tectonic_server::server][INFO] Client connection disconnected. Current: 31.
+[2017-10-25][11:51:05:940112855][tectonic_server::server][INFO] Client connection disconnected. Current: 30.
+[2017-10-25][11:51:05:940614494][tectonic_server::server][INFO] Client connection disconnected. Current: 29.
+[2017-10-25][11:51:05:941398275][tectonic_server::server][INFO] Client connection disconnected. Current: 28.
+[2017-10-25][11:51:05:941866272][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:51:05:942478692][tectonic_server::server][INFO] Client connection disconnected. Current: 26.
+[2017-10-25][11:51:05:943011855][tectonic_server::server][INFO] Client connection disconnected. Current: 25.
+[2017-10-25][11:51:05:943462920][tectonic_server::server][INFO] Client connection disconnected. Current: 24.
+[2017-10-25][11:51:05:944001632][tectonic_server::server][INFO] Client connection disconnected. Current: 23.
+[2017-10-25][11:51:05:944551143][tectonic_server::server][INFO] Client connection disconnected. Current: 22.
+[2017-10-25][11:51:05:945121076][tectonic_server::server][INFO] Client connection disconnected. Current: 21.
+[2017-10-25][11:51:05:945661668][tectonic_server::server][INFO] Client connection disconnected. Current: 20.
+[2017-10-25][11:51:05:946201352][tectonic_server::server][INFO] Client connection disconnected. Current: 19.
+[2017-10-25][11:51:05:946717320][tectonic_server::server][INFO] Client connection disconnected. Current: 18.
+[2017-10-25][11:51:05:947529377][tectonic_server::server][INFO] Client connection disconnected. Current: 17.
+[2017-10-25][11:51:05:948482103][tectonic_server::server][INFO] Client connection disconnected. Current: 16.
+[2017-10-25][11:51:05:949365675][tectonic_server::server][INFO] Client connection disconnected. Current: 14.
+[2017-10-25][11:51:05:950202332][tectonic_server::server][INFO] Client connection disconnected. Current: 13.
+[2017-10-25][11:51:05:950867218][tectonic_server::server][INFO] Client connection disconnected. Current: 12.
+[2017-10-25][11:51:05:951420500][tectonic_server::server][INFO] Client connection disconnected. Current: 11.
+[2017-10-25][11:51:05:952136017][tectonic_server::server][INFO] Client connection disconnected. Current: 11.
+[2017-10-25][11:51:05:956474632][tectonic_server::server][INFO] Client connection disconnected. Current: 10.
+[2017-10-25][11:51:05:957575283][tectonic_server::server][INFO] Client connection disconnected. Current: 9.
+[2017-10-25][11:51:05:958465106][tectonic_server::server][INFO] Client connection disconnected. Current: 8.
+[2017-10-25][11:51:05:961025716][tectonic_server::server][INFO] Client connection disconnected. Current: 7.
+[2017-10-25][11:51:05:961599527][tectonic_server::server][INFO] Client connection disconnected. Current: 6.
+[2017-10-25][11:51:05:962197995][tectonic_server::server][INFO] Client connection disconnected. Current: 5.
+[2017-10-25][11:51:05:962761942][tectonic_server::server][INFO] Client connection disconnected. Current: 4.
+[2017-10-25][11:51:05:963490149][tectonic_server::server][INFO] Client connection disconnected. Current: 3.
+[2017-10-25][11:51:05:964365286][tectonic_server::server][INFO] Client connection disconnected. Current: 1.
+[2017-10-25][11:51:05:964375068][tectonic_server::server][INFO] Client connection disconnected. Current: 1.
+[2017-10-25][11:51:05:965450103][tectonic_server::server][INFO] Client connection disconnected. Current: 0.
+[2017-10-25][11:51:08:452480435][tectonic_server::server][INFO] Client connected. Current: 1.
+[2017-10-25][11:51:08:454202985][tectonic_server::server][INFO] Client connected. Current: 3.
+[2017-10-25][11:51:08:454202981][tectonic_server::server][INFO] Client connected. Current: 3.
+[2017-10-25][11:51:08:455492873][tectonic_server::server][INFO] Client connected. Current: 4.
+[2017-10-25][11:51:08:455590163][tectonic_server::server][INFO] Client connected. Current: 5.
+[2017-10-25][11:51:08:457174838][tectonic_server::server][INFO] Client connected. Current: 7.
+[2017-10-25][11:51:08:457174840][tectonic_server::server][INFO] Client connected. Current: 7.
+[2017-10-25][11:51:08:458284855][tectonic_server::server][INFO] Client connected. Current: 9.
+[2017-10-25][11:51:08:458285259][tectonic_server::server][INFO] Client connected. Current: 9.
+[2017-10-25][11:51:08:460453198][tectonic_server::server][INFO] Client connected. Current: 11.
+[2017-10-25][11:51:08:460454137][tectonic_server::server][INFO] Client connected. Current: 11.
+[2017-10-25][11:51:08:461744863][tectonic_server::server][INFO] Client connected. Current: 14.
+[2017-10-25][11:51:08:461746037][tectonic_server::server][INFO] Client connected. Current: 14.
+[2017-10-25][11:51:08:461764107][tectonic_server::server][INFO] Client connected. Current: 14.
+[2017-10-25][11:51:08:463310753][tectonic_server::server][INFO] Client connected. Current: 15.
+[2017-10-25][11:51:08:463388249][tectonic_server::server][INFO] Client connected. Current: 16.
+[2017-10-25][11:51:08:464857799][tectonic_server::server][INFO] Client connected. Current: 18.
+[2017-10-25][11:51:08:464859829][tectonic_server::server][INFO] Client connected. Current: 18.
+[2017-10-25][11:51:08:466106403][tectonic_server::server][INFO] Client connected. Current: 21.
+[2017-10-25][11:51:08:466148331][tectonic_server::server][INFO] Client connected. Current: 21.
+[2017-10-25][11:51:08:466106481][tectonic_server::server][INFO] Client connected. Current: 21.
+[2017-10-25][11:51:08:469022174][tectonic_server::server][INFO] Client connected. Current: 22.
+[2017-10-25][11:51:08:470450211][tectonic_server::server][INFO] Client connected. Current: 23.
+[2017-10-25][11:51:08:471858557][tectonic_server::server][INFO] Client connected. Current: 24.
+[2017-10-25][11:51:08:473405426][tectonic_server::server][INFO] Client connected. Current: 25.
+[2017-10-25][11:51:08:473642713][tectonic_server::server][INFO] Client connected. Current: 26.
+[2017-10-25][11:51:08:475245352][tectonic_server::server][INFO] Client connected. Current: 27.
+[2017-10-25][11:51:08:476445707][tectonic_server::server][INFO] Client connected. Current: 29.
+[2017-10-25][11:51:08:476447736][tectonic_server::server][INFO] Client connected. Current: 29.
+[2017-10-25][11:51:08:478068110][tectonic_server::server][INFO] Client connected. Current: 30.
+[2017-10-25][11:51:08:478157299][tectonic_server::server][INFO] Client connected. Current: 31.
+[2017-10-25][11:51:08:479885767][tectonic_server::server][INFO] Client connected. Current: 33.
+[2017-10-25][11:51:08:479885769][tectonic_server::server][INFO] Client connected. Current: 33.
+[2017-10-25][11:51:08:481552312][tectonic_server::server][INFO] Client connected. Current: 34.
+[2017-10-25][11:51:08:482924747][tectonic_server::server][INFO] Client connected. Current: 35.
+[2017-10-25][11:51:08:484780988][tectonic_server::server][INFO] Client connected. Current: 36.
+[2017-10-25][11:51:08:486074709][tectonic_server::server][INFO] Client connected. Current: 37.
+[2017-10-25][11:51:08:486163608][tectonic_server::server][INFO] Client connected. Current: 38.
+[2017-10-25][11:51:08:488000413][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:51:08:488000413][tectonic_server::server][INFO] Client connected. Current: 40.
+[2017-10-25][11:51:08:489466866][tectonic_server::server][INFO] Client connected. Current: 42.
+[2017-10-25][11:51:08:489466439][tectonic_server::server][INFO] Client connected. Current: 42.
+[2017-10-25][11:51:08:491118090][tectonic_server::server][INFO] Client connected. Current: 44.
+[2017-10-25][11:51:08:491118091][tectonic_server::server][INFO] Client connected. Current: 44.
+[2017-10-25][11:51:08:492127039][tectonic_server::server][INFO] Client connected. Current: 45.
+[2017-10-25][11:51:08:493619744][tectonic_server::server][INFO] Client connected. Current: 46.
+[2017-10-25][11:51:08:493702744][tectonic_server::server][INFO] Client connected. Current: 47.
+[2017-10-25][11:51:08:495330543][tectonic_server::server][INFO] Client connected. Current: 48.
+[2017-10-25][11:51:08:495534205][tectonic_server::server][INFO] Client connected. Current: 50.
+[2017-10-25][11:51:08:495533883][tectonic_server::server][INFO] Client connected. Current: 50.
+[2017-10-25][11:51:08:497418373][tectonic_server::server][INFO] Client connected. Current: 53.
+[2017-10-25][11:51:08:497419008][tectonic_server::server][INFO] Client connected. Current: 53.
+[2017-10-25][11:51:08:497434290][tectonic_server::server][INFO] Client connected. Current: 53.
+[2017-10-25][11:51:08:500015910][tectonic_server::server][INFO] Client connected. Current: 56.
+[2017-10-25][11:51:08:500015293][tectonic_server::server][INFO] Client connected. Current: 56.
+[2017-10-25][11:51:08:500286202][tectonic_server::server][INFO] Client connected. Current: 56.
+[2017-10-25][11:51:08:501964267][tectonic_server::server][INFO] Client connected. Current: 59.
+[2017-10-25][11:51:08:501964593][tectonic_server::server][INFO] Client connected. Current: 59.
+[2017-10-25][11:51:08:502127801][tectonic_server::server][INFO] Client connected. Current: 59.
+[2017-10-25][11:51:08:504355878][tectonic_server::server][INFO] Client connected. Current: 61.
+[2017-10-25][11:51:08:504355822][tectonic_server::server][INFO] Client connected. Current: 61.
+[2017-10-25][11:51:08:505795538][tectonic_server::server][INFO] Client connected. Current: 62.
+[2017-10-25][11:51:08:505987356][tectonic_server::server][INFO] Client connected. Current: 63.
+[2017-10-25][11:51:08:507331660][tectonic_server::server][INFO] Client connected. Current: 65.
+[2017-10-25][11:51:08:507330558][tectonic_server::server][INFO] Client connected. Current: 65.
+[2017-10-25][11:51:08:509737305][tectonic_server::server][INFO] Client connected. Current: 68.
+[2017-10-25][11:51:08:509740964][tectonic_server::server][INFO] Client connected. Current: 68.
+[2017-10-25][11:51:08:509737302][tectonic_server::server][INFO] Client connected. Current: 68.
+[2017-10-25][11:51:08:512586246][tectonic_server::server][INFO] Client connected. Current: 69.
+[2017-10-25][11:51:08:512683080][tectonic_server::server][INFO] Client connected. Current: 70.
+[2017-10-25][11:51:08:513902427][tectonic_server::server][INFO] Client connected. Current: 72.
+[2017-10-25][11:51:08:513901918][tectonic_server::server][INFO] Client connected. Current: 72.
+[2017-10-25][11:51:08:515209993][tectonic_server::server][INFO] Client connected. Current: 74.
+[2017-10-25][11:51:08:515209637][tectonic_server::server][INFO] Client connected. Current: 74.
+[2017-10-25][11:51:08:516764588][tectonic_server::server][INFO] Client connected. Current: 76.
+[2017-10-25][11:51:08:516764765][tectonic_server::server][INFO] Client connected. Current: 76.
+[2017-10-25][11:51:08:518448517][tectonic_server::server][INFO] Client connected. Current: 77.
+[2017-10-25][11:51:08:518562925][tectonic_server::server][INFO] Client connected. Current: 78.
+[2017-10-25][11:51:08:520208295][tectonic_server::server][INFO] Client connected. Current: 81.
+[2017-10-25][11:51:08:520462358][tectonic_server::server][INFO] Client connected. Current: 81.
+[2017-10-25][11:51:08:520208290][tectonic_server::server][INFO] Client connected. Current: 81.
+[2017-10-25][11:51:08:522270442][tectonic_server::server][INFO] Client connected. Current: 82.
+[2017-10-25][11:51:08:523846956][tectonic_server::server][INFO] Client connected. Current: 84.
+[2017-10-25][11:51:08:523848439][tectonic_server::server][INFO] Client connected. Current: 84.
+[2017-10-25][11:51:08:525242953][tectonic_server::server][INFO] Client connected. Current: 85.
+[2017-10-25][11:51:08:526737596][tectonic_server::server][INFO] Client connected. Current: 87.
+[2017-10-25][11:51:08:526737617][tectonic_server::server][INFO] Client connected. Current: 87.
+[2017-10-25][11:51:08:528513131][tectonic_server::server][INFO] Client connected. Current: 88.
+[2017-10-25][11:51:08:528603461][tectonic_server::server][INFO] Client connected. Current: 89.
+[2017-10-25][11:51:08:529718383][tectonic_server::server][INFO] Client connected. Current: 91.
+[2017-10-25][11:51:08:529717466][tectonic_server::server][INFO] Client connected. Current: 91.
+[2017-10-25][11:51:08:531740168][tectonic_server::server][INFO] Client connected. Current: 92.
+[2017-10-25][11:51:08:533109143][tectonic_server::server][INFO] Client connected. Current: 94.
+[2017-10-25][11:51:08:533110545][tectonic_server::server][INFO] Client connected. Current: 94.
+[2017-10-25][11:51:08:534377566][tectonic_server::server][INFO] Client connected. Current: 97.
+[2017-10-25][11:51:08:534376749][tectonic_server::server][INFO] Client connected. Current: 97.
+[2017-10-25][11:51:08:534376033][tectonic_server::server][INFO] Client connected. Current: 97.
+[2017-10-25][11:51:08:537647679][tectonic_server::server][INFO] Client connected. Current: 98.
+[2017-10-25][11:51:08:537771888][tectonic_server::server][INFO] Client connected. Current: 99.
+[2017-10-25][11:51:08:539296036][tectonic_server::server][INFO] Client connected. Current: 100.
+[2017-10-25][11:51:12:261642100][tectonic_server::server][INFO] Client connected. Current: 101.
+[2017-10-25][11:51:54:745339245][tectonic_server::server][INFO] Current total count: 18058
+[2017-10-25][11:52:54:755095026][tectonic_server::server][INFO] Current total count: 44278
+[2017-10-25][11:53:06:538679364][tectonic_server::server][INFO] Client connection disconnected. Current: 100.
+[2017-10-25][11:53:06:539359765][tectonic_server::server][INFO] Client connection disconnected. Current: 99.
+[2017-10-25][11:53:06:540147681][tectonic_server::server][INFO] Client connection disconnected. Current: 98.
+[2017-10-25][11:53:06:554863910][tectonic_server::server][INFO] Client connection disconnected. Current: 97.
+[2017-10-25][11:53:06:566773376][tectonic_server::server][INFO] Client connection disconnected. Current: 96.
+[2017-10-25][11:53:06:567683717][tectonic_server::server][INFO] Client connection disconnected. Current: 93.
+[2017-10-25][11:53:06:568574496][tectonic_server::server][INFO] Client connection disconnected. Current: 91.
+[2017-10-25][11:53:06:568576276][tectonic_server::server][INFO] Client connection disconnected. Current: 91.
+[2017-10-25][11:53:06:569331178][tectonic_server::server][INFO] Client connection disconnected. Current: 91.
+[2017-10-25][11:53:06:569410975][tectonic_server::server][INFO] Client connection disconnected. Current: 91.
+[2017-10-25][11:53:06:570739875][tectonic_server::server][INFO] Client connection disconnected. Current: 90.
+[2017-10-25][11:53:06:571293550][tectonic_server::server][INFO] Client connection disconnected. Current: 87.
+[2017-10-25][11:53:06:571370833][tectonic_server::server][INFO] Client connection disconnected. Current: 87.
+[2017-10-25][11:53:06:571292950][tectonic_server::server][INFO] Client connection disconnected. Current: 87.
+[2017-10-25][11:53:06:572710510][tectonic_server::server][INFO] Client connection disconnected. Current: 86.
+[2017-10-25][11:53:06:573248836][tectonic_server::server][INFO] Client connection disconnected. Current: 85.
+[2017-10-25][11:53:06:573760053][tectonic_server::server][INFO] Client connection disconnected. Current: 84.
+[2017-10-25][11:53:06:576396484][tectonic_server::server][INFO] Client connection disconnected. Current: 83.
+[2017-10-25][11:53:06:577301353][tectonic_server::server][INFO] Client connection disconnected. Current: 82.
+[2017-10-25][11:53:06:578426178][tectonic_server::server][INFO] Client connection disconnected. Current: 81.
+[2017-10-25][11:53:06:579258467][tectonic_server::server][INFO] Client connection disconnected. Current: 80.
+[2017-10-25][11:53:06:580127761][tectonic_server::server][INFO] Client connection disconnected. Current: 79.
+[2017-10-25][11:53:06:581986177][tectonic_server::server][INFO] Client connection disconnected. Current: 78.
+[2017-10-25][11:53:06:583273412][tectonic_server::server][INFO] Client connection disconnected. Current: 77.
+[2017-10-25][11:53:06:589084644][tectonic_server::server][INFO] Client connection disconnected. Current: 76.
+[2017-10-25][11:53:06:589703859][tectonic_server::server][INFO] Client connection disconnected. Current: 75.
+[2017-10-25][11:53:06:590212897][tectonic_server::server][INFO] Client connection disconnected. Current: 74.
+[2017-10-25][11:53:06:590692873][tectonic_server::server][INFO] Client connection disconnected. Current: 73.
+[2017-10-25][11:53:06:591199080][tectonic_server::server][INFO] Client connection disconnected. Current: 72.
+[2017-10-25][11:53:06:591867780][tectonic_server::server][INFO] Client connection disconnected. Current: 71.
+[2017-10-25][11:53:06:592993646][tectonic_server::server][INFO] Client connection disconnected. Current: 70.
+[2017-10-25][11:53:06:593670436][tectonic_server::server][INFO] Client connection disconnected. Current: 69.
+[2017-10-25][11:53:06:594239808][tectonic_server::server][INFO] Client connection disconnected. Current: 68.
+[2017-10-25][11:53:06:595144358][tectonic_server::server][INFO] Client connection disconnected. Current: 67.
+[2017-10-25][11:53:06:595910957][tectonic_server::server][INFO] Client connection disconnected. Current: 60.
+[2017-10-25][11:53:06:595897525][tectonic_server::server][INFO] Client connection disconnected. Current: 60.
+[2017-10-25][11:53:06:596015020][tectonic_server::server][INFO] Client connection disconnected. Current: 60.
+[2017-10-25][11:53:06:596072617][tectonic_server::server][INFO] Client connection disconnected. Current: 60.
+[2017-10-25][11:53:06:595897259][tectonic_server::server][INFO] Client connection disconnected. Current: 60.
+[2017-10-25][11:53:06:596198610][tectonic_server::server][INFO] Client connection disconnected. Current: 60.
+[2017-10-25][11:53:06:597935704][tectonic_server::server][INFO] Client connection disconnected. Current: 60.
+[2017-10-25][11:53:06:599969969][tectonic_server::server][INFO] Client connection disconnected. Current: 59.
+[2017-10-25][11:53:06:600959714][tectonic_server::server][INFO] Client connection disconnected. Current: 58.
+[2017-10-25][11:53:06:601523632][tectonic_server::server][INFO] Client connection disconnected. Current: 57.
+[2017-10-25][11:53:06:602208267][tectonic_server::server][INFO] Client connection disconnected. Current: 56.
+[2017-10-25][11:53:06:602836530][tectonic_server::server][INFO] Client connection disconnected. Current: 55.
+[2017-10-25][11:53:06:603254551][tectonic_server::server][INFO] Client connection disconnected. Current: 54.
+[2017-10-25][11:53:06:603578673][tectonic_server::server][INFO] Client connection disconnected. Current: 53.
+[2017-10-25][11:53:06:604005140][tectonic_server::server][INFO] Client connection disconnected. Current: 51.
+[2017-10-25][11:53:06:604091704][tectonic_server::server][INFO] Client connection disconnected. Current: 51.
+[2017-10-25][11:53:06:604589006][tectonic_server::server][INFO] Client connection disconnected. Current: 50.
+[2017-10-25][11:53:06:604890527][tectonic_server::server][INFO] Client connection disconnected. Current: 49.
+[2017-10-25][11:53:06:605334649][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:53:06:605334641][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:53:06:605334543][tectonic_server::server][INFO] Client connection disconnected. Current: 46.
+[2017-10-25][11:53:06:606075171][tectonic_server::server][INFO] Client connection disconnected. Current: 45.
+[2017-10-25][11:53:06:606365802][tectonic_server::server][INFO] Client connection disconnected. Current: 44.
+[2017-10-25][11:53:06:606753624][tectonic_server::server][INFO] Client connection disconnected. Current: 43.
+[2017-10-25][11:53:06:607045979][tectonic_server::server][INFO] Client connection disconnected. Current: 42.
+[2017-10-25][11:53:06:607304927][tectonic_server::server][INFO] Client connection disconnected. Current: 41.
+[2017-10-25][11:53:06:607579768][tectonic_server::server][INFO] Client connection disconnected. Current: 40.
+[2017-10-25][11:53:06:607877751][tectonic_server::server][INFO] Client connection disconnected. Current: 39.
+[2017-10-25][11:53:06:608170053][tectonic_server::server][INFO] Client connection disconnected. Current: 38.
+[2017-10-25][11:53:06:608698739][tectonic_server::server][INFO] Client connection disconnected. Current: 37.
+[2017-10-25][11:53:06:609040289][tectonic_server::server][INFO] Client connection disconnected. Current: 36.
+[2017-10-25][11:53:06:609326954][tectonic_server::server][INFO] Client connection disconnected. Current: 35.
+[2017-10-25][11:53:06:609697775][tectonic_server::server][INFO] Client connection disconnected. Current: 34.
+[2017-10-25][11:53:06:610018689][tectonic_server::server][INFO] Client connection disconnected. Current: 33.
+[2017-10-25][11:53:06:610362140][tectonic_server::server][INFO] Client connection disconnected. Current: 32.
+[2017-10-25][11:53:06:610741764][tectonic_server::server][INFO] Client connection disconnected. Current: 31.
+[2017-10-25][11:53:06:611160587][tectonic_server::server][INFO] Client connection disconnected. Current: 30.
+[2017-10-25][11:53:06:611553087][tectonic_server::server][INFO] Client connection disconnected. Current: 29.
+[2017-10-25][11:53:06:611903073][tectonic_server::server][INFO] Client connection disconnected. Current: 28.
+[2017-10-25][11:53:06:612175370][tectonic_server::server][INFO] Client connection disconnected. Current: 27.
+[2017-10-25][11:53:06:612504592][tectonic_server::server][INFO] Client connection disconnected. Current: 26.
+[2017-10-25][11:53:06:612776865][tectonic_server::server][INFO] Client connection disconnected. Current: 25.
+[2017-10-25][11:53:06:613130539][tectonic_server::server][INFO] Client connection disconnected. Current: 24.
+[2017-10-25][11:53:06:613383992][tectonic_server::server][INFO] Client connection disconnected. Current: 23.
+[2017-10-25][11:53:06:613695670][tectonic_server::server][INFO] Client connection disconnected. Current: 22.
+[2017-10-25][11:53:06:614042722][tectonic_server::server][INFO] Client connection disconnected. Current: 21.
+[2017-10-25][11:53:06:614344958][tectonic_server::server][INFO] Client connection disconnected. Current: 20.
+[2017-10-25][11:53:06:614590392][tectonic_server::server][INFO] Client connection disconnected. Current: 19.
+[2017-10-25][11:53:06:614937329][tectonic_server::server][INFO] Client connection disconnected. Current: 18.
+[2017-10-25][11:53:06:615241374][tectonic_server::server][INFO] Client connection disconnected. Current: 16.
+[2017-10-25][11:53:06:615241894][tectonic_server::server][INFO] Client connection disconnected. Current: 16.
+[2017-10-25][11:53:06:615706500][tectonic_server::server][INFO] Client connection disconnected. Current: 15.
+[2017-10-25][11:53:06:616011711][tectonic_server::server][INFO] Client connection disconnected. Current: 14.
+[2017-10-25][11:53:06:616242409][tectonic_server::server][INFO] Client connection disconnected. Current: 13.
+[2017-10-25][11:53:06:616609011][tectonic_server::server][INFO] Client connection disconnected. Current: 11.
+[2017-10-25][11:53:06:616859013][tectonic_server::server][INFO] Client connection disconnected. Current: 10.
+[2017-10-25][11:53:06:616854230][tectonic_server::server][INFO] Client connection disconnected. Current: 10.
+[2017-10-25][11:53:06:617222128][tectonic_server::server][INFO] Client connection disconnected. Current: 9.
+[2017-10-25][11:53:06:617435763][tectonic_server::server][INFO] Client connection disconnected. Current: 8.
+[2017-10-25][11:53:06:617651204][tectonic_server::server][INFO] Client connection disconnected. Current: 7.
+[2017-10-25][11:53:06:617884370][tectonic_server::server][INFO] Client connection disconnected. Current: 6.
+[2017-10-25][11:53:06:618120617][tectonic_server::server][INFO] Client connection disconnected. Current: 5.
+[2017-10-25][11:53:06:618364929][tectonic_server::server][INFO] Client connection disconnected. Current: 4.
+[2017-10-25][11:53:06:618689273][tectonic_server::server][INFO] Client connection disconnected. Current: 3.
+[2017-10-25][11:53:06:618890772][tectonic_server::server][INFO] Client connection disconnected. Current: 2.
+[2017-10-25][11:53:06:619086055][tectonic_server::server][INFO] Client connection disconnected. Current: 1.

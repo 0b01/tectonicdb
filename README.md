@@ -80,6 +80,8 @@ Language bindings:
 
 - [ ] Query by timestamp
 
+This requires saving data in several files. When reading, read each file and determine whether the requested dates are within range. When writing, 
+
 - [x] Commandline inspection tool for dtf file format
 
 - [x] Logging
