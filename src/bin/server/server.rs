@@ -5,7 +5,6 @@
 
 use byteorder::{WriteBytesExt, NetworkEndian, /*ReadBytesExt*/ };
 
-use std::collections::HashMap;
 use std::{str, thread, time};
 use std::error::Error;
 use std::io::{Read, Write};

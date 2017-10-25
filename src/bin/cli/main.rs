@@ -10,7 +10,7 @@ use std::io::{self, Read, Write};
 
 struct Cxn {
     stream : TcpStream,
-    addr: String
+    // addr: String
 }
 
 impl Cxn {
@@ -78,7 +78,7 @@ fn connect(host : &str, port : &str, verbosity : u64) -> Cxn {
 
     let cxn = Cxn{
         stream : TcpStream::connect(&addr).unwrap(),
-        addr
+        // addr
     };
 
     cxn

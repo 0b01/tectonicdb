@@ -104,12 +104,10 @@ impl Store {
         if Path::new(&fname).exists() && !self.in_memory {
 
             let file_item_count = dtf::read_meta(&fname).nums;
-            let current_count = {
-                let rdr = self.global.read().unwrap();
-                rdr.vec_store.get(&self.name).unwrap().1
-            };
+
             // when we have more items in memory, don't load
-            if file_item_count < current_count {
+            if file_item_count < self.count() {
+                warn!("There are more items in memory than in file. Cannot load from file.");
                 return;
             }
 
@@ -236,13 +234,8 @@ impl State {
         ret.push('\n');
         ret
     }
-// {
-//   "thing" : [
-//     "123": "0"
-//     ...
-//   ]
-// }
-
+    /// Returns a JSON object like
+    /// [{"total": [1508968738: 0]}, {"default": [1508968738: 0]}]
     pub fn perf(&self) -> String {
         let rdr = self.global.read().unwrap();
         let objs: Vec<String> = (&rdr.history).iter().map(|(name, vec)| {
@@ -312,16 +305,19 @@ impl State {
         format!("[{}]\n", json)
     }
 
+    /// return the count of the current store
     pub fn count(&mut self) -> u64 {
         let store = self.get_current_store();
         store.count() 
     }
 
+    /// Returns the total count of every item in memory
     pub fn countall(&self) -> u64 {
         let rdr = self.global.read().unwrap();
         rdr.vec_store.iter().fold(0, |acc, (_name, tup)| acc + tup.1)
     }
 
+    /// get n items, serialized as JSON
     pub fn get_n_as_json(&mut self, count: i32) -> Option<String> {
         {
             let shared_state = self.global.read().unwrap();
@@ -345,30 +341,36 @@ impl State {
         Some(json)
     }
 
+    /// remove everything in the current store
     pub fn clear(&mut self) {
         self.get_current_store().clear();
     }
 
+    /// remove everything in every store
     pub fn clearall(&mut self) {
         for store in self.store.values_mut() {
             store.clear();
         }
     }
 
+    /// save current store to file
     pub fn flush(&mut self) {
         self.get_current_store().flush();
     }
 
+    /// save all stores to corresponding files
     pub fn flushall(&mut self) {
         for store in self.store.values() {
             store.flush();
         }
     }
 
+    /// returns the current store as a mutable reference
     fn get_current_store(&mut self) -> &mut Store {
         self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP")
     }
 
+    /// get `count` items from the current store
     pub fn get(&mut self, count : i32) -> Option<Vec<u8>> {
         let mut bytes : Vec<u8> = Vec::new();
         {
@@ -396,6 +398,7 @@ impl State {
         Some(bytes)
     }
 
+    /// create a new store
     pub fn new(global: &Global) -> State {
         let dtf_folder: &str = &global.read().unwrap().settings.dtf_folder;
         let mut state = State {

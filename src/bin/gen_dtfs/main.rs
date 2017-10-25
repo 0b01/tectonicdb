@@ -4,7 +4,7 @@ mod db;
 mod conf;
 
 use dtf::Update;
-use conf::get_config;
+// use conf::get_config;
 
 fn main() {
     let start_time = 1506052800;
@@ -20,17 +20,17 @@ fn main() {
     }
 }
 
-fn get_updates(begin: u32, end: u32, symbol: &str) -> Vec<Update> {
-    let conf = get_config();
-    let cxn_str : &String = &conf["connection_string"];
-    let query = format!("
-                 SELECT id, seq, is_trade, is_bid, price, size, ts
-                   FROM orderbook_{}
-                  WHERE ts > {} AND ts < {}
-               ORDER BY id DESC
-                  LIMIT 10;
-    ", symbol, begin, end);
-    let mut updates : Vec<Update> = db::run(&cxn_str, &query);
-    updates.sort(); // important
-    updates
-}
+// fn get_updates(begin: u32, end: u32, symbol: &str) -> Vec<Update> {
+//     let conf = get_config();
+//     let cxn_str : &String = &conf["connection_string"];
+//     let query = format!("
+//                  SELECT id, seq, is_trade, is_bid, price, size, ts
+//                    FROM orderbook_{}
+//                   WHERE ts > {} AND ts < {}
+//                ORDER BY id DESC
+//                   LIMIT 10;
+//     ", symbol, begin, end);
+//     let mut updates : Vec<Update> = db::run(&cxn_str, &query);
+//     updates.sort(); // important
+//     updates
+// }
