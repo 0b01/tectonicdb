@@ -12,3 +12,4 @@ Cargo.lock
 *.bin
 settings.toml
 *.dtf
+output.log
