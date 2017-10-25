@@ -419,15 +419,19 @@ impl State {
 /// (updates, count)
 pub type VecStore = (Vec<dtf::Update>, u64);
 
-/// (time, total_count, name to size)
-pub type History= (SystemTime, u64, HashMap<String, u64>);
+/// key: btc_neo
+///      btc_eth
+///      ..
+///      total
+pub type History = HashMap<String, Vec<(SystemTime, u64)>>;
+
 
 #[derive(Debug)]
 pub struct SharedState {
     pub connections: u16,
     pub settings: Settings,
     pub vec_store: HashMap<String, VecStore>,
-    pub history: Vec<History>,
+    pub history: History,
 }
 
 impl SharedState {
@@ -438,7 +442,7 @@ impl SharedState {
             connections: 0,
             settings,
             vec_store: hashmap,
-            history: Vec::new(),
+            history: HashMap::new(),
         }
     }
 }

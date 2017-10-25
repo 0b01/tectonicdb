@@ -95,20 +95,36 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
         let global_copy_timer = global.clone();
         let granularity = settings.hist_granularity.clone();
         thread::spawn(move || {
+            let dur = time::Duration::from_secs(granularity);
             loop {
-                let (total, sizes) = get_total_sizes(&global_copy_timer);
-                {
-                    let mut wtr = global_copy_timer.write().unwrap();
-                    let current_t = time::SystemTime::now();
-                    wtr.history.push((current_t, total, sizes));
+                let (total, sizes) = {
+                    let rdr = global_copy_timer.read().unwrap();
+                    let mut total = 0;
+                    let mut sizes: Vec<(String, u64)> = Vec::new();
+                    for (name, vec) in rdr.vec_store.iter() {
+                        let size = vec.1;
+                        total += size;
+                        sizes.push((name.clone(), size));
+                    }
+                    sizes.push(("total".to_owned(), total));
+                    (total, sizes)
+                };
+
+                let mut wtr = global_copy_timer.write().unwrap();
+                let current_t = time::SystemTime::now();
+                for &(ref name, size) in sizes.iter() {
+                    wtr.history.get_mut(name)
+                                .unwrap()
+                                .push((current_t, size));
                 }
 
                 info!("Current total count: {}", total);
-                thread::sleep(time::Duration::from_secs(granularity));
+                thread::sleep(dur);
             }
         });
     }
 
+    // main loop
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         let global_copy = global.clone();
@@ -119,18 +135,8 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
         });
     }
 }
+
 type LockedGlobal = Arc<RwLock<SharedState>>;
-fn get_total_sizes(global: &LockedGlobal) -> (u64, HashMap<String, u64>) {
-    let rdr = global.read().unwrap();
-    let mut total = 0;
-    let mut sizes: HashMap<String, u64> = HashMap::new();
-    for (name, vec) in rdr.vec_store.iter() {
-        let size = vec.1;
-        total += size;
-        sizes.insert(name.clone(), vec.1);
-    }
-    (total, sizes)
-}
 
 fn on_connect(global: &LockedGlobal) {
     {
