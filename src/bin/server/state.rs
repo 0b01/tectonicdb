@@ -236,11 +236,24 @@ impl State {
         ret.push('\n');
         ret
     }
+// {
+//   "thing" : [
+//     "123": "0"
+//     ...
+//   ]
+// }
 
     pub fn perf(&self) -> String {
         let rdr = self.global.read().unwrap();
-        let size_t = &rdr.history;
-        format!("{:?}\n", size_t)
+        let objs: Vec<String> = (&rdr.history).iter().map(|(name, vec)| {
+            let hists: Vec<String> = vec.iter().map(|&(t, size)|{
+                let ts = t.duration_since(UNIX_EPOCH).unwrap().as_secs();
+                format!("{}: {}", ts, size)
+            }).collect();
+            format!(r#"{{"{}": [{}]}}"#, name, hists.join(", "))
+        }).collect();
+
+        format!("[{}]\n", objs.join(", "))
     }
 
     /// Insert a row into store
