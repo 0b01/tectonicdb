@@ -5,8 +5,8 @@ extern crate dtf;
 use clap::{Arg, App};
 
 fn main() {
-        let matches = App::new("tectonic-cli")
-                          .version("0.0.1")
+        let matches = App::new("dtfcat")
+                          .version("1.0.0")
                           .author("Ricky Han <tectonic@rickyhan.com>")
                           .about("command line client for tectonic financial datastore")
                           .arg(Arg::with_name("input")

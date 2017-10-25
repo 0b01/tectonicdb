@@ -31,6 +31,8 @@ fn main() {
     let hist_granularity = matches.value_of("hist_granularity").unwrap_or("30");
     let threads = matches.value_of("threads").unwrap_or("100");
 
+    let log_file = matches.value_of("log_file").unwrap_or("tectonic.log");
+
     let settings = settings::Settings {
         autoflush: autoflush,
         dtf_folder: dtf_folder.to_owned(),
@@ -39,11 +41,11 @@ fn main() {
         hist_granularity: hist_granularity.parse::<u64>().unwrap(),
     };
 
-    prepare_logger(verbosity);
+    prepare_logger(verbosity, &log_file);
     server::run_server(&host, &port, &settings);
 }
 
-fn prepare_logger(verbosity: u8) {
+fn prepare_logger(verbosity: u8, log_file: &str) {
     let level = match verbosity {
         0 => log::LogLevelFilter::Error,
         1 => log::LogLevelFilter::Warn,
@@ -64,13 +66,13 @@ fn prepare_logger(verbosity: u8) {
         })
         .level(level)
         .chain(std::io::stdout())
-        .chain(fern::log_file("output.log").unwrap())
+        .chain(fern::log_file(log_file).unwrap())
         .apply().unwrap();
 }
 
 fn get_matches<'a>() -> ArgMatches<'a> {
     App::new("tectonic-server")
-    .version("0.0.1")
+    .version("1.0.0")
     .author("Ricky Han <tectonic@rickyhan.com>")
     .about("tectonic financial datastore")
     .arg(Arg::with_name("host")
@@ -113,5 +115,10 @@ fn get_matches<'a>() -> ArgMatches<'a> {
         .long("hist_granularity")
         .value_name("HIST_GRANULARITY")
         .help("Sets the history record granularity interval. (default 60s)"))
+    .arg(Arg::with_name("log_file")
+        .short("l")
+        .long("log_file")
+        .value_name("LOG_FILE")
+        .help("Sets the log file to write to"))
     .get_matches()
 }
