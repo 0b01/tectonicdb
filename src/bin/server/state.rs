@@ -102,6 +102,17 @@ impl Store {
         let folder = self.global.read().unwrap().settings.dtf_folder.to_owned();
         let fname = format!("{}/{}.dtf", &folder, self.name);
         if Path::new(&fname).exists() && !self.in_memory {
+
+            let file_item_count = dtf::read_meta(&fname).nums;
+            let current_count = {
+                let rdr = self.global.read().unwrap();
+                rdr.vec_store.get(&self.name).unwrap().1
+            };
+            // when we have more items in memory, don't load
+            if file_item_count < current_count {
+                return;
+            }
+
             let ups = dtf::decode(&fname);
             let mut wtr = self.global.write().unwrap();
             let size = ups.len() as u64;
