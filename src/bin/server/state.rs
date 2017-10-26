@@ -80,20 +80,27 @@ impl Store {
     /// If file doesn't exists, simply encode.
     ///
     /// TODO: Need to figure out how to specify symbol (and exchange name).
-    pub fn flush(&self) -> Option<bool> {
-        let folder = self.global.read().unwrap().settings.dtf_folder.to_owned();
-        let fname = format!("{}/{}.dtf", &folder, self.name);
-        utils::create_dir_if_not_exist(&folder);
-        if Path::new(&fname).exists() {
-            let rdr = self.global.read().unwrap();
-            let vecs = rdr.vec_store.get(&self.name).expect("KEY IS NOT IN HASHMAP");
-            dtf::append(&fname, &vecs.0);
-            return Some(true);
-        } else {
-            let rdr = self.global.read().unwrap();
-            let vecs = rdr.vec_store.get(&self.name).expect("KEY IS NOT IN HASHMAP");
-            dtf::encode(&fname, &self.name /*XXX*/, &vecs.0);
+    pub fn flush(&mut self) -> Option<bool> {
+        {
+            let mut rdr = self.global.write().unwrap(); // use a write lock to block write in client processes
+            let folder = rdr.settings.dtf_folder.to_owned();
+            let vecs = rdr.vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
+            let fname = format!("{}/{}.dtf", &folder, self.name);
+            utils::create_dir_if_not_exist(&folder);
+
+            if Path::new(&fname).exists() {
+                dtf::append(&fname, &vecs.0);
+            } else {
+                dtf::encode(&fname, &self.name /*XXX*/, &vecs.0);
+            }
+
+            // clear
+            vecs.0.clear();
+            // vecs.1 = 0;
         }
+        // continue clear
+        self.in_memory = false;
+        self.load_size_from_file();
         Some(true)
     }
 
@@ -102,15 +109,12 @@ impl Store {
         let folder = self.global.read().unwrap().settings.dtf_folder.to_owned();
         let fname = format!("{}/{}.dtf", &folder, self.name);
         if Path::new(&fname).exists() && !self.in_memory {
-
             let file_item_count = dtf::read_meta(&fname).nums;
-
             // when we have more items in memory, don't load
             if file_item_count < self.count() {
                 warn!("There are more items in memory than in file. Cannot load from file.");
                 return;
             }
-
             let ups = dtf::decode(&fname);
             let mut wtr = self.global.write().unwrap();
             let size = ups.len() as u64;
@@ -141,7 +145,7 @@ impl Store {
             let mut rdr = self.global.write().unwrap();
             let vecs = (*rdr).vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
             vecs.0.clear();
-            vecs.1 = 0;
+            // vecs.1 = 0;
         }
         self.in_memory = false;
         self.load_size_from_file();
@@ -360,8 +364,9 @@ impl State {
 
     /// save all stores to corresponding files
     pub fn flushall(&mut self) {
-        for store in self.store.values() {
+        for mut store in self.store.values_mut() {
             store.flush();
+
         }
     }
 
