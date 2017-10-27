@@ -37,36 +37,47 @@ pub type Global = Arc<RwLock<SharedState>>;
 
 impl Store {
 
-    /// Saves current store into disk after n items is inserted.
-    pub fn autoflush(&mut self) {
-        let (size, is_autoflush, flush_interval) = {
-            let rdr = self.global.read().unwrap();
-            let size = rdr.vec_store.get(&self.name).expect("KEY IS NOT IN HASHMAP").1;
-            let is_autoflush = rdr.settings.autoflush;
-            let flush_interval = rdr.settings.flush_interval;
-            (size, is_autoflush, flush_interval)
-        };
 
-        if is_autoflush
-            && size != 0
-            && size % u64::from(flush_interval) == 0 {
-
-            debug!("AUTOFLUSHING {}!", self.name);
-            self.flush();
-            self.load_size_from_file();
-        }
-    }
-
-    /// Push a new `Update` into the vec
+    /// push a new `update` into the vec
     pub fn add(&mut self, new_vec : dtf::Update) {
-        {
+        let is_autoflush = {
             let mut wtr = self.global.write().unwrap();
+            let is_autoflush = wtr.settings.autoflush;
+            let flush_interval = wtr.settings.flush_interval;
+            let folder = wtr.settings.dtf_folder.to_owned();
             let vecs = wtr.vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
 
             vecs.0.push(new_vec);
             vecs.1 += 1;
+
+            // Saves current store into disk after n items is inserted.
+            let size = vecs.0.len(); // using the raw len so won't have race condition with load_size_from_file
+            let is_autoflush = is_autoflush
+                && size != 0
+                && (size as u32) % flush_interval == 0;
+            if is_autoflush {
+
+                debug!("AUTOFLUSHING {}! Size: {} Last: {:?}", self.name, size, vecs.0.last().clone().unwrap());
+                let fname = format!("{}/{}.dtf", &folder, self.name);
+                utils::create_dir_if_not_exist(&folder);
+
+                if Path::new(&fname).exists() {
+                    dtf::append(&fname, &vecs.0);
+                } else {
+                    dtf::encode(&fname, &self.name /*XXX*/, &vecs.0);
+                }
+
+                // clear
+                vecs.0.clear();
+                // vecs.1 = 0;
+            }
+            is_autoflush
+        };
+        if is_autoflush {
+            // continue clear
+            self.in_memory = false;
+            self.load_size_from_file();
         }
-        self.autoflush();
     }
 
     pub fn count(&self) -> u64 {
@@ -364,9 +375,8 @@ impl State {
 
     /// save all stores to corresponding files
     pub fn flushall(&mut self) {
-        for mut store in self.store.values_mut() {
+        for store in self.store.values_mut() {
             store.flush();
-
         }
     }
 
