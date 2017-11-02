@@ -10,6 +10,7 @@ Cargo.lock
 **/*.rs.bk
 
 *.bin
-settings.toml
+conf/settings.toml
 *.dtf
 *.log
+old/

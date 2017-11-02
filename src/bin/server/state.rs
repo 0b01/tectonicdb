@@ -55,28 +55,16 @@ impl Store {
             let is_autoflush = is_autoflush
                 && size != 0
                 && (size as u32) % flush_interval == 0;
+
             if is_autoflush {
-
                 debug!("AUTOFLUSHING {}! Size: {} Last: {:?}", self.name, size, vecs.0.last().clone().unwrap());
-                let fname = format!("{}/{}.dtf", &folder, self.name);
-                utils::create_dir_if_not_exist(&folder);
-
-                if Path::new(&fname).exists() {
-                    dtf::append(&fname, &vecs.0);
-                } else {
-                    dtf::encode(&fname, &self.name /*XXX*/, &vecs.0);
-                }
-
-                // clear
-                vecs.0.clear();
-                // vecs.1 = 0;
             }
+
             is_autoflush
         };
+
         if is_autoflush {
-            // continue clear
-            self.in_memory = false;
-            self.load_size_from_file();
+            self.flush();
         }
     }
 
@@ -107,11 +95,9 @@ impl Store {
 
             // clear
             vecs.0.clear();
-            // vecs.1 = 0;
         }
         // continue clear
         self.in_memory = false;
-        self.load_size_from_file();
         Some(true)
     }
 
@@ -121,15 +107,17 @@ impl Store {
         let fname = format!("{}/{}.dtf", &folder, self.name);
         if Path::new(&fname).exists() && !self.in_memory {
             let file_item_count = dtf::read_meta(&fname).nums;
-            // when we have more items in memory, don't load
-            if file_item_count < self.count() {
-                warn!("There are more items in memory than in file. Cannot load from file.");
-                return;
-            }
-            let ups = dtf::decode(&fname);
+            // // when we have more items in memory, don't load
+            // if file_item_count < self.count() {
+            //     warn!("There are more items in memory than in file. Cannot load from file.");
+            //     return;
+            // }
+            let mut ups = dtf::decode(&fname);
             let mut wtr = self.global.write().unwrap();
-            let size = ups.len() as u64;
-            wtr.vec_store.insert(self.name.to_owned(), (ups, size));
+            // let size = ups.len() as u64;
+            let vecs = wtr.vec_store.get_mut(&self.name).unwrap();
+            vecs.0.append(&mut ups);
+            // wtr.vec_store.insert(self.name.to_owned(), (ups, size));
             self.in_memory = true;
         }
     }
