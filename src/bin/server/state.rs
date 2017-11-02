@@ -151,9 +151,6 @@ impl Store {
     }
 }
 
-
-
-
 /// Each client gets its own State
 pub struct State {
     /// Is inside a BULKADD operation?
@@ -261,6 +258,11 @@ impl State {
             }
             None => None
         }
+    }
+
+    /// Check if a table exists
+    pub fn exists(&mut self, store_name : &str) -> bool {
+        self.store.contains_key(store_name)
     }
 
     /// Insert a row into current store.

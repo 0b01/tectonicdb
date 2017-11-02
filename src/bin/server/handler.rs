@@ -109,6 +109,15 @@ pub fn gen_response(string : &str, state: &mut State) -> Response {
                 }
             } else
 
+            if string.starts_with("EXISTS ") {
+                let dbname : &str = &string[7..];
+                if state.exists(dbname) {
+                    (Some("1\n".to_owned()), None, None)
+                } else {
+                    (None, None, Some(format!("No db named `{}`", dbname)))
+                }
+            } else
+
             // get
             if string.starts_with("GET ") {
                 let count : &str = &string[4..];
