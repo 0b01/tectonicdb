@@ -15,13 +15,12 @@ static MILLION: u32 = 1_000_000;
 
 
 fn create_or_append(fname: &str, ups: Vec<Update>) {
-
-    if Path::new(&fname).exists() {
-        dtf::append(format!("old/{}", &fname).as_str(), &ups);
+    let fullname = format!("old/{}", &fname);
+    if Path::new(&fullname).exists() {
+        dtf::append(&fullname, &ups);
     } else {
-        dtf::encode(format!("old/{}", &fname).as_str(), fname.clone(), &ups);
+        dtf::encode(&fullname, fname.clone(), &ups);
     }
-
 }
 
 fn pretty_name(dbname : &str) -> String {
