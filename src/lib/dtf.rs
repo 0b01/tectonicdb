@@ -44,7 +44,7 @@ use std::io::{
 };
 
 static MAGIC_VALUE : &[u8] = &[0x44, 0x54, 0x46, 0x90, 0x01]; // DTF9001
-const SYMBOL_LEN : usize = 9;
+const SYMBOL_LEN : usize = 20;
 static SYMBOL_OFFSET : u64 = 5;
 static LEN_OFFSET : u64 = 25;
 static MAX_TS_OFFSET : u64 = 33;
@@ -287,7 +287,6 @@ fn file_reader(fname: &str) -> BufReader<File> {
 
 fn read_symbol(rdr : &mut BufReader<File>) -> String {
     rdr.seek(SeekFrom::Start(SYMBOL_OFFSET)).unwrap();
-
     let mut buffer = [0; SYMBOL_LEN];
     let _ = rdr.read_exact(&mut buffer);
     str::from_utf8(&buffer).unwrap().to_owned()
@@ -547,7 +546,7 @@ mod tests {
         let fname = "test.dtf";
         let mut rdr = file_reader(fname);
         let sym = read_symbol(&mut rdr);
-        assert_eq!(sym, "NEO_BTC  ");
+        assert_eq!(sym, "NEO_BTC             ");
     }
 
     #[test]
