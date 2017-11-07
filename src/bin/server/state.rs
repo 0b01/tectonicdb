@@ -44,7 +44,7 @@ impl Store {
             let mut wtr = self.global.write().unwrap();
             let is_autoflush = wtr.settings.autoflush;
             let flush_interval = wtr.settings.flush_interval;
-            let folder = wtr.settings.dtf_folder.to_owned();
+            let _folder = wtr.settings.dtf_folder.to_owned();
             let vecs = wtr.vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
 
             vecs.0.push(new_vec);
@@ -241,9 +241,9 @@ impl State {
         let objs: Vec<String> = (&rdr.history).iter().map(|(name, vec)| {
             let hists: Vec<String> = vec.iter().map(|&(t, size)|{
                 let ts = t.duration_since(UNIX_EPOCH).unwrap().as_secs();
-                format!("{}: {}", ts, size)
+                format!("\"{}\":{}", ts, size)
             }).collect();
-            format!(r#"{{"{}": [{}]}}"#, name, hists.join(", "))
+            format!(r#"{{"{}": {{{}}}}}"#, name, hists.join(", "))
         }).collect();
 
         format!("[{}]\n", objs.join(", "))
