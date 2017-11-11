@@ -307,7 +307,7 @@ fn read_max_ts(rdr : &mut BufReader<File>) -> u64 {
 }
 
 pub fn read_one_batch(rdr: &mut Read) -> Vec<Update> {
-    let is_ref = rdr.read_u8().expect("is_ref") == 0x0000_0001;
+    let is_ref = rdr.read_u8().expect("is_ref") == 0x1;
     let mut ref_ts = 0;
     let mut ref_seq = 0;
     let mut how_many = 0;
@@ -374,7 +374,7 @@ pub fn decode(fname: &str) -> Vec<Update> {
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
 
     while let Ok(is_ref) = rdr.read_u8() {
-        if is_ref == 0x0000_0001 {
+        if is_ref == 0x1 {
             rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
             v.extend(read_one_batch(&mut rdr));
         }
