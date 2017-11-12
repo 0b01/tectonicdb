@@ -23,8 +23,9 @@ fn main() {
                           .arg(Arg::with_name("csv")
                                .short("c")
                                .long("csv")
-                               .help("output csv"))
+                               .help("output csv (default is JSON)"))
                           .get_matches();
+
     let input = matches.value_of("input").unwrap();
     let metadata = matches.is_present("metadata");
     let csv = matches.is_present("csv");
@@ -32,12 +33,11 @@ fn main() {
     if metadata {
         println!("{}", dtf::read_meta(input));
         return;
-    } else {
-        if !csv {
-            println!("[{}]", dtf::update_vec_to_json(&dtf::decode(input)));
-            return;
-        }
+    } else if csv{
         println!("{}", dtf::update_vec_to_csv(&dtf::decode(input)));
+        return;
+    } else {
+        println!("[{}]", dtf::update_vec_to_json(&dtf::decode(input)));
         return;
     }
 }
