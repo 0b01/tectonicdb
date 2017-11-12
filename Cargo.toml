@@ -35,6 +35,11 @@ name = "dtfcat"
 publish = true
 path = "src/bin/dtfcat/main.rs"
 
+[[bin]]
+name = "rebin"
+publish = true
+path = "src/bin/rebin/main.rs"
+
 [dependencies]
 byteorder = "1.1.0"
 postgres = "0.15"
@@ -44,3 +49,4 @@ bitflags = "1.0.0"
 log = "0.3"
 fern = "0.4"
 chrono = "0.4"
+itertools = "0.7.2"
