@@ -99,6 +99,15 @@ impl Flags {
     }
 }
 
+/// fill digits 123 => 12300 etc..
+/// 151044287500 => 1510442875000 
+pub fn fill_digits(input: u64) -> u64 {
+    let mut ret = input;
+    while ret < 1_000_000_000_000  {
+        ret *= 10;
+    }
+    ret
+}
 
 impl Update {
 
@@ -153,9 +162,11 @@ impl Eq for Update {}
 
 impl PartialOrd for Update {
     fn partial_cmp(&self, other : &Update) -> Option<Ordering> {
-        if self.ts > other.ts {
+        let selfts = self.ts;
+        let otherts = other.ts;
+        if selfts > otherts {
             Some(Ordering::Greater)
-        } else if self.ts == other.ts {
+        } else if selfts == otherts {
             Some(Ordering::Equal)
         } else {
             Some(Ordering::Less)
