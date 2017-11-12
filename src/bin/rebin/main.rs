@@ -23,6 +23,10 @@ fn main() {
                                .help("file to read")
                                .required(true)
                                .takes_value(true))
+                          .arg(Arg::with_name("aligned")
+                               .short("a")
+                               .long("aligned")
+                               .takes_value(false))
                           .arg(Arg::with_name("minutes")
                                .short("m")
                                .long("minutes")
@@ -33,6 +37,7 @@ fn main() {
                           .get_matches();
 
     let input = matches.value_of("input").unwrap();
+    let aligned = matches.is_present("aligned");
     let minutes = matches.value_of("minutes").unwrap_or("1");
 
     let ups = dtf::decode(input);
@@ -40,7 +45,7 @@ fn main() {
     let candles = updates2candles(&ups);
 
     let rebinned = candles
-                    .rebin(minutes.parse::<u16>().unwrap())
+                    .rebin(aligned, minutes.parse::<u16>().unwrap())
                     .unwrap()
                     .to_csv();
 
@@ -49,18 +54,13 @@ fn main() {
 
 
 fn updates2candles(ups: &[dtf::Update]) -> Candles {
-    // filter out trades from orderbook updates
-    // these trades are already sorted
-    let trades : Vec<&dtf::Update> = ups.iter()
-                                       .filter(|up| up.is_trade)
-                                       .collect();
-
     let mut last_ts = 0;        // store the last timestep to test continuity
     let mut last_close = 0.;    // 
 
     let mut candles : HashMap<u32, Candle> = HashMap::new();
 
-    for trade in trades.iter() {
+    for trade in ups.iter() {
+        if !trade.is_trade { continue; }
         // floor(ts)
         let ts = (dtf::fill_digits(trade.ts) / 1000 / 60 * 60) as u32; 
         
@@ -109,10 +109,11 @@ fn updates2candles(ups: &[dtf::Update]) -> Candles {
     }
 
     let mut vec_candle = candles
-                        .drain()
+                        .drain()                    // random order, hence sort below
                         .map(|(_k,v)| v)
                         .collect::<Vec<Candle>>();
-    vec_candle.sort();
+
+    vec_candle.sort();                              // XXX: IMPORTANT! DO NOT DELETE.
 
     return Candles::new(
         vec_candle,
@@ -163,7 +164,7 @@ impl Candles {
     }
 
 
-    fn rebin(self, new_scale : u16) -> Option<Candles> {
+    fn rebin(self, align: bool, new_scale : u16) -> Option<Candles> {
         if new_scale < self.scale { return None }
         else if new_scale == self.scale { return Some(self) }
 
@@ -175,7 +176,19 @@ impl Candles {
         let mut lowacc = 0.;
         let mut volumeacc = 0.; 
 
-        for (i, row) in self.v.iter().enumerate() {
+        let mut aligned = false;
+        let mut i = 0;
+
+        for row in self.v.iter() {
+            // align with some mark ("snap" to grid)
+            if align && !aligned {
+                if row.time == (row.time / (self.scale as u32 * 60)) * (self.scale as u32 * 60) {
+                    aligned = true;
+                    i = 0;
+                } else {
+                    continue;
+                }
+            }
             if i % new_scale as usize == 0 {
                 startacc = row.time;
                 openacc = row.open;
@@ -202,9 +215,11 @@ impl Candles {
                 res.push(candle);
             }
 
+            i += 1;
+
         }
 
-        assert_eq!(res.len(), self.v.len() / (new_scale as usize ));
+        assert_eq!(res.len(), self.v.len() / (new_scale as usize));
         assert!(self._epochs_must_be_sequential());
 
         Some(Candles {
@@ -323,7 +338,7 @@ fn test_rebin() {
     }
 
     let c = Candles { v: candles.clone(), scale: 1};
-    let rebinned = c.rebin(to_scale as u16).unwrap();
+    let rebinned = c.rebin(false, to_scale as u16).unwrap();
     assert_eq!(rebinned.scale, to_scale as u16);
     assert_eq!(rebinned.v.len(), upto / to_scale);
 }
@@ -345,7 +360,7 @@ fn should_have_right_attr() {
     }
 
     let c = Candles { v: candles.clone(), scale: 1};
-    let rebinned = c.rebin(to_scale as u16).unwrap();
+    let rebinned = c.rebin(false, to_scale as u16).unwrap();
     assert_eq!(rebinned.scale, to_scale as u16);
     assert_eq!(rebinned.v.len(), upto / to_scale);
 
