@@ -8,6 +8,9 @@ use std::collections::HashMap;
 use std::cmp::{Ord, Ordering};
 use itertools::Itertools;
 
+///
+/// converts orderbook updates to candles, and rebin 1 minute candles into 5min/ 12hour candles
+/// 
 fn main() {
         let matches = App::new("rebin")
                           .version("1.0.0")
@@ -20,29 +23,40 @@ fn main() {
                                .help("file to read")
                                .required(true)
                                .takes_value(true))
-                          .arg(Arg::with_name("csv")
-                               .short("c")
-                               .long("csv")
-                               .help("output csv (default is JSON)"))
+                          .arg(Arg::with_name("minutes")
+                               .short("m")
+                               .long("minutes")
+                               .required(false)
+                               .value_name("MINUTES")
+                               .help("rebin into minutes. e.g. -m 60 # hour candles")
+                               .takes_value(true))
                           .get_matches();
 
     let input = matches.value_of("input").unwrap();
+    let minutes = matches.value_of("minutes").unwrap_or("1");
 
     let ups = dtf::decode(input);
 
     let candles = updates2candles(&ups);
-    // println!("{:?}", ranges(&candles.v));
 
-    println!("{}", candles.to_csv());
+    let rebinned = candles
+                    .rebin(minutes.parse::<u16>().unwrap())
+                    .unwrap()
+                    .to_csv();
+
+    println!("{}", rebinned);
 }
 
+
 fn updates2candles(ups: &[dtf::Update]) -> Candles {
+    // filter out trades from orderbook updates
+    // these trades are already sorted
     let trades : Vec<&dtf::Update> = ups.iter()
                                        .filter(|up| up.is_trade)
                                        .collect();
 
-    let mut last_ts = 0;
-    let mut last_close = 0.;
+    let mut last_ts = 0;        // store the last timestep to test continuity
+    let mut last_close = 0.;    // 
 
     let mut candles : HashMap<u32, Candle> = HashMap::new();
 
