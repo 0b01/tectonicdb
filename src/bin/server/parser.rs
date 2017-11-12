@@ -23,7 +23,7 @@ pub fn parse_line(string : &str) -> Option<dtf::Update> {
             most_current_bool = ch == 't';
         } else if ch == ',' || ch == ';' {
             match count {
-                0 => { u.ts       = match buf.parse::<u64>() {Ok(ts) => ts, Err(_) => return None}},
+                0 => { u.ts       = match buf.parse::<u64>() {Ok(ts) => dtf::fill_digits(ts), Err(_) => return None}},
                 1 => { u.seq      = match buf.parse::<u32>() {Ok(seq) => seq, Err(_) => return None}},
                 2 => { u.is_trade = most_current_bool; },
                 3 => { u.is_bid   = most_current_bool; },
@@ -88,7 +88,7 @@ mod tests {
         assert_eq!(target, parse_line(&string).unwrap());
 
 
-        let string1 = "1505177459.650, 139010, t, f, 0.0703620, 7.65064240;";
+        let string1 = "1505177459.65, 139010, t, f, 0.0703620, 7.65064240;";
         let target1 = dtf::Update {
             ts: 1505177459650,
             seq: 139010,
