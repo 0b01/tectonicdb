@@ -182,26 +182,31 @@ impl Candles {
         for row in self.v.iter() {
             // align with some mark ("snap" to grid)
             if align && !aligned {
-                if row.time == (row.time / (self.scale as u32 * 60)) * (self.scale as u32 * 60) {
+                let snap_point = (row.time / (self.scale as u32 * 60)) * (self.scale as u32 * 60);
+                if row.time == snap_point {
                     aligned = true;
                     i = 0;
                 } else {
                     continue;
                 }
             }
+            // new candle, reset using first candle
             if i % new_scale as usize == 0 {
                 startacc = row.time;
                 openacc = row.open;
                 highacc = row.high;
                 lowacc = row.low;
                 volumeacc = row.volume;
+                i += 1;
                 continue;
             }
 
+            // accumulate new high, low and volume
             highacc =  if row.high > highacc {row.high} else {highacc};
             lowacc = if row.low < lowacc {row.low} else {lowacc};
             volumeacc += row.volume;
 
+            // if it's the last minute, insert
             if (i % (new_scale as usize)) == ((new_scale as usize) - 1 ){
                 let candle = Candle {
                     time: startacc,
@@ -214,9 +219,7 @@ impl Candles {
                 
                 res.push(candle);
             }
-
             i += 1;
-
         }
 
         assert_eq!(res.len(), self.v.len() / (new_scale as usize));
@@ -324,8 +327,8 @@ fn test_must_be_sequential() {
 #[test]
 fn test_rebin() {
     let mut candles : Vec<Candle> = Vec::new();
-    let to_scale :usize= 10;
-    let upto :usize = 20;
+    let to_scale :usize= 5;
+    let upto :usize = 5;
     for i in 1..(upto+1) {
         candles.push(Candle {
             time: i as u32 * 60,
@@ -338,7 +341,9 @@ fn test_rebin() {
     }
 
     let c = Candles { v: candles.clone(), scale: 1};
+    println!("{:?}", c);
     let rebinned = c.rebin(false, to_scale as u16).unwrap();
+    println!("{:?}", rebinned);
     assert_eq!(rebinned.scale, to_scale as u16);
     assert_eq!(rebinned.v.len(), upto / to_scale);
 }
@@ -347,7 +352,7 @@ fn test_rebin() {
 fn should_have_right_attr() {
     let mut candles : Vec<Candle> = Vec::new();
     let to_scale :usize= 5;
-    let upto :usize = 20;
+    let upto :usize = 5;
     for i in 1..(upto+1) {
         candles.push(Candle {
             time: i as u32 * 60,
@@ -360,7 +365,9 @@ fn should_have_right_attr() {
     }
 
     let c = Candles { v: candles.clone(), scale: 1};
+    println!("{:?}", c);
     let rebinned = c.rebin(false, to_scale as u16).unwrap();
+    println!("{:?}", rebinned);
     assert_eq!(rebinned.scale, to_scale as u16);
     assert_eq!(rebinned.v.len(), upto / to_scale);
 
