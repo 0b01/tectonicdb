@@ -26,7 +26,7 @@ fn main() {
                           .arg(Arg::with_name("aligned")
                                .short("a")
                                .long("aligned")
-                               .takes_value(false))
+                               .help("Snap to grid"))
                           .arg(Arg::with_name("minutes")
                                .short("m")
                                .long("minutes")
