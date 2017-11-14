@@ -25,10 +25,10 @@ path = "src/bin/server/main.rs"
 name = "tectonic-cli"
 path = "src/bin/cli/main.rs"
 
-[[bin]]
-name = "gen_dtfs"
-publish = false
-path = "src/bin/gen_dtfs/main.rs"
+# [[bin]]
+# name = "gen_dtfs"
+# publish = false
+# path = "src/bin/gen_dtfs/main.rs"
 
 [[bin]]
 name = "dtfcat"
@@ -42,7 +42,7 @@ path = "src/bin/dtfrebin/main.rs"
 
 [dependencies]
 byteorder = "1.1.0"
-postgres = "0.15"
+# postgres = "0.15"
 config = "0.6"
 clap = "~2.26"
 bitflags = "1.0.0"
