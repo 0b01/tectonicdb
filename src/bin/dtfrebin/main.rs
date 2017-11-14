@@ -7,7 +7,6 @@ mod candle;
 
 use candle::*;
 use clap::{Arg, App};
-use std::collections::HashMap;
 
 ///
 /// converts orderbook updates to candles, and rebin 1 minute candles into 5min/ 12hour candles

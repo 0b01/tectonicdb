@@ -1,5 +1,4 @@
 use std::collections::{BTreeMap, HashSet};
-use std::cmp::{Ord, Ordering};
 use itertools::Itertools;
 use dtf;
 
@@ -24,12 +23,12 @@ impl Candles {
         let mut set = HashSet::<u32>::new();
         let mut missing = Vec::<u32>::new();
         
-        for candle in self.v.values() {
-            set.insert(candle.time);
+        for &ts in self.v.keys() {
+            set.insert(ts);
         }
 
-        let max_epoch = self.v.values().next_back().unwrap().time;
-        let min_epoch = self.v.values().next().unwrap().time;
+        let &max_epoch = self.v.keys().next_back().unwrap();
+        let &min_epoch = self.v.keys().next().unwrap();
 
         let mut it = min_epoch;
         while it < max_epoch {
@@ -50,22 +49,19 @@ impl Candles {
     /// insert continuation candles and fix missing
     pub fn insert_continuation_candles(&mut self) {
         let (mut last_ts, last_close) = {
-            let first = self.v.values().next().unwrap();
-            let last_ts = first.time;
+            let (&last_ts, first) = self.v.iter().next().unwrap();
             let last_close = first.close;
             (last_ts, last_close)
         };
 
         let mut temp = BTreeMap::<u32,Candle>::new();
 
-        for candle in self.v.values() {
-            let ts = candle.time;
+        for &ts in self.v.keys() {
             if (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
                 //insert continuation candle(s)
                 let mut cur = last_ts;
                 while cur < ts {
                     temp.insert(cur, Candle {
-                        time: cur,
                         volume: 0.,
                         high: last_close,
                         low: last_close,
@@ -97,9 +93,9 @@ impl Candles {
     fn _test_epochs_must_be_sequential(&self) -> bool {
         // all([a[0] + i * 60 * minutes == x for i, x in enumerate(a)])
         let mut i : u32 = 0;
-        let first = self.v.values().next().unwrap().time;
-        for row in self.v.values() {
-            if first + i * 60 * (self.scale as u32) != row.time {
+        let &first = self.v.keys().next().unwrap();
+        for &row in self.v.keys() {
+            if first + i * 60 * (self.scale as u32) != row {
                 return false;
             }
             i += 1;
@@ -124,7 +120,6 @@ impl Candles {
                 let mut cur = last_ts;
                 while cur < ts {
                     candles.insert(cur, Candle {
-                        time: cur,
                         volume: 0.,
                         high: last_close,
                         low: last_close,
@@ -139,7 +134,6 @@ impl Candles {
                 let c = candles.get(&ts).unwrap();
 
                 Candle {
-                    time: ts,
                     volume: c.volume + trade.size,
                     high: if trade.price > c.high { trade.price } else { c.high },
                     low: if trade.price < c.low  { trade.price } else { c.low },
@@ -148,7 +142,6 @@ impl Candles {
                 }
             } else {
                 Candle {
-                    time: ts,
                     volume: trade.size,
                     high: trade.price,
                     low: trade.price,
@@ -184,7 +177,7 @@ impl Candles {
         let mut aligned = false;
         let mut i = 0;
 
-        for row in self.v.values() {
+        for (&ts, row) in self.v.iter() {
             // align with minute mark ("snap" to grid)
             //
             //
@@ -194,8 +187,8 @@ impl Candles {
             //
             //
             if align && !aligned {
-                let snap_point = (row.time / (self.scale as u32 * 60)) * (self.scale as u32 * 60);
-                if row.time == snap_point {
+                let snap_point = (ts / (self.scale as u32 * 60)) * (self.scale as u32 * 60);
+                if ts == snap_point {
                     aligned = true;
                     i = 0;
                 } else {
@@ -204,7 +197,7 @@ impl Candles {
             }
             // new candle, reset using first candle
             if i % new_scale as usize == 0 {
-                startacc = row.time;
+                startacc = ts;
                 openacc = row.open;
                 highacc = row.high;
                 lowacc = row.low;
@@ -221,7 +214,6 @@ impl Candles {
             // if it's the last minute, insert
             if (i % (new_scale as usize)) == ((new_scale as usize) - 1 ){
                 let candle = Candle {
-                    time: startacc,
                     open: openacc,
                     high: highacc,
                     low: lowacc,
@@ -246,26 +238,19 @@ impl Candles {
 
 #[derive(PartialOrd, PartialEq, Clone, Debug)]
 pub struct Candle {
-    pub time:   u32,
-    pub open:   f32,
-    pub high:   f32,
-    pub low:    f32,
-    pub close:  f32,
-    pub volume: f32
-}
-
-impl Ord for Candle {
-    fn cmp(&self, other : &Candle) -> Ordering {
-        self.time.cmp(&other.time)
-    }
+    open:   f32,
+    high:   f32,
+    low:    f32,
+    close:  f32,
+    volume: f32
 }
 
 impl Eq for Candle {}
 
 impl Candle {
     fn to_csv(&self) -> String{
-        format!("{},{},{},{},{},{}",
-                self.time, self.open, self.high, self.low, self.close, self.volume)
+        format!("{},{},{},{},{}",
+                self.open, self.high, self.low, self.close, self.volume)
     }
 }
 
@@ -300,37 +285,14 @@ mod tests {
     #[test]
     fn test_candle_to_csv() {
         let inp = Candle {
-            time: 0,
             open: 0.,
             close: 0.,
             high: 0.,
             low: 0.,
             volume: 0.,
         };
-        let target = "0,0,0,0,0,0";
+        let target = "0,0,0,0,0";
         assert_eq!(inp.to_csv(), target);
-    }
-
-    #[test]
-    fn test_candle_ord() {
-        let c1 = Candle {
-            time: 0,
-            open: 10.,
-            close: 10.,
-            high: 10.,
-            low: 10.,
-            volume: 10.,
-        };
-        let c2 = Candle {
-            time: 10,
-            open: 0.,
-            close: 0.,
-            high: 0.,
-            low: 0.,
-            volume: 0.,
-        };
-
-        assert!(c1 < c2);
     }
 
     #[test]
@@ -339,7 +301,6 @@ mod tests {
         for i in 30..121 {
             let j = 60 * i;
             v.insert(j, Candle {
-                time: j,
                 open: 0.,
                 close: 1.,
                 high: 2.,
@@ -351,7 +312,6 @@ mod tests {
         let candles = Candles::new(v, 1);
         let mut tree = BTreeMap::new();
         tree.insert(1800, Candle {
-                time: 1800,
                 open: 0.,
                 high: 2.,
                 low: 0.,
@@ -380,7 +340,6 @@ mod tests {
             let j = 60 * i;
 
             v.insert(j, Candle {
-                time: j,
                 open: 0.,
                 close: 1.,
                 high: 2.,
@@ -417,7 +376,6 @@ mod tests {
         for i in 1..10 {
             let j = i * 60;
             candles.insert(j, Candle {
-                time: j,
                 open: 0.,
                 close: 0.,
                 high: 0.,
@@ -430,7 +388,6 @@ mod tests {
         assert!(c._test_epochs_must_be_sequential());
 
         candles.insert(10000, Candle {
-            time: 10000,
             open: 0.,
             close: 0.,
             high: 0.,
@@ -449,7 +406,6 @@ mod tests {
         for i in 1..(upto+1) {
             let j = i as u32 * 60;
             candles.insert(j, Candle {
-                time: j,
                 open: 0.,
                 close: 0.,
                 high: 0.,
@@ -474,7 +430,6 @@ mod tests {
         for i in 1..(upto+1) {
             let j =  i as u32 * 60;
             candles.insert(j, Candle {
-                time: j,
                 open: 100.*i as f32,
                 close: 100.*i as f32,
                 high: i as f32,
