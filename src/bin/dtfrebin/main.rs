@@ -121,7 +121,7 @@ fn updates2candles(fix_missing: bool, ups: &[dtf::Update]) -> Candles {
     );
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 struct Candles {
     v: Vec<Candle>,
     scale: u16
@@ -344,104 +344,207 @@ fn ranges(lst: &Vec<u32>) -> Vec<(u32, u32)>{
     ret
 }
 
-#[test]
-fn test_ranges() {
-    let v : Vec<u32> = vec![60,120,180,600,660,720];
-    let result = ranges(&v);
-    let shouldbe : Vec<(u32,u32)> = vec![(60,180), (600, 720)];
-    assert_eq!(shouldbe, result);
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let v : Vec<u32> = vec![0,60,120,180,240,600,660,720];
-    let result = ranges(&v);
-    let shouldbe : Vec<(u32,u32)> = vec![(0,240), (600, 720)];
-    assert_eq!(shouldbe, result);
-}
+    #[test]
+    fn test_candle_to_csv() {
+        let inp = Candle {
+            time: 0,
+            open: 0.,
+            close: 0.,
+            high: 0.,
+            low: 0.,
+            volume: 0.,
+        };
+        let target = "0,0,0,0,0,0";
+        assert_eq!(inp.to_csv(), target);
+    }
 
-#[test]
-fn test_must_be_sequential() {
-    let mut candles : Vec<Candle> = Vec::new();
-    for i in 1..10 {
-        let j = i * 60;
+    #[test]
+    fn test_candle_ord() {
+        let c1 = Candle {
+            time: 0,
+            open: 10.,
+            close: 10.,
+            high: 10.,
+            low: 10.,
+            volume: 10.,
+        };
+        let c2 = Candle {
+            time: 10,
+            open: 0.,
+            close: 0.,
+            high: 0.,
+            low: 0.,
+            volume: 0.,
+        };
+
+        assert!(c1 < c2);
+    }
+
+    #[test]
+    fn test_candle_snap_to_grid() {
+        let mut v = Vec::new();
+        for i in 30..121 {
+            v.push(Candle {
+                time: 60 * i,
+                open: 0.,
+                close: 1.,
+                high: 2.,
+                low: 0.,
+                volume: 1.
+            });
+        }
+
+        let candles = Candles::new(v, 1);
+
+        assert_eq!(Candles {
+            v: vec![Candle {
+                time: 1800,
+                open: 0.,
+                high: 2.,
+                low: 0.,
+                close: 1.,
+                volume: 60.
+            }],
+            scale: 60
+        }, candles.rebin(true, 60).unwrap());
+    }
+
+    #[test]
+    fn test_create_new_candles() {
+        assert_eq!(Candles::new(vec![], 1), Candles {v: vec![], scale:1});
+    }
+
+    #[test]
+    fn test_fix_missing_candles() {
+        let mut v = Vec::new();
+        for i in 30..121 {
+            if i >= 50 && i <= 60 {
+                continue;
+            }
+
+            v.push(Candle {
+                time: 60 * i,
+                open: 0.,
+                close: 1.,
+                high: 2.,
+                low: 0.,
+                volume: 1.
+            });
+        }
+        let mut candles = Candles::new(v, 1);
+
+        assert_eq!(vec![3000, 3060, 3120, 3180, 3240, 3300, 3360, 3420, 3480, 3540, 3600], candles.missing_epochs());
+        assert_eq!(vec![(3000, 3600)], candles.missing_ranges());
+        candles.insert_continuation_candles();
+        assert_eq!(Vec::<u32>::new(), candles.missing_epochs());
+        assert_eq!(Vec::<(u32,u32)>::new(), candles.missing_ranges());
+    }
+
+
+    #[test]
+    fn test_ranges() {
+        let v : Vec<u32> = vec![60,120,180,600,660,720];
+        let result = ranges(&v);
+        let shouldbe : Vec<(u32,u32)> = vec![(60,180), (600, 720)];
+        assert_eq!(shouldbe, result);
+
+        let v : Vec<u32> = vec![0,60,120,180,240,600,660,720];
+        let result = ranges(&v);
+        let shouldbe : Vec<(u32,u32)> = vec![(0,240), (600, 720)];
+        assert_eq!(shouldbe, result);
+    }
+
+    #[test]
+    fn test_must_be_sequential() {
+        let mut candles : Vec<Candle> = Vec::new();
+        for i in 1..10 {
+            let j = i * 60;
+            candles.push(Candle {
+                time: j,
+                open: 0.,
+                close: 0.,
+                high: 0.,
+                low: 0.,
+                volume: 0.
+            });
+        }
+
+        let c = Candles { v: candles.clone(), scale: 1};
+        assert!(c._test_epochs_must_be_sequential());
+
         candles.push(Candle {
-            time: j,
+            time: 10000,
             open: 0.,
             close: 0.,
             high: 0.,
             low: 0.,
             volume: 0.
         });
+        let g = Candles { v: candles, scale: 1};
+        assert!(!g._test_epochs_must_be_sequential());
     }
 
-    let c = Candles { v: candles.clone(), scale: 1};
-    assert!(c._test_epochs_must_be_sequential());
+    #[test]
+    fn test_rebin() {
+        let mut candles : Vec<Candle> = Vec::new();
+        let to_scale :usize= 5;
+        let upto :usize = 5;
+        for i in 1..(upto+1) {
+            candles.push(Candle {
+                time: i as u32 * 60,
+                open: 0.,
+                close: 0.,
+                high: 0.,
+                low: 0.,
+                volume: 0.
+            });
+        }
 
-    candles.push(Candle {
-        time: 10000,
-        open: 0.,
-        close: 0.,
-        high: 0.,
-        low: 0.,
-        volume: 0.
-    });
-    let g = Candles { v: candles, scale: 1};
-    assert!(!g._test_epochs_must_be_sequential());
-}
-
-#[test]
-fn test_rebin() {
-    let mut candles : Vec<Candle> = Vec::new();
-    let to_scale :usize= 5;
-    let upto :usize = 5;
-    for i in 1..(upto+1) {
-        candles.push(Candle {
-            time: i as u32 * 60,
-            open: 0.,
-            close: 0.,
-            high: 0.,
-            low: 0.,
-            volume: 0.
-        });
+        let c = Candles { v: candles.clone(), scale: 1};
+        println!("{:?}", c);
+        let rebinned = c.rebin(false, to_scale as u16).unwrap();
+        println!("{:?}", rebinned);
+        assert_eq!(rebinned.scale, to_scale as u16);
+        assert_eq!(rebinned.v.len(), upto / to_scale);
     }
 
-    let c = Candles { v: candles.clone(), scale: 1};
-    println!("{:?}", c);
-    let rebinned = c.rebin(false, to_scale as u16).unwrap();
-    println!("{:?}", rebinned);
-    assert_eq!(rebinned.scale, to_scale as u16);
-    assert_eq!(rebinned.v.len(), upto / to_scale);
-}
+    #[test]
+    fn should_have_right_attr() {
+        let mut candles : Vec<Candle> = Vec::new();
+        let to_scale :usize= 5;
+        let upto :usize = 5;
+        for i in 1..(upto+1) {
+            candles.push(Candle {
+                time: i as u32 * 60,
+                open: 100.*i as f32,
+                close: 100.*i as f32,
+                high: i as f32,
+                low: i as f32,
+                volume: i as f32
+            });
+        }
 
-#[test]
-fn should_have_right_attr() {
-    let mut candles : Vec<Candle> = Vec::new();
-    let to_scale :usize= 5;
-    let upto :usize = 5;
-    for i in 1..(upto+1) {
-        candles.push(Candle {
-            time: i as u32 * 60,
-            open: 100.*i as f32,
-            close: 100.*i as f32,
-            high: i as f32,
-            low: i as f32,
-            volume: i as f32
-        });
+        let c = Candles { v: candles.clone(), scale: 1};
+        println!("{:?}", c);
+        let rebinned = c.rebin(false, to_scale as u16).unwrap();
+        println!("{:?}", rebinned);
+        assert_eq!(rebinned.scale, to_scale as u16);
+        assert_eq!(rebinned.v.len(), upto / to_scale);
+
+
+        let mut i = 1;
+        for bin in rebinned.v.iter() {
+            println!("{:?}", bin);
+            assert_eq!(bin.high, (i * to_scale) as f32);
+            assert_eq!(bin.open, (100 * (i-1) * to_scale + 100) as f32);
+            assert_eq!(bin.close, 100. * (i * to_scale) as f32);
+            assert_eq!(bin.volume, (1+(i-1)*to_scale..(i*to_scale + 1)).fold(0, |a,b| a+b) as f32);
+            i += 1;
+        }
     }
 
-    let c = Candles { v: candles.clone(), scale: 1};
-    println!("{:?}", c);
-    let rebinned = c.rebin(false, to_scale as u16).unwrap();
-    println!("{:?}", rebinned);
-    assert_eq!(rebinned.scale, to_scale as u16);
-    assert_eq!(rebinned.v.len(), upto / to_scale);
-
-
-    let mut i = 1;
-    for bin in rebinned.v.iter() {
-        println!("{:?}", bin);
-        assert_eq!(bin.high, (i * to_scale) as f32);
-        assert_eq!(bin.open, (100 * (i-1) * to_scale + 100) as f32);
-        assert_eq!(bin.close, 100. * (i * to_scale) as f32);
-        assert_eq!(bin.volume, (1+(i-1)*to_scale..(i*to_scale + 1)).fold(0, |a,b| a+b) as f32);
-        i += 1;
-    }
 }
