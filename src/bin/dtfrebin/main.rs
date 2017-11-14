@@ -4,7 +4,7 @@ extern crate byteorder;
 extern crate dtf;
 
 use clap::{Arg, App};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::cmp::{Ord, Ordering};
 use itertools::Itertools;
 
@@ -42,7 +42,7 @@ fn main() {
 
     let ups = dtf::decode(input);
 
-    let candles = updates2candles(&ups);
+    let candles = updates2candles(true, &ups);
 
     let rebinned = candles
                     .rebin(aligned, minutes.parse::<u16>().unwrap())
@@ -53,7 +53,7 @@ fn main() {
 }
 
 
-fn updates2candles(ups: &[dtf::Update]) -> Candles {
+fn updates2candles(fix_missing: bool, ups: &[dtf::Update]) -> Candles {
     let mut last_ts = 0;        // store the last timestep to test continuity
     let mut last_close = 0.;    // 
 
@@ -64,7 +64,7 @@ fn updates2candles(ups: &[dtf::Update]) -> Candles {
         // floor(ts)
         let ts = (dtf::fill_digits(trade.ts) / 1000 / 60 * 60) as u32; 
         
-        if (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
+        if fix_missing && (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
             //insert continuation candle(s)
             let mut cur = last_ts;
             while cur < ts {
@@ -136,21 +136,83 @@ impl Candles {
         csvs.join("\n")
     }
 
-    // fn fill_missing(self) -> Candles {
-    // }
+    /// find missing epochs
+    fn missing_epochs(&self) -> Vec<u32> {
 
+        let mut set = HashSet::<u32>::new();
+        let mut missing = Vec::<u32>::new();
+        
+        for candle in self.v.iter() {
+            set.insert(candle.time);
+        }
+
+        let min_epoch = self.v.first().unwrap().time;
+        let max_epoch = self.v.last().unwrap().time;
+
+        let mut it = min_epoch;
+        while it < max_epoch {
+            if !set.contains(&it) {
+                missing.push(it);
+            }
+            it += (self.scale as u32) * 60;
+        }
+
+        missing
+    }
+
+    /// return ranges of missing epochs
+    fn missing_ranges(&self) -> Vec<(u32, u32)> {
+        ranges(&self.missing_epochs())
+    }
+
+    /// insert continuation candles and fix missing
+    fn insert_continuation_candles(&mut self) {
+        let mut candles = Vec::new();
+        let (mut last_ts, last_close) = {
+            let first = self.v.first().unwrap();
+            let last_ts = first.time;
+            let last_close = first.close;
+            (last_ts, last_close)
+        };
+
+        for candle in self.v.iter() {
+            let ts = candle.time;
+            if (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
+                //insert continuation candle(s)
+                let mut cur = last_ts;
+                while cur < ts {
+                    candles.push(Candle {
+                        time: cur,
+                        volume: 0.,
+                        high: last_close,
+                        low: last_close,
+                        open: last_close,
+                        close: last_close
+                    });
+                    cur += 60;
+                }
+            }
+            last_ts = ts;
+        }
+
+        self.v = candles;
+
+    }
+
+
+    /// create new Candles object
     fn new(v: Vec<Candle>, scale: u16) -> Candles {
         let ret = Candles {
             v,
             scale
         };
 
-        ret._epochs_must_be_sequential();
+        // assert!(self._test_epochs_must_be_sequential());
         ret
     }
 
     /// epochs must be exactly incrementing by n * 60
-    fn _epochs_must_be_sequential(&self) -> bool {
+    fn _test_epochs_must_be_sequential(&self) -> bool {
         // all([a[0] + i * 60 * minutes == x for i, x in enumerate(a)])
         let mut i : u32 = 0;
         let first = self.v.get(0).unwrap().time;
@@ -164,6 +226,7 @@ impl Candles {
     }
 
 
+    /// rebin 1 minute candles to x-minute candles
     fn rebin(self, align: bool, new_scale : u16) -> Option<Candles> {
         if new_scale < self.scale { return None }
         else if new_scale == self.scale { return Some(self) }
@@ -223,7 +286,7 @@ impl Candles {
         }
 
         assert_eq!(res.len(), self.v.len() / (new_scale as usize));
-        assert!(self._epochs_must_be_sequential());
+        assert!(self._test_epochs_must_be_sequential());
 
         Some(Candles {
             v: res,
@@ -310,7 +373,7 @@ fn test_must_be_sequential() {
     }
 
     let c = Candles { v: candles.clone(), scale: 1};
-    assert!(c._epochs_must_be_sequential());
+    assert!(c._test_epochs_must_be_sequential());
 
     candles.push(Candle {
         time: 10000,
@@ -321,7 +384,7 @@ fn test_must_be_sequential() {
         volume: 0.
     });
     let g = Candles { v: candles, scale: 1};
-    assert!(!g._epochs_must_be_sequential());
+    assert!(!g._test_epochs_must_be_sequential());
 }
 
 #[test]

@@ -36,9 +36,9 @@ publish = true
 path = "src/bin/dtfcat/main.rs"
 
 [[bin]]
-name = "rebin"
+name = "dtfrebin"
 publish = true
-path = "src/bin/rebin/main.rs"
+path = "src/bin/dtfrebin/main.rs"
 
 [dependencies]
 byteorder = "1.1.0"
