@@ -534,6 +534,23 @@ mod tests {
     }
 
     #[test]
+    fn should_format_metadata_properly() {
+        let meta = Metadata { 
+            symbol: "TEST".to_owned(), 
+            nums: 1, 
+            max_ts: 1, 
+            min_ts: 1 
+        };
+
+        assert_eq!(format!("{}", meta), r#"{
+  "symbol": "TEST",
+  "nums": 1,
+  "max_ts": 1,
+  "min_ts": 1
+}"#);
+    }
+
+    #[test]
     fn should_encode_decode_one_item() {
         let ts = sample_data_one_item();
         let fname = "test.dtf";
