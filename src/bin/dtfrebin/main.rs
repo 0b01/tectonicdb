@@ -243,7 +243,14 @@ impl Candles {
         let mut i = 0;
 
         for row in self.v.iter() {
-            // align with some mark ("snap" to grid)
+            // align with minute mark ("snap" to grid)
+            //
+            //
+            // --|------|------|------|-->
+            //   |
+            //   ^ discard up to this point         
+            //
+            //
             if align && !aligned {
                 let snap_point = (row.time / (self.scale as u32 * 60)) * (self.scale as u32 * 60);
                 if row.time == snap_point {
