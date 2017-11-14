@@ -44,6 +44,8 @@ fn main() {
 
     let candles = Candles::from_updates(true, &ups);
 
+    // eprintln!("Missing ranges: {:?}", candles.missing_ranges());
+
     let rebinned = candles
                     .rebin(aligned, minutes.parse::<u16>().unwrap())
                     .unwrap()
