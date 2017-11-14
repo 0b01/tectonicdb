@@ -99,4 +99,28 @@ mod tests {
         };
         assert_eq!(target1, parse_line(&string1).unwrap());
     }
+
+    #[test]
+    fn should_parse_dbname_ok() {
+        assert_eq!( parse_dbname("INSERT 1 INTO dbname"),
+                    (8, "dbname"));
+        assert_eq!( parse_dbname("INSERT 1000, INTO dbname1;"),
+                    (12, "dbname1;"));
+    }
+
+    #[test]
+    fn should_parse_add_into_ok() {
+        let cmd = "INSERT 1505177459.65, 139010, t, f, 0.0703620, 7.65064240; INTO dbname";
+        println!("{:?}", parse_add_into(cmd));
+        let target = dtf::Update {
+            ts: 1505177459650,
+            seq: 139010,
+            is_trade: true,
+            is_bid: false,
+            price: 0.0703620,
+            size: 7.65064240
+        };
+        assert_eq!( Some((target, "dbname".to_owned())),
+                    parse_add_into(cmd));
+    }
 }
