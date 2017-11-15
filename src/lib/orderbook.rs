@@ -3,13 +3,15 @@ use std::collections::BTreeMap;
 
 type Price = f32;
 type Size = f32;
-
+type Scale = u16;
 type Time = u32;
+type OrderbookSide = BTreeMap<Price, Size>;
 
 struct Orderbook {
-    bids: BTreeMap<Price, Size>,
-    asks: BTreeMap<Price, Size>,
-    time: Time
+    bids: OrderbookSide,
+    asks: OrderbookSide,
+    time: Time,
+    scale: Scale
 }
 
 impl Orderbook {
