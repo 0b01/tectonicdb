@@ -15,7 +15,7 @@ exclude = [
 
 [lib]
 name = "dtf"
-path = "src/lib/dtf.rs"
+path = "src/lib/lib.rs"
 
 [[bin]]
 name = "tectonic-server"
@@ -50,3 +50,4 @@ log = "0.3"
 fern = "0.4"
 chrono = "0.4"
 itertools = "0.7.2"
+histogram = "*"
