@@ -1,12 +1,21 @@
+extern crate itertools;
+use self::itertools::Itertools;
 use std::collections::{BTreeMap, HashSet};
-use itertools::Itertools;
-use dtf;
+
+//
+// ─── Candles ────────────────────────────────────────────────────────────────────
+//
+
+type Time = u32;
+type Price = f32;
+type Scale = u16;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Candles {
-    v: BTreeMap<u32, Candle>,
-    scale: u16
+    v: BTreeMap<Time, Candle>,
+    scale: Scale
 }
+
 
 impl Candles {
     pub fn to_csv(self) -> String {
@@ -18,10 +27,10 @@ impl Candles {
     }
 
     /// find missing epochs
-    fn missing_epochs(&self) -> Vec<u32> {
+    fn missing_epochs(&self) -> Vec<Time> {
 
-        let mut set = HashSet::<u32>::new();
-        let mut missing = Vec::<u32>::new();
+        let mut set = HashSet::<Time>::new();
+        let mut missing = Vec::<Time>::new();
         
         for &ts in self.v.keys() {
             set.insert(ts);
@@ -35,14 +44,14 @@ impl Candles {
             if !set.contains(&it) {
                 missing.push(it);
             }
-            it += (self.scale as u32) * 60;
+            it += (self.scale as Time) * 60;
         }
 
         missing
     }
 
     /// return ranges of missing epochs
-    pub fn missing_ranges(&self) -> Vec<(u32, u32)> {
+    pub fn missing_ranges(&self) -> Vec<(Time, Time)> {
         ranges(&self.missing_epochs())
     }
 
@@ -53,7 +62,7 @@ impl Candles {
             (last_ts, row.close) 
         };
 
-        let mut temp = BTreeMap::<u32,Candle>::new();
+        let mut temp = BTreeMap::<Time,Candle>::new();
 
         for (&ts, row) in self.v.iter() {
             if (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
@@ -80,7 +89,7 @@ impl Candles {
 
 
     /// create new Candles object
-    pub fn new(v: BTreeMap<u32, Candle>, scale: u16) -> Candles {
+    pub fn new(v: BTreeMap<Time, Candle>, scale: u16) -> Candles {
         let ret = Candles {
             v,
             scale
@@ -93,10 +102,10 @@ impl Candles {
     /// epochs must be exactly incrementing by n * 60
     fn _test_epochs_must_be_sequential(&self) -> bool {
         // all([a[0] + i * 60 * minutes == x for i, x in enumerate(a)])
-        let mut i : u32 = 0;
+        let mut i : Time = 0;
         let &first = self.v.keys().next().unwrap();
         for &row in self.v.keys() {
-            if first + i * 60 * (self.scale as u32) != row {
+            if first + i * 60 * (self.scale as Time) != row {
                 return false;
             }
             i += 1;
@@ -105,16 +114,16 @@ impl Candles {
     }
 
 
-    pub fn from_updates(fix_missing: bool, ups: &[dtf::Update]) -> Candles {
+    pub fn from_updates(fix_missing: bool, ups: &[super::Update]) -> Candles {
         let mut last_ts = 0;        // store the last timestep to test continuity
         let mut last_close = 0.;    // 
 
-        let mut candles : BTreeMap<u32, Candle> = BTreeMap::new();
+        let mut candles : BTreeMap<Time, Candle> = BTreeMap::new();
 
         for trade in ups.iter() {
             if !trade.is_trade { continue; }
             // floor(ts)
-            let ts = (dtf::fill_digits(trade.ts) / 1000 / 60 * 60) as u32; 
+            let ts = (super::fill_digits(trade.ts) / 1000 / 60 * 60) as Time; 
             
             if fix_missing && (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
                 //insert continuation candle(s)
@@ -166,7 +175,7 @@ impl Candles {
         if new_scale < self.scale { return None }
         else if new_scale == self.scale { return Some(self) }
 
-        let mut res = BTreeMap::<u32,Candle>::new();
+        let mut res = BTreeMap::<Time,Candle>::new();
 
         let mut startacc = 0;
         let mut openacc = 0.;
@@ -187,7 +196,7 @@ impl Candles {
             //
             //
             if align && !aligned {
-                let snap_point = (ts / (self.scale as u32 * 60)) * (self.scale as u32 * 60);
+                let snap_point = (ts / (self.scale as Time * 60)) * (self.scale as Time * 60);
                 if ts == snap_point {
                     aligned = true;
                     i = 0;
@@ -235,14 +244,19 @@ impl Candles {
         })
     }
 }
+// ────────────────────────────────────────────────────────────────────────────────
 
+
+//
+// ─── CANDLE ─────────────────────────────────────────────────────────────────────
+//
 #[derive(PartialOrd, PartialEq, Clone, Debug)]
 pub struct Candle {
-    open:   f32,
-    high:   f32,
-    low:    f32,
-    close:  f32,
-    volume: f32
+    open:   Price,
+    high:   Price,
+    low:    Price,
+    close:  Price,
+    volume: Price
 }
 
 impl Eq for Candle {}
@@ -253,17 +267,21 @@ impl Candle {
                 self.open, self.high, self.low, self.close, self.volume)
     }
 }
+// ────────────────────────────────────────────────────────────────────────────────
 
+//
+// ─── HELPER ─────────────────────────────────────────────────────────────────────
+//
 /// Check a list of sequence
 /// Returns maximum continuous sequence
 /// [1,2,3,5,6,7] -> [(1,3), (5,7)]
 /// :param lst: list of epochs
 /// :return: list of tuples of shape (start, end)
-fn ranges(lst: &Vec<u32>) -> Vec<(u32, u32)>{
+fn ranges(lst: &Vec<Time>) -> Vec<(Time, Time)>{
     let mut pos = Vec::new();
 
     for (i, j) in lst.iter().enumerate() {
-        pos.push(j/ 60 - i as u32);
+        pos.push(j/ 60 - i as Time);
     }
 
     let mut ret = Vec::new();
@@ -272,12 +290,18 @@ fn ranges(lst: &Vec<u32>) -> Vec<(u32, u32)>{
         let l = els.count();
         let el = lst.get(t).unwrap();
         t += l;
-        ret.push((el.clone(), el + 60 * (l-1) as u32));
+        ret.push((el.clone(), el + 60 * (l-1) as Time));
     }
 
     ret
 }
 
+// ────────────────────────────────────────────────────────────────────────────────
+
+
+//
+// ─── TESTS ──────────────────────────────────────────────────────────────────────
+//
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -297,7 +321,7 @@ mod tests {
 
     #[test]
     fn test_candle_snap_to_grid() {
-        let mut v = BTreeMap::<u32,Candle>::new();
+        let mut v = BTreeMap::<Time,Candle>::new();
         for i in 30..121 {
             let j = 60 * i;
             v.insert(j, Candle {
@@ -328,7 +352,7 @@ mod tests {
     #[test]
     fn assert_same_data() {
         static FNAME : &str = "test-data/bt_btcnav.dtf";
-        let ups = &dtf::decode(FNAME)[1..100000];
+        let ups = &super::super::decode(FNAME)[1..100000];
 
         // test two ways
         let first = Candles::from_updates(false, &ups);
@@ -347,7 +371,7 @@ mod tests {
     #[test]
     fn assert_two_ways_produce_the_same_continuation_candles() {
         static FNAME : &str = "test-data/bt_btcnav.dtf";
-        let ups = &dtf::decode(FNAME)[1..100000];
+        let ups = &super::super::decode(FNAME)[1..100000];
 
         // test two ways
         let mut first = Candles::from_updates(false, &ups);
@@ -384,21 +408,21 @@ mod tests {
         assert_eq!(vec![3000, 3060, 3120, 3180, 3240, 3300, 3360, 3420, 3480, 3540, 3600], candles.missing_epochs());
         assert_eq!(vec![(3000, 3600)], candles.missing_ranges());
         candles.insert_continuation_candles();
-        assert_eq!(Vec::<u32>::new(), candles.missing_epochs());
-        assert_eq!(Vec::<(u32,u32)>::new(), candles.missing_ranges());
+        assert_eq!(Vec::<Time>::new(), candles.missing_epochs());
+        assert_eq!(Vec::<(Time,Time)>::new(), candles.missing_ranges());
     }
 
 
     #[test]
     fn test_ranges() {
-        let v : Vec<u32> = vec![60,120,180,600,660,720];
+        let v : Vec<Time> = vec![60,120,180,600,660,720];
         let result = ranges(&v);
-        let shouldbe : Vec<(u32,u32)> = vec![(60,180), (600, 720)];
+        let shouldbe : Vec<(Time,Time)> = vec![(60,180), (600, 720)];
         assert_eq!(shouldbe, result);
 
-        let v : Vec<u32> = vec![0,60,120,180,240,600,660,720];
+        let v : Vec<Time> = vec![0,60,120,180,240,600,660,720];
         let result = ranges(&v);
-        let shouldbe : Vec<(u32,u32)> = vec![(0,240), (600, 720)];
+        let shouldbe : Vec<(Time,Time)> = vec![(0,240), (600, 720)];
         assert_eq!(shouldbe, result);
     }
 
@@ -436,7 +460,7 @@ mod tests {
         let to_scale :usize= 5;
         let upto :usize = 5;
         for i in 1..(upto+1) {
-            let j = i as u32 * 60;
+            let j = i as Time * 60;
             candles.insert(j, Candle {
                 open: 0.,
                 close: 0.,
@@ -460,13 +484,13 @@ mod tests {
         let to_scale :usize= 5;
         let upto :usize = 5;
         for i in 1..(upto+1) {
-            let j =  i as u32 * 60;
+            let j =  i as Time * 60;
             candles.insert(j, Candle {
-                open: 100.*i as f32,
-                close: 100.*i as f32,
-                high: i as f32,
-                low: i as f32,
-                volume: i as f32
+                open: 100.*i as Price,
+                close: 100.*i as Price,
+                high: i as Price,
+                low: i as Price,
+                volume: i as Price
             });
         }
 
@@ -481,12 +505,14 @@ mod tests {
         let mut i = 1;
         for bin in rebinned.v.values() {
             println!("{:?}", bin);
-            assert_eq!(bin.high, (i * to_scale) as f32);
-            assert_eq!(bin.open, (100 * (i-1) * to_scale + 100) as f32);
-            assert_eq!(bin.close, 100. * (i * to_scale) as f32);
-            assert_eq!(bin.volume, (1+(i-1)*to_scale..(i*to_scale + 1)).fold(0, |a,b| a+b) as f32);
+            assert_eq!(bin.high, (i * to_scale) as Price);
+            assert_eq!(bin.open, (100 * (i-1) * to_scale + 100) as Price);
+            assert_eq!(bin.close, 100. * (i * to_scale) as Price);
+            assert_eq!(bin.volume, (1+(i-1)*to_scale..(i*to_scale + 1)).fold(0, |a,b| a+b) as Price);
             i += 1;
         }
     }
 
 }
+
+// ────────────────────────────────────────────────────────────────────────────────
