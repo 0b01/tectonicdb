@@ -23,13 +23,6 @@
 ///        size: (f32)
 
 
-extern crate byteorder;
-#[macro_use] extern crate bitflags;
-
-pub mod candle;
-pub mod orderbook;
-pub mod event;
-pub mod update;
 
 use update::*;
 use std::str;
@@ -78,15 +71,6 @@ impl fmt::Display for Metadata {
     }
 }
 
-/// fill digits 123 => 12300 etc..
-/// 151044287500 => 1510442875000 
-pub fn fill_digits(input: u64) -> u64 {
-    let mut ret = input;
-    while ret < 1_000_000_000_000  {
-        ret *= 10;
-    }
-    ret
-}
 
 pub fn update_vec_to_csv(vecs: &[Update]) -> String {
     let objects : Vec<String> = vecs.into_iter().map(|up| up.to_csv()).collect();
@@ -305,7 +289,6 @@ pub fn read_meta(fname: &str) -> Metadata {
 }
 
 /// decode main section
-/// TODO: limit # of records read.
 pub fn decode(fname: &str, num_rows : Option<u32>) -> Vec<Update> {
     let mut v : Vec<Update> = Vec::new();
 
