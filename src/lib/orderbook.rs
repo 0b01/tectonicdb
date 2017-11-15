@@ -9,13 +9,23 @@ type OrderbookSide = BTreeMap<Price, Size>;
 
 struct Orderbook {
     bids: OrderbookSide,
-    asks: OrderbookSide,
-    time: Time,
-    scale: Scale
+    asks: OrderbookSide
 }
 
 impl Orderbook {
     fn new() -> Orderbook {
-        unimplemented!();
+        unimplemented!()
     }
 }
+
+struct Orderbooks {
+    books: BTreeMap<Time, Orderbook>,
+    scale: Scale,
+}
+
+impl<'a> From<&'a [super::Update]> for Orderbooks {
+    fn from(ups: &[super::Update]) -> Orderbooks {
+        unimplemented!()
+    }
+}
+

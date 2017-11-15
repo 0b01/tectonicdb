@@ -28,13 +28,15 @@ extern crate byteorder;
 
 pub mod candle;
 pub mod orderbook;
+pub mod trade;
+pub mod update;
 
+use update::*;
 use std::str;
 use std::fs;
-use std::cmp::Ordering;
-use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
 use std::fs::File;
 use std::fmt;
+use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
 use std::io::{
     Write,
     Read,
@@ -52,15 +54,6 @@ static MAX_TS_OFFSET : u64 = 33;
 static MAIN_OFFSET : u64 = 80; // main section start at 80
 // static ITEM_OFFSET : u64 = 13; // each item has 13 bytes
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Update {
-    pub ts: u64,
-    pub seq: u32,
-    pub is_trade: bool,
-    pub is_bid: bool,
-    pub price: f32,
-    pub size: f32,
-}
 
 pub struct Metadata {
     pub symbol: String,
@@ -85,21 +78,6 @@ impl fmt::Display for Metadata {
     }
 }
 
-
-bitflags! {
-    struct Flags: u8 {
-        const FLAG_EMPTY   = 0b0000_0000;
-        const FLAG_IS_BID   = 0b0000_0001;
-        const FLAG_IS_TRADE = 0b0000_0010;
-    }
-}
-
-impl Flags {
-    fn to_bool(&self) -> bool {
-        (self.bits == 0b0000_0001) || (self.bits == 0b0000_0010)
-    }
-}
-
 /// fill digits 123 => 12300 etc..
 /// 151044287500 => 1510442875000 
 pub fn fill_digits(input: u64) -> u64 {
@@ -108,39 +86,6 @@ pub fn fill_digits(input: u64) -> u64 {
         ret *= 10;
     }
     ret
-}
-
-impl Update {
-
-    fn serialize(&self, ref_ts : u64, ref_seq : u32) -> Vec<u8> {
-        if self.seq < ref_seq {
-            println!("{:?}", ref_seq);
-            println!("{:?}", self);
-            /* TODO */
-        }
-        let mut buf : Vec<u8> = Vec::new();
-        let _ = buf.write_u16::<BigEndian>((self.ts- ref_ts) as u16);
-        let _ = buf.write_u8((self.seq - ref_seq) as u8);
-
-        let mut flags = Flags::FLAG_EMPTY;
-        if self.is_bid { flags |= Flags::FLAG_IS_BID; }
-        if self.is_trade { flags |= Flags::FLAG_IS_TRADE; }
-        let _ = buf.write_u8(flags.bits());
-
-        let _ = buf.write_f32::<BigEndian>(self.price);
-        let _ = buf.write_f32::<BigEndian>(self.size);
-        buf
-    }
-
-    pub fn to_json(&self) -> String {
-        format!(r#"{{"ts":{},"seq":{},"is_trade":{},"is_bid":{},"price":{},"size":{}}}"#,
-                  (self.ts as f64) / 1000_f64, self.seq, self.is_trade, self.is_bid, self.price, self.size)
-    }
-
-    pub fn to_csv(&self) -> String {
-        format!(r#"{},{},{},{},{},{}"#,
-                  (self.ts as f64) / 1000_f64, self.seq, self.is_trade, self.is_bid, self.price, self.size)
-    }
 }
 
 pub fn update_vec_to_csv(vecs: &[Update]) -> String {
@@ -153,27 +98,7 @@ pub fn update_vec_to_json(vecs: &[Update]) -> String {
     objects.join(", ")
 }
 
-impl Ord for Update {
-    fn cmp(&self, other: &Update) -> Ordering {
-        self.partial_cmp(other).unwrap()
-    }
-}
 
-impl Eq for Update {}
-
-impl PartialOrd for Update {
-    fn partial_cmp(&self, other : &Update) -> Option<Ordering> {
-        let selfts = self.ts;
-        let otherts = other.ts;
-        if selfts > otherts {
-            Some(Ordering::Greater)
-        } else if selfts == otherts {
-            Some(Ordering::Equal)
-        } else {
-            Some(Ordering::Less)
-        }
-    }
-}
 
 pub fn get_max_ts(updates : &[Update]) -> u64 {
     let mut max = 0;

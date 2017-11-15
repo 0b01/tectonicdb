@@ -16,6 +16,65 @@ pub struct Candles {
     scale: Scale
 }
 
+impl<'a> From<&'a [super::Update]> for Candles{
+    fn from(ups: &[super::Update]) -> Candles {
+        let fix_missing = false;
+
+        let mut last_ts = 0;        // store the last timestep to test continuity
+        let mut last_close = 0.;    // 
+
+        let mut candles : BTreeMap<Time, Candle> = BTreeMap::new();
+
+        for trade in ups.iter() {
+            if !trade.is_trade { continue; }
+            // floor(ts)
+            let ts = (super::fill_digits(trade.ts) / 1000 / 60 * 60) as Time; 
+            
+            if fix_missing && (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
+                //insert continuation candle(s)
+                let mut cur = last_ts + 60;
+                while cur < ts {
+                    candles.insert(cur, Candle {
+                        volume: 0.,
+                        high: last_close,
+                        low: last_close,
+                        open: last_close,
+                        close: last_close
+                    });
+                    cur += 60;
+                }
+            }
+
+            let new_candle = if candles.contains_key(&ts) {
+                let c = candles.get(&ts).unwrap();
+                Candle {
+                    volume: c.volume + trade.size,
+                    high: if trade.price >= c.high { trade.price } else { c.high },
+                    low: if trade.price <= c.low  { trade.price } else { c.low },
+                    close: trade.price,
+                    open: c.open
+                }
+            } else {
+                Candle {
+                    volume: trade.size,
+                    high: trade.price,
+                    low: trade.price,
+                    close: trade.price,
+                    open: trade.price
+                }
+            };
+
+            candles.insert(ts, new_candle);
+            last_ts = ts;
+            last_close = trade.price;
+        }
+
+        return Candles::new(
+            candles,
+            1
+        );
+    }
+}
 
 impl Candles {
     pub fn to_csv(self) -> String {
@@ -114,61 +173,6 @@ impl Candles {
     }
 
 
-    pub fn from_updates(fix_missing: bool, ups: &[super::Update]) -> Candles {
-        let mut last_ts = 0;        // store the last timestep to test continuity
-        let mut last_close = 0.;    // 
-
-        let mut candles : BTreeMap<Time, Candle> = BTreeMap::new();
-
-        for trade in ups.iter() {
-            if !trade.is_trade { continue; }
-            // floor(ts)
-            let ts = (super::fill_digits(trade.ts) / 1000 / 60 * 60) as Time; 
-            
-            if fix_missing && (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
-                //insert continuation candle(s)
-                let mut cur = last_ts + 60;
-                while cur < ts {
-                    candles.insert(cur, Candle {
-                        volume: 0.,
-                        high: last_close,
-                        low: last_close,
-                        open: last_close,
-                        close: last_close
-                    });
-                    cur += 60;
-                }
-            }
-
-            let new_candle = if candles.contains_key(&ts) {
-                let c = candles.get(&ts).unwrap();
-                Candle {
-                    volume: c.volume + trade.size,
-                    high: if trade.price >= c.high { trade.price } else { c.high },
-                    low: if trade.price <= c.low  { trade.price } else { c.low },
-                    close: trade.price,
-                    open: c.open
-                }
-            } else {
-                Candle {
-                    volume: trade.size,
-                    high: trade.price,
-                    low: trade.price,
-                    close: trade.price,
-                    open: trade.price
-                }
-            };
-
-            candles.insert(ts, new_candle);
-            last_ts = ts;
-            last_close = trade.price;
-        }
-
-        return Candles::new(
-            candles,
-            1
-        );
-    }
 
     /// rebin 1 minute candles to x-minute candles
     pub fn rebin(self, align: bool, new_scale : u16) -> Option<Candles> {
@@ -349,37 +353,37 @@ mod tests {
         }, candles.rebin(true, 60).unwrap());
     }
 
-    #[test]
-    fn assert_same_data() {
-        static FNAME : &str = "test-data/bt_btcnav.dtf";
-        let ups = &super::super::decode(FNAME)[1..100000];
+    // #[test]
+    // fn assert_same_data() {
+    //     static FNAME : &str = "test-data/bt_btcnav.dtf";
+    //     let ups = &super::super::decode(FNAME)[1..100000];
 
-        // test two ways
-        let first = Candles::from_updates(false, &ups);
-        let second = Candles::from_updates(true, &ups);
+    //     // test two ways
+    //     let first = Candles::from_updates(false, &ups);
+    //     let second = Candles::from_updates(true, &ups);
 
-        println!("{}", *second.v.iter().next_back().unwrap().0);
+    //     println!("{}", *second.v.iter().next_back().unwrap().0);
 
-        for (&ts, row) in first.v.iter() {
-            if second.v.contains_key(&ts) {
-                let other = second.v.get(&ts).unwrap();
-                assert_eq!(row, other);
-            }
-        }
-    }
+    //     for (&ts, row) in first.v.iter() {
+    //         if second.v.contains_key(&ts) {
+    //             let other = second.v.get(&ts).unwrap();
+    //             assert_eq!(row, other);
+    //         }
+    //     }
+    // }
 
-    #[test]
-    fn assert_two_ways_produce_the_same_continuation_candles() {
-        static FNAME : &str = "test-data/bt_btcnav.dtf";
-        let ups = &super::super::decode(FNAME)[1..100000];
+    // #[test]
+    // fn assert_two_ways_produce_the_same_continuation_candles() {
+    //     static FNAME : &str = "test-data/bt_btcnav.dtf";
+    //     let ups = &super::super::decode(FNAME)[1..100000];
 
-        // test two ways
-        let mut first = Candles::from_updates(false, &ups);
-        first.insert_continuation_candles();
+    //     // test two ways
+    //     let mut first = Candles::from_updates(false, &ups);
+    //     first.insert_continuation_candles();
 
-        let second = Candles::from_updates(true, &ups);
-        assert_eq!(first, second);
-    }
+    //     let second = Candles::from_updates(true, &ups);
+    //     assert_eq!(first, second);
+    // }
 
     #[test]
     fn test_create_new_candles() {

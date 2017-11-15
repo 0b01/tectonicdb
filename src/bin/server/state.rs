@@ -1,4 +1,5 @@
 use dtf;
+use dtf::update::Update;
 use std::collections::HashMap;
 use utils;
 use std::path::Path;
@@ -39,7 +40,7 @@ impl Store {
 
 
     /// push a new `update` into the vec
-    pub fn add(&mut self, new_vec : dtf::Update) {
+    pub fn add(&mut self, new_vec: Update) {
         let is_autoflush = {
             let mut wtr = self.global.write().unwrap();
             let is_autoflush = wtr.settings.autoflush;
@@ -250,7 +251,7 @@ impl State {
     }
 
     /// Insert a row into store
-    pub fn insert(&mut self, up: dtf::Update, store_name : &str) -> Option<()> {
+    pub fn insert(&mut self, up: Update, store_name : &str) -> Option<()> {
         match self.store.get_mut(store_name) {
             Some(store) => {
                 store.add(up);
@@ -266,7 +267,7 @@ impl State {
     }
 
     /// Insert a row into current store.
-    pub fn add(&mut self, up: dtf::Update) {
+    pub fn add(&mut self, up: Update) {
         let current_store = self.get_current_store();
         current_store.add(up);
     }
@@ -438,7 +439,7 @@ impl State {
 }
 
 /// (updates, count)
-pub type VecStore = (Vec<dtf::Update>, u64);
+pub type VecStore = (Vec<Update>, u64);
 
 /// key: btc_neo
 ///      btc_eth

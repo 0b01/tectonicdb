@@ -1,4 +1,5 @@
 use dtf;
+use dtf::update::Update;
 
 /// Parses a line that looks like 
 /// 
@@ -6,8 +7,8 @@ use dtf;
 /// 
 /// into an `Update` struct.
 /// 
-pub fn parse_line(string : &str) -> Option<dtf::Update> {
-    let mut u = dtf::Update { ts : 0, seq : 0, is_bid : false, is_trade : false, price : -0.1, size : -0.1 };
+pub fn parse_line(string : &str) -> Option<Update> {
+    let mut u = Update { ts : 0, seq : 0, is_bid : false, is_trade : false, price : -0.1, size : -0.1 };
     let mut buf : String = String::new();
     let mut count = 0;
     let mut most_current_bool = false;
@@ -51,7 +52,7 @@ pub fn parse_dbname(string: &str) -> (usize, &str) {
 }
 
 /// returns Option<Update, dbname>
-pub fn parse_add_into(string: &str) -> Option<(dtf::Update, String)> {
+pub fn parse_add_into(string: &str) -> Option<(Update, String)> {
     let (index, dbname) = parse_dbname(string);
     let data_string : &str = &string[3..(index)];
     match parse_line(data_string) {
@@ -77,7 +78,7 @@ mod tests {
     #[test]
     fn should_parse_string_okay() {
         let string = "1505177459.658, 139010, f, t, 0.0703629, 7.65064249;";
-        let target = dtf::Update {
+        let target = Update {
             ts: 1505177459658,
             seq: 139010,
             is_trade: false,
@@ -89,7 +90,7 @@ mod tests {
 
 
         let string1 = "1505177459.65, 139010, t, f, 0.0703620, 7.65064240;";
-        let target1 = dtf::Update {
+        let target1 = Update {
             ts: 1505177459650,
             seq: 139010,
             is_trade: true,
@@ -112,7 +113,7 @@ mod tests {
     fn should_parse_add_into_ok() {
         let cmd = "INSERT 1505177459.65, 139010, t, f, 0.0703620, 7.65064240; INTO dbname";
         println!("{:?}", parse_add_into(cmd));
-        let target = dtf::Update {
+        let target = Update {
             ts: 1505177459650,
             seq: 139010,
             is_trade: true,

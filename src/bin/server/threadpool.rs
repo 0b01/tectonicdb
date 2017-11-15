@@ -40,8 +40,8 @@ impl ThreadPool {
 
         let mut workers = Vec::with_capacity(size);
 
-        for id in 0..size {
-            workers.push(Worker::new(id, receiver.clone()));
+        for _id in 0..size {
+            workers.push(Worker::new(/*id, */receiver.clone()));
         }
 
         ThreadPool {
@@ -75,12 +75,12 @@ impl Drop for ThreadPool {
 }
 
 struct Worker {
-    id: usize,
+    // id: usize,
     thread: Option<thread::JoinHandle<()>>,
 }
 
 impl Worker {
-    fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Message>>>) ->
+    fn new(/*id: usize, */receiver: Arc<Mutex<mpsc::Receiver<Message>>>) ->
         Worker {
 
         let thread = thread::spawn(move ||{
@@ -99,7 +99,7 @@ impl Worker {
         });
 
         Worker {
-            id,
+            // id,
             thread: Some(thread),
         }
     }

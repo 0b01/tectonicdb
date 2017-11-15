@@ -39,7 +39,8 @@ fn main() {
 
     let ups = dtf::decode(input);
 
-    let candles = Candles::from_updates(true, &ups);
+    let mut candles = Candles::from(ups.as_slice());
+    candles.insert_continuation_candles();
 
     // eprintln!("Missing ranges: {:?}", candles.missing_ranges());
 
