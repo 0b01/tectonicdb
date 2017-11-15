@@ -378,6 +378,8 @@ pub fn read_meta(fname: &str) -> Metadata {
 
 }
 
+/// decode main section
+/// TODO: limit # of records read.
 pub fn decode(fname: &str) -> Vec<Update> {
     let mut v : Vec<Update> = Vec::new();
 

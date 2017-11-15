@@ -48,18 +48,18 @@ impl Candles {
 
     /// insert continuation candles and fix missing
     pub fn insert_continuation_candles(&mut self) {
-        let (mut last_ts, last_close) = {
-            let (&last_ts, first) = self.v.iter().next().unwrap();
-            let last_close = first.close;
-            (last_ts, last_close)
+        let (mut last_ts, mut last_close) = {
+            let (&last_ts, row) = self.v.iter().next().unwrap(); // first ts here, last ts later
+            (last_ts, row.close) 
         };
 
         let mut temp = BTreeMap::<u32,Candle>::new();
 
-        for &ts in self.v.keys() {
+        for (&ts, row) in self.v.iter() {
             if (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
+                println!("{}", last_close);
                 //insert continuation candle(s)
-                let mut cur = last_ts;
+                let mut cur = last_ts + 60;
                 while cur < ts {
                     temp.insert(cur, Candle {
                         volume: 0.,
@@ -72,6 +72,7 @@ impl Candles {
                 }
             }
             last_ts = ts;
+            last_close = row.close;
         }
 
         self.v.extend(temp);
@@ -117,7 +118,7 @@ impl Candles {
             
             if fix_missing && (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
                 //insert continuation candle(s)
-                let mut cur = last_ts;
+                let mut cur = last_ts + 60;
                 while cur < ts {
                     candles.insert(cur, Candle {
                         volume: 0.,
@@ -132,11 +133,10 @@ impl Candles {
 
             let new_candle = if candles.contains_key(&ts) {
                 let c = candles.get(&ts).unwrap();
-
                 Candle {
                     volume: c.volume + trade.size,
-                    high: if trade.price > c.high { trade.price } else { c.high },
-                    low: if trade.price < c.low  { trade.price } else { c.low },
+                    high: if trade.price >= c.high { trade.price } else { c.high },
+                    low: if trade.price <= c.low  { trade.price } else { c.low },
                     close: trade.price,
                     open: c.open
                 }
@@ -323,6 +323,38 @@ mod tests {
             v: tree,
             scale: 60
         }, candles.rebin(true, 60).unwrap());
+    }
+
+    #[test]
+    fn assert_same_data() {
+        static FNAME : &str = "test-data/bt_btcnav.dtf";
+        let ups = &dtf::decode(FNAME)[1..100000];
+
+        // test two ways
+        let first = Candles::from_updates(false, &ups);
+        let second = Candles::from_updates(true, &ups);
+
+        println!("{}", *second.v.iter().next_back().unwrap().0);
+
+        for (&ts, row) in first.v.iter() {
+            if second.v.contains_key(&ts) {
+                let other = second.v.get(&ts).unwrap();
+                assert_eq!(row, other);
+            }
+        }
+    }
+
+    #[test]
+    fn assert_two_ways_produce_the_same_continuation_candles() {
+        static FNAME : &str = "test-data/bt_btcnav.dtf";
+        let ups = &dtf::decode(FNAME)[1..100000];
+
+        // test two ways
+        let mut first = Candles::from_updates(false, &ups);
+        first.insert_continuation_candles();
+
+        let second = Candles::from_updates(true, &ups);
+        assert_eq!(first, second);
     }
 
     #[test]
