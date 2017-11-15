@@ -89,8 +89,8 @@ mod test {
 
     #[test]
     fn test_into_events (){
-        let records = super::super::decode(FNAME, Some(10000));
-        let ups = records.as_slice();
+        // let records = super::super::decode(FNAME, Some(10000));
+        // let ups = records.as_slice();
         // TODO: Finish this test...
     }
 
