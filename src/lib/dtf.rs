@@ -29,6 +29,7 @@ extern crate byteorder;
 pub mod candle;
 pub mod orderbook;
 pub mod trade;
+pub mod event;
 pub mod update;
 
 use update::*;
