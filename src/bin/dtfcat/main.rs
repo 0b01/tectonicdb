@@ -34,10 +34,10 @@ fn main() {
         println!("{}", dtf::read_meta(input));
         return;
     } else if csv{
-        println!("{}", dtf::update_vec_to_csv(&dtf::decode(input)));
+        println!("{}", dtf::update_vec_to_csv(&dtf::decode(input, None)));
         return;
     } else {
-        println!("[{}]", dtf::update_vec_to_json(&dtf::decode(input)));
+        println!("[{}]", dtf::update_vec_to_json(&dtf::decode(input, None)));
         return;
     }
 }

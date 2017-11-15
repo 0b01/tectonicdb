@@ -113,7 +113,7 @@ impl Store {
             //     warn!("There are more items in memory than in file. Cannot load from file.");
             //     return;
             // }
-            let mut ups = dtf::decode(&fname);
+            let mut ups = dtf::decode(&fname, None);
             let mut wtr = self.global.write().unwrap();
             // let size = ups.len() as u64;
             let vecs = wtr.vec_store.get_mut(&self.name).unwrap();

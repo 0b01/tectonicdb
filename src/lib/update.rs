@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
+use byteorder::{BigEndian, WriteBytesExt};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Update {

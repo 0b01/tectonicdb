@@ -28,7 +28,6 @@ extern crate byteorder;
 
 pub mod candle;
 pub mod orderbook;
-pub mod trade;
 pub mod event;
 pub mod update;
 
@@ -307,18 +306,36 @@ pub fn read_meta(fname: &str) -> Metadata {
 
 /// decode main section
 /// TODO: limit # of records read.
-pub fn decode(fname: &str) -> Vec<Update> {
+pub fn decode(fname: &str, num_rows : Option<u32>) -> Vec<Update> {
     let mut v : Vec<Update> = Vec::new();
 
     let mut rdr = file_reader(fname);
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
 
-    while let Ok(is_ref) = rdr.read_u8() {
-        if is_ref == 0x1 {
-            rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
-            v.extend(read_one_batch(&mut rdr));
+    match num_rows {
+        Some(num_rows) => {
+            let mut count = 0;
+            while let Ok(is_ref) = rdr.read_u8() {
+                if count > num_rows { break; }
+
+                if is_ref == 0x1 {
+                    rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
+                    v.extend(read_one_batch(&mut rdr));
+                }
+
+                count += 1;
+            }
+        },
+        None => {
+            while let Ok(is_ref) = rdr.read_u8() {
+                if is_ref == 0x1 {
+                    rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
+                    v.extend(read_one_batch(&mut rdr));
+                }
+            }
         }
     }
+
 
     v
 }
@@ -485,7 +502,7 @@ mod tests {
         let fname = "test.dtf";
         let symbol = "NEO_BTC";
         encode(fname, symbol, &ts);
-        let decoded_updates = decode(fname);
+        let decoded_updates = decode(fname, None);
         assert_eq!(decoded_updates, ts);
     }
 
@@ -493,7 +510,7 @@ mod tests {
     fn should_encode_and_decode_file() {
         let ts = init();
         let fname = "test.dtf";
-        let decoded_updates = decode(fname);
+        let decoded_updates = decode(fname, None);
         assert_eq!(decoded_updates, ts);
     }
 
@@ -551,7 +568,7 @@ mod tests {
     //     let fname = "real.dtf";
     //     let symbol = "NEO_BTC";
     //     encode(fname, symbol, &mut vs);
-    //     let decoded_updates = decode(fname);
+    //     let decoded_updates = decode(fname, None);
     //     assert_eq!(decoded_updates, vs);
     // }
 
@@ -585,7 +602,7 @@ mod tests {
         let mut all_the_data = sample_data();
         all_the_data.extend(append_data);
         all_the_data.sort();
-        let decoded = decode(&fname);
+        let decoded = decode(&fname, None);
         assert_eq!(all_the_data, decoded);
         
     }
