@@ -27,7 +27,7 @@ extern crate byteorder;
 #[macro_use] extern crate bitflags;
 
 pub mod candle;
-pub mod ops;
+pub mod orderbook;
 
 use std::str;
 use std::fs;
