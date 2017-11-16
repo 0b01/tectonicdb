@@ -1,2 +1,0 @@
-connection_string = "postgres://postgres@aws-vm:5432/test"
-dtf_folder = "db"
