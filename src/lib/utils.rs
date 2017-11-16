@@ -20,67 +20,90 @@ pub mod price_histogram {
 
     use std::mem;
     use std::cmp::Ordering::{self, Equal, Greater, Less};
+    use super::super::utils::bigram;
+
     pub type Price = f64;
+    pub type Count = usize;
 
-
-    pub struct PriceHistogram {
-        pub bins: Vec<usize>,
+    #[derive(Debug)]    
+    pub struct Histogram {
+        pub bins: Option<Vec<Count>>,
+        pub boundaries: Vec<Price>
     }
 
-    impl PriceHistogram {
+    impl Histogram {
 
-        pub fn new(prices: &[Price], bin_count: usize) -> PriceHistogram {
-            let mean = (*prices).mean();
-            let stddev = (*prices).std_dev();
-            let median = (*prices).median();
-            let max = (*prices).max();
-            let min = (*prices).min();
+        pub fn new(prices: &[Price], bin_count: Count) -> Histogram {
+            let filtered = reject_outliers(prices);
+            let (bins, boundaries) = build_histogram(filtered, bin_count);
 
-            println!("len before: {}", prices.len());
-
-            // reject outliers!
-            let m = 2.;
-            let d = prices.iter().map(|p|{
-                let v = p - median;
-                if v > 0. { v } else { -v }
-            }).collect::<Vec<f64>>();
-            let mdev = d.median();
-            let s = d.iter().map(|a| {
-                if mdev > 0. {a / mdev} else {0.}
-            }).collect::<Vec<f64>>();
-            let filtered = prices.iter().enumerate()
-                                .filter(|&(i, p)| s[i] < m)
-                                .map(|(_i, &p)| p)
-                                .collect::<Vec<f64>>();
-            println!("len after: {}", filtered.len());
-
-            // ////////////////
-            let mut min = 100000000.;
-            let mut max = 0.;
-            for &i in filtered.iter() {
-                if i < min { min = i; }
-                else if i > max { max = i; }
-            }
-
-            println!("MAX: {}; MIN: {}", max, min);
-
-            let mut bins = vec![0; bin_count as usize];
-            let bucket_size = (max - min) / (bin_count as f64);
-            for price in filtered.iter() {
-                let mut bucket_index = 0;
-                if bucket_size > 0.0 {
-                    bucket_index = ((price - min) / bucket_size) as usize;
-                    if bucket_index == bin_count {
-                        bucket_index -= 1;
-                    }
-                }
-                bins[bucket_index] += 1;
-            }
-
-            PriceHistogram {
-                bins
+            Histogram {
+                bins: Some(bins),
+                boundaries
             }
         }
+
+        pub fn to_bin(&self, price : Price) -> Option<Price> {
+            for (&s,&b) in bigram(&self.boundaries) {
+                if b > price && price > s {
+                    return Some(s);
+                }
+            }
+            return None;
+        }
+
+    }
+
+    pub fn reject_outliers(prices: &[Price]) -> Vec<Price> {
+        let median = (*prices).median();
+
+        // println!("len before: {}", prices.len());
+
+        // reject outliers!
+        let m = 2.;
+        let d = prices.iter().map(|p|{
+            let v = p - median;
+            if v > 0. { v } else { -v }
+        }).collect::<Vec<f64>>();
+        let mdev = d.median();
+        let s = d.iter().map(|a| {
+            if mdev > 0. {a / mdev} else {0.}
+        }).collect::<Vec<f64>>();
+        let filtered = prices.iter().enumerate()
+                            .filter(|&(i, p)| s[i] < m)
+                            .map(|(_i, &p)| p)
+                            .collect::<Vec<f64>>();
+
+        // println!("len after: {}", filtered.len());
+
+        filtered
+    }
+
+    pub fn build_histogram(filtered_vals: Vec<Price>, bin_count: Count) -> (Vec<Count>, Vec<Price>) {
+        let max = &filtered_vals.max();
+        let min = &filtered_vals.min();
+
+        // println!("MAX: {}; MIN: {}", max, min);
+
+        let mut bins = vec![0; bin_count as usize];
+        let bucket_size = (max - min) / (bin_count as f64);
+        for price in filtered_vals.iter() {
+            let mut bucket_index = 0;
+            if bucket_size > 0.0 {
+                bucket_index = ((price - min) / bucket_size) as usize;
+                if bucket_index == bin_count {
+                    bucket_index -= 1;
+                }
+            }
+            bins[bucket_index] += 1;
+        }
+
+        let mut boundaries = vec![];
+        for i in 0..(bin_count+1) {
+            boundaries.push(min + i as f64 * bucket_size);
+        }
+        (bins, boundaries)
+
     }
 
     /// Trait that provides simple descriptive statistics on a univariate set of numeric samples.
@@ -340,7 +363,7 @@ pub mod price_histogram {
 mod tests {
 
     use super::*;
-    use super::price_histogram::{PriceHistogram, Price};
+    use super::price_histogram::{Histogram, Price};
     static FNAME : &str = "test-data/bt_btcnav.dtf";
 
     #[test]
@@ -350,9 +373,9 @@ mod tests {
                                     .map(|up| up.price as f64) 
                                     .collect();
 
-        let mut hist = PriceHistogram::new(&prices, 100);
+        let mut hist = Histogram::new(&prices, 100);
 
-        println!("{:?}", hist.bins);
+        // println!("{:?}", hist.bins);
         
 
         // use std::time::Instant;

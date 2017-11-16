@@ -3,7 +3,8 @@
 //! this is [price -> time -> size] to keep track of
 //! size changes on each price level over time.
 use std::collections::{ BTreeMap, HashMap };
-use super::utils::price_histogram::PriceHistogram;
+use super::utils::price_histogram::{Histogram, Count};
+
 
 type Price = f32;
 type Size = f32;
@@ -17,13 +18,20 @@ impl Levels {
     fn new() -> Levels {
         unimplemented!()
     }
-}
 
-impl<'a> From<&'a [super::Update]> for Levels {
-    fn from(ups: &[super::Update]) -> Levels {
-        // let prices = ups.iter().map(|up| up.price as f64).collect();
-        // let mut hist = PriceHistogram::new(&prices);
-        // println!("{:?}", hist.get_percentile(50));
+    fn from(ups: &[super::Update], step_bins: Count, tick_bins: Count) -> Levels {
+        let prices = ups.iter().map(|up| up.price as f64).collect::<Vec<f64>>();
+        let price_hist = Histogram::new(&prices, tick_bins);
+
+        let min_ts = ups.iter().next().unwrap().ts / 1000;
+        let max_ts = ups.iter().next_back().unwrap().ts / 1000;
+
+        println!("min {} ::::: max {}", min_ts, max_ts);
+
+        let range = (min_ts..max_ts).map(|i| i as f64)
+                                    .collect::<Vec<f64>>();
+        let time_hist = Histogram::new(range.as_slice(), step_bins);
+        println!("{:?}", time_hist.boundaries);
 
         unimplemented!();
 
@@ -40,20 +48,14 @@ mod tests {
 
     #[test]
     pub fn test_levels() {
-        let records = super::super::decode(FNAME, Some(10000));
-        let prices = Levels::from(records.as_slice());
-
+        let records = super::super::decode(FNAME, Some(100000));
+        let prices = Levels::from(records.as_slice(), 10, 10);
     }
 }
 
 // def to_updates(events):
 //     tick_bins_cnt = 2000
 //     step_bins_cnt = 2000
-//     def into_tick_bin(price):
-//         for (s, b) in zip(boundaries, boundaries[1:]):
-//             if b > price > s:
-//                 return s
-//         return False
 //     min_ts = result[0][0]
 //     max_ts = result[-1][0]
 //     step_thresholds = range(int(floor(min_ts)), int(ceil(max_ts)), int(floor((max_ts - min_ts)/(step_bins_cnt))))
@@ -74,4 +76,4 @@ mod tests {
 //         if time not in updates[price]:
 //             updates[price][time] = 0
 //         updates[price][time] += size;
-//     return updates
+//     return updatesrecords.as_slice
