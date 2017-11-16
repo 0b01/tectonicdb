@@ -11,6 +11,6 @@ Cargo.lock
 
 *.bin
 conf/settings.toml
-*.dtf
 *.log
 old/
+
