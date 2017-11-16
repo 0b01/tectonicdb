@@ -8,71 +8,331 @@ pub fn fill_digits(input: u64) -> u64 {
     ret
 }
 
-pub mod PriceHistogram {
+/// Returns bigram
+///     bigram(&[1,2,3]) -> [(1,2), (2,3)]
+pub fn bigram<T>(a: &[T]) -> Vec<(&T,&T)> {
+    a.into_iter()
+        .zip(a[1..].into_iter())
+        .collect::<Vec<(_, _)>>()
+}
 
-    use histogram::Histogram;
+pub mod price_histogram {
 
+    use std::mem;
+    use std::cmp::Ordering::{self, Equal, Greater, Less};
     pub type Price = f64;
 
+
     pub struct PriceHistogram {
-        hist: Histogram,
-        cache: Vec<Option<f64>>
+        pub bins: Vec<usize>,
     }
 
     impl PriceHistogram {
-        pub fn new(prices: &Vec<Price>) -> PriceHistogram{
-            let mut histogram = Histogram::new();
-            for &price in prices.iter() {
-                let p_u64 = (price * 1_0000_0000. /*satoshi*/) as u64;
-                let _ = histogram.increment(p_u64);
+
+        pub fn new(prices: &[Price], bin_count: usize) -> PriceHistogram {
+            let mean = (*prices).mean();
+            let stddev = (*prices).std_dev();
+            let median = (*prices).median();
+            let max = (*prices).max();
+            let min = (*prices).min();
+
+            println!("len before: {}", prices.len());
+
+            // reject outliers!
+            let m = 2.;
+            let d = prices.iter().map(|p|{
+                let v = p - median;
+                if v > 0. { v } else { -v }
+            }).collect::<Vec<f64>>();
+            let mdev = d.median();
+            let s = d.iter().map(|a| {
+                if mdev > 0. {a / mdev} else {0.}
+            }).collect::<Vec<f64>>();
+            let filtered = prices.iter().enumerate()
+                                .filter(|&(i, p)| s[i] < m)
+                                .map(|(_i, &p)| p)
+                                .collect::<Vec<f64>>();
+            println!("len after: {}", filtered.len());
+
+            // ////////////////
+            let mut min = 100000000.;
+            let mut max = 0.;
+            for &i in filtered.iter() {
+                if i < min { min = i; }
+                else if i > max { max = i; }
+            }
+
+            println!("MAX: {}; MIN: {}", max, min);
+
+            let mut bins = vec![0; bin_count as usize];
+            let bucket_size = (max - min) / (bin_count as f64);
+            for price in filtered.iter() {
+                let mut bucket_index = 0;
+                if bucket_size > 0.0 {
+                    bucket_index = ((price - min) / bucket_size) as usize;
+                    if bucket_index == bin_count {
+                        bucket_index -= 1;
+                    }
+                }
+                bins[bucket_index] += 1;
             }
 
             PriceHistogram {
-                hist: histogram,
-                cache: vec![None; 101],
-            }
-        }
-
-        pub fn get_percentile(&mut self, middle_percent: u8) -> (Price, Price) {
-
-            let high = 50. + middle_percent as f64 / 2.;
-            let low = 50. - middle_percent  as f64 / 2.;
-            
-            let cache = |c: &mut Vec<Option<f64>>, k: usize, v:f64| { c[k] = Some(v); };
-
-            let (low_price, high_price) = {
-                let low_p  = self.cache.get(low  as usize).map(|&s| s).unwrap();
-                let high_p = self.cache.get(high as usize).map(|&s| s).unwrap();
-                (low_p, high_p)
-            };
-
-            match (low_price, high_price) {
-                (Some(l), Some(h)) => (l, h),
-                (_, Some(h)) => {
-
-                    let lowval = self.hist.percentile(low).unwrap() as f64 / 1_0000_0000.;
-                    cache(&mut self.cache, low as usize, low);
-
-                    (lowval, h)
-                },
-                (Some(l), _) => {
-
-                    let highval = self.hist.percentile(low).unwrap() as f64 / 1_0000_0000.;
-                    cache(&mut self.cache, high as usize, highval);
-
-                    (l, highval)
-                },
-                (None, None) => {
-                    let highval = self.hist.percentile(high).unwrap() as f64 / 1_0000_0000.;
-                    cache(&mut self.cache, high as usize, highval);
-                    let lowval = self.hist.percentile(low).unwrap() as f64 / 1_0000_0000.;
-                    cache(&mut self.cache, low as usize, lowval);
-                    (lowval, highval)
-                }
+                bins
             }
         }
     }
 
+    /// Trait that provides simple descriptive statistics on a univariate set of numeric samples.
+    pub trait Stats {
+        /// Sum of the samples.
+        ///
+        /// Note: this method sacrifices performance at the altar of accuracy
+        /// Depends on IEEE-754 arithmetic guarantees. See proof of correctness at:
+        /// ["Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric
+        /// Predicates"][paper]
+        ///
+        /// [paper]: http://www.cs.cmu.edu/~quake-papers/robust-arithmetic.ps
+        fn sum(&self) -> f64;
+
+        /// Minimum value of the samples.
+        fn min(&self) -> f64;
+
+        /// Maximum value of the samples.
+        fn max(&self) -> f64;
+
+        /// Arithmetic mean (average) of the samples: sum divided by sample-count.
+        ///
+        /// See: https://en.wikipedia.org/wiki/Arithmetic_mean
+        fn mean(&self) -> f64;
+
+        /// Median of the samples: value separating the lower half of the samples from the higher half.
+        /// Equal to `self.percentile(50.0)`.
+        ///
+        /// See: https://en.wikipedia.org/wiki/Median
+        fn median(&self) -> f64;
+
+        /// Variance of the samples: bias-corrected mean of the squares of the differences of each
+        /// sample from the sample mean. Note that this calculates the _sample variance_ rather than the
+        /// population variance, which is assumed to be unknown. It therefore corrects the `(n-1)/n`
+        /// bias that would appear if we calculated a population variance, by dividing by `(n-1)` rather
+        /// than `n`.
+        ///
+        /// See: https://en.wikipedia.org/wiki/Variance
+        fn var(&self) -> f64;
+
+        /// Standard deviation: the square root of the sample variance.
+        ///
+        /// Note: this is not a robust statistic for non-normal distributions. Prefer the
+        /// `median_abs_dev` for unknown distributions.
+        ///
+        /// See: https://en.wikipedia.org/wiki/Standard_deviation
+        fn std_dev(&self) -> f64;
+
+        /// Standard deviation as a percent of the mean value. See `std_dev` and `mean`.
+        ///
+        /// Note: this is not a robust statistic for non-normal distributions. Prefer the
+        /// `median_abs_dev_pct` for unknown distributions.
+        fn std_dev_pct(&self) -> f64;
+
+        /// Scaled median of the absolute deviations of each sample from the sample median. This is a
+        /// robust (distribution-agnostic) estimator of sample variability. Use this in preference to
+        /// `std_dev` if you cannot assume your sample is normally distributed. Note that this is scaled
+        /// by the constant `1.4826` to allow its use as a consistent estimator for the standard
+        /// deviation.
+        ///
+        /// See: http://en.wikipedia.org/wiki/Median_absolute_deviation
+        fn median_abs_dev(&self) -> f64;
+
+        /// Median absolute deviation as a percent of the median. See `median_abs_dev` and `median`.
+        fn median_abs_dev_pct(&self) -> f64;
+
+        /// Percentile: the value below which `pct` percent of the values in `self` fall. For example,
+        /// percentile(95.0) will return the value `v` such that 95% of the samples `s` in `self`
+        /// satisfy `s <= v`.
+        ///
+        /// Calculated by linear interpolation between closest ranks.
+        ///
+        /// See: http://en.wikipedia.org/wiki/Percentile
+        fn percentile(&self, pct: f64) -> f64;
+
+        /// Quartiles of the sample: three values that divide the sample into four equal groups, each
+        /// with 1/4 of the data. The middle value is the median. See `median` and `percentile`. This
+        /// function may calculate the 3 quartiles more efficiently than 3 calls to `percentile`, but
+        /// is otherwise equivalent.
+        ///
+        /// See also: https://en.wikipedia.org/wiki/Quartile
+        fn quartiles(&self) -> (f64, f64, f64);
+
+        /// Inter-quartile range: the difference between the 25th percentile (1st quartile) and the 75th
+        /// percentile (3rd quartile). See `quartiles`.
+        ///
+        /// See also: https://en.wikipedia.org/wiki/Interquartile_range
+        fn iqr(&self) -> f64;
+    }
+
+    impl Stats for [f64] {
+        // FIXME #11059 handle NaN, inf and overflow
+        fn sum(&self) -> f64 {
+            let mut partials = vec![];
+
+            for &x in self {
+                let mut x = x;
+                let mut j = 0;
+                // This inner loop applies `hi`/`lo` summation to each
+                // partial so that the list of partial sums remains exact.
+                for i in 0..partials.len() {
+                    let mut y: f64 = partials[i];
+                    if x.abs() < y.abs() {
+                        mem::swap(&mut x, &mut y);
+                    }
+                    // Rounded `x+y` is stored in `hi` with round-off stored in
+                    // `lo`. Together `hi+lo` are exactly equal to `x+y`.
+                    let hi = x + y;
+                    let lo = y - (hi - x);
+                    if lo != 0.0 {
+                        partials[j] = lo;
+                        j += 1;
+                    }
+                    x = hi;
+                }
+                if j >= partials.len() {
+                    partials.push(x);
+                } else {
+                    partials[j] = x;
+                    partials.truncate(j + 1);
+                }
+            }
+            let zero: f64 = 0.0;
+            partials.iter().fold(zero, |p, q| p + *q)
+        }
+
+        fn min(&self) -> f64 {
+            assert!(!self.is_empty());
+            self.iter().fold(self[0], |p, q| p.min(*q))
+        }
+
+        fn max(&self) -> f64 {
+            assert!(!self.is_empty());
+            self.iter().fold(self[0], |p, q| p.max(*q))
+        }
+
+        fn mean(&self) -> f64 {
+            assert!(!self.is_empty());
+            self.sum() / (self.len() as f64)
+        }
+
+        fn median(&self) -> f64 {
+            self.percentile(50 as f64)
+        }
+
+        fn var(&self) -> f64 {
+            if self.len() < 2 {
+                0.0
+            } else {
+                let mean = self.mean();
+                let mut v: f64 = 0.0;
+                for s in self {
+                    let x = *s - mean;
+                    v = v + x * x;
+                }
+                // NB: this is _supposed to be_ len-1, not len. If you
+                // change it back to len, you will be calculating a
+                // population variance, not a sample variance.
+                let denom = (self.len() - 1) as f64;
+                v / denom
+            }
+        }
+
+        fn std_dev(&self) -> f64 {
+            self.var().sqrt()
+        }
+
+        fn std_dev_pct(&self) -> f64 {
+            let hundred = 100 as f64;
+            (self.std_dev() / self.mean()) * hundred
+        }
+
+        fn median_abs_dev(&self) -> f64 {
+            let med = self.median();
+            let abs_devs: Vec<f64> = self.iter().map(|&v| (med - v).abs()).collect();
+            // This constant is derived by smarter statistics brains than me, but it is
+            // consistent with how R and other packages treat the MAD.
+            let number = 1.4826;
+            abs_devs.median() * number
+        }
+
+        fn median_abs_dev_pct(&self) -> f64 {
+            let hundred = 100 as f64;
+            (self.median_abs_dev() / self.median()) * hundred
+        }
+
+        fn percentile(&self, pct: f64) -> f64 {
+            let mut tmp = self.to_vec();
+            local_sort(&mut tmp);
+            percentile_of_sorted(&tmp, pct)
+        }
+
+        fn quartiles(&self) -> (f64, f64, f64) {
+            let mut tmp = self.to_vec();
+            local_sort(&mut tmp);
+            let first = 25f64;
+            let a = percentile_of_sorted(&tmp, first);
+            let second = 50f64;
+            let b = percentile_of_sorted(&tmp, second);
+            let third = 75f64;
+            let c = percentile_of_sorted(&tmp, third);
+            (a, b, c)
+        }
+
+        fn iqr(&self) -> f64 {
+            let (a, _, c) = self.quartiles();
+            c - a
+        }
+    }
+
+    // Helper function: extract a value representing the `pct` percentile of a sorted sample-set, using
+    // linear interpolation. If samples are not sorted, return nonsensical value.
+    fn percentile_of_sorted(sorted_samples: &[f64], pct: f64) -> f64 {
+        assert!(!sorted_samples.is_empty());
+        if sorted_samples.len() == 1 {
+            return sorted_samples[0];
+        }
+        let zero: f64 = 0.0;
+        assert!(zero <= pct);
+        let hundred = 100f64;
+        assert!(pct <= hundred);
+        if pct == hundred {
+            return sorted_samples[sorted_samples.len() - 1];
+        }
+        let length = (sorted_samples.len() - 1) as f64;
+        let rank = (pct / hundred) * length;
+        let lrank = rank.floor();
+        let d = rank - lrank;
+        let n = lrank as usize;
+        let lo = sorted_samples[n];
+        let hi = sorted_samples[n + 1];
+        lo + (hi - lo) * d
+    }
+
+    fn local_sort(v: &mut [f64]) {
+        v.sort_by(|x: &f64, y: &f64| local_cmp(*x, *y));
+    }
+
+    fn local_cmp(x: f64, y: f64) -> Ordering {
+        // arbitrarily decide that NaNs are larger than everything.
+        if y.is_nan() {
+            Less
+        } else if x.is_nan() {
+            Greater
+        } else if x < y {
+            Less
+        } else if x == y {
+            Equal
+        } else {
+            Greater
+        }
+    }
 }
 
 
@@ -80,34 +340,39 @@ pub mod PriceHistogram {
 mod tests {
 
     use super::*;
-    use super::PriceHistogram::{PriceHistogram, Price};
+    use super::price_histogram::{PriceHistogram, Price};
     static FNAME : &str = "test-data/bt_btcnav.dtf";
 
     #[test]
     fn test_histogram() {
-
-        // this test is pretty hard to fail...
-        // return;
-
         let records = super::super::decode(FNAME, Some(10000));
         let prices: Vec<Price> = records.into_iter()
                                     .map(|up| up.price as f64) 
                                     .collect();
 
-        let mut hist = PriceHistogram::new(&prices);
+        let mut hist = PriceHistogram::new(&prices, 100);
 
-        use std::time::Instant;
+        println!("{:?}", hist.bins);
+        
 
-        for i in 1..10 {
-            let now = Instant::now();
-            {
-                for i in 0..101 {
-                    let per = hist.get_percentile(i);
-                }
-            }
-            let elapsed = now.elapsed();
-            let sec = (elapsed.as_secs() as f64) + (elapsed.subsec_nanos() as f64 / 1000_000_000.0);
-            println!("Seconds: {}", sec);
-        }
+        // use std::time::Instant;
+
+        // for i in 1..10 {
+        //     let now = Instant::now();
+        //     {
+        //         for i in 0..101 {
+        //             let per = hist.get_percentile(i);
+        //         }
+        //     }
+        //     let elapsed = now.elapsed();
+        //     let sec = (elapsed.as_secs() as f64) + (elapsed.subsec_nanos() as f64 / 1000_000_000.0);
+        //     println!("Seconds: {}", sec);
+        // }
+    }
+
+    #[test]
+    fn test_bigram() {
+        let a = vec![1,2,3];
+        assert_eq!(bigram(&a), vec![(&1,&2), (&2,&3)]);
     }
 }

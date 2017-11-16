@@ -4,6 +4,7 @@ extern crate histogram;
 
 pub mod candle;
 pub mod orderbook;
+pub mod level;
 pub mod event;
 pub mod update;
 pub mod utils;
