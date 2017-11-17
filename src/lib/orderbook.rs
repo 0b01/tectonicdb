@@ -47,16 +47,16 @@ impl<'a> From<&'a [super::Update]> for Orderbooks {
             let ts = (up.ts / 1000) as u32;
             if !ob_across_time.contains_key(&ts) {
                 temp_ob.clean();
+                {
+                    // update local orderbook
+                    let mut local_side = if up.is_bid {&mut temp_ob.bids} else {&mut temp_ob.asks};
+                    (*local_side).insert(up.price.to_bits(), up.size);
+                }
+                // copy local orderbook to global
                 ob_across_time.insert(ts, temp_ob.clone());
             }
-            let mut ob_at_time = ob_across_time.get_mut(&ts).unwrap();
-            let mut global_side = if up.is_bid {&mut ob_at_time.bids} else {&mut ob_at_time.asks};
-            (*global_side).insert(up.price.to_bits(), up.size);
-
-            let mut local_side = if up.is_bid {&mut temp_ob.bids} else {&mut temp_ob.asks};
-            (*local_side).insert(up.price.to_bits(), up.size);
         }
-        
+
         Orderbooks {
             books: ob_across_time
         }
