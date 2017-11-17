@@ -67,18 +67,3 @@ mod tests {
         let prices = Levels::from(records.as_slice(), 10, 10);
     }
 }
-
-// def to_levels(events):
-//     updates = {}
-//     for row in result:
-//         ts, seq, size, price, is_bid, is_trade = row
-//         price = into_tick_bin(price)
-//         time = into_step_bin(ts)
-//         if not price or not time:
-//             continue
-//         if price not in updates:
-//             updates[price] = {}
-//         if time not in updates[price]:
-//             updates[price][time] = 0
-//         updates[price][time] += size;
-//     return updatesrecords.as_slice
