@@ -31,6 +31,11 @@ path = "src/bin/cli/main.rs"
 # path = "src/bin/gen_dtfs/main.rs"
 
 [[bin]]
+name = "gen_train_data"
+publish = false
+path = "src/bin/gen_train_data/main.rs"
+
+[[bin]]
 name = "dtfcat"
 publish = true
 path = "src/bin/dtfcat/main.rs"
