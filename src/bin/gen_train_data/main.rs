@@ -1,4 +1,5 @@
 extern crate byteorder;
+extern crate dtf;
 mod write_npy;
 mod record;
 
@@ -7,8 +8,6 @@ use std::io::BufWriter;
 use std::fs::File;
 
 fn main() {
-    println!("Start writing");
-
     let fname = "test.npy";
     let new_file = File::create(fname).unwrap();
     let mut wtr = BufWriter::new(new_file);
@@ -23,4 +22,12 @@ fn main() {
     }
 
     write_npy::write(&mut wtr, &record);
+}
+
+/// dataset is a list of rebinned orderbook levels
+/// then normalized to [-1,1]
+fn gen_dataset() {
+    static FNAME : &str = "test-data/bt_btcnav.dtf";
+    let ups = dtf::decode(FNAME, Some(10000));
+
 }

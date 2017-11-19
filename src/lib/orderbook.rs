@@ -1,14 +1,14 @@
 // this module handles orderbook ops on Updates
 use std::collections::BTreeMap;
+use super::utils::price_histogram::{Histogram, Count};
 
 // type Price = f32;
 type PriceBits = u32;
 type Size = f32;
-type Scale = u16;
 type Time = u32;
 type OrderbookSide = BTreeMap<PriceBits, Size>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Orderbook {
     bids: OrderbookSide,
     asks: OrderbookSide
@@ -34,12 +34,14 @@ impl Orderbook {
     }
 }
 
-struct Orderbooks {
-    books: BTreeMap<Time, Orderbook>
-}
+#[derive(Debug)]
+struct RebinnedOrderbook(BTreeMap<Time, Orderbook>);
 
-impl<'a> From<&'a [super::Update]> for Orderbooks {
-    fn from(ups: &[super::Update]) -> Orderbooks {
+impl RebinnedOrderbook {
+    fn from(ups: &[super::Update], step_bins: Count, tick_bins: Count) -> RebinnedOrderbook {
+
+        let (price_hist, step_hist) = Histogram::from(&ups, step_bins, tick_bins);
+
         let mut temp_ob = Orderbook::new();
         let mut ob_across_time = BTreeMap::<Time, Orderbook>::new();
         for up in ups.iter() {
@@ -49,7 +51,7 @@ impl<'a> From<&'a [super::Update]> for Orderbooks {
                 temp_ob.clean();
                 {
                     // update local orderbook
-                    let mut local_side = if up.is_bid {&mut temp_ob.bids} else {&mut temp_ob.asks};
+                    let local_side = if up.is_bid {&mut temp_ob.bids} else {&mut temp_ob.asks};
                     (*local_side).insert(up.price.to_bits(), up.size);
                 }
                 // copy local orderbook to global
@@ -57,9 +59,20 @@ impl<'a> From<&'a [super::Update]> for Orderbooks {
             }
         }
 
-        Orderbooks {
-            books: ob_across_time
-        }
+        RebinnedOrderbook(ob_across_time)
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use super::super::*;
+    static FNAME: &str = "test-data/bt_btcnav.dtf";
+
+    // #[test]
+    // fn test_level_orderbook() {
+    //     let ups = dtf::decode(FNAME, Some(100));
+    //     let ob = Orderbooks::from(ups.as_slice());
+    //     println!("{:?}", ob);
+    // }
+}

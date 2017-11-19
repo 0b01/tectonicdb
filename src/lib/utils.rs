@@ -21,6 +21,8 @@ pub mod price_histogram {
     use std::mem;
     use std::cmp::Ordering::{self, Equal, Greater, Less};
     use super::super::utils::bigram;
+    use super::super::Update;
+    use super::fill_digits;
 
     pub type Price = f64;
     pub type Count = usize;
@@ -45,13 +47,32 @@ pub mod price_histogram {
 
         pub fn to_bin(&self, price : Price) -> Option<Price> {
             for (&s,&b) in bigram(&self.boundaries) {
-                if b > price && price > s {
+                if (s == price) || (b > price && price > s) {
                     return Some(s);
                 }
             }
             return None;
         }
 
+        /// get spatial temporal histograms
+        pub fn from(ups: &[Update], step_bins: Count, tick_bins: Count)
+              -> (Histogram, Histogram) {
+            // build price histogram
+            let prices = ups.iter().map(|up| up.price as f64).collect::<Vec<f64>>();
+            let price_hist = Histogram::new(&prices, tick_bins);
+
+            // build time step histogram
+            let min_ts = fill_digits(ups.iter().next().unwrap().ts) / 1000;
+            let max_ts = fill_digits(ups.iter().next_back().unwrap().ts) / 1000;
+            let bucket_size = (max_ts - min_ts) / ((step_bins - 1) as u64);
+            let mut boundaries = vec![];
+            for i in 0..step_bins {
+                boundaries.push((min_ts + (i as u64) * bucket_size) as f64);
+            }
+            let step_hist = Histogram { bins: None, boundaries };
+
+            (price_hist, step_hist)
+        }
     }
 
     pub fn reject_outliers(prices: &[Price]) -> Vec<Price> {
@@ -70,7 +91,7 @@ pub mod price_histogram {
             if mdev > 0. {a / mdev} else {0.}
         }).collect::<Vec<f64>>();
         let filtered = prices.iter().enumerate()
-                            .filter(|&(i, p)| s[i] < m)
+                            .filter(|&(i, _p)| s[i] < m)
                             .map(|(_i, &p)| p)
                             .collect::<Vec<f64>>();
 
@@ -86,7 +107,7 @@ pub mod price_histogram {
         // println!("MAX: {}; MIN: {}", max, min);
 
         let mut bins = vec![0; bin_count as usize];
-        let bucket_size = (max - min) / (bin_count as f64);
+        let bucket_size = (max - min) / ((bin_count - 1) as f64);
         for price in filtered_vals.iter() {
             let mut bucket_index = 0;
             if bucket_size > 0.0 {
@@ -99,7 +120,7 @@ pub mod price_histogram {
         }
 
         let mut boundaries = vec![];
-        for i in 0..(bin_count+1) {
+        for i in 0..bin_count {
             boundaries.push(min + i as f64 * bucket_size);
         }
         (bins, boundaries)
@@ -397,5 +418,23 @@ mod tests {
     fn test_bigram() {
         let a = vec![1,2,3];
         assert_eq!(bigram(&a), vec![(&1,&2), (&2,&3)]);
+    }
+
+    #[test]
+    fn test_epoch_histogram() {
+        let step_bins = 10;
+        let min_ts = 1_000;
+        let max_ts = 10_000;
+        let bucket_size = (max_ts - min_ts) / (step_bins as u64 - 1);
+        let mut boundaries = vec![];
+        for i in 0..step_bins {
+            boundaries.push(min_ts as f64 + i as f64 * bucket_size as f64);
+        }
+        let step_hist = Histogram { bins: None, boundaries };
+
+        assert_eq!(step_hist.boundaries.len(), step_bins as usize);
+        for i in min_ts..max_ts {
+            assert_eq!(Some((i / 1000 * 1000) as f64), step_hist.to_bin(i as f64));
+        }
     }
 }
