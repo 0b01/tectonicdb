@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use super::utils::price_histogram::{Histogram, Count};
 
 // type Price = f32;
-type PriceBits = u32;
+type PriceBits = u64;
 type Size = f32;
 type Time = u32;
 type OrderbookSide = BTreeMap<PriceBits, Size>;
@@ -35,7 +35,7 @@ impl Orderbook {
 }
 
 #[derive(Debug)]
-struct RebinnedOrderbook(BTreeMap<Time, Orderbook>);
+struct RebinnedOrderbook(BTreeMap<u64, Orderbook>);
 
 impl RebinnedOrderbook {
     fn from(ups: &[super::Update], step_bins: Count, tick_bins: Count) -> RebinnedOrderbook {
@@ -43,19 +43,30 @@ impl RebinnedOrderbook {
         let (price_hist, step_hist) = Histogram::from(&ups, step_bins, tick_bins);
 
         let mut temp_ob = Orderbook::new();
-        let mut ob_across_time = BTreeMap::<Time, Orderbook>::new();
+        let mut ob_across_time = BTreeMap::<u64, Orderbook>::new();
         for up in ups.iter() {
             if up.is_trade { continue; }
-            let ts = (up.ts / 1000) as u32;
-            if !ob_across_time.contains_key(&ts) {
+
+            let ts = step_hist.to_bin((up.ts / 1000) as f64);
+            let price = price_hist.to_bin(up.price as f64);
+            if ts == None || price == None { continue; }
+
+            // using a scope to drop &temp_ob
+            {
+                // update local orderbook
+                let local_side = if up.is_bid {&mut temp_ob.bids} else {&mut temp_ob.asks};
+                (*local_side).insert(price.unwrap().to_bits(), up.size);
+            }
+
+            if !ob_across_time.contains_key(&ts.unwrap().to_bits()) {
+                // if no ts, insert a copy of current book
                 temp_ob.clean();
-                {
-                    // update local orderbook
-                    let local_side = if up.is_bid {&mut temp_ob.bids} else {&mut temp_ob.asks};
-                    (*local_side).insert(up.price.to_bits(), up.size);
-                }
-                // copy local orderbook to global
-                ob_across_time.insert(ts, temp_ob.clone());
+                ob_across_time.insert(ts.unwrap().to_bits(), temp_ob.clone());
+            } else {
+                // if already in global, modify the orderbook at ts
+                let mut ob_at_time = ob_across_time.get_mut(&ts.unwrap().to_bits()).unwrap();
+                let mut global_side = if up.is_bid {&mut ob_at_time.bids} else {&mut ob_at_time.asks};
+                (*global_side).insert(price.unwrap().to_bits(), up.size);
             }
         }
 
