@@ -104,20 +104,20 @@ impl RebinnedOrderbook {
                 let local_side = if up.is_bid {&mut temp_ob.bids} else {&mut temp_ob.asks};
                 let coarse_size = (*local_side).entry(coarse_price).or_insert(up.size);
 
-                if (*fine_size) == up.size {                // if level was 0, fine_size == course_size == up.size
+                if (*fine_size) == up.size {                // if level was 0, fine_size == coarse_size == up.size
                     ()                                      // do nothing
                 } else if (*fine_size) > up.size {          // if size shrinks
                     *coarse_size -= (*fine_size) - up.size; // shrink the coarse size
-                } else if (*fine_size) < up.size {          // if size grows
+                } else /* if (*fine_size) < up.size */ {    // if size grows
                     *coarse_size += up.size - (*fine_size); // grow the coarse size
                 }
 
                 *fine_size = up.size;
 
                 // XXX: important
-                // there might be orders before the feed
+                // there might be orders before the first cancellation
                 // we simply ignore those by setting the size to 0
-                if *coarse_size < 0. { *coarse_size = 0.; }   // coarse_size = min(0, coarse_size)
+                if *coarse_size < 0. { *coarse_size = 0.; }
 
                 *coarse_size
             };
