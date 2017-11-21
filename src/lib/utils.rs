@@ -10,9 +10,10 @@ pub fn fill_digits(input: u64) -> u64 {
 
 /// Returns bigram
 ///     bigram(&[1,2,3]) -> [(1,2), (2,3)]
-pub fn bigram<T>(a: &[T]) -> Vec<(&T,&T)> {
+pub fn bigram<T: Copy>(a: &[T]) -> Vec<(T,T)> {
     a.into_iter()
-        .zip(a[1..].into_iter())
+        .map(|&t| t)
+        .zip(a[1..].into_iter().map(|&t| t))
         .collect::<Vec<(_, _)>>()
 }
 
@@ -20,6 +21,7 @@ pub mod price_histogram {
 
     use std::mem;
     use std::cmp::Ordering::{self, Equal, Greater, Less};
+    use std::collections::HashMap;
     use super::super::utils::bigram;
     use super::super::Update;
     use super::fill_digits;
@@ -30,28 +32,49 @@ pub mod price_histogram {
     #[derive(Debug)]    
     pub struct Histogram {
         pub bins: Option<Vec<Count>>,
-        pub boundaries: Vec<Price>
+        pub boundaries: Vec<Price>,
+        boundary2idx: HashMap<u64, usize>,
+        cached_bigram: Vec<(f64,f64)>
     }
 
     impl Histogram {
 
         pub fn new(prices: &[Price], bin_count: Count) -> Histogram {
             let filtered = reject_outliers(prices);
-            let (bins, boundaries) = build_histogram(filtered, bin_count);
-
-            Histogram {
-                bins: Some(bins),
-                boundaries
-            }
+            build_histogram(filtered, bin_count)
         }
 
         pub fn to_bin(&self, price : Price) -> Option<Price> {
-            for (&s,&b) in bigram(&self.boundaries) {
+            let cb = &self.cached_bigram;
+            for &(s, b) in cb.iter() {
                 if (s == price) || (b > price && price > s) {
                     return Some(s);
                 }
             }
             return None;
+        }
+
+        fn new_boundaries(min_ts: u64, max_ts: u64, step_bins: usize) -> Histogram {
+            let bucket_size = (max_ts - min_ts) / ((step_bins - 1) as u64);
+            let mut boundaries = vec![];
+
+            // build boundary lookup table
+            let mut lookup_table = HashMap::new();
+            for i in 0..step_bins {
+                let boundary = (min_ts + (i as u64) * bucket_size) as f64;
+                boundaries.push(boundary);
+                lookup_table.insert(boundary.to_bits(), i);
+            }
+
+            // cache bigram
+            let cached_bigram = bigram(&boundaries);
+
+            Histogram { 
+                bins: None, 
+                boundaries, 
+                boundary2idx: lookup_table,
+                cached_bigram: cached_bigram
+            }
         }
 
         /// get spatial temporal histograms
@@ -64,14 +87,13 @@ pub mod price_histogram {
             // build time step histogram
             let min_ts = fill_digits(ups.iter().next().unwrap().ts) / 1000;
             let max_ts = fill_digits(ups.iter().next_back().unwrap().ts) / 1000;
-            let bucket_size = (max_ts - min_ts) / ((step_bins - 1) as u64);
-            let mut boundaries = vec![];
-            for i in 0..step_bins {
-                boundaries.push((min_ts + (i as u64) * bucket_size) as f64);
-            }
-            let step_hist = Histogram { bins: None, boundaries };
+            let step_hist = Histogram::new_boundaries(min_ts, max_ts, step_bins);
 
             (price_hist, step_hist)
+        }
+
+        pub fn index(&self, price: Price) -> usize {
+            *self.boundary2idx.get(&price.to_bits()).unwrap()
         }
     }
 
@@ -100,14 +122,12 @@ pub mod price_histogram {
         filtered
     }
 
-    pub fn build_histogram(filtered_vals: Vec<Price>, bin_count: Count) -> (Vec<Count>, Vec<Price>) {
+    pub fn build_histogram(filtered_vals: Vec<Price>, bin_count: Count) -> Histogram {
         let max = &filtered_vals.max();
         let min = &filtered_vals.min();
-
-        // println!("MAX: {}; MIN: {}", max, min);
+        let bucket_size = (max - min) / ((bin_count - 1) as f64);
 
         let mut bins = vec![0; bin_count as usize];
-        let bucket_size = (max - min) / ((bin_count - 1) as f64);
         for price in filtered_vals.iter() {
             let mut bucket_index = 0;
             if bucket_size > 0.0 {
@@ -120,10 +140,24 @@ pub mod price_histogram {
         }
 
         let mut boundaries = vec![];
+        let mut lookup_table = HashMap::new();
         for i in 0..bin_count {
-            boundaries.push(min + i as f64 * bucket_size);
+            let boundary = min + i as f64 * bucket_size;
+            boundaries.push(boundary);
+            lookup_table.insert(boundary.to_bits(), i);
         }
-        (bins, boundaries)
+
+
+        // cache bigram
+        let cached_bigram = bigram(&boundaries);
+        
+
+        Histogram {
+            bins: Some(bins),
+            boundaries,
+            boundary2idx: lookup_table,
+            cached_bigram
+        }
 
     }
 
