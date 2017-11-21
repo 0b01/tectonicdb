@@ -19,8 +19,8 @@ impl Levels {
 
     /// converts a slice of Update to [price, time, size]
     /// see how price levels evolve over time...
-    fn from(ups: &[super::Update], step_bins: Count, tick_bins: Count) -> Levels {
-        let (price_hist, step_hist) = Histogram::from(&ups, step_bins, tick_bins);
+    fn from(ups: &[super::Update], step_bins: Count, tick_bins: Count, m: f64) -> Levels {
+        let (price_hist, step_hist) = Histogram::from(&ups, step_bins, tick_bins, m);
         println!("{:?}", step_hist);
 
         // build map for levels
@@ -57,7 +57,7 @@ mod tests {
         let records = super::super::decode(FNAME, Some(100));
         {
             let prices = records.iter().map(|up| up.price as f64).collect::<Vec<f64>>();
-            let price_hist = Histogram::new(&prices, tick_bins);
+            let price_hist = Histogram::new(&prices, tick_bins, 2.0);
             let mut dict = BTreeMap::new();
             for up in records.iter() {
                 if let Some(binned_val) = price_hist.to_bin(up.price as f64) {
@@ -73,7 +73,7 @@ mod tests {
             }
         }
 
-        let levels = Levels::from(records.as_slice(), step_bins, tick_bins);
+        let levels = Levels::from(records.as_slice(), step_bins, tick_bins, 2.);
         assert_eq!(levels.levels.keys().collect::<Vec<_>>().len(), tick_bins - 1);
         for level in levels.levels.values() {
             assert!(level.keys().collect::<Vec<_>>().len() <= (step_bins - 1));

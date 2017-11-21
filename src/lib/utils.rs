@@ -33,14 +33,14 @@ pub mod price_histogram {
     pub struct Histogram {
         pub bins: Option<Vec<Count>>,
         pub boundaries: Vec<Price>,
-        boundary2idx: HashMap<u64, usize>,
-        cached_bigram: Vec<(f64,f64)>
+        pub boundary2idx: HashMap<u64, usize>,
+        pub cached_bigram: Vec<(f64,f64)>
     }
 
     impl Histogram {
 
-        pub fn new(prices: &[Price], bin_count: Count) -> Histogram {
-            let filtered = reject_outliers(prices);
+        pub fn new(prices: &[Price], bin_count: Count, m: f64) -> Histogram {
+            let filtered = reject_outliers(prices, m);
             build_histogram(filtered, bin_count)
         }
 
@@ -78,11 +78,12 @@ pub mod price_histogram {
         }
 
         /// get spatial temporal histograms
-        pub fn from(ups: &[Update], step_bins: Count, tick_bins: Count)
+        /// m is value of z-score cutoff
+        pub fn from(ups: &[Update], step_bins: Count, tick_bins: Count, m: f64)
               -> (Histogram, Histogram) {
             // build price histogram
             let prices = ups.iter().map(|up| up.price as f64).collect::<Vec<f64>>();
-            let price_hist = Histogram::new(&prices, tick_bins);
+            let price_hist = Histogram::new(&prices, tick_bins, m);
 
             // build time step histogram
             let min_ts = fill_digits(ups.iter().next().unwrap().ts) / 1000;
@@ -97,13 +98,11 @@ pub mod price_histogram {
         }
     }
 
-    pub fn reject_outliers(prices: &[Price]) -> Vec<Price> {
+    pub fn reject_outliers(prices: &[Price], m: f64) -> Vec<Price> {
         let median = (*prices).median();
 
         // println!("len before: {}", prices.len());
-
-        // reject outliers!
-        let m = 2.;
+        // let m = 2.;
         let d = prices.iter().map(|p|{
             let v = p - median;
             if v > 0. { v } else { -v }
@@ -420,6 +419,7 @@ mod tests {
     use super::*;
     use super::price_histogram::{Histogram, Price};
     static FNAME : &str = "test-data/bt_btcnav.dtf";
+    use std::collections::HashMap;
 
     #[test]
     fn test_histogram() {
@@ -428,7 +428,7 @@ mod tests {
                                     .map(|up| up.price as f64) 
                                     .collect();
 
-        let mut hist = Histogram::new(&prices, 100);
+        let mut hist = Histogram::new(&prices, 100, 2.);
 
         // println!("{:?}", hist.bins);
         
@@ -451,7 +451,7 @@ mod tests {
     #[test]
     fn test_bigram() {
         let a = vec![1,2,3];
-        assert_eq!(bigram(&a), vec![(&1,&2), (&2,&3)]);
+        assert_eq!(bigram(&a), vec![(1,2), (2,3)]);
     }
 
     #[test]
@@ -461,10 +461,21 @@ mod tests {
         let max_ts = 10_000;
         let bucket_size = (max_ts - min_ts) / (step_bins as u64 - 1);
         let mut boundaries = vec![];
+        let mut boundary2idx = HashMap::new();
         for i in 0..step_bins {
-            boundaries.push(min_ts as f64 + i as f64 * bucket_size as f64);
+            let boundary = min_ts as f64 + i as f64 * bucket_size as f64;
+            boundaries.push(boundary);
+            boundary2idx.insert(boundary.to_bits(), i);
         }
-        let step_hist = Histogram { bins: None, boundaries };
+
+        let cached_bigram = bigram(&boundaries);
+
+        let step_hist = Histogram { 
+            bins: None,
+            boundaries, 
+            boundary2idx, 
+            cached_bigram
+        };
 
         assert_eq!(step_hist.boundaries.len(), step_bins as usize);
         for i in min_ts..max_ts {

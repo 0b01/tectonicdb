@@ -60,10 +60,13 @@ pub struct RebinnedOrderbook {
 }
 
 impl RebinnedOrderbook {
-    pub fn from(ups: &[super::Update], step_bins: Count, tick_bins: Count) -> RebinnedOrderbook {
+    pub fn from(ups: &[super::Update],
+                step_bins: Count,
+                tick_bins: Count,
+                m: f64) -> RebinnedOrderbook {
 
         // build histogram so later can put price and time into bins
-        let (price_hist, step_hist) = Histogram::from(&ups, step_bins, tick_bins);
+        let (price_hist, step_hist) = Histogram::from(&ups, step_bins, tick_bins, m);
 
         // raw_price -> size
         // using a fine_level to track individual price level instead of a batched one
@@ -165,14 +168,14 @@ mod tests {
         let tick_bins = 100;
 
         let ups = dtf::decode(FNAME, Some(1000));
-        let ob = RebinnedOrderbook::from(ups.as_slice(), step_bins, tick_bins);
+        let ob = RebinnedOrderbook::from(ups.as_slice(), step_bins, tick_bins, 2.);
 
-        assert_eq!(ob.0.len(), step_bins -1);
-        for v in ob.0.values() {
+        assert_eq!(ob.book.len(), step_bins -1);
+        for v in ob.book.values() {
             assert!(v.bids.values().len() < tick_bins);
             assert!(v.asks.values().len() < tick_bins);
         }
 
-        println!("{:?}", ob.0.values().next_back());
+        println!("{:?}", ob.book.values().next_back());
     }
 }
