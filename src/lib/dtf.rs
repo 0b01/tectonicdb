@@ -55,6 +55,13 @@ pub struct Metadata {
     pub min_ts: u64
 }
 
+#[derive(Clone)]
+pub struct BatchMetadata {
+    pub ref_ts: u64,
+    pub ref_seq: u32,
+    pub count: u16
+}
+
 impl fmt::Display for Metadata {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, r#"{{
@@ -81,8 +88,6 @@ pub fn update_vec_to_json(vecs: &[Update]) -> String {
     let objects : Vec<String> = vecs.into_iter().map(|up| up.to_json()).collect();
     objects.join(", ")
 }
-
-
 
 pub fn get_max_ts(updates : &[Update]) -> u64 {
     let mut max = 0;
@@ -227,34 +232,111 @@ fn read_max_ts(rdr : &mut BufReader<File>) -> u64 {
     rdr.read_u64::<BigEndian>().expect("maximum timestamp")
 }
 
-pub fn read_one_batch(rdr: &mut Read) -> Vec<Update> {
-    let is_ref = rdr.read_u8().expect("is_ref") == 0x1;
-    let mut ref_ts = 0;
-    let mut ref_seq = 0;
-    let mut how_many = 0;
+pub fn read_one_batch_meta(rdr: &mut Read) -> BatchMetadata {
+    let ref_ts = rdr.read_u64::<BigEndian>().unwrap();
+    let ref_seq = rdr.read_u32::<BigEndian>().unwrap();
+    let count = rdr.read_u16::<BigEndian>().unwrap();
+
+    BatchMetadata {
+        ref_ts,
+        ref_seq,
+        count
+    }
+}
+
+pub fn range(rdr: &mut BufReader<File>, min_ts: u64, max_ts: u64) -> Vec<Update> {
+    if min_ts > max_ts { return Vec::new(); }
+    rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
     let mut v : Vec<Update> = Vec::new();
 
-    if is_ref {
-        ref_ts = rdr.read_u64::<BigEndian>().unwrap();
-        ref_seq = rdr.read_u32::<BigEndian>().unwrap();
-        how_many = rdr.read_u16::<BigEndian>().unwrap();
-    }
-
-    for _i in 0..how_many {
-        let ts = u64::from(rdr.read_u16::<BigEndian>().expect("ts")) + ref_ts;
-        let seq = u32::from(rdr.read_u8().expect("seq")) + ref_seq;
-        let flags = rdr.read_u8().expect("is_trade and is_bid");
-        let is_trade = (Flags::from_bits(flags).unwrap() & Flags::FLAG_IS_TRADE).to_bool();
-        let is_bid = (Flags::from_bits(flags).unwrap() & Flags::FLAG_IS_BID).to_bool();
-        let price = rdr.read_f32::<BigEndian>().expect("price");
-        let size = rdr.read_f32::<BigEndian>().expect("size");
-        let current_update = Update {
-            ts, seq, is_trade, is_bid, price, size
+    loop {
+        match rdr.read_u8() {
+            Ok(byte) => { if byte != 0x1 { return v; } },
+            Err(e) => { return v; }
         };
-        v.push(current_update);
-    }
 
+        let current_meta = read_one_batch_meta(rdr);
+        let current_ref_ts = current_meta.ref_ts;
+        let current_count = current_meta.count;
+
+        // skip a few bytes and read the next metadata
+        let bytes_to_skip = current_count * 12 /* 12 bytes per row */;
+        rdr.seek(SeekFrom::Current(bytes_to_skip as i64)).expect("SKIPPING n ROWS");
+        match rdr.read_u8() {
+            Ok(byte) => { if byte != 0x1 { return v; } },
+            Err(e) => { return v; }
+        };
+        let next_meta = read_one_batch_meta(rdr);
+        let next_ref_ts = next_meta.ref_ts;
+
+        if min_ts <= current_ref_ts && max_ts <= current_ref_ts {
+            return v;
+        } else if (min_ts <= current_ref_ts && max_ts <= next_ref_ts )
+               || (min_ts < next_ref_ts && max_ts >= next_ref_ts) {
+            // seek back
+            let bytes_to_scrollback = - (bytes_to_skip as i64) - 14 /* metadata */ - 1 /* indicator byte */ ;
+            rdr.seek(SeekFrom::Current( bytes_to_scrollback )).expect("SKIPPING n ROWS");
+            // now we are here
+            //      v
+            // [m1] | [b1][m2][b2]
+            //      ^
+
+            // read and filter current batch
+            let filtered = read_one_batch_main(rdr, current_meta).into_iter()
+                            .filter(|up| up.ts <= max_ts && up.ts >= min_ts)
+                            .collect::<Vec<Update>>();
+            v.extend(filtered);
+        } else if min_ts <= current_ref_ts && max_ts > current_ref_ts {
+            // seek back
+            let bytes_to_scrollback = - (bytes_to_skip as i64) - 14 /* metadata */ - 1 /* indicator byte */ ;
+            rdr.seek(SeekFrom::Current( bytes_to_scrollback )).expect("SKIPPING n ROWS");
+            // read all
+            v.extend(read_one_batch_main(rdr, current_meta));
+        } else if min_ts >= next_ref_ts {
+            // simply skip back to the beginning of the second batch
+            let bytes_to_scrollback = - 14 /* metadata */ - 1 /* indicator byte */ ;
+            rdr.seek(SeekFrom::Current( bytes_to_scrollback )).expect("SKIPPING n ROWS");
+            // we are at 
+            //         v       
+            // [m1][b1]|[m2][b2]
+            //         ^              
+        } else {
+            panic!("Should have cover all the cases.");
+        }
+    }
     v
+}
+
+pub fn read_one_batch(rdr: &mut Read) -> Vec<Update> {
+    let is_ref = rdr.read_u8().expect("is_ref") == 0x1;
+    if !is_ref {
+        Vec::new()
+    } else {
+        let meta = read_one_batch_meta(rdr);
+        read_one_batch_main(rdr, meta)
+    }
+}
+
+fn read_one_batch_main(rdr: &mut Read, meta: BatchMetadata) -> Vec<Update> {
+    let mut v : Vec<Update> = Vec::new();
+    for _i in 0..meta.count {
+        let up = read_one_update(rdr, &meta);
+        v.push(up);
+    }
+    v
+}
+
+fn read_one_update(rdr: &mut Read, meta: &BatchMetadata) -> Update {
+    let ts = u64::from(rdr.read_u16::<BigEndian>().expect("ts")) + meta.ref_ts;
+    let seq = u32::from(rdr.read_u8().expect("seq")) + meta.ref_seq;
+    let flags = rdr.read_u8().expect("is_trade and is_bid");
+    let is_trade = (Flags::from_bits(flags).unwrap() & Flags::FLAG_IS_TRADE).to_bool();
+    let is_bid = (Flags::from_bits(flags).unwrap() & Flags::FLAG_IS_BID).to_bool();
+    let price = rdr.read_f32::<BigEndian>().expect("price");
+    let size = rdr.read_f32::<BigEndian>().expect("size");
+    Update {
+        ts, seq, is_trade, is_bid, price, size
+    }
 }
 
 fn read_first_batch(mut rdr: &mut BufReader<File>) -> Vec<Update> {
@@ -496,6 +578,42 @@ mod tests {
         let decoded_updates = decode(fname, None);
         assert_eq!(decoded_updates, ts);
     }
+
+    #[test]
+    fn should_return_the_correct_range() {
+        let fname = "test.dtf";
+        {
+            let mut wtr = file_writer(fname, true);
+            let mut ups =
+                (1..1000).map(|i| 
+                    Update {
+                        ts: i as u64,
+                        seq: i as u32,
+                        price: 0.,
+                        size: 0.,
+                        is_bid: false,
+                        is_trade: false
+                    })
+                .collect::<Vec<Update>>();
+
+            encode(fname, "test", &ups);
+        }
+        
+        let mut rdr = file_reader(fname);
+        assert_eq!((10..21).map(|i| 
+                    Update {
+                        ts: i as u64,
+                        seq: i as u32,
+                        price: 0.,
+                        size: 0.,
+                        is_bid: false,
+                        is_trade: false
+                    })
+                .collect::<Vec<Update>>(), range(&mut rdr, 10, 20));
+
+
+    }
+    // TODO: write more test cases...
 
     #[test]
     fn should_return_correct_symbol() {
