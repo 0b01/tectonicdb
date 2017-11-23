@@ -154,90 +154,90 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
 
     match command {
         Nothing =>
-            return_string("\n".to_owned()),
+            return_string(""),
         Ping =>
-            return_string("PONG\n".to_owned()),
+            return_string("PONG"),
         Help =>
-            return_string(HELP_STR.to_owned()),
+            return_string(HELP_STR),
         Info =>
-            return_string(state.info()),
+            return_string(&state.info()),
         Perf =>
-            return_string(state.perf()),
+            return_string(&state.perf()),
         BulkAdd => 
             {
                 state.is_adding = true;
-                return_string("\n".to_owned())
+                return_string("")
             },
         BulkAddInto(dbname) =>
             {
-                state.bulkadd_db = Some(dbname.to_owned());
+                state.bulkadd_db = Some(dbname);
                 state.is_adding = true;
-                return_string("\n".to_owned())
+                return_string("")
             },
         BulkAddEnd => 
             {
                 state.is_adding = false;
                 state.bulkadd_db = None;
-                return_string("1\n".to_owned())
+                return_string("1")
             },
         Count(ReqCount::Count(_)) => 
-            return_string(format!("{}\n", state.count())),
+            return_string(&format!("{}", state.count())),
         Count(ReqCount::All) => 
-            return_string(format!("{}\n", state.countall())),
+            return_string(&format!("{}", state.countall())),
         Clear(ReqCount::Count(_)) => 
             {
                 state.clear();
-                return_string("1\n".to_owned())
+                return_string("1")
             },
         Clear(ReqCount::All) => 
             {
                 state.clearall();
-                return_string("1\n".to_owned())
+                return_string("1")
             },
         Flush(ReqCount::Count(_)) =>
             {
                 state.flush();
-                return_string("1\n".to_owned())
+                return_string("1")
             },
         Flush(ReqCount::All) =>
             {
                 state.flushall();
-                return_string("1\n".to_owned())
+                return_string("1")
             },
 
         // update, dbname
         Insert(Some(up), Some(dbname)) =>
             {
                 state.insert(up, &dbname);
-                return_string("\n".to_owned())
+                return_string("")
             },
         Insert(Some(up), None) =>
             {
                 state.add(up);
-                return_string("\n".to_owned())
+                return_string("")
             },
         Insert(None, _) => 
-            return_err(String::from("Unable to parse line")),
+            return_err("Unable to parse line"),
 
 
         Create(dbname) =>
             { 
                 state.create(&dbname); 
-                return_string(format!("Created DB `{}`.\n", &dbname))
+                return_string(&format!("Created DB `{}`.", &dbname))
             },
         Use(dbname) => 
             {
                 match state.use_db(&dbname) {
-                    Some(_) => return_string(format!("SWITCHED TO DB `{}`.\n", &dbname)),
-                    None => return_err(format!("No db named `{}`", dbname))
+                    Some(_) => return_string(&format!("SWITCHED TO DB `{}`.", &dbname)),
+                    None => return_err(&format!("No db named `{}`", dbname))
                 }
             },
         Exists(dbname) =>
             {
                 if state.exists(&dbname) {
-                    return_string("1\n".to_owned())
+                    return_string("1")
                 } else {
-                    return_err(format!("No db named `{}`", dbname))
+                    return_err(&format!("No db named `{}`", dbname))
                 }
             },
 
@@ -245,15 +245,15 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
         Get(ReqCount::All, GetFormat::JSON, _) => 
             {
                 match state.get_n_as_json(None) {
-                    Some(json) => return_string(json.to_owned()),
-                    None => return_err("Not enough items to return.".to_owned()),
+                    Some(json) => return_string(&json),
+                    None => return_err("Not enough items to return."),
                 }
             },
         Get(ReqCount::All, GetFormat::DTF, _) => 
             {
                 match state.get(None) {
                     Some(bytes) => return_bytes(bytes),
-                    None => return_err("Failed to GET ALL.".to_owned())
+                    None => return_err("Failed to GET ALL.")
                 }
             },
         Get(ReqCount::Count(count), GetFormat::JSON, range) => 
@@ -262,8 +262,8 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                     Some((min, max)) => unimplemented!(),
                     None => {
                         match state.get_n_as_json(Some(count)) {
-                            Some(json) => return_string(json.to_owned()),
-                            None => return_err(format!("Requested {} items. Too many.", count).to_owned())
+                            Some(json) => return_string(&json),
+                            None => return_err(&format!("Requested {} items. Too many.", count))
                         }
                     }
                 }
@@ -276,25 +276,31 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                     None => {
                         match state.get(Some(count)) {
                             Some(bytes) => return_bytes(bytes),
-                            None => return_string(format!("Failed to get {}.", count).to_owned())
+                            None => return_string(&format!("Failed to get {}.", count))
                         }
                     }
                 }
             }
 
         Unknown => 
-            return_err("Unknown command.".to_owned())
+            return_err("Unknown command.")
     }
 }
 
-fn return_string(string: String) -> ReturnType {
-    ReturnType::String(string)
+fn return_string(string: &str) -> ReturnType {
+    let mut ret = String::new();
+    ret.push_str(string);
+    ret.push_str("\n");
+    ReturnType::String(ret)
 }
 
 fn return_bytes(bytes: Vec<u8>) -> ReturnType {
     ReturnType::Bytes(bytes)
 }
 
-fn return_err(err: String) -> ReturnType {
-    ReturnType::Error(err)
+fn return_err(err: &str) -> ReturnType {
+    let mut ret = String::new();
+    ret.push_str(err);
+    ret.push_str("\n");
+    ReturnType::Error(ret)
 }
