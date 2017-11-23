@@ -12,7 +12,7 @@ pub enum ReturnType {
 #[derive(Debug)]
 enum ReqCount {
     All,
-    Count(i32)
+    Count(u32)
 }
 
 #[derive(Debug)]
@@ -120,7 +120,7 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 // how many records from memory we want...
                 let count : &str = &string.clone()[4..];
                 let count : Vec<&str> = count.split(" ").collect();
-                let count = count[0].parse::<i32>().unwrap();
+                let count = count[0].parse::<u32>().unwrap();
 
                 let ranged = string.contains(" FROM ");
                 let range = if ranged {
@@ -151,13 +151,6 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
             { Unknown }
         }
     };
-
-
-        //     else {
-        //         (None, None, Some("Unsupported command.".to_owned()))
-        //     }
-        // }
-    // };
 
     match command {
         Nothing =>
@@ -250,10 +243,15 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
 
         // get
         Get(ReqCount::All, GetFormat::JSON, _) => 
-            return_string(state.get_n_as_json(None).unwrap()), //TODO: refactor unwrap 
+            {
+                match state.get_n_as_json(None) {
+                    Some(json) => return_string(json.to_owned()),
+                    None => return_err("Not enough items to return.".to_owned()),
+                }
+            },
         Get(ReqCount::All, GetFormat::DTF, _) => 
             {
-                match state.get(-1) {
+                match state.get(None) {
                     Some(bytes) => return_bytes(bytes),
                     None => return_err("Failed to GET ALL.".to_owned())
                 }
@@ -276,7 +274,7 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 match range {
                     Some((min, max)) => unimplemented!(),
                     None => {
-                        match state.get(count) {
+                        match state.get(Some(count)) {
                             Some(bytes) => return_bytes(bytes),
                             None => return_string(format!("Failed to get {}.", count).to_owned())
                         }

@@ -342,64 +342,37 @@ impl State {
     }
 
     /// get n items in memory as JSON
-    pub fn get_n_as_json(&mut self, count: Option<i32>) -> Option<String> {
-        let shared_state = self.global.read().unwrap();
-        let size = shared_state.vec_store
-                    .get(&self.current_store_name)
-                    .expect("Key is not in vec_store")
-                    .1;
+    pub fn get_n_as_json(&mut self, count: Option<u32>) -> Option<String> {
+        match self.get_aux(count) {
+            Some(vecs) => Some(format!("[{}]\n", dtf::update_vec_to_json(&vecs))),
+            None => None
+        }
+    }
 
-        let json = match count {
+    fn get_aux(&mut self, count: Option<u32>) -> Option<Vec<Update>> {
+        let shared_state = self.global.read().unwrap();
+        let &(ref vecs, ref size) = 
+            shared_state.vec_store
+                    .get(&self.current_store_name)
+                    .expect("Key is not in vec_store");
+        match count {
             Some(count) => {
-                if (size as i32) < count || size == 0 {
+                if (*size as u32) < count || *size == 0 {
                     return None
                 }
-                let vecs = &shared_state.vec_store
-                            .get(&self.current_store_name)
-                            .expect("Key is not in vec_store")
-                            .0;
-                dtf::update_vec_to_json(&vecs[..count as usize])
+                Some(vecs[..count as usize].to_vec())
             },
-
-            None => {
-                let vecs = &shared_state.vec_store
-                            .get(&self.current_store_name)
-                            .expect("Key is not in vec_store")
-                            .0;
-                dtf::update_vec_to_json(vecs)
-            }
-        };
-
-        Some(format!("[{}]\n", json))
-
+            None => Some(vecs.clone()) // XXX: very inefficient, ok with small n
+        }
     }
 
     /// get `count` items from the current store
-    pub fn get(&mut self, count : i32) -> Option<Vec<u8>> {
+    pub fn get(&mut self, count: Option<u32>) -> Option<Vec<u8>> {
         let mut bytes : Vec<u8> = Vec::new();
-        {
-            let shared_state = self.global.read().unwrap();
-            let size = shared_state.vec_store
-                        .get(&self.current_store_name)
-                        .expect("Key is not in vec_store")
-                        .1;
-
-            if (size as i32) < count || size == 0 {
-                return None
-            }
+        match self.get_aux(count) {
+            Some(vecs) => { dtf::write_batches(&mut bytes, &vecs); Some(bytes) },
+            None => None
         }
-
-        let rdr = self.global.read().unwrap();
-        let vecs = rdr.vec_store.get(&self.current_store_name).expect("KEY IS NOT IN HASHMAP");
-        match count {
-            -1 => {
-                dtf::write_batches(&mut bytes, &vecs.0);
-            },
-            _ => {
-                dtf::write_batches(&mut bytes, &vecs.0[..count as usize]);
-            }
-        }
-        Some(bytes)
     }
 
     /// create a new store
