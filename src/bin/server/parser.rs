@@ -52,12 +52,12 @@ pub fn parse_dbname(string: &str) -> (usize, &str) {
 }
 
 /// returns Option<Update, dbname>
-pub fn parse_add_into(string: &str) -> Option<(Update, String)> {
+pub fn parse_add_into(string: &str) -> (Option<Update>, Option<String>) {
     let (index, dbname) = parse_dbname(string);
     let data_string : &str = &string[3..(index)];
     match parse_line(data_string) {
-        Some(up) => Some((up, dbname.to_owned())),
-        None => None
+        Some(up) => (Some(up), Some(dbname.to_owned())),
+        None => (None, None)
     }
 }
 
@@ -121,7 +121,7 @@ mod tests {
             price: 0.0703620,
             size: 7.65064240
         };
-        assert_eq!( Some((target, "dbname".to_owned())),
+        assert_eq!((Some(target), Some("dbname".to_owned())),
                     parse_add_into(cmd));
     }
 }

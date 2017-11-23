@@ -300,17 +300,6 @@ impl State {
         }
     }
 
-    /// returns every row formatted as JSON
-    pub fn get_all_as_json(&mut self) -> String {
-        let shared_state = self.global.read().unwrap();
-        let vecs = &shared_state.vec_store
-                    .get(&self.current_store_name)
-                    .expect("Key is not in vec_store")
-                    .0;
-        let json = dtf::update_vec_to_json(vecs);
-        format!("[{}]\n", json)
-    }
-
     /// return the count of the current store
     pub fn count(&mut self) -> u64 {
         let store = self.get_current_store();
@@ -321,30 +310,6 @@ impl State {
     pub fn countall(&self) -> u64 {
         let rdr = self.global.read().unwrap();
         rdr.vec_store.iter().fold(0, |acc, (_name, tup)| acc + tup.1)
-    }
-
-    /// get n items, serialized as JSON
-    pub fn get_n_as_json(&mut self, count: i32) -> Option<String> {
-        {
-            let shared_state = self.global.read().unwrap();
-            let size = shared_state.vec_store
-                        .get(&self.current_store_name)
-                        .expect("Key is not in vec_store")
-                        .1;
-
-            if (size as i32) < count || size == 0 {
-                return None
-            }
-        }
-
-        let shared_state = self.global.read().unwrap();
-        let vecs = &shared_state.vec_store
-                    .get(&self.current_store_name)
-                    .expect("Key is not in vec_store")
-                    .0;
-        let json = dtf::update_vec_to_json(&vecs[..count as usize]);
-        let json = format!("[{}]\n", json);
-        Some(json)
     }
 
     /// remove everything in the current store
@@ -374,6 +339,39 @@ impl State {
     /// returns the current store as a mutable reference
     fn get_current_store(&mut self) -> &mut Store {
         self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP")
+    }
+
+    /// get n items in memory as JSON
+    pub fn get_n_as_json(&mut self, count: Option<i32>) -> Option<String> {
+        let shared_state = self.global.read().unwrap();
+        let size = shared_state.vec_store
+                    .get(&self.current_store_name)
+                    .expect("Key is not in vec_store")
+                    .1;
+
+        let json = match count {
+            Some(count) => {
+                if (size as i32) < count || size == 0 {
+                    return None
+                }
+                let vecs = &shared_state.vec_store
+                            .get(&self.current_store_name)
+                            .expect("Key is not in vec_store")
+                            .0;
+                dtf::update_vec_to_json(&vecs[..count as usize])
+            },
+
+            None => {
+                let vecs = &shared_state.vec_store
+                            .get(&self.current_store_name)
+                            .expect("Key is not in vec_store")
+                            .0;
+                dtf::update_vec_to_json(vecs)
+            }
+        };
+
+        Some(format!("[{}]\n", json))
+
     }
 
     /// get `count` items from the current store

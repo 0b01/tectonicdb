@@ -12,6 +12,7 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 
 use state::*;
+use handler::ReturnType;
 use utils;
 use handler;
 use settings::Settings;
@@ -21,17 +22,16 @@ use std::sync::{Arc, RwLock};
 fn respond(mut stream: &TcpStream, mut state: &mut State, line: &str) {
     let resp = handler::gen_response(&line, &mut state);
     match resp {
-        (Some(str_resp), None, _) => {
+        ReturnType::Bytes(bytes)  => {
+            stream.write_u8(0x1).unwrap();
+            stream.write(&bytes).unwrap()
+        }
+        ReturnType::String(str_resp) => {
             stream.write_u8(0x1).unwrap();
             stream.write_u64::<NetworkEndian>(str_resp.len() as u64).unwrap();
             stream.write(str_resp.as_bytes()).unwrap()
         },
-        (None, Some(bytes_resp), _) => {
-            stream.write_u8(0x1).unwrap();
-            stream.write(&bytes_resp).unwrap()
-        },
-        (None, None, Some(errmsg)) => {
-
+        ReturnType::Error(errmsg) => {
             error!("Req: `{}`", line);
             error!("Err: `{}`", errmsg.clone());
 
@@ -39,8 +39,7 @@ fn respond(mut stream: &TcpStream, mut state: &mut State, line: &str) {
             let ret = format!("ERR: {}\n", errmsg);
             stream.write_u64::<NetworkEndian>(ret.len() as u64).unwrap();
             stream.write(ret.as_bytes()).unwrap()
-        },
-        _ => panic!("IMPOSSIBLE")
+        }
     };
 }
 

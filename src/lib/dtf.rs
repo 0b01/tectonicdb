@@ -244,7 +244,10 @@ pub fn read_one_batch_meta(rdr: &mut Read) -> BatchMetadata {
     }
 }
 
-pub fn range(rdr: &mut BufReader<File>, min_ts: u64, max_ts: u64) -> Vec<Update> {
+pub fn range(rdr: &mut BufReader<File>, min_ts: f64, max_ts: f64) -> Vec<Update> {
+    let min_ts = (min_ts * 1000.) as u64;
+    let max_ts = (max_ts * 1000.) as u64;
+
     if min_ts > max_ts { return Vec::new(); }
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
     let mut v : Vec<Update> = Vec::new();
@@ -587,7 +590,7 @@ mod tests {
             let mut ups =
                 (1..1000).map(|i| 
                     Update {
-                        ts: i as u64,
+                        ts: i*1000 as u64,
                         seq: i as u32,
                         price: 0.,
                         size: 0.,
@@ -602,17 +605,65 @@ mod tests {
         let mut rdr = file_reader(fname);
         assert_eq!((10..21).map(|i| 
                     Update {
-                        ts: i as u64,
+                        ts: i*1000 as u64,
                         seq: i as u32,
                         price: 0.,
                         size: 0.,
                         is_bid: false,
                         is_trade: false
                     })
-                .collect::<Vec<Update>>(), range(&mut rdr, 10, 20));
-
-
+                .collect::<Vec<Update>>(), range(&mut rdr, 10., 20.));
     }
+
+    #[test]
+    fn should_return_the_correct_range_2() {
+        let fname = "test.dtf";
+        {
+            let mut wtr = file_writer(fname, true);
+            let mut ups =
+                (1..1000).map(|i| 
+                    Update {
+                        ts: i*1000 as u64,
+                        seq: i as u32 % 500 * 500,
+                        price: 0.,
+                        size: 0.,
+                        is_bid: false,
+                        is_trade: false
+                    })
+                .collect::<Vec<Update>>();
+
+            encode(fname, "test", &ups);
+        }
+        
+        let mut rdr = file_reader(fname);
+        assert_eq!((1..999).map(|i| 
+                    Update {
+                        ts: i*1000 as u64,
+                        seq: i as u32 % 500 * 500,
+                        price: 0.,
+                        size: 0.,
+                        is_bid: false,
+                        is_trade: false
+                    })
+                .collect::<Vec<Update>>(), range(&mut rdr, 1., 999.)); // ???
+    }
+
+    #[test]
+    fn should_return_correct_range_real() {
+        let fname: &str = "test-data/bt_btcnav.dtf";
+        let mut rdr = file_reader(fname);
+
+        let start = 1_510_168_156.;
+        let end = 1_510_171_756.;
+
+        let ups = range(&mut rdr, start, end);
+        println!("{}", ups.len());
+
+        for up in ups.iter() {
+            assert!(up.ts >= (start * 1000.) as u64 && up.ts <= (end * 1000.) as u64);
+        }
+    }
+
     // TODO: write more test cases...
 
     #[test]
