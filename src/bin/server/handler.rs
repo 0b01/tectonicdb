@@ -148,7 +148,7 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 Get(ReqCount::Count(count), format, range)
             } else
 
-            { unimplemented!(); }
+            { Unknown }
         }
     };
 
@@ -284,7 +284,8 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 }
             }
 
-        _ => unimplemented!(),
+        Unknown => 
+            return_err("Unknown command.".to_owned())
     }
 }
 

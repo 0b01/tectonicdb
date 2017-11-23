@@ -107,7 +107,7 @@ impl Store {
         let folder = self.global.read().unwrap().settings.dtf_folder.to_owned();
         let fname = format!("{}/{}.dtf", &folder, self.name);
         if Path::new(&fname).exists() && !self.in_memory {
-            let file_item_count = dtf::read_meta(&fname).nums;
+            // let file_item_count = dtf::read_meta(&fname).nums;
             // // when we have more items in memory, don't load
             // if file_item_count < self.count() {
             //     warn!("There are more items in memory than in file. Cannot load from file.");
