@@ -195,20 +195,26 @@ pub fn encode(fname : &str, symbol : &str, ups : &[Update]) {
     wtr.flush().expect("FAILURE TO FLUSH");
 }
 
-fn file_reader(fname: &str) -> BufReader<File> {
-
-    let file = File::open(fname).expect("OPENING FILE");
-    let mut rdr = BufReader::new(file);
-
+pub fn read_magic_value(rdr : &mut BufReader<File>) -> bool {
     // magic value
     let _ = rdr.seek(SeekFrom::Start(0));
     let mut buf = vec![0u8; 5];
     let _ = rdr.read_exact(&mut buf);
 
     if buf != MAGIC_VALUE {
+        return false;
+    }
+    true
+}
+
+fn file_reader(fname: &str) -> BufReader<File> {
+
+    let file = File::open(fname).expect("OPENING FILE");
+    let mut rdr = BufReader::new(file);
+
+    if ! read_magic_value(&mut rdr)  {
         panic!("MAGIC VALUE INCORRECT");
     }
-
     rdr 
 }
 
