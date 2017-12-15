@@ -1,21 +1,19 @@
 use std::collections::{BTreeMap, HashSet};
 
-//
-// ─── Candles ────────────────────────────────────────────────────────────────────
-//
-
 type Time = u32;
 type Price = f32;
 type Volume = f32;
 type Scale = u16;
 
 #[derive(Clone, Debug, PartialEq)]
+/// utilities for rebinning candlesticks
 pub struct Candles {
     v: BTreeMap<Time, Candle>,
     scale: Scale
 }
 
-impl<'a> From<&'a [super::Update]> for Candles{
+impl<'a> From<&'a [super::Update]> for Candles {
+    /// Generate a vector of 1-min candles from Updates
     fn from(ups: &[super::Update]) -> Candles {
         let fix_missing = false;
 
@@ -76,6 +74,9 @@ impl<'a> From<&'a [super::Update]> for Candles{
 }
 
 impl Candles {
+    /// convert Candles vector to csv
+    /// format is 
+    ///     O,H,L,C,V
     pub fn to_csv(self) -> String {
         let csvs : Vec<String> = self.v.values().into_iter()
                 .map(|candle| candle.to_csv())
@@ -84,7 +85,10 @@ impl Candles {
         csvs.join("\n")
     }
 
-    /// find missing epochs
+    /// Find missing epochs (in minute)
+    /// Some epochs may be missing from the candles for some reason.
+    /// For example, some instruments may have low volatility for 1 minute, or the
+    /// exchange is down, or the collection backend is flooded.
     fn missing_epochs(&self) -> Vec<Time> {
 
         let mut set = HashSet::<Time>::new();
@@ -108,12 +112,14 @@ impl Candles {
         missing
     }
 
-    /// return ranges of missing epochs
+    /// returns the ranges of missing epochs
+    /// [60, 120, 280, 360] => [(180, 280)]
     pub fn missing_ranges(&self) -> Vec<(Time, Time)> {
         ranges(&self.missing_epochs())
     }
 
     /// insert continuation candles and fix missing
+    /// insert the missing candles based on the previous candle
     pub fn insert_continuation_candles(&mut self) {
         let (mut last_ts, mut last_close) = {
             let (&last_ts, row) = self.v.iter().next().unwrap(); // first ts here, last ts later
@@ -157,7 +163,9 @@ impl Candles {
         ret
     }
 
-    /// epochs must be exactly incrementing by n * 60
+    /// epochs must be exactly incrementing by 60
+    /// 60, 120, 180 => ok!
+    /// 60,    , 180 => not ok!
     fn _test_epochs_must_be_sequential(&self) -> bool {
         // all([a[0] + i * 60 * minutes == x for i, x in enumerate(a)])
         let mut i : Time = 0;
@@ -190,7 +198,7 @@ impl Candles {
         let mut i = 0;
 
         for (&ts, row) in self.v.iter() {
-            // align with minute mark ("snap" to grid)
+            // align with minute mark ("snap to grid")
             //
             //
             // --|------|------|------|-->
@@ -238,6 +246,7 @@ impl Candles {
             i += 1;
         }
 
+        // sanity check!
         assert_eq!(res.len(), self.v.len() / (new_scale as usize));
         assert!(self._test_epochs_must_be_sequential());
 
@@ -247,13 +256,9 @@ impl Candles {
         })
     }
 }
-// ────────────────────────────────────────────────────────────────────────────────
 
-
-//
-// ─── CANDLE ─────────────────────────────────────────────────────────────────────
-//
 #[derive(PartialOrd, PartialEq, Clone, Debug)]
+/// a candlestick
 pub struct Candle {
     open:   Price,
     high:   Price,
@@ -265,27 +270,41 @@ pub struct Candle {
 impl Eq for Candle {}
 
 impl Candle {
+
+    /// convert to csv
+    /// Format:
+    ///     O,H,L,C,V
     fn to_csv(&self) -> String{
         format!("{},{},{},{},{}",
                 self.open, self.high, self.low, self.close, self.volume)
     }
-}
-// ────────────────────────────────────────────────────────────────────────────────
 
-//
-// ─── HELPER ─────────────────────────────────────────────────────────────────────
-//
+}
+
 /// Check a list of sequence
+/// 
 /// Returns maximum continuous sequence
-/// Concept: [1,2,3,5,6,7] -> [(1,3), (5,7)]
-/// actual value: [60, 120, 180] -> [(60, 180)]
+/// 
+/// example: [60, 120, 180] -> [(60, 180)]
+/// 
+/// The algorithm does the following:
+///     1. a "rolling" conversion:
+///         epochs to natural numbers
+///         [60, 120, 180] -> [1, 2, 3]
+///     2. then minus the index
+///         [1, 2 - 1, 3 - 2] -> [1, 1, 1]
+///     3. group and count the size of each group
+///         [1, 1, 1, 3, 3, 3, 3] -> [3, 4]
+///     4. convert back to begin and end epochs
+///         [3] => [(60, 180)]
+/// 
 /// :param lst: list of epochs
 /// :return: list of tuples of shape (start, end)
 fn ranges(lst: &Vec<Time>) -> Vec<(Time, Time)>{
     let mut pos = Vec::new();
 
     for (i, j) in lst.iter().enumerate() {
-        pos.push(j/ 60 - i as Time);
+        pos.push(j / 60 - i as Time);
     }
 
     let mut ret = Vec::new();
@@ -328,12 +347,6 @@ fn ranges(lst: &Vec<Time>) -> Vec<(Time, Time)>{
     ret
 }
 
-// ────────────────────────────────────────────────────────────────────────────────
-
-
-//
-// ─── TESTS ──────────────────────────────────────────────────────────────────────
-//
 #[cfg(test)]
 mod tests {
     use super::*;

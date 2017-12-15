@@ -3,7 +3,7 @@
 //! this is [price -> time -> size] to keep track of
 //! size changes on each price level over time.
 use std::collections::{ BTreeMap, HashMap };
-use super::utils::price_histogram::{Histogram, Count};
+use super::utils::price_histogram::{ Histogram, Count };
 use super::fill_digits;
 
 

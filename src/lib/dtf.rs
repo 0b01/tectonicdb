@@ -1,3 +1,4 @@
+/// 
 /// File format for Dense Tick Format (DTF)
 /// 
 /// 
@@ -244,70 +245,96 @@ pub fn read_one_batch_meta(rdr: &mut Read) -> BatchMetadata {
     }
 }
 
+/// reads a vector of Update over some time interval (min_ts, max_ts) from file.
 pub fn range(rdr: &mut BufReader<File>, min_ts: f64, max_ts: f64) -> Vec<Update> {
+    // convert ts to match the dtf file format (in ms)
     let min_ts = (min_ts * 1000.) as u64;
     let max_ts = (max_ts * 1000.) as u64;
 
+    // can't go back in time
     if min_ts > max_ts { return Vec::new(); }
+    // go to beginning of main section
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
     let mut v : Vec<Update> = Vec::new();
 
     loop {
+        // read marker byte
         match rdr.read_u8() {
-            Ok(byte) => { if byte != 0x1 { return v; } },
-            Err(e) => { return v; }
+            Ok(byte) => { if byte != 0x1 { return v; } },   // 0x1 indicates a batch
+            Err(_e) => { return v; }                        // EOF
         };
 
+        // read the metadata of the current batch
         let current_meta = read_one_batch_meta(rdr);
         let current_ref_ts = current_meta.ref_ts;
         let current_count = current_meta.count;
 
         // skip a few bytes and read the next metadata
         let bytes_to_skip = current_count * 12 /* 12 bytes per row */;
-        rdr.seek(SeekFrom::Current(bytes_to_skip as i64)).expect("SKIPPING n ROWS");
+        rdr.seek(SeekFrom::Current(bytes_to_skip as i64)).expect(&format!("Skipping {} rows", current_count));
+
+        // must be a batch
         match rdr.read_u8() {
-            Ok(byte) => { if byte != 0x1 { return v; } },
-            Err(e) => { return v; }
+            Ok(byte) => { if byte != 0x1 { return v; } },   // is a batch
+            Err(_e) => { return v; }                        // EOF
         };
         let next_meta = read_one_batch_meta(rdr);
         let next_ref_ts = next_meta.ref_ts;
 
+        // legend:
+        // `|`: meta data
+        // `1`: indicator byte
+        // `-`: updates
+
+        //     |1-----|1*---      <- we are here
+
+        //  [ ]                   <- requested
+        //     |1-----|1---
+        // 
         if min_ts <= current_ref_ts && max_ts <= current_ref_ts {
             return v;
-        } else if (min_ts <= current_ref_ts && max_ts <= next_ref_ts )
-               || (min_ts < next_ref_ts && max_ts >= next_ref_ts) {
-            // seek back
-            let bytes_to_scrollback = - (bytes_to_skip as i64) - 14 /* metadata */ - 1 /* indicator byte */ ;
-            rdr.seek(SeekFrom::Current( bytes_to_scrollback )).expect("SKIPPING n ROWS");
-            // now we are here
-            //      v
-            // [m1] | [b1][m2][b2]
-            //      ^
+        } else
 
-            // read and filter current batch
-            let filtered = read_one_batch_main(rdr, current_meta).into_iter()
-                            .filter(|up| up.ts <= max_ts && up.ts >= min_ts)
-                            .collect::<Vec<Update>>();
-            v.extend(filtered);
-        } else if min_ts <= current_ref_ts && max_ts > current_ref_ts {
+        // [    ]
+        //   |1*-----|1---
+        //
+        // or 
+        //
+        //         [     ]
+        //         [          ]
+        //   |1*-----|1----|1---
+        //
+        if (min_ts <= current_ref_ts && max_ts <= next_ref_ts )
+            || (min_ts < next_ref_ts && max_ts >= next_ref_ts) {
             // seek back
             let bytes_to_scrollback = - (bytes_to_skip as i64) - 14 /* metadata */ - 1 /* indicator byte */ ;
-            rdr.seek(SeekFrom::Current( bytes_to_scrollback )).expect("SKIPPING n ROWS");
-            // read all
-            v.extend(read_one_batch_main(rdr, current_meta));
+            rdr.seek(SeekFrom::Current( bytes_to_scrollback )).expect("scrolling back");
+            //   |1*------|1--          <- we are here
+            // read and filter current batch
+            let filtered = {
+                let batch = read_one_batch_main(rdr, current_meta);
+                if min_ts <= current_ref_ts && max_ts >= next_ref_ts {
+                    batch
+                } else {
+                    batch.into_iter()
+                        .filter(|up| up.ts <= max_ts && up.ts >= min_ts)
+                        .collect::<Vec<Update>>()
+                }
+            };
+            v.extend(filtered);
+        
+        //               [      ]
+        // |1----|1---|1----
+        //
         } else if min_ts >= next_ref_ts {
             // simply skip back to the beginning of the second batch
+            // |1----*|1---|1---
             let bytes_to_scrollback = - 14 /* metadata */ - 1 /* indicator byte */ ;
             rdr.seek(SeekFrom::Current( bytes_to_scrollback )).expect("SKIPPING n ROWS");
-            // we are at 
-            //         v       
-            // [m1][b1]|[m2][b2]
-            //         ^              
         } else {
             panic!("Should have cover all the cases.");
         }
     }
-    v
 }
 
 pub fn read_one_batch(rdr: &mut Read) -> Vec<Update> {
@@ -586,8 +613,8 @@ mod tests {
     fn should_return_the_correct_range() {
         let fname = "test.dtf";
         {
-            let mut wtr = file_writer(fname, true);
-            let mut ups =
+            // let wtr = file_writer(fname, true);
+            let ups =
                 (1..1000).map(|i| 
                     Update {
                         ts: i*1000 as u64,
@@ -619,8 +646,8 @@ mod tests {
     fn should_return_the_correct_range_2() {
         let fname = "test.dtf";
         {
-            let mut wtr = file_writer(fname, true);
-            let mut ups =
+            // let wtr = file_writer(fname, true);
+            let ups =
                 (1..1000).map(|i| 
                     Update {
                         ts: i*1000 as u64,
@@ -658,6 +685,7 @@ mod tests {
 
         let ups = range(&mut rdr, start, end);
         println!("{}", ups.len());
+        assert_eq!(ups.len(), 10736);
 
         for up in ups.iter() {
             assert!(up.ts >= (start * 1000.) as u64 && up.ts <= (end * 1000.) as u64);

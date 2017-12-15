@@ -8,7 +8,7 @@ use std::f64;
 // type Price = f32;
 type PriceBits = u64;
 type Size = f32;
-type Time = u32;
+type Time = u64;
 type OrderbookSide = BTreeMap<PriceBits, Size>;
 
 #[derive(Clone)]
@@ -39,15 +39,15 @@ impl Orderbook {
 
 impl fmt::Debug for Orderbook {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "bids: \n");
+        let _ = write!(f, "bids: \n");
         for (&price, size) in self.bids.iter() {
-            write!(f, "- price: {} \t - size: {} \n", f64::from_bits(price), size);
+            let _ = write!(f, "- price: {} \t - size: {} \n", f64::from_bits(price), size);
         }
-        write!(f, "\n");
+        let _ = write!(f, "\n");
 
-        write!(f, "asks: \n");
+        let _ = write!(f, "asks: \n");
         for (&price, size) in self.asks.iter() {
-            write!(f, "- price: {} \t - size: {} \n", f64::from_bits(price), size);
+            let _ = write!(f, "- price: {} \t - size: {} \n", f64::from_bits(price), size);
         }
         write!(f, "\n")
     }
@@ -75,7 +75,7 @@ impl RebinnedOrderbook {
         // coarse means rebinned(like snap to grid)
         let mut temp_ob = Orderbook::new();
         // coarse price orderbook across coarse time
-        let mut ob_across_time = BTreeMap::<u64, Orderbook>::new();
+        let mut ob_across_time = BTreeMap::<Time, Orderbook>::new();
 
         // iterate over each update
         for up in ups.iter() {
@@ -149,8 +149,8 @@ impl RebinnedOrderbook {
 impl fmt::Debug for RebinnedOrderbook {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (&ts, ob) in self.book.iter() {
-            write!(f, "ts: {}\n", f64::from_bits(ts));
-            write!(f, "{:?}\n", ob);
+            let _ = write!(f, "ts: {}\n", f64::from_bits(ts));
+            let _ = write!(f, "{:?}\n", ob);
         }
         write!(f, "")
     }

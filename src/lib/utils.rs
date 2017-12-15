@@ -428,7 +428,7 @@ mod tests {
                                     .map(|up| up.price as f64) 
                                     .collect();
 
-        let mut hist = Histogram::new(&prices, 100, 2.);
+        let hist = Histogram::new(&prices, 100, 2.);
 
         // println!("{:?}", hist.bins);
         
