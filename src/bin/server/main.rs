@@ -7,6 +7,8 @@ extern crate chrono;
 extern crate log;
 extern crate fern;
 
+mod plugins;
+
 mod server;
 mod state;
 mod utils;

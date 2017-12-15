@@ -46,9 +46,12 @@ publish = true
 path = "src/bin/dtfrebin/main.rs"
 
 [features]
-default = []
+default = ["gcs"]
 
-google-cloud-storage = ["google-storage1"]
+gcs = [ "reqwest"
+      , "serde"
+      , "serde_json"
+      ]
 
 
 
@@ -65,6 +68,8 @@ log = "0.3"
 chrono = "0.4"
 
 # google storage
-google-storage1 = { version = "1.0.7+20171101", optional = true }
+reqwest = { version = "*", optional = true }
+serde = { version = "*", optional = true }
+serde_json = { version = "*", optional = true }
 
 # postgres = "0.15"
