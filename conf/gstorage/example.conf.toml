@@ -1,2 +1,2 @@
-client-id = ""
-client-secret = ""
+bucket-name = "tick-data"
+oauth = ""
