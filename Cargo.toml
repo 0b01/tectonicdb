@@ -48,9 +48,13 @@ path = "src/bin/dtfrebin/main.rs"
 [features]
 default = []
 
+google-cloud-storage = ["google-storage1"]
+
+
+
 
 [dependencies]
-# These crates are strictly mandatory:
+# These crates are mandatory:
 byteorder = "1.1.0"
 bitflags = "1.0.0"
 config = "0.6"
@@ -59,5 +63,8 @@ clap = "~2.26"
 fern = "0.4"
 log = "0.3"
 chrono = "0.4"
+
+# google storage
+google-storage1 = { version = "1.0.7+20171101", optional = true }
 
 # postgres = "0.15"
