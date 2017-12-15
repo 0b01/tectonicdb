@@ -1,7 +1,7 @@
 [package]
 name = "tectonicdb"
-version = "0.1.6"
-authors = ["Ricky Han <rickylqhan@gmail.com>"]
+version = "0.1.7"
+authors = ["Ricky Han <tectonic@rickyhan.com>"]
 description = "fast datastore server for contiguous order book ticks"
 repository = "https://github.com/rickyhan/tectonicdb"
 keywords = ["finance", "datastore", "database", "financial"]
@@ -45,14 +45,19 @@ name = "dtfrebin"
 publish = true
 path = "src/bin/dtfrebin/main.rs"
 
+[features]
+default = []
+
+
 [dependencies]
+# These crates are strictly mandatory:
 byteorder = "1.1.0"
-# postgres = "0.15"
+bitflags = "1.0.0"
 config = "0.6"
 clap = "~2.26"
-bitflags = "1.0.0"
-log = "0.3"
+# Logging
 fern = "0.4"
+log = "0.3"
 chrono = "0.4"
-itertools = "0.7.2"
-histogram = "*"
+
+# postgres = "0.15"

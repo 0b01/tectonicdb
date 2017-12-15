@@ -1,6 +1,5 @@
 extern crate byteorder;
 #[macro_use] extern crate bitflags;
-extern crate histogram;
 
 pub mod candle;
 pub mod orderbook;

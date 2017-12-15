@@ -1,5 +1,3 @@
-extern crate itertools;
-use self::itertools::Itertools;
 use std::collections::{BTreeMap, HashSet};
 
 //
@@ -8,6 +6,7 @@ use std::collections::{BTreeMap, HashSet};
 
 type Time = u32;
 type Price = f32;
+type Volume = f32;
 type Scale = u16;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -260,7 +259,7 @@ pub struct Candle {
     high:   Price,
     low:    Price,
     close:  Price,
-    volume: Price
+    volume: Volume,
 }
 
 impl Eq for Candle {}
@@ -278,7 +277,8 @@ impl Candle {
 //
 /// Check a list of sequence
 /// Returns maximum continuous sequence
-/// [1,2,3,5,6,7] -> [(1,3), (5,7)]
+/// Concept: [1,2,3,5,6,7] -> [(1,3), (5,7)]
+/// actual value: [60, 120, 180] -> [(60, 180)]
 /// :param lst: list of epochs
 /// :return: list of tuples of shape (start, end)
 fn ranges(lst: &Vec<Time>) -> Vec<(Time, Time)>{
@@ -290,8 +290,36 @@ fn ranges(lst: &Vec<Time>) -> Vec<(Time, Time)>{
 
     let mut ret = Vec::new();
     let mut t = 0;
-    for (_i, els) in &pos.into_iter().group_by(|e| *e) {
-        let l = els.count();
+
+    println!("{:?}", pos);
+
+    // [1, 1, 1, 2, 2] -> [3, 2]
+    let n_groups = {
+        if pos.len() == 0 {
+            vec![]
+        } else {
+            let mut n_groups = vec![];
+            let mut prev = pos[0];
+            let mut count = 0;
+            for &num in pos.iter() {
+                if num != prev {
+                    n_groups.push(count);
+                    count = 0;
+                } else {
+                    count += 1;
+                }
+                prev = num;
+            }
+            if n_groups.len() == 0 {
+                n_groups.push(count);
+            } else {
+                n_groups.push(count+1);
+            }
+            n_groups
+        }
+    };
+
+    for &l in n_groups.iter() {
         let el = lst.get(t).unwrap();
         t += l;
         ret.push((el.clone(), el + 60 * (l-1) as Time));
