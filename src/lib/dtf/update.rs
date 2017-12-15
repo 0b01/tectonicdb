@@ -18,6 +18,7 @@ impl Update {
         if self.seq < ref_seq {
             println!("{:?}", ref_seq);
             println!("{:?}", self);
+            panic!("TODO: ???");
             /* TODO */
         }
         let mut buf : Vec<u8> = Vec::new();

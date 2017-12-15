@@ -185,7 +185,7 @@ impl Default for GStorageFileMetadata {
             file_type: GStorageFileType::RAW_DTF,
             asset_type: AssetType::SPOT,
 
-            // ..Default::default()
+            ..Default::default()
         }
     }
 }

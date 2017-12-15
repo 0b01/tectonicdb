@@ -3,8 +3,9 @@
 //! this is [price -> time -> size] to keep track of
 //! size changes on each price level over time.
 use std::collections::{ BTreeMap, HashMap };
-use super::utils::price_histogram::{ Histogram, Count };
-use super::fill_digits;
+use postprocessing::histogram::{Histogram, Count};
+use utils::fill_digits;
+use dtf::Update;
 
 
 #[derive(Debug)]
@@ -19,7 +20,7 @@ impl Levels {
 
     /// converts a slice of Update to [price, time, size]
     /// see how price levels evolve over time...
-    fn from(ups: &[super::Update], step_bins: Count, tick_bins: Count, m: f64) -> Levels {
+    fn from(ups: &[Update], step_bins: Count, tick_bins: Count, m: f64) -> Levels {
         let (price_hist, step_hist) = Histogram::from(&ups, step_bins, tick_bins, m);
         println!("{:?}", step_hist);
 
@@ -47,6 +48,7 @@ impl Levels {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use dtf;
     static FNAME : &str = "test-data/bt_btcnav.dtf";
 
     #[test]
@@ -54,7 +56,7 @@ mod tests {
         // rebin price
         let tick_bins = 10; // or 9 thresholds
         let step_bins = 10;
-        let records = super::super::decode(FNAME, Some(100));
+        let records = dtf::decode(FNAME, Some(100));
         {
             let prices = records.iter().map(|up| up.price as f64).collect::<Vec<f64>>();
             let price_hist = Histogram::new(&prices, tick_bins, 2.0);

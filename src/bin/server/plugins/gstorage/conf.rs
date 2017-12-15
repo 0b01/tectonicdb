@@ -43,7 +43,7 @@ impl GStorageConfig {
     }
 
     fn get_conf() -> HashMap<String, String> {
-        let fname = "conf/gstorage/conf";
+        let fname = "conf/gstorage/example.conf";
         let mut settings = config::Config::default();
         settings.merge(config::File::with_name(fname)).unwrap();
         settings.deserialize::<HashMap<String, String>>().unwrap()

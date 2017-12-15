@@ -1,6 +1,7 @@
 // this module handles orderbook ops on Updates
 use std::collections::BTreeMap;
-use super::utils::price_histogram::{Histogram, Count};
+use postprocessing::histogram::{Histogram, Count};
+use dtf::Update;
 use std::fmt;
 use std::f64;
 
@@ -60,7 +61,7 @@ pub struct RebinnedOrderbook {
 }
 
 impl RebinnedOrderbook {
-    pub fn from(ups: &[super::Update],
+    pub fn from(ups: &[Update],
                 step_bins: Count,
                 tick_bins: Count,
                 m: f64) -> RebinnedOrderbook {
@@ -159,7 +160,7 @@ impl fmt::Debug for RebinnedOrderbook {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use super::super::*;
+    use dtf;
     static FNAME: &str = "test-data/bt_btcnav.dtf";
 
     #[test]

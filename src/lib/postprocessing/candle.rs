@@ -1,4 +1,6 @@
 use std::collections::{BTreeMap, HashSet};
+use dtf::Update;
+use utils::fill_digits;
 
 type Time = u32;
 type Price = f32;
@@ -12,9 +14,9 @@ pub struct Candles {
     scale: Scale
 }
 
-impl<'a> From<&'a [super::Update]> for Candles {
+impl<'a> From<&'a [Update]> for Candles {
     /// Generate a vector of 1-min candles from Updates
-    fn from(ups: &[super::Update]) -> Candles {
+    fn from(ups: &[Update]) -> Candles {
         let fix_missing = false;
 
         let mut last_ts = 0;        // store the last timestep to test continuity
@@ -25,7 +27,7 @@ impl<'a> From<&'a [super::Update]> for Candles {
         for trade in ups.iter() {
             if !trade.is_trade { continue; }
             // floor(ts)
-            let ts = (super::fill_digits(trade.ts) / 1000 / 60 * 60) as Time; 
+            let ts = (fill_digits(trade.ts) / 1000 / 60 * 60) as Time; 
             
             if fix_missing && (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
                 //insert continuation candle(s)
