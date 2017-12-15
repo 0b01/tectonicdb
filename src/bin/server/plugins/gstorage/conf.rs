@@ -9,6 +9,11 @@ extern crate config;
 use std::collections::HashMap;
 use std::default::Default;
 
+#[cfg(test)]
+static GSTORAGE_CONF_FNAME: &str = "conf/gstorage/example.conf.toml";
+#[cfg(not(test))]
+static GSTORAGE_CONF_FNAME: &str = "conf/gstorage/conf";
+
 pub struct GStorageConfig {
     pub conf: HashMap<String, String>,
     pub oauth_token: Option<String>,
@@ -42,10 +47,10 @@ impl GStorageConfig {
         }
     }
 
+
     fn get_conf() -> HashMap<String, String> {
-        let fname = "conf/gstorage/example.conf";
         let mut settings = config::Config::default();
-        settings.merge(config::File::with_name(fname)).unwrap();
+        settings.merge(config::File::with_name(GSTORAGE_CONF_FNAME)).unwrap();
         settings.deserialize::<HashMap<String, String>>().unwrap()
     }
 
