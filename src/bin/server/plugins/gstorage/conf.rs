@@ -11,6 +11,8 @@ pub struct GStorageConfig {
     pub conf: HashMap<String, String>,
     pub oauth_token: Option<String>,
     pub bucket_name: String,
+    pub folder: String,
+    pub interval: u64,
 }
 
 impl GStorageConfig {
@@ -19,25 +21,32 @@ impl GStorageConfig {
         let conf = GStorageConfig::get_conf();
         let oauth_token = {
             if conf.contains_key("oauth") {
-                Some(conf.get("oauth")
-                         .unwrap()
+                Some(conf.get("oauth").unwrap()
                          .to_owned())
             } else {
                 None
             }
         };
 
-        let bucket_name = conf.get("bucket-name")
-                              .unwrap()
-                              .to_owned();
+        let bucket_name = conf.get("bucket-name").unwrap()
+            .to_owned();
+        let folder = conf.get("folder").unwrap_or(&"".to_owned())
+            .to_owned();
+
+        // upload interval
+        let interval = conf.get("interval")
+            .unwrap_or(&"3600".to_owned()).to_owned();
+        
 
         GStorageConfig {
             conf,
             oauth_token,
-            bucket_name
+            bucket_name,
+            folder,
+            interval: interval.parse().unwrap(),
         }
-    }
 
+    }
 
     fn get_conf() -> HashMap<String, String> {
         let mut settings = config::Config::default();

@@ -49,6 +49,7 @@ path = "src/bin/dtfrebin/main.rs"
 default = ["gcs"]
 
 gcs = [ "reqwest"
+      , "uuid"
       ]
 
 
@@ -71,5 +72,4 @@ serde_derive = "*"
 
 # google storage
 reqwest = { version = "*", optional = true }
-
-# postgres = "0.15"
+uuid = { version = "*", optional = true }
