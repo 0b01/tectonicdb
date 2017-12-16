@@ -431,7 +431,7 @@ pub type History = HashMap<String, Vec<(SystemTime, u64)>>;
 pub struct SharedState {
     pub n_cxns: u16,
     pub settings: Settings,
-    pub vec_store: HashMap<String, VecStore>,
+    pub vec_store: HashMap<String, Box<VecStore>>,
     pub history: History,
 }
 
