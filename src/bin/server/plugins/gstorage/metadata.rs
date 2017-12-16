@@ -6,6 +6,7 @@ use plugins::gstorage::serde::de::Deserialize;
 use dtf::file_metadata::FileMetadata;
 
 use std::fmt;
+use std::error;
 
 #[derive(Serialize)]
 enum GStorageOp {
@@ -101,11 +102,14 @@ impl Default for GStorageOpMetadata {
 }
 
 impl GStorageOpMetadata {
-    pub fn new(resp: String) -> GStorageOpMetadata {
+    pub fn new(resp: String, start_ts: u32, finish_ts: u32) -> Result<GStorageOpMetadata, Box<error::Error>> {
+
         let mut meta = GStorageOpMetadata::default();
 
-        let resp = from_str::<GStorageResp>(&resp).unwrap();
-
+        let resp = from_str::<GStorageResp>(&resp)?;
+        meta.start_ts = start_ts;
+        meta.finish_ts = finish_ts;
+        meta.response_time = finish_ts - start_ts;
         meta.id = resp.id;
         meta.selfLink = resp.selfLink;
         meta.name = resp.name;
@@ -119,7 +123,7 @@ impl GStorageOpMetadata {
 
         meta.batch_hash = resp.md5Hash;
 
-        meta
+        Ok(meta)
     }
 }
 

@@ -5,7 +5,7 @@
 
 use byteorder::{WriteBytesExt, NetworkEndian, /*ReadBytesExt*/ };
 
-use std::{str, thread, time};
+use std::str;
 use std::error::Error;
 use std::io::{Read, Write};
 use std::net::TcpListener;

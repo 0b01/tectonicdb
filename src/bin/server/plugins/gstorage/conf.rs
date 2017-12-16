@@ -1,6 +1,7 @@
 use plugins::gstorage::config;
 use std::collections::HashMap;
 use std::default::Default;
+use std::error;
 
 #[cfg(test)]
 static GSTORAGE_CONF_FNAME: &str = "conf/gstorage/example.conf.toml";
@@ -18,7 +19,7 @@ pub struct GStorageConfig {
 
 impl GStorageConfig {
 
-    pub fn new() -> GStorageConfig {
+    pub fn new() -> Result<GStorageConfig, Box<error::Error>> {
         let conf = GStorageConfig::get_conf();
         let oauth_token = {
             if conf.contains_key("oauth") {
@@ -29,26 +30,32 @@ impl GStorageConfig {
             }
         };
 
-        let bucket_name = conf.get("bucket-name").unwrap()
-            .to_owned();
-        let folder = conf.get("folder").unwrap_or(&"".to_owned())
-            .to_owned();
+        let bucket_name = conf.get("bucket-name").unwrap().to_owned();
+        let folder = match conf.get("folder") {
+            Some(&ref f) => f.to_owned(),
+            None => "".to_owned()
+        };
 
         // upload interval
-        let interval = conf.get("interval")
-            .unwrap_or(&"3600".to_owned()).to_owned();
+        let interval = match conf.get("interval") {
+            Some(ref i) => i.parse()?,
+            None => 3600,
+        };
         
-        let remove = conf.contains_key("delete");
+        let remove = match conf.get("delete"){
+            Some(ref f) => f.to_owned() == "true",
+            None => false
+        };
         
 
-        GStorageConfig {
+        Ok(GStorageConfig {
             conf,
             oauth_token,
             bucket_name,
             folder,
-            interval: interval.parse().unwrap(),
+            interval,
             remove,
-        }
+        })
 
     }
 

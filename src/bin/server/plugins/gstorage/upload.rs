@@ -12,6 +12,8 @@ use plugins::gstorage::GStorageMetadata;
 use plugins::gstorage::serde_json;
 
 use std::path::Path;
+use std::io;
+use std::error;
 
 use std::fs::File;
 extern crate time;
@@ -30,29 +32,42 @@ pub struct GStorageFile {
 
 impl GStorageFile {
 
-    pub fn new(conf: &GStorageConfig, fname: &str) -> GStorageFile {
+    pub fn new(conf: &GStorageConfig, fname: &str) -> Result<GStorageFile, io::Error> {
 
-        let name = Path::new(fname).file_name().unwrap();
+        let name = Path::new(fname).file_name()
+            .ok_or(
+                io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "don't know filename"
+                )
+            )?
+            .to_str()
+            .ok_or(
+                io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "not a valid filename"
+                )
+            )?;
 
-        let remote_name = format!("{}-{}", Uuid::new_v4(), name.to_str().unwrap());
+        let remote_name = format!("{}-{}",Uuid::new_v4(), name);
 
-        GStorageFile {
+        Ok(GStorageFile {
             fname: fname.to_owned(),
             remote_name,
             bucket_name: conf.bucket_name.clone(),
             folder: conf.folder.clone(),
             uploaded: false,
-        }
+        })
 
     }
 
-    fn file_content(&self) -> Body {
-        let file = File::open(&self.fname).unwrap();
+    fn file_content(&self) -> Result<Body, io::Error> {
+        let file = File::open(&self.fname)?;
         let body = Body::new(file);
-        body
+        Ok(body)
     }
 
-    pub fn upload(&mut self) -> Option<GStorageOpMetadata> {
+    pub fn upload(&mut self) -> Result<GStorageOpMetadata, Box<error::Error>> {
 
         // get start time
         let start_ts = time::now();
@@ -67,9 +82,8 @@ impl GStorageFile {
 
         let client = reqwest::Client::new();
         let mut res = client.post(&uri)
-            .body(body)
-            .send()
-            .unwrap();
+            .body(body?)
+            .send()?;
 
 
         if res.status().is_success() {
@@ -77,36 +91,36 @@ impl GStorageFile {
             let _ = res.read_to_string(&mut content);
 
             // get end time
-            let end_ts = time::now();
+            let finish_ts = time::now();
 
             self.uploaded = true;
-            return Some(self.parse_resp(content, start_ts.to_timespec().sec as u32, end_ts.to_timespec().sec as u32));
+
+            Ok(GStorageOpMetadata::new(
+                content,
+                start_ts.to_timespec().sec as u32,
+                finish_ts.to_timespec().sec as u32
+            )?)
+
         } else {
-            // TODO: smooth failure
-            panic!("Upload failed!");
-            // return None;
+            Err(
+                box io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("Cannot upload file {}! dbg: {:?}", self.fname, res)
+                )
+            )
         }
 
     }
 
-    fn parse_resp(&self, resp: String, start_ts: u32, end_ts: u32) -> GStorageOpMetadata {
-        let mut meta = GStorageOpMetadata::new(resp);
-        meta.start_ts = start_ts;
-        meta.finish_ts = end_ts;
-        println!("{:?} {:?}", end_ts, start_ts);
-        meta.response_time = end_ts - start_ts;
-
-        meta
-    }
 }
 
-pub fn upload(fname: &str, conf: &GStorageConfig) -> String {
-    let mut f = GStorageFile::new(conf, fname);
-    let op_meta = f.upload().unwrap();
-    let file_meta = file_metadata::from_fname(fname);
+pub fn upload(fname: &str, conf: &GStorageConfig) -> Result<String, Box<error::Error>> {
+    let mut f = GStorageFile::new(conf, fname)?;
+    let op_meta = f.upload()?;
+    let file_meta = file_metadata::from_fname(fname)?;
     let metadata = GStorageMetadata::new(op_meta, file_meta);
-    let json = serde_json::to_string(&metadata).unwrap();
-    json
+    let json = serde_json::to_string(&metadata)?;
+    Ok(json)
 }
 
 
@@ -122,9 +136,9 @@ mod tests {
 
         let conf = GStorageConfig::new();
         let fname = "test-data/pl_btc_nav.dtf";
-        let mut f = GStorageFile::new(conf, fname);
+        let mut f = GStorageFile::new(&conf, fname).unwrap();
         let op_meta = f.upload().unwrap();
-        let file_meta = file_metadata::from_fname(fname);
+        let file_meta = file_metadata::from_fname(fname).unwrap();
 
         let metadata = GStorageMetadata::new(op_meta, file_meta);
 

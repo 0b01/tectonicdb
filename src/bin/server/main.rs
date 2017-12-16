@@ -1,3 +1,5 @@
+#![feature(box_syntax)]
+
 extern crate dtf;
 extern crate clap;
 extern crate byteorder;

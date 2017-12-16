@@ -1,6 +1,7 @@
 use FileType;
 use dtf::{self, Symbol, AssetType};
 use file_metadata::FileMetadata;
+use std::io;
 use std::fs;
 
 
@@ -30,15 +31,23 @@ pub struct DTFFileMetadata {
 impl FileMetadata for DTFFileMetadata {}
 
 impl DTFFileMetadata {
-    pub fn new(fname: &str) -> DTFFileMetadata {
+    pub fn new(fname: &str) -> Result<DTFFileMetadata, io::Error> {
         let metadata: dtf::Metadata = dtf::read_meta(fname);
-        let file_size = fs::metadata(fname).unwrap().len();
-        let symbol = Symbol::from_str(&metadata.symbol).unwrap();
+        let file_size = fs::metadata(fname)?.len();
+        let symbol = match Symbol::from_str(&metadata.symbol) {
+            Some(sym) => sym,
+            None => {
+                return Err(
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Unable to parse symbol {}", metadata.symbol)));
+            }
+        };
         let first_epoch = metadata.min_ts;
         let last_epoch = metadata.max_ts;
         let total_updates = metadata.nums;
 
-        DTFFileMetadata {
+        Ok(DTFFileMetadata {
             file_type: FileType::RAW_DTF,
             file_size,
             exchange: symbol.exchange,
@@ -60,6 +69,6 @@ impl DTFFileMetadata {
             // uuid: 
             // tags: 
             // errors: 
-        }
+        })
     }
 }
