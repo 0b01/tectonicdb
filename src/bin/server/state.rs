@@ -6,6 +6,7 @@ use std::path::Path;
 use settings::Settings;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
 
 /// name: *should* be the filename
 /// in_memory: are the updates read into memory?
@@ -29,6 +30,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 #[derive(Debug)]
 pub struct Store {
     pub name: String,
+    pub fname: String,
     pub in_memory: bool,
     pub global: Global
 }
@@ -85,13 +87,14 @@ impl Store {
             let mut rdr = self.global.write().unwrap(); // use a write lock to block write in client processes
             let folder = rdr.settings.dtf_folder.to_owned();
             let vecs = rdr.vec_store.get_mut(&self.name).expect("KEY IS NOT IN HASHMAP");
-            let fname = format!("{}/{}.dtf", &folder, self.name);
+            let fullfname = format!("{}/{}.dtf", &folder, self.fname);
             utils::create_dir_if_not_exist(&folder);
 
-            if Path::new(&fname).exists() {
-                dtf::append(&fname, &vecs.0);
+            let fpath = Path::new(&fullfname);
+            if fpath.exists() {
+                dtf::append(&fullfname, &vecs.0);
             } else {
-                dtf::encode(&fname, &self.name /*XXX*/, &vecs.0);
+                dtf::encode(&fullfname, &self.name /*XXX*/, &vecs.0);
             }
 
             // clear
@@ -283,6 +286,7 @@ impl State {
         // insert a store into client state hashmap
         self.store.insert(store_name.to_owned(), Store {
             name: store_name.to_owned(),
+            fname: format!("{}--{}", Uuid::new_v4(), store_name),
             in_memory: false,
             global: self.global.clone()
         });
@@ -391,6 +395,7 @@ impl State {
         let default_in_memory = !Path::new(&default_file).exists();
         state.store.insert("default".to_owned(), Store {
             name: "default".to_owned(),
+            fname: format!("{}--default", Uuid::new_v4()),
             in_memory: default_in_memory,
             global: global.clone()
         });
@@ -401,6 +406,7 @@ impl State {
             let in_memory = !Path::new(&fname).exists();
             state.store.insert(store_name.to_owned(), Store {
                 name: store_name.to_owned(),
+                fname: format!("{}--{}", Uuid::new_v4(), store_name),
                 in_memory: in_memory,
                 global: global.clone()
             });

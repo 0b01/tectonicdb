@@ -9,6 +9,8 @@ extern crate chrono;
 #[macro_use] extern crate log;
 extern crate fern;
 
+extern crate uuid;
+
 mod plugins;
 
 mod server;

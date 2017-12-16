@@ -228,7 +228,7 @@ fn read_symbol(rdr : &mut BufReader<File>) -> String {
     rdr.seek(SeekFrom::Start(SYMBOL_OFFSET)).unwrap();
     let mut buffer = [0; SYMBOL_LEN];
     let _ = rdr.read_exact(&mut buffer);
-    str::from_utf8(&buffer).unwrap().to_owned()
+    str::from_utf8(&buffer).unwrap().trim().to_owned()
 }
 
 fn read_len(rdr : &mut BufReader<File>) -> u64 {
@@ -401,7 +401,11 @@ pub fn read_meta(fname: &str) -> Metadata {
     let symbol = read_symbol(&mut rdr); 
     let nums = read_len(&mut rdr);
     let max_ts = read_max_ts(&mut rdr);
-    let min_ts = read_min_ts(&mut rdr);
+    let min_ts = if nums > 0 {
+        read_min_ts(&mut rdr)
+    } else {
+        Default::default()
+    };
 
     Metadata{
         symbol,
