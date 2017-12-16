@@ -344,20 +344,15 @@ impl State {
         self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP")
     }
 
-    /// get n items in memory as JSON
-    pub fn get_n_as_json(&mut self, count: Option<u32>) -> Option<String> {
-        match self.get_aux(count) {
-            Some(vecs) => Some(format!("[{}]\n", dtf::update_vec_to_json(&vecs))),
-            None => None
-        }
-    }
-
-    fn get_aux(&mut self, count: Option<u32>) -> Option<Vec<Update>> {
+    fn get_aux(&mut self, count: Option<u32>, range: Option<(u32, u32)>) -> Option<Vec<Update>> {
         let shared_state = self.global.read().unwrap();
+
+        //TODO: range
         let &(ref vecs, ref size) = 
             shared_state.vec_store
                     .get(&self.current_store_name)
                     .expect("Key is not in vec_store");
+
         match count {
             Some(count) => {
                 if (*size as u32) < count || *size == 0 {
@@ -365,14 +360,22 @@ impl State {
                 }
                 Some(vecs[..count as usize].to_vec())
             },
-            None => Some(vecs.clone()) // XXX: very inefficient, ok with small n
+            None => Some(vecs.to_owned()) // XXX: very inefficient, ok with small n
+        }
+    }
+
+    /// get n items in memory as JSON
+    pub fn get_n_as_json(&mut self, count: Option<u32>, range: Option<(u32, u32)>) -> Option<String> {
+        match self.get_aux(count, range) {
+            Some(vecs) => Some(format!("[{}]\n", dtf::update_vec_to_json(&vecs))),
+            None => None
         }
     }
 
     /// get `count` items from the current store
-    pub fn get(&mut self, count: Option<u32>) -> Option<Vec<u8>> {
+    pub fn get(&mut self, count: Option<u32>, range: Option<(u32, u32)>) -> Option<Vec<u8>> {
         let mut bytes : Vec<u8> = Vec::new();
-        match self.get_aux(count) {
+        match self.get_aux(count, range) {
             Some(vecs) => { dtf::write_batches(&mut bytes, &vecs); Some(bytes) },
             None => None
         }

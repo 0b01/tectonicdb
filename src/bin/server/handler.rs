@@ -242,45 +242,35 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
             },
 
         // get
-        Get(ReqCount::All, GetFormat::JSON, _) => 
+        Get(ReqCount::All, GetFormat::JSON, range) => 
             {
-                match state.get_n_as_json(None) {
+                match state.get_n_as_json(None, range) {
                     Some(json) => return_string(&json),
                     None => return_err("Not enough items to return."),
                 }
             },
-        Get(ReqCount::All, GetFormat::DTF, _) => 
+        Get(ReqCount::All, GetFormat::DTF, range) => 
             {
-                match state.get(None) {
+                match state.get(None, range) {
                     Some(bytes) => return_bytes(bytes),
                     None => return_err("Failed to GET ALL.")
                 }
             },
         Get(ReqCount::Count(count), GetFormat::JSON, range) => 
             {
-                match range {
-                    Some((min, max)) => unimplemented!(),
-                    None => {
-                        match state.get_n_as_json(Some(count)) {
-                            Some(json) => return_string(&json),
-                            None => return_err(&format!("Requested {} items. Too many.", count))
-                        }
-                    }
+                match state.get_n_as_json(Some(count), range) {
+                    Some(json) => return_string(&json),
+                    None => return_err(&format!("Requested {} items. Too many.", count))
                 }
             }
 
         Get(ReqCount::Count(count), GetFormat::DTF, range) => 
             {
-                match range {
-                    Some((min, max)) => unimplemented!(),
-                    None => {
-                        match state.get(Some(count)) {
-                            Some(bytes) => return_bytes(bytes),
-                            None => return_string(&format!("Failed to get {}.", count))
-                        }
-                    }
+                match state.get(Some(count), range) {
+                    Some(bytes) => return_bytes(bytes),
+                    None => return_string(&format!("Failed to get {}.", count))
                 }
-            }
+            },
 
         Unknown => 
             return_err("Unknown command.")

@@ -1,4 +1,3 @@
-use std::fmt;
 use dtf::read_magic_value;
 use std::io::{
     BufReader,
