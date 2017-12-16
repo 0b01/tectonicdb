@@ -134,7 +134,7 @@ mod tests {
     #[test]
     fn should_upload_file_to_gcloud() {
 
-        let conf = GStorageConfig::new();
+        let conf = GStorageConfig::new().unwrap();
         let fname = "test-data/pl_btc_nav.dtf";
         let mut f = GStorageFile::new(&conf, fname).unwrap();
         let op_meta = f.upload().unwrap();
