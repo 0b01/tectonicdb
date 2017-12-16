@@ -215,7 +215,7 @@ impl State {
     "total_count": {}
   }}"#,
 
-                rdr.connections,
+                rdr.n_cxns,
                 rdr.settings.threads,
                 SystemTime::now()
                     .duration_since(UNIX_EPOCH)
@@ -421,7 +421,7 @@ pub type History = HashMap<String, Vec<(SystemTime, u64)>>;
 
 #[derive(Debug)]
 pub struct SharedState {
-    pub connections: u16,
+    pub n_cxns: u16,
     pub settings: Settings,
     pub vec_store: HashMap<String, VecStore>,
     pub history: History,
@@ -432,7 +432,7 @@ impl SharedState {
         let mut hashmap = HashMap::new();
         hashmap.insert("default".to_owned(), (Vec::new(),0) );
         SharedState {
-            connections: 0,
+            n_cxns: 0,
             settings,
             vec_store: hashmap,
             history: HashMap::new(),

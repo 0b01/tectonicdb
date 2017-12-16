@@ -144,18 +144,18 @@ type LockedGlobal = Arc<RwLock<SharedState>>;
 fn on_connect(global: &LockedGlobal) {
     {
         let mut glb_wtr = global.write().unwrap();
-        glb_wtr.connections += 1;
+        glb_wtr.n_cxns += 1;
     }
 
-    info!("Client connected. Current: {}.", global.read().unwrap().connections);
+    info!("Client connected. Current: {}.", global.read().unwrap().n_cxns);
 }
 
 fn on_disconnect(global: &LockedGlobal) {
     {
         let mut glb_wtr = global.write().unwrap();
-        glb_wtr.connections -= 1;
+        glb_wtr.n_cxns -= 1;
     }
 
     let rdr = global.read().unwrap();
-    info!("Client connection disconnected. Current: {}.", rdr.connections);
+    info!("Client connection disconnected. Current: {}.", rdr.n_cxns);
 }
