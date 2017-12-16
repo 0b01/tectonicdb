@@ -1,7 +1,4 @@
-extern crate serde;
-extern crate serde_json;
-
-extern crate config;
+use plugins::gstorage::config;
 use std::collections::HashMap;
 use std::default::Default;
 

@@ -49,8 +49,6 @@ path = "src/bin/dtfrebin/main.rs"
 default = ["gcs"]
 
 gcs = [ "reqwest"
-      , "serde"
-      , "serde_json"
       ]
 
 
@@ -66,10 +64,12 @@ clap = "~2.26"
 fern = "0.4"
 log = "0.3"
 chrono = "0.4"
+time = "*"
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
 
 # google storage
 reqwest = { version = "*", optional = true }
-serde = { version = "*", optional = true }
-serde_json = { version = "*", optional = true }
 
 # postgres = "0.15"

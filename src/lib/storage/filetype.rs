@@ -5,17 +5,9 @@ use std::io::{
 };
 use std::fs::File;
 
+#[derive(Serialize)]
 pub enum FileType {
     RAW_DTF,
-}
-
-impl fmt::Display for FileType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &FileType::RAW_DTF => 
-                write!(f, "raw.dtf"),
-        }
-    }
 }
 
 impl Default for FileType {

@@ -1,7 +1,8 @@
 use storage::filetype::FileType;
 use storage::DTFFileMetadata;
+use serde::ser::Serialize;
 
-pub trait FileMetadata: Default { } // marker trait
+pub trait FileMetadata: Default + Serialize { }
 
 pub fn from_fname(fname: &str) -> impl FileMetadata {
 

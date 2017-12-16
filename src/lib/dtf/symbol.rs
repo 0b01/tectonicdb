@@ -24,6 +24,7 @@ impl Symbol {
     }
 }
 
+#[derive(Serialize)]
 /// asset type:
 /// spot, futures, options ...
 pub enum AssetType {

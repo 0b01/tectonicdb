@@ -4,7 +4,7 @@ use file_metadata::FileMetadata;
 use std::fs;
 
 
-#[derive(Default)]
+#[derive(Default, Serialize)]
 pub struct DTFFileMetadata {
     file_type: FileType,
 
