@@ -1,9 +1,16 @@
 /// upload saved dtf file to google cloud storage
 extern crate reqwest;
+extern crate serde;
+extern crate serde_json;
 
 use self::reqwest::Body;
 use std::io::Read;
+
 use plugins::gstorage::conf::GStorageConfig;
+use plugins::gstorage::metadata::{ GStorageMetadata, GStorageOpMetadata };
+use dtf::storage::file_metadata::FileMetadata;
+use dtf::storage::file_metadata;
+
 use std::fs::File;
 
 #[derive(Debug)]
@@ -33,7 +40,7 @@ impl GStorageFile {
         body
     }
 
-    fn upload(&mut self) {
+    fn upload(&mut self) -> Option<GStorageOpMetadata> {
         let uri = format!(
             "https://www.googleapis.com/upload/storage/v1/b/{}/o?uploadType=media&name={}",
                 self.bucket_name,
@@ -53,12 +60,26 @@ impl GStorageFile {
 
             self.uploaded = true;
 
-            println!("{}", content);
+            println!("{:?}", content);
+
+            let json = serde_json::from_str::<serde_json::Value>(&content).unwrap();
+            return Some(self.parse_resp(json));
         } else {
             unimplemented!();
+            return None;
         }
-
     }
+
+    fn parse_resp(&self, resp: serde_json::Value) -> GStorageOpMetadata {
+        unimplemented!()
+    }
+
+    fn to_metadata<T>(op_meta: GStorageOpMetadata, file_meta: T) -> GStorageMetadata<T> 
+        where T: FileMetadata
+    {
+        unimplemented!()
+    }
+
 }
 
 
@@ -68,9 +89,13 @@ mod tests {
     use super::*;
     #[test]
     fn should_upload_file_to_gcloud() {
-        let mut f = GStorageFile::new("Cargo.lock");
-        f.upload();
 
+        let fname = "test-data/pl_btc_nav.dtf";
+        let mut f = GStorageFile::new(fname);
+        let op_meta = f.upload();
+
+        let file_meta = file_metadata::from_fname(fname);
+        
         println!("DONE");
     }
 }

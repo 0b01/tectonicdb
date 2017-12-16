@@ -1,10 +1,6 @@
 extern crate serde;
 extern crate serde_json;
 
-use self::serde_json as json;
-use std::fs::File;
-use std::io::{Read};
-
 extern crate config;
 use std::collections::HashMap;
 use std::default::Default;
@@ -26,19 +22,17 @@ impl GStorageConfig {
         let conf = GStorageConfig::get_conf();
         let oauth_token = {
             if conf.contains_key("oauth") {
-                Some(conf
-                        .get("oauth")
-                        .unwrap()
-                        .to_owned())
+                Some(conf.get("oauth")
+                         .unwrap()
+                         .to_owned())
             } else {
                 None
             }
         };
 
-        let bucket_name = conf
-                            .get("bucket-name")
-                            .unwrap()
-                            .to_owned();
+        let bucket_name = conf.get("bucket-name")
+                              .unwrap()
+                              .to_owned();
 
         GStorageConfig {
             conf,

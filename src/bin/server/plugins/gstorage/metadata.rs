@@ -57,7 +57,7 @@
 ///         "chunk_parts": 3, /* if yes, how many chunks */
 ///         "x_of_n": 1, /* this is the first chunk of three */
 ///         "chunk_hash": "fdf3...", /* should be same as above */
-///         "batch_hash": "fdf3cfdb724f7ed282cb4f7e34349c05aaaa8125bc51daeca3456ce6646c3586",
+///         "batch_hash": "fgdf3cfdb724f7ed282cb4f7e34349c05aaaa8125bc51daeca3456ce6646c3586",
 
 ///         // additional properties
 ///         // may store analytics results here
@@ -71,6 +71,8 @@
 /// }
 /// 
 
+use dtf::storage::DTFFileMetadata;
+use dtf::file_metadata::FileMetadata;
 
 use std::fmt;
 
@@ -87,39 +89,7 @@ impl fmt::Display for GStorageFileOp {
     }
 }
 
-enum GStorageFileType {
-    RAW_DTF,
-}
-
-impl fmt::Display for GStorageFileType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &GStorageFileType::RAW_DTF => 
-                write!(f, "raw.dtf"),
-        }
-    }
-}
-
-enum AssetType {
-    SPOT,
-}
-
-impl fmt::Display for AssetType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &AssetType::SPOT => 
-                write!(f, "spot"),
-        }
-    }
-}
-
-struct DTFMetadata {
-
-}
-
-struct GStorageFileMetadata {
-    // meta: about storage operation
-
+pub struct GStorageOpMetadata {
     /*-------------- operation -------------*/
     op_type: GStorageFileOp,
     start_ts: u64,
@@ -143,32 +113,11 @@ struct GStorageFileMetadata {
     server_version: String,
     _prefix: String,
 
-
-    // data section: about the file itself
-    /*-------------- file type -------------*/
-
-    file_type: GStorageFileType,
-    file_size: u64, // in byte
-    exchange: String,
-    currency: String,
-    asset: String,
-    asset_type: AssetType,
-    first_epoch: u64,
-    last_epoch: u64,
-    total_updates: u64,
-    assert_continuity: bool,
-    discontinuities: Vec<(u64, u64)>, // (start, finish)
-    uuid: String,
-    filename: String,
-    continuation_candles: bool,
-
-    tags: Vec<String>,
-    errors: Vec<String>,
 }
 
-impl Default for GStorageFileMetadata {
+impl Default for GStorageOpMetadata {
     fn default() -> Self {
-        GStorageFileMetadata {
+        GStorageOpMetadata {
             op_type: GStorageFileOp::ADD_DTF,
 
             chunked: false,
@@ -182,10 +131,40 @@ impl Default for GStorageFileMetadata {
             server_version: "?".to_owned(),
             _prefix: "".to_owned(),
 
-            file_type: GStorageFileType::RAW_DTF,
-            asset_type: AssetType::SPOT,
+            batch_hash: "".to_owned(),
 
             ..Default::default()
+        }
+    }
+}
+
+
+
+
+//----------------------------------------------
+
+
+pub struct GStorageMetadata<T: FileMetadata> {
+    // meta section: about storage operation
+    meta: GStorageOpMetadata,
+    // data section: about the file itself
+    data: T
+
+}
+
+impl<T: FileMetadata> GStorageMetadata<T> {
+    pub fn new() -> GStorageMetadata<T> {
+        GStorageMetadata {
+            ..Default::default()
+        }
+    }
+}
+
+impl<T: FileMetadata> Default for GStorageMetadata<T> {
+    fn default() -> Self {
+        GStorageMetadata {
+            meta: Default::default(),
+            data: Default::default(),
         }
     }
 }
