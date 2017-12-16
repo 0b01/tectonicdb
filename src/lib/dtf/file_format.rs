@@ -195,6 +195,12 @@ pub fn encode(fname : &str, symbol : &str, ups : &[Update]) {
     wtr.flush().expect("FAILURE TO FLUSH");
 }
 
+pub fn is_dtf(fname: &str) -> bool {
+    let file = File::open(fname).expect("OPENING FILE");
+    let mut rdr = BufReader::new(file);
+    read_magic_value(&mut rdr)
+}
+
 pub fn read_magic_value(rdr : &mut BufReader<File>) -> bool {
     // magic value
     let _ = rdr.seek(SeekFrom::Start(0));

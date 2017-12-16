@@ -13,6 +13,7 @@ pub struct GStorageConfig {
     pub bucket_name: String,
     pub folder: String,
     pub interval: u64,
+    pub remove: bool,
 }
 
 impl GStorageConfig {
@@ -37,6 +38,8 @@ impl GStorageConfig {
         let interval = conf.get("interval")
             .unwrap_or(&"3600".to_owned()).to_owned();
         
+        let remove = conf.contains_key("delete");
+        
 
         GStorageConfig {
             conf,
@@ -44,6 +47,7 @@ impl GStorageConfig {
             bucket_name,
             folder,
             interval: interval.parse().unwrap(),
+            remove,
         }
 
     }

@@ -30,7 +30,7 @@ pub struct GStorageFile {
 
 impl GStorageFile {
 
-    pub fn new(conf: GStorageConfig, fname: &str) -> GStorageFile {
+    pub fn new(conf: &GStorageConfig, fname: &str) -> GStorageFile {
 
         let name = Path::new(fname).file_name().unwrap();
 
@@ -39,8 +39,8 @@ impl GStorageFile {
         GStorageFile {
             fname: fname.to_owned(),
             remote_name,
-            bucket_name: conf.bucket_name,
-            folder: conf.folder,
+            bucket_name: conf.bucket_name.clone(),
+            folder: conf.folder.clone(),
             uploaded: false,
         }
 
@@ -52,7 +52,7 @@ impl GStorageFile {
         body
     }
 
-    fn upload(&mut self) -> Option<GStorageOpMetadata> {
+    pub fn upload(&mut self) -> Option<GStorageOpMetadata> {
 
         // get start time
         let start_ts = time::now();
@@ -100,9 +100,7 @@ impl GStorageFile {
     }
 }
 
-pub fn process_file(fname: &str) -> String {
-    let conf = GStorageConfig::new();
-
+pub fn upload(fname: &str, conf: &GStorageConfig) -> String {
     let mut f = GStorageFile::new(conf, fname);
     let op_meta = f.upload().unwrap();
     let file_meta = file_metadata::from_fname(fname);
