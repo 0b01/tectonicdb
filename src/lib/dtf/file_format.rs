@@ -404,7 +404,7 @@ pub fn read_meta(fname: &str) -> Metadata {
     let min_ts = if nums > 0 {
         read_min_ts(&mut rdr)
     } else {
-        Default::default()
+        max_ts
     };
 
     Metadata{
@@ -716,7 +716,7 @@ mod tests {
         let fname = "test.dtf";
         let mut rdr = file_reader(fname);
         let sym = read_symbol(&mut rdr);
-        assert_eq!(sym, "NEO_BTC             ");
+        assert_eq!(sym, "NEO_BTC");
     }
 
     #[test]

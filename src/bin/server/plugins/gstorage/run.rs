@@ -37,7 +37,7 @@ pub fn run(global: Arc<RwLock<SharedState>> ) {
                         let entry = match entry {
                             Ok(e) => e,
                             Err(e) => {
-                                error!("Unable to get Dir Entry");
+                                error!("Unable to get Dir Entry: {:?}", e);
                                 continue;
                             }
                         };

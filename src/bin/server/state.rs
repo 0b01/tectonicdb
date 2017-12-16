@@ -81,7 +81,6 @@ impl Store {
     /// If file exists, use append which only appends a filtered set of updates whose timestamp is larger than the old timestamp
     /// If file doesn't exists, simply encode.
     ///
-    /// TODO: Need to figure out how to specify symbol (and exchange name).
     pub fn flush(&mut self) -> Option<bool> {
         {
             let mut rdr = self.global.write().unwrap(); // use a write lock to block write in client processes
@@ -94,7 +93,7 @@ impl Store {
             if fpath.exists() {
                 dtf::append(&fullfname, &vecs.0);
             } else {
-                dtf::encode(&fullfname, &self.name /*XXX*/, &vecs.0);
+                dtf::encode(&fullfname, &self.name, &vecs.0);
             }
 
             // clear

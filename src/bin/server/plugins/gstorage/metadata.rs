@@ -1,8 +1,6 @@
-use dtf::storage::DTFFileMetadata;
-use plugins::gstorage::serde_json::Value;
-use plugins::gstorage::serde::ser::Serialize;
+const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
+
 use plugins::gstorage::serde_json::from_str;
-use plugins::gstorage::serde::de::Deserialize;
 use dtf::file_metadata::FileMetadata;
 
 use std::fmt;
@@ -10,13 +8,13 @@ use std::error;
 
 #[derive(Serialize)]
 enum GStorageOp {
-    ADD_DTF,
+    AddDtf,
 }
 
 impl fmt::Display for GStorageOp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &GStorageOp::ADD_DTF => 
+            &GStorageOp::AddDtf => 
                 write!(f, "add.dtf"),
         }
     }
@@ -30,15 +28,24 @@ pub struct GStorageOpMetadata {
 
     /*-------------- returned vals -------------*/
     id: String,
-    selfLink: String,
+    #[serde(rename="selfLink")]
+    self_link: String,
     name: String,
     bucket: String,
     metageneration: String,
-    timeCreated: String,
-    timeStorageClassUpdated: String,
+
+    #[serde(rename="timeCreated")]
+    time_created: String,
+
+    #[serde(rename="timeStorageClassUpdated")]
+    time_storage_class_updated: String,
+
     size: String,
-    md5Hash: String,
-    mediaLink: String,
+
+    #[serde(rename="md5Hash")]
+    md5_hash: String,
+    #[serde(rename="mediaLink")]
+    media_link: String,
 
     /*-------------- operation -------------*/
     op_type: GStorageOp,
@@ -66,7 +73,7 @@ pub struct GStorageOpMetadata {
 impl Default for GStorageOpMetadata {
     fn default() -> Self {
         GStorageOpMetadata {
-            op_type: GStorageOp::ADD_DTF,
+            op_type: GStorageOp::AddDtf,
 
             chunked: false,
             n_batch_parts: 1,
@@ -75,26 +82,26 @@ impl Default for GStorageOpMetadata {
             status: "ok".to_owned(),
             dtf_spec: "v1".to_owned(),
             priority: 0,
-            client_version: "0.1.7".to_owned(),
+            client_version: VERSION.unwrap_or("unknown").to_owned(),
             server_version: "?".to_owned(),
             _prefix: "".to_owned(),
 
             batch_hash: "".to_owned(),
 
             response_time: 0,
-            timeStorageClassUpdated: "".to_owned(),
+            time_storage_class_updated: "".to_owned(),
             size: "".to_owned(),
-            timeCreated: "".to_owned(),
+            time_created: "".to_owned(),
 
             start_ts: 0,
             finish_ts: 0,
             bucket: "".to_owned(),
             id: "".to_owned(),
-            selfLink: "".to_owned(),
+            self_link: "".to_owned(),
             name: "".to_owned(),
             metageneration: "".to_owned(),
-            md5Hash: "".to_owned(),
-            mediaLink: "".to_owned(),
+            md5_hash: "".to_owned(),
+            media_link: "".to_owned(),
 
             // ..Default::default()
         }
@@ -111,17 +118,17 @@ impl GStorageOpMetadata {
         meta.finish_ts = finish_ts;
         meta.response_time = finish_ts - start_ts;
         meta.id = resp.id;
-        meta.selfLink = resp.selfLink;
+        meta.self_link = resp.self_link;
         meta.name = resp.name;
         meta.bucket = resp.bucket;
         meta.metageneration = resp.metageneration;
-        meta.timeCreated = resp.timeCreated;
-        meta.timeStorageClassUpdated = resp.timeStorageClassUpdated;
+        meta.time_created = resp.time_created;
+        meta.time_storage_class_updated = resp.time_storage_class_updated;
         meta.size = resp.size;
-        meta.md5Hash = resp.md5Hash.clone();
-        meta.mediaLink = resp.mediaLink;
+        meta.md5_hash = resp.md5_hash.clone();
+        meta.media_link = resp.media_link;
 
-        meta.batch_hash = resp.md5Hash;
+        meta.batch_hash = resp.md5_hash;
 
         Ok(meta)
     }
@@ -129,22 +136,21 @@ impl GStorageOpMetadata {
 
 #[derive(Deserialize)]
 struct GStorageResp {
-    kind: String,
     id: String,
-    selfLink: String,
+    #[serde(rename="selfLink")]
+    self_link: String,
     name: String,
     bucket: String,
-    generation: String,
     metageneration: String,
-    timeCreated: String,
-    updated: String,
-    storageClass: String,
-    timeStorageClassUpdated: String,
+    #[serde(rename="timeCreated")]
+    time_created: String,
+    #[serde(rename="timeStorageClassUpdated")]
+    time_storage_class_updated: String,
     size: String,
-    md5Hash: String,
-    mediaLink: String,
-    crc32c: String,
-    etag: String,
+    #[serde(rename="md5Hash")]
+    md5_hash: String,
+    #[serde(rename="mediaLink")]
+    media_link: String,
 }
 
 
