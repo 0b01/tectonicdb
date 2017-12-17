@@ -10,13 +10,13 @@ pub enum ReturnType {
 }
 
 #[derive(Debug)]
-enum ReqCount {
+pub enum ReqCount {
     All,
     Count(u32)
 }
 
 #[derive(Debug)]
-enum GetFormat {
+pub enum GetFormat {
     JSON,
     DTF
 }
@@ -33,7 +33,7 @@ enum Command {
     BulkAdd,
     BulkAddInto(DbName),
     BulkAddEnd,
-    Get(ReqCount, GetFormat, Option<(u32,u32)>),
+    Get(ReqCount, GetFormat, Option<(u64,u64)>),
     Count(ReqCount),
     Clear(ReqCount),
     Flush(ReqCount),
@@ -129,14 +129,16 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                                         .split(" ")
                                         .collect::<Vec<&str>>()
                                         [0]
-                                        .parse::<u32>()
-                                        .unwrap();
+                                        .parse::<u64>()
+                                        .unwrap()
+                                        * 1000;
                         let to_epoch = string.clone()[(string.find(" TO ").unwrap()+4)..]
                                         .split(" ")
                                         .collect::<Vec<&str>>()
                                         [0]
-                                        .parse::<u32>()
-                                        .unwrap();
+                                        .parse::<u64>()
+                                        .unwrap()
+                                        * 1000;
                         Some((from_epoch, to_epoch))
                     } else {
                         None
@@ -242,33 +244,13 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
             },
 
         // get
-        Get(ReqCount::All, GetFormat::JSON, range) => 
+        Get(cnt, fmt, rng) => 
             {
-                match state.get_n_as_json(None, range) {
-                    Some(json) => return_string(&json),
+                match state.get(cnt, fmt, rng) {
+                    Some(ReturnType::Bytes(b)) => return_bytes(b),
+                    Some(ReturnType::String(s)) => return_string(&s),
+                    Some(ReturnType::Error(e)) => return_err(&e),
                     None => return_err("Not enough items to return."),
-                }
-            },
-        Get(ReqCount::All, GetFormat::DTF, range) => 
-            {
-                match state.get(None, range) {
-                    Some(bytes) => return_bytes(bytes),
-                    None => return_err("Failed to GET ALL.")
-                }
-            },
-        Get(ReqCount::Count(count), GetFormat::JSON, range) => 
-            {
-                match state.get_n_as_json(Some(count), range) {
-                    Some(json) => return_string(&json),
-                    None => return_err(&format!("Requested {} items. Too many.", count))
-                }
-            }
-
-        Get(ReqCount::Count(count), GetFormat::DTF, range) => 
-            {
-                match state.get(Some(count), range) {
-                    Some(bytes) => return_bytes(bytes),
-                    None => return_string(&format!("Failed to get {}.", count))
                 }
             },
 

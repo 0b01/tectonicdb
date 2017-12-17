@@ -145,6 +145,7 @@ fn write_reference(wtr: &mut Write, ref_ts: u64, ref_seq: u32, len: u16) {
 }
 
 pub fn write_batches(mut wtr: &mut Write, ups : &[Update]) {
+    if ups.len() == 0 { return; }
     let mut buf : Vec<u8> = Vec::new();
     let mut ref_ts = ups[0].ts;
     let mut ref_seq = ups[0].seq;
@@ -257,11 +258,16 @@ pub fn read_one_batch_meta(rdr: &mut Read) -> BatchMetadata {
     }
 }
 
+pub fn get_range_in_file(fname: &str, min_ts: u64, max_ts: u64) -> Vec<Update> {
+    let mut rdr = file_reader(fname);
+    range(&mut rdr, min_ts, max_ts)
+}
+
 /// reads a vector of Update over some time interval (min_ts, max_ts) from file.
-pub fn range(rdr: &mut BufReader<File>, min_ts: f64, max_ts: f64) -> Vec<Update> {
+fn range(rdr: &mut BufReader<File>, min_ts: u64, max_ts: u64) -> Vec<Update> {
     // convert ts to match the dtf file format (in ms)
-    let min_ts = (min_ts * 1000.) as u64;
-    let max_ts = (max_ts * 1000.) as u64;
+    let min_ts = (min_ts * 1000) as u64;
+    let max_ts = (max_ts * 1000) as u64;
 
     // can't go back in time
     if min_ts > max_ts { return Vec::new(); }

@@ -1,3 +1,9 @@
+macro_rules! catch {
+    ($($code:tt)*) => {
+        (|| { Some({ $($code)* }) })()
+    }
+}
+
 use dtf;
 use dtf::update::Update;
 use std::collections::HashMap;
@@ -7,6 +13,7 @@ use settings::Settings;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
+use handler::{GetFormat, ReturnType, ReqCount};
 
 /// name: *should* be the filename
 /// in_memory: are the updates read into memory?
@@ -344,40 +351,73 @@ impl State {
         self.store.get_mut(&self.current_store_name).expect("KEY IS NOT IN HASHMAP")
     }
 
-    fn get_aux(&mut self, count: Option<u32>, range: Option<(u32, u32)>) -> Option<Vec<Update>> {
-        let shared_state = self.global.read().unwrap();
+    /// get `count` items from the current store
+    /// 
+    /// return if request item,
+    /// get from mem
+    /// if range, filter
+    /// if count <= len, return
+    /// need more, get from fs
+    /// 
+    pub fn get(&mut self, count: ReqCount, format: GetFormat, range: Option<(u64, u64)>) -> Option<ReturnType> {
 
-        //TODO: range
-        let &(ref vecs, ref size) = 
-            shared_state.vec_store
-                    .get(&self.current_store_name)
-                    .expect("Key is not in vec_store");
+        // return if requested 0 item
+        { if let ReqCount::Count(c) = count { if c == 0 { return None; }}}
+
+        // check for items in memory
+        let rdr = self.global.read().unwrap();
+        let &(ref vecs, _) = rdr.vec_store.get(&self.current_store_name)?;
+
+        // if range, filter mem
+        let acc = catch! {
+            let (min_ts, max_ts) = range?;
+            if !utils::within_range(min_ts, max_ts, vecs.first()?.ts, vecs.last()?.ts) { return None; }
+            vecs.iter()
+                .filter(|up| up.ts < max_ts && up.ts > min_ts)
+                .map(|up| up.to_owned())
+                .collect::<Vec<_>>()
+        }.unwrap_or(vecs.to_owned());
+
+        // if count <= len, return
+        match count {
+            ReqCount::Count(c) => {
+                if (c as usize) <= acc.len() {
+                    return self._return_aux(&acc[..c as usize], format);
+                }
+            },
+            ReqCount::All => ()
+        };
+
+        // turns out we need more items to fill the req...
+        // check dtf files under folder and collect updates in requested range
+        let mut ups_from_fs = acc;
+        if let Some((min_ts, max_ts)) = range {
+            let folder = {
+                let rdr = self.global.read().unwrap();
+                rdr.settings.dtf_folder.clone()
+            };
+            let ups = utils::scan_files_for_range(&folder, &self.current_store_name, min_ts, max_ts);
+            ups_from_fs.extend(ups);
+        }
+
+        let result = ups_from_fs;
 
         match count {
-            Some(count) => {
-                if (*size as u32) < count || *size == 0 {
-                    return None
-                }
-                Some(vecs[..count as usize].to_vec())
+            ReqCount::Count(c) => return self._return_aux(&result[..c as usize], format),
+            ReqCount::All => self._return_aux(&result, format),
+        }
+    }
+
+    fn _return_aux(&self, result: &[Update], format: GetFormat) -> Option<ReturnType> {
+        match format {
+            GetFormat::DTF => {
+                let mut bytes : Vec<u8> = Vec::new();
+                dtf::write_batches(&mut bytes, &result);
+                Some(ReturnType::Bytes(bytes))
             },
-            None => Some(vecs.to_owned()) // XXX: very inefficient, ok with small n
-        }
-    }
-
-    /// get n items in memory as JSON
-    pub fn get_n_as_json(&mut self, count: Option<u32>, range: Option<(u32, u32)>) -> Option<String> {
-        match self.get_aux(count, range) {
-            Some(vecs) => Some(format!("[{}]\n", dtf::update_vec_to_json(&vecs))),
-            None => None
-        }
-    }
-
-    /// get `count` items from the current store
-    pub fn get(&mut self, count: Option<u32>, range: Option<(u32, u32)>) -> Option<Vec<u8>> {
-        let mut bytes : Vec<u8> = Vec::new();
-        match self.get_aux(count, range) {
-            Some(vecs) => { dtf::write_batches(&mut bytes, &vecs); Some(bytes) },
-            None => None
+            GetFormat::JSON => {
+                Some(ReturnType::String(format!("[{}]\n", dtf::update_vec_to_json(&result))))
+            }
         }
     }
 
