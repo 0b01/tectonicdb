@@ -403,7 +403,13 @@ impl State {
         let result = ups_from_fs;
 
         match count {
-            ReqCount::Count(c) => return self._return_aux(&result[..c as usize], format),
+            ReqCount::Count(c) => {
+                if result.len() >= c as usize {
+                    return self._return_aux(&result[..(c as usize -1)], format);
+                } else {
+                    return Some(ReturnType::Error(format!("Requested {} but only have {}.", c, result.len())))
+                }
+            }
             ReqCount::All => self._return_aux(&result, format),
         }
     }

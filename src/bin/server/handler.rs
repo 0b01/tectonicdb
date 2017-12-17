@@ -101,7 +101,7 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 Exists(dbname.to_owned())
             } else
 
-            if string.starts_with("ADD ") {
+            if string.starts_with("ADD ") || string.starts_with("INSERT ") {
                 let parsed = if string.contains(" INTO ") {
                         parser::parse_add_into(&string)
                     } else {
@@ -122,27 +122,7 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 let count : Vec<&str> = count.split(" ").collect();
                 let count = count[0].parse::<u32>().unwrap();
 
-                let ranged = string.contains(" FROM ");
-                let range = if ranged {
-                        // range to query
-                        let from_epoch = string.clone()[(string.find(" FROM ").unwrap()+6)..]
-                                        .split(" ")
-                                        .collect::<Vec<&str>>()
-                                        [0]
-                                        .parse::<u64>()
-                                        .unwrap()
-                                        * 1000;
-                        let to_epoch = string.clone()[(string.find(" TO ").unwrap()+4)..]
-                                        .split(" ")
-                                        .collect::<Vec<&str>>()
-                                        [0]
-                                        .parse::<u64>()
-                                        .unwrap()
-                                        * 1000;
-                        Some((from_epoch, to_epoch))
-                    } else {
-                        None
-                    };
+                let range = parser::parse_get_range(string);
 
                 // test if json
                 let format =  if string.contains(" AS JSON") { GetFormat::JSON } else { GetFormat::DTF };
