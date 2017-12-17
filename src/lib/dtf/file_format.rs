@@ -264,10 +264,10 @@ pub fn get_range_in_file(fname: &str, min_ts: u64, max_ts: u64) -> Vec<Update> {
 }
 
 /// reads a vector of Update over some time interval (min_ts, max_ts) from file.
+/// :param min_ts is time in millisecond
+/// :param max_ts is time in millisecond
 fn range(rdr: &mut BufReader<File>, min_ts: u64, max_ts: u64) -> Vec<Update> {
     // convert ts to match the dtf file format (in ms)
-    let min_ts = (min_ts * 1000) as u64;
-    let max_ts = (max_ts * 1000) as u64;
 
     // can't go back in time
     if min_ts > max_ts { return Vec::new(); }
@@ -661,7 +661,7 @@ mod tests {
                         is_bid: false,
                         is_trade: false
                     })
-                .collect::<Vec<Update>>(), range(&mut rdr, 10., 20.));
+                .collect::<Vec<Update>>(), range(&mut rdr, 10000, 20000));
     }
 
     #[test]
@@ -694,7 +694,7 @@ mod tests {
                         is_bid: false,
                         is_trade: false
                     })
-                .collect::<Vec<Update>>(), range(&mut rdr, 1., 999.)); // ???
+                .collect::<Vec<Update>>(), range(&mut rdr, 1000, 999000)); // ???
     }
 
     #[test]
@@ -702,15 +702,15 @@ mod tests {
         let fname: &str = "test-data/bt_btcnav.dtf";
         let mut rdr = file_reader(fname);
 
-        let start = 1_510_168_156.;
-        let end = 1_510_171_756.;
+        let start = 1_510_168_156 * 1000;
+        let end = 1_510_171_756 * 1000;
 
         let ups = range(&mut rdr, start, end);
         println!("{}", ups.len());
         assert_eq!(ups.len(), 10736);
 
         for up in ups.iter() {
-            assert!(up.ts >= (start * 1000.) as u64 && up.ts <= (end * 1000.) as u64);
+            assert!(up.ts >= start && up.ts <= end);
         }
     }
 
