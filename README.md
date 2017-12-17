@@ -136,4 +136,4 @@ Language bindings:
 
 - [x] Logging
 
-- [ ] Query by timestamp
+- [x] Query by timestamp
