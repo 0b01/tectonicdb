@@ -61,6 +61,28 @@ pub fn parse_add_into(string: &str) -> (Option<Update>, Option<String>) {
     }
 }
 
+pub fn parse_get_range(string: &str) -> Option<(u64, u64)> {
+    if string.contains(" FROM ") {
+        // range to query
+        let from_epoch = string.clone()[(string.find(" FROM ").unwrap()+6)..]
+                        .split(" ")
+                        .collect::<Vec<&str>>()
+                        [0]
+                        .parse::<u64>()
+                        .unwrap()
+                        * 1000;
+        let to_epoch = string.clone()[(string.find(" TO ").unwrap()+4)..]
+                        .split(" ")
+                        .collect::<Vec<&str>>()
+                        [0]
+                        .parse::<u64>()
+                        .unwrap()
+                        * 1000;
+        Some((from_epoch, to_epoch))
+    } else {
+        None
+    }
+}
 
 #[cfg(test)]
 mod tests {
