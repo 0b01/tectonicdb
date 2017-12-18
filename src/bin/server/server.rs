@@ -6,6 +6,7 @@
 use byteorder::{WriteBytesExt, NetworkEndian, /*ReadBytesExt*/ };
 
 use std::str;
+use std::time;
 use std::error::Error;
 use std::io::{Read, Write};
 use std::net::TcpListener;
@@ -56,12 +57,17 @@ fn handle_client(mut stream: TcpStream, global: &LockedGlobal) {
     let mut state = State::new(global);
     utils::init_dbs(&mut state);
 
-    let mut buf = [0; 2048];
     loop {
+        let mut buf = vec![0; 2048];
+        let t = time::SystemTime::now();
         let bytes_read = stream.read(&mut buf).unwrap();
+        println!("done: {:?}", t.elapsed());
+
         if bytes_read == 0 { break }
         let req = str::from_utf8(&buf[..(bytes_read-1)]).unwrap();
-        for line in req.split('\n') {
+
+
+        for line in req.lines() {
             // println!("[DEBUG] Received:\t{:?}", line);
             respond(&stream, &mut state, &line);
         }
@@ -85,7 +91,7 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
     };
 
     info!("Listening on addr: {}", addr);
-    info!("-----------------initiated-----------------");
+    info!("----------------- initialized -----------------");
 
     let pool = ThreadPool::new(settings.threads);
     let global = Arc::new(RwLock::new(SharedState::new(settings.clone()))); 

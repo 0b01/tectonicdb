@@ -10,6 +10,7 @@ license = "MIT"
 readme = "README.md"
 exclude = [
     "db/*",
+    "test-data/*",
 ]
 
 
@@ -48,9 +49,7 @@ path = "src/bin/dtfrebin/main.rs"
 [features]
 default = ["gcs"]
 
-gcs = [ "reqwest"
-      , "uuid"
-      ]
+gcs = [ "reqwest" ]
 
 
 
@@ -65,11 +64,11 @@ clap = "~2.26"
 fern = "0.4"
 log = "0.3"
 chrono = "0.4"
-time = "*"
-serde = "*"
-serde_json = "*"
-serde_derive = "*"
+time = "0.1.38"
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
+uuid = "0.5.1"
 
 # google storage
-reqwest = { version = "*", optional = true }
-uuid = { version = "*", optional = true }
+reqwest = { version = "0.8.1", optional = true }

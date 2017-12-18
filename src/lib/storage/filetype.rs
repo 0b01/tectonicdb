@@ -6,12 +6,12 @@ use std::fs::File;
 
 #[derive(Serialize)]
 pub enum FileType {
-    RAW_DTF,
+    RawDtf,
 }
 
 impl Default for FileType {
     fn default() -> Self {
-        FileType::RAW_DTF
+        FileType::RawDtf
     }
 }
 
@@ -22,7 +22,7 @@ impl FileType {
         let mut rdr = BufReader::new(file);
 
         if read_magic_value(&mut rdr) {
-            return FileType::RAW_DTF;
+            return FileType::RawDtf;
         }
 
         unimplemented!()

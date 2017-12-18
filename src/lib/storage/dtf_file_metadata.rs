@@ -48,7 +48,7 @@ impl DTFFileMetadata {
         let total_updates = metadata.nums;
 
         Ok(DTFFileMetadata {
-            file_type: FileType::RAW_DTF,
+            file_type: FileType::RawDtf,
             file_size,
             exchange: symbol.exchange,
             currency: symbol.currency,

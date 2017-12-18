@@ -10,7 +10,7 @@ pub fn from_fname(fname: &str) -> Result<impl FileMetadata, io::Error> {
     let ftype = FileType::from_fname(fname);
 
     match ftype {
-        FileType::RAW_DTF => DTFFileMetadata::new(fname)
+        FileType::RawDtf => DTFFileMetadata::new(fname)
     }
 
 }

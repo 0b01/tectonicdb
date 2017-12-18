@@ -7,6 +7,7 @@ use std::net::TcpStream;
 use std::str;
 use byteorder::{BigEndian, /*WriteBytesExt, */ ReadBytesExt};
 use std::io::{self, Read, Write};
+use std::time;
 
 struct Cxn {
     stream : TcpStream,
@@ -26,6 +27,20 @@ impl Cxn {
             let _ = self.stream.read_exact(&mut buf);
             str::from_utf8(&buf).unwrap().to_owned()
         }
+    }
+    fn new(host : &str, port : &str, verbosity : u64) -> Cxn {
+        let addr = format!("{}:{}", host, port);
+
+        if verbosity > 0 {
+            println!("Connecting to {}", addr);
+        }
+
+        let cxn = Cxn{
+            stream : TcpStream::connect(&addr).unwrap(),
+            // addr
+        };
+
+        cxn
     }
 }
 
@@ -50,36 +65,41 @@ fn main() {
                                .short("v")
                                .multiple(true)
                                .help("Sets the level of verbosity"))
+                          .arg(Arg::with_name("b")
+                               .short("b")
+                               .value_name("ITERATION")
+                               .multiple(false)
+                               .help("Benchmark network latency")
+                               .takes_value(true))
                           .get_matches();
     let host = matches.value_of("host").unwrap_or("0.0.0.0");
     let port = matches.value_of("port").unwrap_or("9001");
     let verbosity = matches.occurrences_of("v");
 
-    let mut cxn = connect(host, port, verbosity);
+    let mut cxn = Cxn::new(host, port, verbosity);
+    
+    let mut t = time::SystemTime::now();
+    if matches.is_present("b") {
+        let times = matches.value_of("b")
+                    .unwrap_or("10")
+                    .parse::<usize>()
+                    .unwrap_or(10) + 1;
 
-    loop {
-        print!("--> ");
-        io::stdout().flush().ok().expect("Could not flush stdout"); // manually flush stdout
+        for _ in 1..times {
+            let res = cxn.cmd("PING\n");
+            println!("res: {:?}, latency: {:?}", res, t.elapsed());
+            t = time::SystemTime::now();
+        }
+    } else {
+        loop {
+            print!("--> ");
+            io::stdout().flush().ok().expect("Could not flush stdout"); // manually flush stdout
 
-        let mut cmd = String::new();
-        io::stdin().read_line(&mut cmd).unwrap();
-        let res = cxn.cmd(&cmd);
-        print!("{}", res);
+            let mut cmd = String::new();
+            io::stdin().read_line(&mut cmd).unwrap();
+            let res = cxn.cmd(&cmd);
+            print!("{}", res);
+        }
     }
 }
 
-
-fn connect(host : &str, port : &str, verbosity : u64) -> Cxn {
-    let addr = format!("{}:{}", host, port);
-
-    if verbosity > 0 {
-        println!("Connecting to {}", addr);
-    }
-
-    let cxn = Cxn{
-        stream : TcpStream::connect(&addr).unwrap(),
-        // addr
-    };
-
-    cxn
-}
