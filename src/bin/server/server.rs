@@ -31,30 +31,6 @@ use tokio_io::io::{lines, write_all, WriteHalf};
 
 use plugins::run_plugins;
 
-fn respond(mut wtr: WriteHalf<TcpStream>, mut state: &mut State, line: &str) {
-    let resp = handler::gen_response(&line, &mut state);
-    match resp {
-        ReturnType::Bytes(bytes)  => {
-            wtr.write_u8(0x1).unwrap();
-            wtr.write(&bytes).unwrap()
-        }
-        ReturnType::String(str_resp) => {
-            wtr.write_u8(0x1).unwrap();
-            wtr.write_u64::<NetworkEndian>(str_resp.len() as u64).unwrap();
-            wtr.write(str_resp.as_bytes()).unwrap()
-        },
-        ReturnType::Error(errmsg) => {
-            error!("Req: `{}`", line);
-            error!("Err: `{}`", errmsg.clone());
-
-            wtr.write_u8(0x0).unwrap();
-            let ret = format!("ERR: {}\n", errmsg);
-            wtr.write_u64::<NetworkEndian>(ret.len() as u64).unwrap();
-            wtr.write(ret.as_bytes()).unwrap()
-        }
-    };
-}
-
 pub fn run_server(host : &str, port : &str, settings: &Settings) {
     let addr = format!("{}:{}", host, port);
     let addr = addr.parse::<SocketAddr>().unwrap();
@@ -86,44 +62,51 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
 
     // main loop
     let done = listener.incoming().for_each(move |(socket, _addr)| {
-
         let global_copy = global.clone();
-        on_connect(&global_copy);
-
-        // handle client
         let mut state = State::new(&global);
         utils::init_dbs(&mut state);
+        on_connect(&global_copy);
 
         let (reader, writer) = socket.split();
-        let mainloop = loop {
-            let lines = lines(BufReader::new(reader));
+        let lines = lines(BufReader::new(reader));
+        let responses = lines.map(move |line| {
+            handler::gen_response(&line, &mut state)
+        });
+        let writes = responses.fold(writer, |wtr, resp| {
+            let mut buf: Vec<u8> = vec![];
+            match resp {
+                ReturnType::Bytes(bytes)  => {
+                    buf.write_u8(0x1).unwrap();
+                    buf.write(&bytes).unwrap();
+                },
+                ReturnType::String(str_resp) => {
+                    buf.write_u8(0x1).unwrap();
+                    buf.write_u64::<NetworkEndian>(str_resp.len() as u64).unwrap();
+                },
+                ReturnType::Error(errmsg) => {
+                    // error!("Req: `{}`", line);
+                    error!("Err: `{}`", errmsg.clone());
+                    buf.write_u8(0x0).unwrap();
+                    let ret = format!("ERR: {}\n", errmsg);
+                    buf.write_u64::<NetworkEndian>(ret.len() as u64).unwrap();
+                    buf.write(ret.as_bytes()).unwrap();
+                }
+            };
+            write_all(wtr, buf).map(|(w,_)| w)
+        });
 
-            let responses = lines.map(move |line| {
-                respond(writer, &mut state, &line);
-            });
+        // let writes = responses.then(move |_| Ok(()));
 
-            responses.then(move |_| Ok(()));
-        };
+
+        let msg = writes.then(move |_| Ok(()));
+        handle.spawn(msg);
 
         on_disconnect(&global_copy);
 
-        handle.spawn(mainloop);
         Ok(())
     });
 
     core.run(done).unwrap();
-
-
-    // // main loop
-    // for stream in listener.incoming() {
-    //     let stream = stream.unwrap();
-    //     let global_copy = global.clone();
-    //     pool.execute(move || {
-    //         on_connect(&global_copy);
-    //         handle_client(stream, &global_copy);
-    //         on_disconnect(&global_copy);
-    //     });
-    // }
 }
 
 type LockedGlobal = Arc<RwLock<SharedState>>;
