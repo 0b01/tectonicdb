@@ -9,8 +9,10 @@ use std::str;
 use std::time;
 use std::error::Error;
 use std::io::{Read, Write};
-use std::net::TcpListener;
-use std::net::TcpStream;
+// use std::net::TcpListener;
+// use std::net::TcpStream;
+use std::net::SocketAddr;
+use std::io::{BufReader};
 
 use state::*;
 use handler::ReturnType;
@@ -20,62 +22,42 @@ use settings::Settings;
 use threadpool::ThreadPool;
 use std::sync::{Arc, RwLock};
 
+use futures::prelude::*;
+use futures::stream::Then;
+use tokio_core::net::{TcpListener, TcpStream};
+use tokio_core::reactor::Core;
+use tokio_io::AsyncRead;
+use tokio_io::io::{lines, write_all, WriteHalf};
+
 use plugins::run_plugins;
 
-fn respond(mut stream: &TcpStream, mut state: &mut State, line: &str) {
+fn respond(mut wtr: WriteHalf<TcpStream>, mut state: &mut State, line: &str) {
     let resp = handler::gen_response(&line, &mut state);
     match resp {
         ReturnType::Bytes(bytes)  => {
-            stream.write_u8(0x1).unwrap();
-            stream.write(&bytes).unwrap()
+            wtr.write_u8(0x1).unwrap();
+            wtr.write(&bytes).unwrap()
         }
         ReturnType::String(str_resp) => {
-            stream.write_u8(0x1).unwrap();
-            stream.write_u64::<NetworkEndian>(str_resp.len() as u64).unwrap();
-            stream.write(str_resp.as_bytes()).unwrap()
+            wtr.write_u8(0x1).unwrap();
+            wtr.write_u64::<NetworkEndian>(str_resp.len() as u64).unwrap();
+            wtr.write(str_resp.as_bytes()).unwrap()
         },
         ReturnType::Error(errmsg) => {
             error!("Req: `{}`", line);
             error!("Err: `{}`", errmsg.clone());
 
-            stream.write_u8(0x0).unwrap();
+            wtr.write_u8(0x0).unwrap();
             let ret = format!("ERR: {}\n", errmsg);
-            stream.write_u64::<NetworkEndian>(ret.len() as u64).unwrap();
-            stream.write(ret.as_bytes()).unwrap()
+            wtr.write_u64::<NetworkEndian>(ret.len() as u64).unwrap();
+            wtr.write(ret.as_bytes()).unwrap()
         }
     };
-}
-
-fn handle_client(mut stream: TcpStream, global: &LockedGlobal) {
-    let settings = {
-        let shared_state = global.read().unwrap();
-        &shared_state.settings.clone()
-    };
-    let dtf_folder = &settings.dtf_folder;
-    utils::create_dir_if_not_exist(&dtf_folder);
-
-    let mut state = State::new(global);
-    utils::init_dbs(&mut state);
-
-    loop {
-        let mut buf = vec![0; 2048];
-        let t = time::SystemTime::now();
-        let bytes_read = stream.read(&mut buf).unwrap();
-        println!("done: {:?}", t.elapsed());
-
-        if bytes_read == 0 { break }
-        let req = str::from_utf8(&buf[..(bytes_read-1)]).unwrap();
-
-
-        for line in req.lines() {
-            // println!("[DEBUG] Received:\t{:?}", line);
-            respond(&stream, &mut state, &line);
-        }
-    }
 }
 
 pub fn run_server(host : &str, port : &str, settings: &Settings) {
     let addr = format!("{}:{}", host, port);
+    let addr = addr.parse::<SocketAddr>().unwrap();
 
     info!("Trying to bind to addr: {}", addr);
     if !settings.autoflush {
@@ -85,10 +67,13 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
     debug!("Maximum connection: {}.", settings.threads);
     debug!("History granularity: {}.", settings.hist_granularity);
 
-    let listener = match TcpListener::bind(&addr) {
-        Ok(l) => l,
-        Err(e) => panic!(format!("{:?}", e.description()))
-    };
+    let mut core = Core::new().unwrap();
+    let handle = core.handle();
+    let listener = TcpListener::bind(&addr, &handle).expect("failed to bind");
+
+
+    let dtf_folder = &settings.dtf_folder;
+    utils::create_dir_if_not_exist(&dtf_folder);
 
     info!("Listening on addr: {}", addr);
     info!("----------------- initialized -----------------");
@@ -100,15 +85,45 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
     run_plugins(global.clone());
 
     // main loop
-    for stream in listener.incoming() {
-        let stream = stream.unwrap();
+    let done = listener.incoming().for_each(move |(socket, _addr)| {
+
         let global_copy = global.clone();
-        pool.execute(move || {
-            on_connect(&global_copy);
-            handle_client(stream, &global_copy);
-            on_disconnect(&global_copy);
-        });
-    }
+        on_connect(&global_copy);
+
+        // handle client
+        let mut state = State::new(&global);
+        utils::init_dbs(&mut state);
+
+        let (reader, writer) = socket.split();
+        let mainloop = loop {
+            let lines = lines(BufReader::new(reader));
+
+            let responses = lines.map(move |line| {
+                respond(writer, &mut state, &line);
+            });
+
+            responses.then(move |_| Ok(()));
+        };
+
+        on_disconnect(&global_copy);
+
+        handle.spawn(mainloop);
+        Ok(())
+    });
+
+    core.run(done).unwrap();
+
+
+    // // main loop
+    // for stream in listener.incoming() {
+    //     let stream = stream.unwrap();
+    //     let global_copy = global.clone();
+    //     pool.execute(move || {
+    //         on_connect(&global_copy);
+    //         handle_client(stream, &global_copy);
+    //         on_disconnect(&global_copy);
+    //     });
+    // }
 }
 
 type LockedGlobal = Arc<RwLock<SharedState>>;

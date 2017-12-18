@@ -12,6 +12,10 @@ extern crate fern;
 
 extern crate uuid;
 
+extern crate futures;
+extern crate tokio_io;
+extern crate tokio_core;
+
 mod plugins;
 
 mod server;
