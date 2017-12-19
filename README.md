@@ -123,9 +123,9 @@ Language bindings:
 
 - [x] Rust
 
-- [ ] Python
+- [x] Python
 
-- [ ] JavaScript
+- [x] JavaScript
 
 
 ## Additional Features

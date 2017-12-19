@@ -21,7 +21,7 @@ fn main() {
 /// dataset is a list of rebinned orderbook levels
 /// then normalized to [-1,1]
 fn gen_dataset() -> Record {
-    let fname: &str = "test-data/bt_btceth.dtf";
+    let fname: &str = "test/test-data/bt_btceth.dtf";
 
     let batch_size = 1;
     let step_bins = 1000;

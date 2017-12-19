@@ -1,0 +1,17 @@
+{
+  "name": "tectonic",
+  "version": "1.0.0",
+  "description": "connect to tectonicdb api wrapper with pool",
+  "main": "built/index.js",
+  "scripts": {
+    "build": "tsc --declaration -p .",
+    "test": "ts-node test/test.ts"
+  },
+  "author": "Ricky Han <tectonic@rickyhan.com>",
+  "license": "MIT",
+  "types": "./built/index.d.ts",
+  "dependencies": {
+    "@types/node": "^8.0.51",
+    "text-encoding": "^0.6.4"
+  }
+}

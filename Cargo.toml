@@ -10,7 +10,7 @@ license = "MIT"
 readme = "README.md"
 exclude = [
     "db/*",
-    "test-data/*",
+    "test/test-data/*",
 ]
 
 
