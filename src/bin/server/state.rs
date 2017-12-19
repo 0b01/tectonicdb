@@ -67,7 +67,7 @@ impl Store {
                 && (size as u32) % flush_interval == 0;
 
             if is_autoflush {
-                debug!("AUTOFLUSHING {}! Size: {} Last: {:?}", self.name, vecs.1, vecs.0.last().clone().unwrap());
+                info!("AUTOFLUSHING {}! Size: {} Last: {:?}", self.name, vecs.1, vecs.0.last().clone().unwrap());
             }
 
             is_autoflush

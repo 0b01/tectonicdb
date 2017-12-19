@@ -39,9 +39,9 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
     if !settings.autoflush {
         warn!("Autoflush is off!");
     }
-    debug!("Autoflush is {}: every {} inserts.", settings.autoflush, settings.flush_interval);
-    debug!("Maximum connection: {}.", settings.threads);
-    debug!("History granularity: {}.", settings.hist_granularity);
+    info!("Autoflush is {}: every {} inserts.", settings.autoflush, settings.flush_interval);
+    info!("Maximum connection: {}.", settings.threads);
+    info!("History granularity: {}.", settings.hist_granularity);
 
     let mut core = Core::new().unwrap();
     let handle = core.handle();
@@ -70,9 +70,10 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
         let (reader, writer) = socket.split();
         let lines = lines(BufReader::new(reader));
         let responses = lines.map(move |line| {
-            handler::gen_response(&line, &mut state)
+            let resp = handler::gen_response(&line, &mut state);
+            (line, resp)
         });
-        let writes = responses.fold(writer, |wtr, resp| {
+        let writes = responses.fold(writer, |wtr, (line, resp)| {
             let mut buf: Vec<u8> = vec![];
             match resp {
                 ReturnType::Bytes(bytes)  => {
@@ -82,9 +83,10 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
                 ReturnType::String(str_resp) => {
                     buf.write_u8(0x1).unwrap();
                     buf.write_u64::<NetworkEndian>(str_resp.len() as u64).unwrap();
+                    buf.write(str_resp.as_bytes()).unwrap();
                 },
                 ReturnType::Error(errmsg) => {
-                    // error!("Req: `{}`", line);
+                    error!("Req: `{}`", line);
                     error!("Err: `{}`", errmsg.clone());
                     buf.write_u8(0x0).unwrap();
                     let ret = format!("ERR: {}\n", errmsg);
