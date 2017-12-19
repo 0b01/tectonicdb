@@ -39,7 +39,7 @@ pub fn init_dbs(state: &mut State) {
             // insert a vector into shared hashmap
             {
                 let mut global = state.global.write().unwrap();
-                global.vec_store.insert(symbol.to_owned(), (Vec::new(), header_size));
+                global.vec_store.insert(symbol.to_owned(), (box Vec::new(), header_size));
             }
 
             // insert a db store into user state

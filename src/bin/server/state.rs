@@ -287,7 +287,7 @@ impl State {
         // insert a vector into shared hashmap
         {
             let mut global = self.global.write().unwrap();
-            global.vec_store.insert(store_name.to_owned(), (Vec::new(), 0));
+            global.vec_store.insert(store_name.to_owned(), (box Vec::new(), 0));
         }
         // insert a store into client state hashmap
         self.store.insert(store_name.to_owned(), Store {
@@ -372,7 +372,7 @@ impl State {
         let acc = catch! {
             let (min_ts, max_ts) = range?;
             if !utils::within_range(min_ts, max_ts, vecs.first()?.ts, vecs.last()?.ts) { return None; }
-            vecs.iter()
+            box vecs.iter()
                 .filter(|up| up.ts < max_ts && up.ts > min_ts)
                 .map(|up| up.to_owned())
                 .collect::<Vec<_>>()
@@ -464,7 +464,7 @@ impl State {
 }
 
 /// (updates, count)
-pub type VecStore = (Vec<Update>, u64);
+pub type VecStore = (Box<Vec<Update>>, u64);
 
 /// key: btc_neo
 ///      btc_eth
@@ -477,14 +477,14 @@ pub type History = HashMap<String, Vec<(SystemTime, u64)>>;
 pub struct SharedState {
     pub n_cxns: u16,
     pub settings: Settings,
-    pub vec_store: HashMap<String, Box<VecStore>>,
+    pub vec_store: HashMap<String, VecStore>,
     pub history: History,
 }
 
 impl SharedState {
     pub fn new(settings: Settings) -> SharedState {
         let mut hashmap = HashMap::new();
-        hashmap.insert("default".to_owned(), (Vec::new(),0) );
+        hashmap.insert("default".to_owned(), (box Vec::new(),0) );
         SharedState {
             n_cxns: 0,
             settings,
