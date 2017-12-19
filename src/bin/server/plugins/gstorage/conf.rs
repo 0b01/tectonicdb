@@ -67,12 +67,12 @@ impl GStorageConfig {
 
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
     
-    #[test]
-    fn should_return_config() {
-        let config = GStorageConfig::new();
-    }
-}
+//     #[test]
+//     fn should_return_config() {
+//         let config = GStorageConfig::new();
+//     }
+// }
