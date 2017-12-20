@@ -137,3 +137,8 @@ Language bindings:
 - [x] Logging
 
 - [x] Query by timestamp
+
+
+# Note
+
+This software is release under GNU General Public License which means you are **required** to contribute back and disclose source.
