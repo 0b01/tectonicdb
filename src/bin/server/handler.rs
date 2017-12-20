@@ -192,7 +192,7 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
             {
                 match state.insert(up, &dbname) {
                     Some(()) => return_string(""),
-                    None => return_err(&format!("Err: DB {} not found.", dbname))
+                    None => return_err(&format!("DB {} not found.", dbname))
                 }
             },
         Insert(Some(up), None) =>
@@ -282,7 +282,7 @@ mod tests {
     fn should_not_insert_into_empty() {
         let mut state = gen_state();
         let resp = gen_response("ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth", &mut state);
-        assert_eq!(ReturnType::Error(String::from("Err: DB bnc_btc_eth not found.\n")), resp);
+        assert_eq!(ReturnType::Error(String::from("DB bnc_btc_eth not found.\n")), resp);
     }
 
     #[test]
