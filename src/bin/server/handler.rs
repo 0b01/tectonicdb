@@ -2,7 +2,7 @@ use state::*;
 use parser;
 use dtf::Update;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ReturnType {
     String(String),
     Bytes(Vec<u8>),
@@ -190,8 +190,10 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
         // update, dbname
         Insert(Some(up), Some(dbname)) =>
             {
-                state.insert(up, &dbname);
-                return_string("")
+                match state.insert(up, &dbname) {
+                    Some(()) => return_string(""),
+                    None => return_err(&format!("Err: DB {} not found.", dbname))
+                }
             },
         Insert(Some(up), None) =>
             {
@@ -255,4 +257,41 @@ fn return_err(err: &str) -> ReturnType {
     ret.push_str(err);
     ret.push_str("\n");
     ReturnType::Error(ret)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use settings::Settings;
+    use std::sync::{Arc, RwLock};
+
+    fn gen_state() -> State {
+        let settings: Settings = Default::default();
+        let global = Arc::new(RwLock::new(SharedState::new(settings)));
+        State::new(&global)
+    }
+
+    #[test]
+    fn should_return_pong() {
+        let mut state = gen_state();
+        let resp = gen_response("PING", &mut state);
+        assert_eq!(ReturnType::String(String::from("PONG\n")), resp);
+    }
+
+    #[test]
+    fn should_not_insert_into_empty() {
+        let mut state = gen_state();
+        let resp = gen_response("ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth", &mut state);
+        assert_eq!(ReturnType::Error(String::from("Err: DB bnc_btc_eth not found.\n")), resp);
+    }
+
+    #[test]
+    fn should_insert_ok() {
+        let mut state = gen_state();
+        let resp = gen_response("CREATE bnc_btc_eth", &mut state);
+        assert_eq!(ReturnType::String(String::from("Created DB `bnc_btc_eth`.\n")), resp);
+        let resp = gen_response("ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth", &mut state);
+        assert_eq!(ReturnType::String(String::from("\n")), resp);
+    }
+
 }
