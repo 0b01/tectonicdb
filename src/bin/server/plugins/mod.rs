@@ -8,6 +8,9 @@ pub mod gstorage;
 // history plugin
 pub mod history;
 
+// subscribe plugin
+pub mod subscription;
+
 // global state
 use std::sync::{Arc, RwLock};
 use state::SharedState;

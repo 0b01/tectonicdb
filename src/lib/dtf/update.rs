@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use byteorder::{BigEndian, WriteBytesExt};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Update {
     pub ts: u64,
     pub seq: u32,
@@ -13,7 +13,6 @@ pub struct Update {
 
 
 impl Update {
-
     pub fn serialize(&self, ref_ts : u64, ref_seq : u32) -> Vec<u8> {
         if self.seq < ref_seq {
             println!("{:?}", ref_seq);
