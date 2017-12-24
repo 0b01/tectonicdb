@@ -24,7 +24,6 @@ mod utils;
 mod parser;
 mod handler;
 mod settings;
-mod threadpool;
 
 use clap::{Arg, App, ArgMatches};
 

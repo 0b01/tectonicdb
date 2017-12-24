@@ -6,11 +6,7 @@
 use byteorder::{WriteBytesExt, NetworkEndian, /*ReadBytesExt*/ };
 
 use std::str;
-use std::time;
-use std::error::Error;
 use std::io::{Read, Write};
-// use std::net::TcpListener;
-// use std::net::TcpStream;
 use std::net::SocketAddr;
 use std::io::{BufReader};
 
@@ -19,15 +15,13 @@ use handler::ReturnType;
 use utils;
 use handler;
 use settings::Settings;
-use threadpool::ThreadPool;
 use std::sync::{Arc, RwLock};
 
 use futures::prelude::*;
-use futures::stream::Then;
-use tokio_core::net::{TcpListener, TcpStream};
+use tokio_core::net::TcpListener;
 use tokio_core::reactor::Core;
 use tokio_io::AsyncRead;
-use tokio_io::io::{lines, write_all, WriteHalf};
+use tokio_io::io::{lines, write_all};
 
 use plugins::run_plugins;
 
@@ -54,7 +48,6 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
     info!("Listening on addr: {}", addr);
     info!("----------------- initialized -----------------");
 
-    let pool = ThreadPool::new(settings.threads);
     let global = Arc::new(RwLock::new(SharedState::new(settings.clone()))); 
 
 
@@ -67,13 +60,13 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
         utils::init_dbs(&mut state);
         on_connect(&global_copy);
 
-        let (reader, writer) = socket.split();
-        let lines = lines(BufReader::new(reader));
+        let (rdr, wtr) = socket.split();
+        let lines = lines(BufReader::new(rdr));
         let responses = lines.map(move |line| {
             let resp = handler::gen_response(&line, &mut state);
             (line, resp)
         });
-        let writes = responses.fold(writer, |wtr, (line, resp)| {
+        let writes = responses.fold(wtr, |wtr, (line, resp)| {
             let mut buf: Vec<u8> = vec![];
             match resp {
                 ReturnType::Bytes(bytes)  => {

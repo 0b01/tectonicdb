@@ -86,7 +86,7 @@ fn main() {
                     .unwrap_or(10) + 1;
 
         for _ in 1..times {
-            let res = cxn.cmd("PING\n");
+            let res = cxn.cmd("ADD 1513922718770, 0, t, f, 0.001939, 22.85; INTO bnc_gas_btc\n");
             println!("res: {:?}, latency: {:?}", res, t.elapsed());
             t = time::SystemTime::now();
         }

@@ -54,7 +54,12 @@ pub fn parse_dbname(string: &str) -> (usize, &str) {
 /// returns Option<Update, dbname>
 pub fn parse_add_into(string: &str) -> (Option<Update>, Option<String>) {
     let (index, dbname) = parse_dbname(string);
-    let data_string : &str = &string[3..(index)];
+    let data_string : &str = {
+        if string.contains("ADD ") { &string[4..(index)] }
+        else if string.contains("INSERT ") { &string[7..(index)] }
+        else { return (None, None); }
+    };
+
     match parse_line(data_string) {
         Some(up) => (Some(up), Some(dbname.to_owned())),
         None => (None, None)
@@ -146,4 +151,21 @@ mod tests {
         assert_eq!((Some(target), Some("dbname".to_owned())),
                     parse_add_into(cmd));
     }
+
+    #[test]
+    fn should_parse_default_ok() {
+        let cmd = "ADD 0,0,f,f,0,0; INTO default";
+        println!("{:?}", parse_add_into(cmd));
+        let target = Update {
+            ts: 0,
+            seq: 0,
+            is_trade: false,
+            is_bid: false,
+            price: 0.,
+            size: 0.
+        };
+        assert_eq!((Some(target), Some("default".to_owned())),
+                    parse_add_into(cmd));
+    }
+
 }
