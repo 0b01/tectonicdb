@@ -24,6 +24,7 @@ mod utils;
 mod parser;
 mod handler;
 mod settings;
+mod subscription;
 
 use clap::{Arg, App, ArgMatches};
 

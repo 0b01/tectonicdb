@@ -11,14 +11,18 @@ use std::time;
 
 struct Cxn {
     stream : TcpStream,
+    subscribed: bool,
     // addr: String
 }
 
 impl Cxn {
     fn cmd(&mut self, command : &str) -> String {
+
         let _ = self.stream.write(command.as_bytes());
         let success = self.stream.read_u8().unwrap() == 0x1;
-        if command.starts_with("GET") && !command.contains("AS JSON") && success {
+        let ret = if success
+          && command.starts_with("GET")
+          && !command.contains("AS JSON"){
             let vecs = dtf::read_one_batch(&mut self.stream);
             format!("[{}]\n", dtf::update_vec_to_json(&vecs))
         } else {
@@ -26,7 +30,15 @@ impl Cxn {
             let mut buf = vec![0; size as usize];
             let _ = self.stream.read_exact(&mut buf);
             str::from_utf8(&buf).unwrap().to_owned()
+        };
+
+        if command.len() >= 9 && "SUBSCRIBE" == &command[..9] {
+            self.subscribed = true;
+        } else if command.len() >= 11 && "UNSUBSCRIBE" == &command[..11] {
+            self.subscribed = false;
         }
+
+        ret
     }
     fn new(host : &str, port : &str, verbosity : u64) -> Cxn {
         let addr = format!("{}:{}", host, port);
@@ -35,9 +47,9 @@ impl Cxn {
             println!("Connecting to {}", addr);
         }
 
-        let cxn = Cxn{
+        let cxn = Cxn {
+            subscribed: false,
             stream : TcpStream::connect(&addr).unwrap(),
-            // addr
         };
 
         cxn

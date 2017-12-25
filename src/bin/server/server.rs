@@ -90,9 +90,6 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
             write_all(wtr, buf).map(|(w,_)| w)
         });
 
-        // let writes = responses.then(move |_| Ok(()));
-
-
         let msg = writes.then(move |_| Ok(()));
         handle.spawn(msg);
 

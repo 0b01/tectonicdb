@@ -1,6 +1,8 @@
 use state::*;
 use parser;
-use dtf::Update;
+use dtf::{update_vec_to_json, Update};
+
+// BUG: subscribe, add, deadlock!!!
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ReturnType {
@@ -39,6 +41,9 @@ enum Command {
     Flush(ReqCount),
     Insert(Option<Update>, Option<DbName>),
     Create(DbName),
+    Subscribe(DbName),
+    Unsubscribe,
+    Subscription,
     Use(DbName),
     Exists(DbName),
     Unknown
@@ -57,13 +62,14 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
     use self::Command::*;
 
     let command: Command = match string {
-        "" => Nothing,
+        "" => { if state.is_subscribed { Subscription } else { Nothing } },
         "PING" => Ping,
         "HELP" => Help,
         "INFO" => Info,
         "PERF" => Perf,
         "BULKADD" => BulkAdd,
         "DDAKLUB" => BulkAddEnd,
+        "UNSUBSCRIBE" => Unsubscribe,
         "COUNT" => Count(ReqCount::Count(1)), 
         "COUNT ALL" => Count(ReqCount::All),
         "CLEAR" => Clear(ReqCount::Count(1)),
@@ -85,6 +91,11 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 let (_index, dbname) = parser::parse_dbname(string);
                 BulkAddInto(dbname.to_owned())
             } else 
+
+            if string.starts_with("SUBSCRIBE ") {
+                let dbname : &str = &string[10..];
+                Subscribe(dbname.to_owned())
+            } else
 
             if string.starts_with("CREATE ") {
                 let dbname : &str = &string[7..];
@@ -141,7 +152,7 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
             return_string("PONG"),
         Help =>
             return_string(HELP_STR),
-        Info =>
+        Info => 
             return_string(&state.info()),
         Perf =>
             return_string(&state.perf()),
@@ -203,12 +214,45 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
         Insert(None, _) => 
             return_err("Unable to parse line"),
 
-
         Create(dbname) =>
             { 
-                state.create(&dbname); 
+                state.create(&dbname);
                 return_string(&format!("Created DB `{}`.", &dbname))
             },
+
+        Subscribe(dbname) =>
+            { 
+                state.is_subscribed = true;
+                state.subscribed_db = Some(dbname.clone());
+                let glb = state.global.read().unwrap();
+                glb.subs.lock().unwrap().add(dbname.clone());
+                return_string(&format!("Subscribed to {}", dbname))
+            },
+
+        Subscription => {
+            let subscribed_db = state.subscribed_db.clone();
+            let glb = state.global.read().unwrap();
+            let rx = glb.subs.lock().unwrap().get(&subscribed_db.unwrap());
+
+            let message = rx.lock().unwrap().try_recv();
+            match message {
+                Ok(msg) => {
+                    return_string(&update_vec_to_json(&vec![msg]))
+                },
+                _ => {
+                    return_string("NONE")
+                }
+            }
+        },
+
+        Unsubscribe =>
+            { 
+                let old_dbname = state.subscribed_db.clone();
+                state.is_subscribed = false;
+                state.subscribed_db = None;
+                return_string(&format!("Unsubscribed from {}", old_dbname.unwrap()))
+            },
+
         Use(dbname) => 
             {
                 match state.use_db(&dbname) {

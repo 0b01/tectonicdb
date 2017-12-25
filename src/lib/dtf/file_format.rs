@@ -821,4 +821,21 @@ mod tests {
         };
         assert_eq!(r#"{"ts":20000.001,"seq":113,"is_trade":false,"is_bid":false,"price":5100.01,"size":1.1456456}"#, t1.to_json());
     }
+
+    #[test]
+    fn should_write_to_bytes() {
+        // ADD 0,0,f,f,0,0;
+        let up = Update {
+            ts: 0,
+            seq: 0,
+            is_trade: false,
+            is_bid: false,
+            price: 0.,
+            size: 0.,
+        };
+        let mut bytes = vec![];
+        write_batches(&mut bytes, &vec![up]);
+        assert_eq!(vec![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            bytes);
+    }
 }

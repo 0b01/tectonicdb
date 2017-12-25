@@ -1,5 +1,6 @@
 use std::thread;
 use std::sync::{mpsc, Arc, Mutex};
+use std::collections::HashMap;
 use dtf::Update;
 
 pub type Event = Arc<Mutex<(String, Update)>>;
@@ -9,32 +10,40 @@ enum Message {
     Terminate,
 }
 
+#[derive(Debug)]
 pub struct Subscriptions {
-    subs: Vec<Subscription>,
+    o_rxs: HashMap<String, Arc<Mutex<mpsc::Receiver<Update>>>>,
+    subs: HashMap<String, Subscription>,
     senders: Vec<mpsc::Sender<Message>>,
 }
 
 impl Subscriptions {
 
     pub fn new() -> Subscriptions {
-        let subs = Vec::new();
+        let o_rxs = HashMap::new();
+        let subs = HashMap::new();
         let senders = Vec::new();
         Subscriptions {
+            o_rxs,
             subs,
             senders,
         }
     }
 
-    pub fn add(&mut self, filter: String) -> mpsc::Receiver<Update> {
+    pub fn add(&mut self, filter: String) {
 
         let (i_tx, i_rx) = mpsc::channel();
         let (o_tx, o_rx) = mpsc::channel();
         let i_rx = Arc::new(Mutex::new(i_rx));
+        let o_rx = Arc::new(Mutex::new(o_rx));
         let o_tx = Arc::new(Mutex::new(o_tx));
-        self.subs.push(Subscription::new(filter, i_rx, o_tx));
+        self.subs.insert(filter.clone(), Subscription::new(filter.clone(), i_rx, o_tx));
+        self.o_rxs.insert(filter.clone(), o_rx);
         self.senders.push(i_tx);
-        o_rx
+    }
 
+    pub fn get(&self, filter: &str) -> Arc<Mutex<mpsc::Receiver<Update>>> {
+        self.o_rxs.get(filter).unwrap().clone()
     }
 
     pub fn msg(&self, f: Event) {
@@ -50,7 +59,7 @@ impl Drop for Subscriptions {
             i_tx.send(Message::Terminate).unwrap();
         }
 
-        for worker in &mut self.subs {
+        for worker in &mut self.subs.values_mut() {
             if let Some(thread) = worker.thread.take() {
                 thread.join().unwrap();
             }
@@ -58,6 +67,7 @@ impl Drop for Subscriptions {
     }
 }
 
+#[derive(Debug)]
 struct Subscription {
     thread: Option<thread::JoinHandle<()>>,
 }
@@ -102,11 +112,12 @@ mod tests {
         let event = Arc::new(Mutex::new((symbol.clone(), up)));
 
         let mut subs = Subscriptions::new();
-        let rx = subs.add(symbol);
+        subs.add(symbol.clone());
+        let rx = subs.get(&symbol);
 
         subs.msg(event);
 
-        for msg in rx.recv() {
+        for msg in rx.lock().unwrap().recv() {
             assert_eq!(up, msg);
             break;
         }

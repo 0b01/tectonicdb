@@ -10,10 +10,11 @@ use std::collections::HashMap;
 use utils;
 use std::path::Path;
 use settings::Settings;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, Mutex, mpsc};
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 use handler::{GetFormat, ReturnType, ReqCount};
+use subscription::Subscriptions;
 
 /// name: *should* be the filename
 /// in_memory: are the updates read into memory?
@@ -52,6 +53,13 @@ impl Store {
     pub fn add(&mut self, new_vec: Update) {
         let is_autoflush = {
             let mut wtr = self.global.write().unwrap();
+
+            // send to insertion firehose
+            {
+                let tx = wtr.subs.lock().unwrap();
+                let _ = tx.msg(Arc::new(Mutex::new((self.name.clone(), new_vec))));
+            }
+
             let is_autoflush = wtr.settings.autoflush;
             let flush_interval = wtr.settings.flush_interval;
             let _folder = wtr.settings.dtf_folder.to_owned();
@@ -165,9 +173,13 @@ impl Store {
 pub struct State {
     /// Is inside a BULKADD operation?
     pub is_adding: bool,
-
     /// Current selected db using `BULKADD INTO [db]`
     pub bulkadd_db: Option<String>,
+
+    /// Is client subscribe?
+    pub is_subscribed: bool,
+    /// current subscribed db
+    pub subscribed_db: Option<String>,
 
     /// mapping store_name -> Store
     pub store: HashMap<String, Store>,
@@ -432,8 +444,10 @@ impl State {
         let dtf_folder: &str = &global.read().unwrap().settings.dtf_folder;
         let mut state = State {
             current_store_name: "default".to_owned(),
-            bulkadd_db: None,
             is_adding: false,
+            bulkadd_db: None,
+            is_subscribed: false,
+            subscribed_db: None,
             store: HashMap::new(),
             global: global.clone()
         };
@@ -479,17 +493,20 @@ pub struct SharedState {
     pub settings: Settings,
     pub vec_store: HashMap<String, VecStore>,
     pub history: History,
+    pub subs: Arc<Mutex<Subscriptions>>,
 }
 
 impl SharedState {
     pub fn new(settings: Settings) -> SharedState {
         let mut hashmap = HashMap::new();
         hashmap.insert("default".to_owned(), (box Vec::new(),0) );
+        let subs = Arc::new(Mutex::new(Subscriptions::new()));
         SharedState {
             n_cxns: 0,
             settings,
             vec_store: hashmap,
             history: HashMap::new(),
+            subs,
         }
     }
 }
