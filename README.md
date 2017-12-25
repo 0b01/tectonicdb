@@ -12,7 +12,7 @@ This software is motivated by reducing expenditure. 1TB stored on Google Cloud P
 
 * Uses a simple binary file format: Dense Tick Format(DTF) ...
 
-* Stores order book tick data tuple of shape: `(timestamp, seq, is\_trade, is\_bid, price, size)`.
+* Stores order book tick data tuple of shape: `(timestamp, seq, is_trade, is_bid, price, size)`.
 
 * Sorted by seq/timestamp
 

@@ -97,11 +97,16 @@ fn main() {
                     .parse::<usize>()
                     .unwrap_or(10) + 1;
 
+        let mut acc = vec![];
         for _ in 1..times {
-            let res = cxn.cmd("ADD 1513922718770, 0, t, f, 0.001939, 22.85; INTO bnc_gas_btc\n");
-            println!("res: {:?}, latency: {:?}", res, t.elapsed());
+            let _res = cxn.cmd("ADD 1513922718770, 0, t, f, 0.001939, 22.85; INTO bnc_gas_btc\n");
+            acc.push(t.elapsed().unwrap().subsec_nanos());
+            // println!("res: {:?}, latency: {:?}", res, t.elapsed());
             t = time::SystemTime::now();
         }
+
+        println!("AVG: {}", acc.iter().fold(0, |s,i|s+i) as f32 / acc.len() as f32);
+        
     } else {
         loop {
             print!("--> ");

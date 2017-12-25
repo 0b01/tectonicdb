@@ -1,5 +1,6 @@
 #![feature(box_syntax)]
 #![feature(box_patterns)]
+#![feature(entry_and_modify)]
 
 extern crate dtf;
 extern crate clap;

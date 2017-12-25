@@ -19,6 +19,7 @@ pub fn run(global: Arc<RwLock<SharedState>> ) {
     let global_copy = global.clone();
     thread::spawn(move || {
         let conf = GStorageConfig::new().unwrap();
+        info!("{:?}", conf);
         let interval = conf.interval;
 
         let folder = {

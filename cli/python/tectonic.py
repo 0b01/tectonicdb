@@ -109,8 +109,7 @@ def measure_latency():
     db = TectonicDB()
 
     t = time.time()
-    for i in range(1000):
-        db.ping()
+    for i in range(10000):
         db.insert(0,0,True, True, 0., 0., 'default')
         t_ = time.time()
         dt = t_ - t
@@ -146,6 +145,6 @@ def example_subscribe():
             print item[0],
 
 if __name__ == '__main__':
-    # measure_latency()
-    example_subscribe()
+    measure_latency()
+    # example_subscribe()
     

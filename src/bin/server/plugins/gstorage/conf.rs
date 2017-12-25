@@ -8,6 +8,7 @@ static GSTORAGE_CONF_FNAME: &str = "conf/gstorage/example.conf.toml";
 #[cfg(not(test))]
 static GSTORAGE_CONF_FNAME: &str = "conf/gstorage/conf";
 
+#[derive(Debug)]
 pub struct GStorageConfig {
     pub conf: HashMap<String, String>,
     pub oauth_token: Option<String>,
@@ -42,7 +43,7 @@ impl GStorageConfig {
             None => 3600,
         };
         
-        let remove = match conf.get("delete"){
+        let remove = match conf.get("remove"){
             Some(ref f) => f.to_owned() == "true",
             None => false
         };

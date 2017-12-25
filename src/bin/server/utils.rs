@@ -30,16 +30,11 @@ pub fn init_dbs(state: &mut State) {
             let symbol = dtf::read_meta(full_path).symbol;
 
             {
-                let rdr = state.global.read().unwrap();
-                if rdr.vec_store.contains_key(&symbol) {
-                    return;
-                }
-            }
-
-            // insert a vector into shared hashmap
-            {
-                let mut global = state.global.write().unwrap();
-                global.vec_store.insert(symbol.to_owned(), (box Vec::new(), header_size));
+                let mut wtr = state.global.write().unwrap();
+                // if symbol is in vec_store, append to store
+                wtr.vec_store.entry(symbol.clone())
+                    .and_modify(|e| e.1 += header_size)
+                    .or_insert((box Vec::new(), header_size));
             }
 
             // insert a db store into user state
