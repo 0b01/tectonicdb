@@ -160,8 +160,7 @@ mod tests {
         let event = Arc::new(Mutex::new((symbol.clone(), up)));
 
         let mut subs = Subscriptions::new();
-        subs.add(symbol.clone());
-        let rx = subs.get(&symbol);
+        let (_id, rx) = subs.sub(symbol.clone());
 
         subs.msg(event);
 
