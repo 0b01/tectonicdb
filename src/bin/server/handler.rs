@@ -225,31 +225,30 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 state.is_subscribed = true;
                 state.subscribed_db = Some(dbname.clone());
                 let glb = state.global.read().unwrap();
-                glb.subs.lock().unwrap().add(dbname.clone());
+                state.rx = Some(glb.subs.lock().unwrap().sub(dbname.clone()));
                 return_string(&format!("Subscribed to {}", dbname))
             },
 
-        Subscription => {
-            let subscribed_db = state.subscribed_db.clone();
-            let glb = state.global.read().unwrap();
-            let rx = glb.subs.lock().unwrap().get(&subscribed_db.unwrap());
-
-            let message = rx.lock().unwrap().try_recv();
-            match message {
-                Ok(msg) => {
-                    return_string(&update_vec_to_json(&vec![msg]))
-                },
-                _ => {
-                    return_string("NONE")
+        Subscription =>
+            {
+                let rxlocked = state.rx.clone().unwrap();
+                let message = rxlocked.lock().unwrap().try_recv();
+                match message {
+                    Ok(msg) => {
+                        return_string(&update_vec_to_json(&vec![msg]))
+                    },
+                    _ => {
+                        return_string("NONE")
+                    }
                 }
-            }
-        },
+            },
 
         Unsubscribe =>
             { 
                 let old_dbname = state.subscribed_db.clone();
                 state.is_subscribed = false;
                 state.subscribed_db = None;
+                state.rx = None;
                 return_string(&format!("Unsubscribed from {}", old_dbname.unwrap()))
             },
 

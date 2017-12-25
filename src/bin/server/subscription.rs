@@ -12,42 +12,51 @@ enum Message {
 
 #[derive(Debug)]
 pub struct Subscriptions {
-    o_rxs: HashMap<String, Arc<Mutex<mpsc::Receiver<Update>>>>,
+    // /// a list of output receivers
+    // o_rxs: HashMap<String, Arc<Mutex<mpsc::Receiver<Update>>>>,
+
+    /// string -> Subscription multiplexer
     subs: HashMap<String, Subscription>,
-    senders: Vec<mpsc::Sender<Message>>,
+
+    /// input receivers
+    i_txs: Vec<mpsc::Sender<Message>>,
 }
 
 impl Subscriptions {
 
     pub fn new() -> Subscriptions {
-        let o_rxs = HashMap::new();
+        // let o_rxs = HashMap::new();
         let subs = HashMap::new();
-        let senders = Vec::new();
+        let i_txs = Vec::new();
         Subscriptions {
-            o_rxs,
+            // o_rxs,
             subs,
-            senders,
+            i_txs,
         }
     }
 
-    pub fn add(&mut self, filter: String) {
+    pub fn sub(&mut self, filter: String) -> Arc<Mutex<mpsc::Receiver<Update>>> {
 
         let (i_tx, i_rx) = mpsc::channel();
         let (o_tx, o_rx) = mpsc::channel();
+
         let i_rx = Arc::new(Mutex::new(i_rx));
         let o_rx = Arc::new(Mutex::new(o_rx));
         let o_tx = Arc::new(Mutex::new(o_tx));
+
         self.subs.insert(filter.clone(), Subscription::new(filter.clone(), i_rx, o_tx));
-        self.o_rxs.insert(filter.clone(), o_rx);
-        self.senders.push(i_tx);
+        // self.o_rxs.insert(filter.clone(), o_rx.clone());
+        self.i_txs.push(i_tx);
+
+        o_rx
     }
 
-    pub fn get(&self, filter: &str) -> Arc<Mutex<mpsc::Receiver<Update>>> {
-        self.o_rxs.get(filter).unwrap().clone()
-    }
+    // pub fn get(&self, filter: &str) -> Arc<Mutex<mpsc::Receiver<Update>>> {
+    //     self.o_rxs.get(filter).unwrap().clone()
+    // }
 
     pub fn msg(&self, f: Event) {
-        for i_tx in &self.senders {
+        for i_tx in &self.i_txs {
             i_tx.send(Message::Msg(f.clone())).unwrap();
         }
     }
@@ -55,7 +64,7 @@ impl Subscriptions {
 
 impl Drop for Subscriptions {
     fn drop(&mut self) {
-        for i_tx in &mut self.senders {
+        for i_tx in &mut self.i_txs {
             i_tx.send(Message::Terminate).unwrap();
         }
 
@@ -98,7 +107,6 @@ impl Subscription {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
