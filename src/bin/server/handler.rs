@@ -131,7 +131,7 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 // how many records from memory we want...
                 let count : &str = &string.clone()[4..];
                 let count : Vec<&str> = count.split(" ").collect();
-                let count = count[0].parse::<u32>().unwrap();
+                let count = count[0].parse::<u32>().unwrap_or(1);
 
                 let range = parser::parse_get_range(string);
 
