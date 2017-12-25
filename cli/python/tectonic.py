@@ -39,6 +39,13 @@ class TectonicDB():
     def help(self):
         return self.cmd("HELP")
 
+    def insert(self, ts, seq, is_trade, is_bid, price, size, dbname):
+        return self.cmd("INSERT {}, {}, {} ,{}, {}, {}; INTO {}"
+                        .format( ts, seq, 
+                            't' if is_trade else 'f',
+                            't' if is_bid else 'f', price, size,
+                            dbname))
+
     def add(self, ts, seq, is_trade, is_bid, price, size):
         return self.cmd("ADD {}, {}, {} ,{}, {}, {};"
                         .format( ts, seq, 
@@ -88,11 +95,11 @@ def measure_latency():
     dts = []
 
     db = TectonicDB()
-    # print db.get(1)
 
     t = time.time()
-    for i in range(100):
+    for i in range(1000):
         db.ping()
+        db.insert(0,0,True, True, 0., 0., 'default')
         t_ = time.time()
         dt = t_ - t
         t = t_

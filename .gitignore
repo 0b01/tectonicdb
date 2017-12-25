@@ -15,4 +15,5 @@ conf/gstorage/conf.toml
 *.log
 old/
 test.dtf
+*.pyc
 
