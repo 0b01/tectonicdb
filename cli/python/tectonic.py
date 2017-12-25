@@ -140,9 +140,10 @@ def example_subscribe():
 
     while 1:
         _, item = db.poll()
-        if item != "NONE\n":
-            print 'ok',
-        time.sleep(0.00001)
+        if item == "NONE\n":
+            time.sleep(0.01)
+        else:
+            print item[0],
 
 if __name__ == '__main__':
     # measure_latency()
