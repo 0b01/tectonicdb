@@ -181,6 +181,8 @@ pub struct State {
     /// current subscribed db
     pub subscribed_db: Option<String>,
     /// current receiver
+    pub sub_id: Option<usize>,
+    /// current receiver
     pub rx: Option<Arc<Mutex<mpsc::Receiver<Update>>>>,
 
     /// mapping store_name -> Store
@@ -450,6 +452,7 @@ impl State {
             bulkadd_db: None,
             is_subscribed: false,
             subscribed_db: None,
+            sub_id: None,
             rx: None,
             store: HashMap::new(),
             global: global.clone()

@@ -16,10 +16,13 @@ pub struct Subscriptions {
     // o_rxs: HashMap<String, Arc<Mutex<mpsc::Receiver<Update>>>>,
 
     /// string -> Subscription multiplexer
-    subs: HashMap<String, Subscription>,
+    subs: HashMap<String, Vec<Subscription>>,
 
     /// input receivers
-    i_txs: Vec<mpsc::Sender<Message>>,
+    i_txs: HashMap<String, Vec<mpsc::Sender<Message>>>,
+
+    /// sub count
+    sub_count: HashMap<String, usize>,
 }
 
 impl Subscriptions {
@@ -27,15 +30,17 @@ impl Subscriptions {
     pub fn new() -> Subscriptions {
         // let o_rxs = HashMap::new();
         let subs = HashMap::new();
-        let i_txs = Vec::new();
+        let sub_count = HashMap::new();
+        let i_txs = HashMap::new();
         Subscriptions {
             // o_rxs,
+            sub_count,
             subs,
             i_txs,
         }
     }
 
-    pub fn sub(&mut self, filter: String) -> Arc<Mutex<mpsc::Receiver<Update>>> {
+    pub fn sub(&mut self, filter: String) -> (usize, Arc<Mutex<mpsc::Receiver<Update>>>) {
 
         let (i_tx, i_rx) = mpsc::channel();
         let (o_tx, o_rx) = mpsc::channel();
@@ -44,11 +49,40 @@ impl Subscriptions {
         let o_rx = Arc::new(Mutex::new(o_rx));
         let o_tx = Arc::new(Mutex::new(o_tx));
 
-        self.subs.insert(filter.clone(), Subscription::new(filter.clone(), i_rx, o_tx));
-        // self.o_rxs.insert(filter.clone(), o_rx.clone());
-        self.i_txs.push(i_tx);
+        // upsert
+        // if there is a subscription on dbname
+        let id = if self.subs.contains_key(&filter) {
+            let mut count = self.sub_count.get_mut(&filter).unwrap();
+            *count += 1;
+            let sub_v = self.subs.get_mut(&filter).unwrap();
+            sub_v.push(Subscription::new(filter.clone(), i_rx, o_tx));
+            self.i_txs.get_mut(&filter).unwrap().push(i_tx);
+            *count
+        } else {
+            self.sub_count.insert(filter.clone(), 0);
+            self.subs.insert(filter.clone(), vec![Subscription::new(filter.clone().clone(), i_rx, o_tx)] );
+            self.i_txs.insert(filter, vec![i_tx]);
+            0
+        };
 
-        o_rx
+        (id, o_rx)
+    }
+
+    pub fn unsub(&mut self, id: usize, filter: &str) {
+
+        let count = self.sub_count.get_mut(filter).unwrap();
+        if *count > 0 { *count -= 1; }
+
+        let i_tx = &self.i_txs.get_mut(filter).unwrap()[id];
+        i_tx.send(Message::Terminate).unwrap();
+
+        let sub = self.subs
+                        .get_mut(filter).unwrap()
+                        .get_mut(id).unwrap();
+        if let Some(thread) = sub.thread.take() {
+            thread.join().unwrap();
+        }
+
     }
 
     // pub fn get(&self, filter: &str) -> Arc<Mutex<mpsc::Receiver<Update>>> {
@@ -56,21 +90,27 @@ impl Subscriptions {
     // }
 
     pub fn msg(&self, f: Event) {
-        for i_tx in &self.i_txs {
-            i_tx.send(Message::Msg(f.clone())).unwrap();
+        for i_tx_v in self.i_txs.values() {
+            for i_tx in i_tx_v {
+                i_tx.send(Message::Msg(f.clone())).unwrap();
+            }
         }
     }
 }
 
 impl Drop for Subscriptions {
     fn drop(&mut self) {
-        for i_tx in &mut self.i_txs {
-            i_tx.send(Message::Terminate).unwrap();
+        for i_tx_v in self.i_txs.values() {
+            for i_tx in i_tx_v.iter() {
+                i_tx.send(Message::Terminate).unwrap();
+            }
         }
 
-        for worker in &mut self.subs.values_mut() {
-            if let Some(thread) = worker.thread.take() {
-                thread.join().unwrap();
+        for worker_v in &mut self.subs.values_mut() {
+            for worker in worker_v.iter_mut() {
+                if let Some(thread) = worker.thread.take() {
+                    thread.join().unwrap();
+                }
             }
         }
     }

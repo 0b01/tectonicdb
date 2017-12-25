@@ -225,7 +225,10 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 state.is_subscribed = true;
                 state.subscribed_db = Some(dbname.clone());
                 let glb = state.global.read().unwrap();
-                state.rx = Some(glb.subs.lock().unwrap().sub(dbname.clone()));
+                let (id, rx) = glb.subs.lock().unwrap().sub(dbname.clone());
+                state.rx = Some(rx);
+                state.sub_id = Some(id);
+                info!("Subscribing to channel {}. id: {}", dbname, id);
                 return_string(&format!("Subscribed to {}", dbname))
             },
 
@@ -245,11 +248,19 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
 
         Unsubscribe =>
             { 
-                let old_dbname = state.subscribed_db.clone();
+                let old_dbname = state.subscribed_db.clone().unwrap();
+                let sub_id = state.sub_id.unwrap();
+
+                let glb = state.global.read().unwrap();
+                let _ = glb.subs.lock().unwrap().unsub(sub_id, &old_dbname);
+
+                info!("Unsubscribing from channel {}. id: {}", old_dbname, sub_id);
+
                 state.is_subscribed = false;
                 state.subscribed_db = None;
                 state.rx = None;
-                return_string(&format!("Unsubscribed from {}", old_dbname.unwrap()))
+                state.sub_id = None;
+                return_string(&format!("Unsubscribed from {}", old_dbname))
             },
 
         Use(dbname) => 
