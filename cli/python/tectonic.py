@@ -9,6 +9,9 @@ import time
 
 class TectonicDB():
     def __init__(self, host="localhost", port=9001):
+
+        self.subscribed = False
+
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_address = (host, port)
         self.sock.connect(server_address)
@@ -90,6 +93,15 @@ class TectonicDB():
     def use(self, dbname):
         return self.cmd("USE {}".format(dbname))
 
+    def subscribe(self, dbname):
+        res = self.cmd("SUBSCRIBE {}".format(dbname))
+        if res[0]:
+            self.subscribed = True
+        return res
+    
+    def poll(self):
+        return self.cmd("")
+
 
 def measure_latency():
     dts = []
@@ -108,6 +120,31 @@ def measure_latency():
     print "AVG:", sum(dts) / len(dts)
     db.destroy()
 
+def insert_n(n):
+    db = TectonicDB()
+    for i in range(n):
+        db.insert(0,0,True, True, 0., 0., 'default')
+
+def example_subscribe():
+    db = TectonicDB()
+    print db.subscribe('default')
+
+    import threading
+    def send_req():
+        while 1:
+            print "----------------------------"
+            insert_n(100)
+            time.sleep(3)
+    t = threading.Thread(target=send_req)
+    t.start()
+
+    while 1:
+        _, item = db.poll()
+        if item != "NONE\n":
+            print 'ok',
+        time.sleep(0.00001)
 
 if __name__ == '__main__':
-    measure_latency()
+    # measure_latency()
+    example_subscribe()
+    
