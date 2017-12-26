@@ -98,6 +98,7 @@ fn main() {
                     .unwrap_or(10) + 1;
 
         let mut acc = vec![];
+        let _create = cxn.cmd("CREATE bnc_gas_btc\n");
         for _ in 1..times {
             let _res = cxn.cmd("ADD 1513922718770, 0, t, f, 0.001939, 22.85; INTO bnc_gas_btc\n");
             acc.push(t.elapsed().unwrap().subsec_nanos());
@@ -105,7 +106,9 @@ fn main() {
             t = time::SystemTime::now();
         }
 
-        println!("AVG: {}", acc.iter().fold(0, |s,i|s+i) as f32 / acc.len() as f32);
+        let avg_ns = acc.iter().fold(0, |s,i|s+i) as f32 / acc.len() as f32;
+        println!("AVG ns/insert: {}", avg_ns);
+        println!("AVG inserts/s: {}", 1. / (avg_ns / 1_000_000_000.));
         
     } else {
         loop {
