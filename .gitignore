@@ -16,4 +16,5 @@ conf/gstorage/conf.toml
 old/
 test.dtf
 *.pyc
+db
 
