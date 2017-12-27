@@ -36,6 +36,12 @@ class TectonicDB():
     def info(self):
         return self.cmd("INFO")
 
+    def countall(self):
+        return self.cmd("COUNT ALL")
+
+    def countall_in_mem(self):
+        return self.cmd("COUNT ALL IN MEM")
+
     def ping(self):
         return self.cmd("PING")
     
@@ -93,6 +99,10 @@ class TectonicDB():
     def use(self, dbname):
         return self.cmd("USE {}".format(dbname))
 
+    def unsubscribe(self):
+        self.cmd("UNSUBSCRIBE")
+        self.subscribed = False
+
     def subscribe(self, dbname):
         res = self.cmd("SUBSCRIBE {}".format(dbname))
         if res[0]:
@@ -103,48 +113,3 @@ class TectonicDB():
         return self.cmd("")
 
 
-def measure_latency():
-    dts = []
-
-    db = TectonicDB()
-
-    t = time.time()
-    for i in range(10000):
-        db.insert(0,0,True, True, 0., 0., 'default')
-        t_ = time.time()
-        dt = t_ - t
-        t = t_
-        # print dt
-        dts.append(dt)
-    print "AVG:", sum(dts) / len(dts)
-    db.destroy()
-
-def insert_n(n):
-    db = TectonicDB()
-    for i in range(n):
-        db.insert(0,0,True, True, 0., 0., 'default')
-
-def example_subscribe():
-    db = TectonicDB()
-    print db.subscribe('default')
-
-    import threading
-    def send_req():
-        while 1:
-            print "----------------------------"
-            insert_n(100)
-            time.sleep(3)
-    t = threading.Thread(target=send_req)
-    t.start()
-
-    while 1:
-        _, item = db.poll()
-        if item == "NONE\n":
-            time.sleep(0.01)
-        else:
-            print item[0],
-
-if __name__ == '__main__':
-    measure_latency()
-    # example_subscribe()
-    
