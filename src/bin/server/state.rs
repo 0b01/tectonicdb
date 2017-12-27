@@ -332,7 +332,13 @@ impl State {
         store.count() 
     }
 
-    /// Returns the total count of every item in memory
+    /// Returns the total count
+    pub fn countall_in_mem(&self) -> u64 {
+        let rdr = self.global.read().unwrap();
+        rdr.vec_store.iter().fold(0, |acc, (_name, tup)| acc + tup.0.len()) as u64
+    }
+
+    /// Returns the total count
     pub fn countall(&self) -> u64 {
         let rdr = self.global.read().unwrap();
         rdr.vec_store.iter().fold(0, |acc, (_name, tup)| acc + tup.1)

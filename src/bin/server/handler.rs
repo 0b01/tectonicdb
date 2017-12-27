@@ -26,6 +26,12 @@ pub enum GetFormat {
 type DbName = String;
 
 #[derive(Debug)]
+enum Loc {
+    Mem,
+    Fs
+}
+
+#[derive(Debug)]
 enum Command {
     Nothing,
     Ping,
@@ -36,7 +42,7 @@ enum Command {
     BulkAddInto(DbName),
     BulkAddEnd,
     Get(ReqCount, GetFormat, Option<(u64,u64)>),
-    Count(ReqCount),
+    Count(ReqCount, Loc),
     Clear(ReqCount),
     Flush(ReqCount),
     Insert(Option<Update>, Option<DbName>),
@@ -70,8 +76,9 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
         "BULKADD" => BulkAdd,
         "DDAKLUB" => BulkAddEnd,
         "UNSUBSCRIBE" => Unsubscribe,
-        "COUNT" => Count(ReqCount::Count(1)), 
-        "COUNT ALL" => Count(ReqCount::All),
+        "COUNT" => Count(ReqCount::Count(1), Loc::Fs), 
+        "COUNT ALL" => Count(ReqCount::All, Loc::Fs),
+        "COUNT ALL IN MEM" => Count(ReqCount::All, Loc::Mem),
         "CLEAR" => Clear(ReqCount::Count(1)),
         "CLEAR ALL" => Clear(ReqCount::All),
         "GET ALL AS JSON" => Get(ReqCount::All, GetFormat::JSON, None),
@@ -173,10 +180,10 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 state.bulkadd_db = None;
                 return_string("1")
             },
-        Count(ReqCount::Count(_)) => 
-            return_string(&format!("{}", state.count())),
-        Count(ReqCount::All) => 
-            return_string(&format!("{}", state.countall())),
+        Count(ReqCount::Count(_), Loc::Fs) => return_string(&format!("{}", state.count())),
+        Count(ReqCount::Count(_), Loc::Mem) => return_string(&format!("{}", state.count())), // TODO: implement count in mem
+        Count(ReqCount::All, Loc::Fs) => return_string(&format!("{}", state.countall())),
+        Count(ReqCount::All, Loc::Mem) => return_string(&format!("{}", state.countall_in_mem())),
         Clear(ReqCount::Count(_)) => 
             {
                 state.clear();
