@@ -25,4 +25,4 @@ WORKDIR /app
 RUN cargo build --release
 
 # Initialize the application
-CMD ["cargo", "run", "--release", "--bin", "tectonic-server"]
+CMD ["cargo", "run", "--release", "--bin", "tectonic-server", "--", "-vv", "-a", "-i 5000"]
