@@ -15,6 +15,7 @@ ENV PATH "/root/.cargo/bin:$PATH"
 
 # Move source code and scripts from local filesystem into the image
 COPY src /app/src
+COPY start-server.sh /app/start-server.sh
 COPY conf /app/conf
 COPY Cargo.toml /app/Cargo.toml
 COPY Cargo.lock /app/Cargo.lock
@@ -25,4 +26,4 @@ WORKDIR /app
 RUN cargo build --release
 
 # Initialize the application
-CMD ["cargo", "run", "--release", "--bin", "tectonic-server", "--", "-vv", "-a", "-i 5000"]
+CMD ["./start-server.sh"]
