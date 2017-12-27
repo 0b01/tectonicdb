@@ -90,10 +90,11 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
             write_all(wtr, buf).map(|(w,_)| w)
         });
 
-        let msg = writes.then(move |_| Ok(()));
+        let msg = writes.then(move |_| {
+            on_disconnect(&global_copy);
+            Ok(())
+        });
         handle.spawn(msg);
-
-        on_disconnect(&global_copy);
 
         Ok(())
     });
