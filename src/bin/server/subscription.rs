@@ -59,10 +59,10 @@ impl Subscriptions {
             self.i_txs.get_mut(&filter).unwrap().push(i_tx);
             *count
         } else {
-            self.sub_count.insert(filter.clone(), 0);
+            self.sub_count.insert(filter.clone(), 1);
             self.subs.insert(filter.clone(), vec![Subscription::new(filter.clone().clone(), i_rx, o_tx)] );
             self.i_txs.insert(filter, vec![i_tx]);
-            0
+            1
         };
 
         (id, o_rx)
@@ -70,11 +70,22 @@ impl Subscriptions {
 
     pub fn unsub(&mut self, id: usize, filter: &str) {
 
+        // decrement count
         let count = self.sub_count.get_mut(filter).unwrap();
         if *count > 0 { *count -= 1; }
 
-        let i_tx = &self.i_txs.get_mut(filter).unwrap()[id];
-        i_tx.send(Message::Terminate).unwrap();
+        let id = if id - 1 < 0 {0} else {id - 1};
+
+        // terminate the thread
+        {
+            let i_tx = &self.i_txs.get_mut(filter).unwrap()[id];
+            i_tx.send(Message::Terminate).unwrap();
+        }
+
+        // remove closed Sender from list
+        {
+            &self.i_txs.get_mut(filter).unwrap().remove(id);
+        }
 
         let sub = self.subs
                         .get_mut(filter).unwrap()
@@ -92,7 +103,10 @@ impl Subscriptions {
     pub fn msg(&self, f: Event) {
         for i_tx_v in self.i_txs.values() {
             for i_tx in i_tx_v {
-                i_tx.send(Message::Msg(f.clone())).unwrap();
+                match i_tx.send(Message::Msg(f.clone())) {
+                    Err(_) => error!("Mux message failed!"),
+                    _ => (),
+                }
             }
         }
     }
