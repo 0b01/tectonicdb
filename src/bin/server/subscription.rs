@@ -11,6 +11,9 @@ enum Message {
 }
 
 #[derive(Debug)]
+/// using SUBSCRIBE [db] command
+/// user can poll from the newly inserted updates
+/// server will responde to blank line "" query
 pub struct Subscriptions {
     // /// a list of output receivers
     // o_rxs: HashMap<String, Arc<Mutex<mpsc::Receiver<Update>>>>,

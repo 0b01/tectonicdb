@@ -3,123 +3,114 @@ extern crate byteorder;
 extern crate dtf;
 
 use clap::{Arg, App};
-use std::net::TcpStream;
-use std::str;
-use byteorder::{BigEndian, /*WriteBytesExt, */ ReadBytesExt};
-use std::io::{self, Read, Write};
-use std::time;
+use std::{time, str};
+use std::io::{self, Write};
+use std::thread;
 
-struct Cxn {
-    stream : TcpStream,
-    subscribed: bool,
-    // addr: String
-}
+mod db;
 
-impl Cxn {
-    fn cmd(&mut self, command : &str) -> String {
-
-        let _ = self.stream.write(command.as_bytes());
-        let success = self.stream.read_u8().unwrap() == 0x1;
-        let ret = if success
-          && command.starts_with("GET")
-          && !command.contains("AS JSON"){
-            let vecs = dtf::read_one_batch(&mut self.stream);
-            format!("[{}]\n", dtf::update_vec_to_json(&vecs))
-        } else {
-            let size = self.stream.read_u64::<BigEndian>().unwrap();
-            let mut buf = vec![0; size as usize];
-            let _ = self.stream.read_exact(&mut buf);
-            str::from_utf8(&buf).unwrap().to_owned()
-        };
-
-        if command.len() >= 9 && "SUBSCRIBE" == &command[..9] {
-            self.subscribed = true;
-        } else if command.len() >= 11 && "UNSUBSCRIBE" == &command[..11] {
-            self.subscribed = false;
-        }
-
-        ret
-    }
-    fn new(host : &str, port : &str, verbosity : u64) -> Cxn {
-        let addr = format!("{}:{}", host, port);
-
-        if verbosity > 0 {
-            println!("Connecting to {}", addr);
-        }
-
-        let cxn = Cxn {
-            subscribed: false,
-            stream : TcpStream::connect(&addr).unwrap(),
-        };
-
-        cxn
-    }
-}
 
 fn main() {
-        let matches = App::new("tectonic-cli")
-                          .version("0.0.1")
-                          .author("Ricky Han <tectonic@rickyhan.com>")
-                          .about("command line client for tectonic financial datastore")
-                          .arg(Arg::with_name("host")
-                               .short("h")
-                               .long("host")
-                               .value_name("HOST")
-                               .help("Sets the host to connect to (default 0.0.0.0)")
-                               .takes_value(true))
-                          .arg(Arg::with_name("port")
-                               .short("p")
-                               .long("port")
-                               .value_name("PORT")
-                               .help("Sets the port to connect to (default 9001)")
-                               .takes_value(true))
-                          .arg(Arg::with_name("v")
-                               .short("v")
-                               .multiple(true)
-                               .help("Sets the level of verbosity"))
-                          .arg(Arg::with_name("b")
-                               .short("b")
-                               .value_name("ITERATION")
-                               .multiple(false)
-                               .help("Benchmark network latency")
-                               .takes_value(true))
-                          .get_matches();
+    let matches = App::new("tectonic-cli")
+          .version("0.0.1")
+          .author("Ricky Han <tectonic@rickyhan.com>")
+          .about("command line client for tectonic financial datastore")
+          .arg(Arg::with_name("host")
+               .short("h")
+               .long("host")
+               .value_name("HOST")
+               .help("Sets the host to connect to (default 0.0.0.0)")
+               .takes_value(true))
+          .arg(Arg::with_name("port")
+               .short("p")
+               .long("port")
+               .value_name("PORT")
+               .help("Sets the port to connect to (default 9001)")
+               .takes_value(true))
+          .arg(Arg::with_name("s")
+               .short("s")
+               .long("subscription")
+               .value_name("DBNAME")
+               .help("subscribe to the datastore")
+               .takes_value(true))
+          .arg(Arg::with_name("v")
+               .short("v")
+               .multiple(true)
+               .help("Sets the level of verbosity"))
+          .arg(Arg::with_name("b")
+               .short("b")
+               .value_name("ITERATION")
+               .multiple(false)
+               .help("Benchmark network latency")
+               .takes_value(true))
+          .get_matches();
+
     let host = matches.value_of("host").unwrap_or("0.0.0.0");
     let port = matches.value_of("port").unwrap_or("9001");
-    let verbosity = matches.occurrences_of("v");
+    let verbosity = matches.occurrences_of("v") as u8;
 
-    let mut cxn = Cxn::new(host, port, verbosity);
-    
-    let mut t = time::SystemTime::now();
+    let mut cxn = db::Cxn::new(host, port, verbosity).unwrap();
+
     if matches.is_present("b") {
-        let times = matches.value_of("b")
-                    .unwrap_or("10")
+        let times = matches.value_of("b") .unwrap_or("10")
                     .parse::<usize>()
                     .unwrap_or(10) + 1;
-
-        let mut acc = vec![];
-        let _create = cxn.cmd("CREATE bnc_gas_btc\n");
-        for _ in 1..times {
-            let _res = cxn.cmd("ADD 1513922718770, 0, t, f, 0.001939, 22.85; INTO bnc_gas_btc\n");
-            acc.push(t.elapsed().unwrap().subsec_nanos());
-            // println!("res: {:?}, latency: {:?}", res, t.elapsed());
-            t = time::SystemTime::now();
-        }
-
-        let avg_ns = acc.iter().fold(0, |s,i|s+i) as f32 / acc.len() as f32;
-        println!("AVG ns/insert: {}", avg_ns);
-        println!("AVG inserts/s: {}", 1. / (avg_ns / 1_000_000_000.));
-        
+        benchmark(&mut cxn, times);
+    } else if matches.is_present("s") {
+        let dbname = matches.value_of("s").unwrap_or("");
+        subscribe(&mut cxn, dbname);
     } else {
-        loop {
-            print!("--> ");
-            io::stdout().flush().ok().expect("Could not flush stdout"); // manually flush stdout
-
-            let mut cmd = String::new();
-            io::stdin().read_line(&mut cmd).unwrap();
-            let res = cxn.cmd(&cmd);
-            print!("{}", res);
-        }
+        handle_query(&mut cxn);
     }
 }
 
+
+fn benchmark(cxn: &mut db::Cxn, times: usize) {
+
+    let mut t = time::SystemTime::now();
+
+    let mut acc = vec![];
+    let _create = cxn.cmd("CREATE bnc_gas_btc\n");
+    for _ in 1..times {
+        let _res = cxn.cmd("ADD 1513922718770, 0, t, f, 0.001939, 22.85; INTO bnc_gas_btc\n");
+        acc.push(t.elapsed().unwrap().subsec_nanos());
+        // println!("res: {:?}, latency: {:?}", res, t.elapsed());
+        t = time::SystemTime::now();
+    }
+
+    let avg_ns = acc.iter().fold(0, |s,i|s+i) as f32 / acc.len() as f32;
+    println!("AVG ns/insert: {}", avg_ns);
+    println!("AVG inserts/s: {}", 1. / (avg_ns / 1_000_000_000.));
+}
+
+
+fn handle_query(cxn: &mut db::Cxn) {
+    loop {
+        print!("--> ");
+        io::stdout().flush().ok().expect("Could not flush stdout"); // manually flush stdout
+
+        let mut cmd = String::new();
+        io::stdin().read_line(&mut cmd).unwrap();
+        match cxn.cmd(&cmd) {
+            Err(db::TectonicError::ConnectionError) => {
+                panic!("Connection Error");
+            },
+            Err(db::TectonicError::ServerError(msg)) => {
+                print!("{}", msg);
+            },
+            Ok(msg) => {
+                print!("{}", msg);
+            }
+        };
+    }
+}
+
+fn subscribe(cxn: &mut db::Cxn, dbname: &str) {
+    let _ = cxn.subscribe(dbname);
+    let rx = cxn.subscription.clone();
+    let rx = rx.unwrap();
+
+    for msg in rx.lock().unwrap().recv() {
+        println!("{:?}", msg);
+    }
+}
