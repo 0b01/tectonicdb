@@ -62,7 +62,13 @@ pub fn run(global: Arc<RwLock<SharedState>> ) {
 
                                 let meta = upload::upload(fname, &conf);
                                 match meta {
-                                    Ok(m) => info!("{}", m),
+                                    Ok(m) => {
+                                        info!("Uplaoded to dcb: {}", fname);
+                                        match upload::post_to_dcb(&m) {
+                                            Ok(_) => info!("Uplaoded to dcb: {}", fname),
+                                            Err(_) => error!("Error uploading to dcb: {}", fname)
+                                        }
+                                    }
                                     Err(e) => error!("fname: {}, {:?}", fname, e)
                                 };
                             }

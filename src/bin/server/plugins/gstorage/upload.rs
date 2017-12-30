@@ -123,6 +123,14 @@ pub fn upload(fname: &str, conf: &GStorageConfig) -> Result<String, Box<error::E
     Ok(json)
 }
 
+/// data collection backend is a proprietary data ingestion engine
+pub fn post_to_dcb(json: &str) -> Result<String, Box<error::Error>> {
+    let client = reqwest::Client::new();
+    let mut res = client.post("http://httpbin.org/post")
+        .body(json.to_owned())
+        .send()?;
+    Ok(res.text()?)
+}
 
 #[cfg(test)]
 mod tests {
@@ -145,6 +153,8 @@ mod tests {
         let json = serde_json::to_string(&metadata).unwrap();
 
         println!("{}", json);
+        let res = post_to_dcb(&json).unwrap();
+        println!("{}", res);
         
         println!("DONE");
 
