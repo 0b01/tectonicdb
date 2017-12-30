@@ -3,6 +3,7 @@ extern crate byteorder;
 extern crate dtf;
 
 use clap::{Arg, App};
+use std::io;
 
 fn main() {
         let matches = App::new("dtfcat")
@@ -31,13 +32,13 @@ fn main() {
     let csv = matches.is_present("csv");
 
     if metadata {
-        println!("{}", dtf::read_meta(input));
+        println!("{}", dtf::read_meta(input).unwrap());
         return;
     } else if csv{
-        println!("{}", dtf::update_vec_to_csv(&dtf::decode(input, None)));
+        println!("{}", dtf::update_vec_to_csv(&dtf::decode(input, None).unwrap()));
         return;
     } else {
-        println!("[{}]", dtf::update_vec_to_json(&dtf::decode(input, None)));
+        println!("[{}]", dtf::update_vec_to_json(&dtf::decode(input, None).unwrap()));
         return;
     }
 }

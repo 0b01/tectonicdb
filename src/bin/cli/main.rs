@@ -92,6 +92,9 @@ fn handle_query(cxn: &mut db::Cxn) {
         let mut cmd = String::new();
         io::stdin().read_line(&mut cmd).unwrap();
         match cxn.cmd(&cmd) {
+            Err(db::TectonicError::DecodeError) => {
+                panic!("Decode Error");
+            },
             Err(db::TectonicError::ConnectionError) => {
                 panic!("Connection Error");
             },

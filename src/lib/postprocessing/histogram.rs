@@ -400,7 +400,7 @@ mod tests {
 
     #[test]
     fn test_histogram() {
-        let records = dtf::decode(FNAME, Some(10000));
+        let records = dtf::decode(FNAME, Some(10000)).unwrap();
         let prices: Vec<Price> = records.into_iter()
                                     .map(|up| up.price as f64) 
                                     .collect();

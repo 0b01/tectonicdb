@@ -2,6 +2,7 @@ use std::path::Path;
 use std::fs;
 use state::*;
 use dtf;
+use std::io;
 
 pub fn create_dir_if_not_exist(dtf_folder : &str) {
     if !Path::new(dtf_folder).exists() {
@@ -11,7 +12,7 @@ pub fn create_dir_if_not_exist(dtf_folder : &str) {
 
 /// Iterate through the dtf files in the folder and load some metadata into memory.
 /// Create corresponding Store objects in State.
-pub fn init_dbs(state: &mut State) {
+pub fn init_dbs(state: &mut State) -> Result<(), io::Error> {
     let dtf_folder = {
         let rdr = state.global.read().unwrap();
         rdr.settings.dtf_folder.clone()
@@ -26,8 +27,8 @@ pub fn init_dbs(state: &mut State) {
                        .to_str()
                        .unwrap(); // sldjf-lks-djflk-sfsd--something
             let full_path = &format!("{}/{}", dtf_folder, stem);
-            let header_size = dtf::get_size(full_path);
-            let symbol = dtf::read_meta(full_path).symbol;
+            let header_size = dtf::get_size(full_path)?;
+            let symbol = dtf::read_meta(full_path)?.symbol;
 
             {
                 let mut wtr = state.global.write().unwrap();
@@ -46,10 +47,11 @@ pub fn init_dbs(state: &mut State) {
             });
         }
     }
+    Ok(())
 }
 
 /// search every matching dtf file under folder
-pub fn scan_files_for_range(folder: &str, symbol: &str, min_ts: u64, max_ts: u64) -> Vec<dtf::Update> {
+pub fn scan_files_for_range(folder: &str, symbol: &str, min_ts: u64, max_ts: u64) -> Result<Vec<dtf::Update>, io::Error> {
     let mut ret = Vec::new();
     match fs::read_dir(folder) {
         Err(e) => error!("Unable to read dir entries: {:?}", e),
@@ -59,18 +61,17 @@ pub fn scan_files_for_range(folder: &str, symbol: &str, min_ts: u64, max_ts: u64
                 let path = entry.path();
                 let fname_str = path.to_str().unwrap();
 
-                let meta = dtf::read_meta(fname_str);
+                let meta = dtf::read_meta(fname_str)?;
                 if meta.symbol == symbol && within_range(
                     min_ts, max_ts, meta.min_ts, meta.max_ts) {
 
-                    let ups = dtf::get_range_in_file(fname_str, min_ts, max_ts);
+                    let ups = dtf::get_range_in_file(fname_str, min_ts, max_ts)?;
                     ret.extend(ups);
                 }
             }
         }
     };
-
-    ret
+    Ok(ret)
 }
 
 /// check if two ranges intersect

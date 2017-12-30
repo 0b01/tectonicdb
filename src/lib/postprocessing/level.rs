@@ -56,7 +56,7 @@ mod tests {
         // rebin price
         let tick_bins = 10; // or 9 thresholds
         let step_bins = 10;
-        let records = dtf::decode(FNAME, Some(100));
+        let records = dtf::decode(FNAME, Some(100)).unwrap();
         {
             let prices = records.iter().map(|up| up.price as f64).collect::<Vec<f64>>();
             let price_hist = Histogram::new(&prices, tick_bins, 2.0);

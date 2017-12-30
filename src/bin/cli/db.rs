@@ -8,13 +8,14 @@ use std::io::{Read, Write};
 use std::error;
 use std::fmt;
 use std::{thread, time};
-use std::sync::mpsc::{Sender, Receiver, channel};
+use std::sync::mpsc::{Receiver, channel};
 use std::sync::{Mutex, Arc, RwLock};
 
 #[derive(Debug)]
 pub enum TectonicError {
     ServerError(String),
     ConnectionError,
+    DecodeError,
 }
 
 impl error::Error for TectonicError {
@@ -22,6 +23,7 @@ impl error::Error for TectonicError {
         match self {
             &TectonicError::ServerError(ref msg) => &msg,
             &TectonicError::ConnectionError => "disconnection from tectonicdb",
+            &TectonicError::DecodeError => "Unable to decode dtf stream",
         }
     }
 }
@@ -31,6 +33,7 @@ impl fmt::Display for TectonicError {
         match self {
             &TectonicError::ServerError(ref msg) => write!(f, "TectonicError: {}", msg),
             &TectonicError::ConnectionError => write!(f, "ConnectionError"),
+            &TectonicError::DecodeError => write!(f, "DecodeError"),
         }
     }
 }
@@ -48,8 +51,12 @@ impl CxnStream {
         };
 
         if command.starts_with("GET") && !command.contains("AS JSON") && success {
-            let vecs = dtf::read_one_batch(&mut self.stream);
-            Ok(format!("[{}]\n", dtf::update_vec_to_json(&vecs)))
+            match dtf::read_one_batch(&mut self.stream) {
+                Ok(vecs) => {
+                    Ok(format!("[{}]\n", dtf::update_vec_to_json(&vecs)))
+                },
+                Err(_) => Err(TectonicError::DecodeError),
+            }
         } else {
             let size = self.stream.read_u64::<BigEndian>().unwrap();
             let mut buf = vec![0; size as usize];
@@ -253,30 +260,30 @@ impl InsertCommand {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn should_err() {
-        let mut cxn = Cxn::new("localhost", "9001", 3).unwrap();
-        let res = cxn.cmd("USE test\n");
-        assert!(res.is_err());
-    }
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     #[test]
+//     fn should_err() {
+//         let mut cxn = Cxn::new("localhost", "9001", 3).unwrap();
+//         let res = cxn.cmd("USE test\n");
+//         assert!(res.is_err());
+//     }
 
-    #[test]
-    fn should_cxnpool_work() {
-        let mut cxn = CxnPool::new(10, "localhost", "9001", 3).unwrap();
-        let res = cxn.cmd("COUNT ALL\n").unwrap();
-        // assert_eq!("3\n", res);
+//     #[test]
+//     fn should_cxnpool_work() {
+//         let mut cxn = CxnPool::new(10, "localhost", "9001", 3).unwrap();
+//         let res = cxn.cmd("COUNT ALL\n").unwrap();
+//         // assert_eq!("3\n", res);
 
-        let res = cxn.insert(&InsertCommand::Add("default".to_owned(), dtf::Update {
-            ts: 0,
-            seq: 0,
-            is_bid: false,
-            is_trade: false,
-            price: 0.,
-            size: 0.,
-        }));
-        println!("{:?}", res);
-    }
-}
+//         let res = cxn.insert(&InsertCommand::Add("default".to_owned(), dtf::Update {
+//             ts: 0,
+//             seq: 0,
+//             is_bid: false,
+//             is_trade: false,
+//             price: 0.,
+//             size: 0.,
+//         }));
+//         println!("{:?}", res);
+//     }
+// }

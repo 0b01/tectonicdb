@@ -37,7 +37,7 @@ fn main() {
     let aligned = matches.is_present("aligned");
     let minutes = matches.value_of("minutes").unwrap_or("1");
 
-    let ups = dtf::decode(input, None);
+    let ups = dtf::decode(input, None).unwrap();
 
     let mut candles = Candles::from(ups.as_slice());
     candles.insert_continuation_candles();

@@ -90,7 +90,7 @@ fn needs_to_upload(fname: &path::PathBuf, dur: &Duration) -> Result<bool, Box<er
 
     Ok(
         fname.is_file()                                     // if is file
-        && is_dtf(fname_str)                                // dtf
+        && is_dtf(fname_str).unwrap()                       // dtf
         && time::SystemTime::now().duration_since(
                 fs::metadata(fname)?.modified()?)? <= *dur  // file modified after
     )

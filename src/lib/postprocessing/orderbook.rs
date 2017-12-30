@@ -168,7 +168,7 @@ mod tests {
         let step_bins = 100;
         let tick_bins = 100;
 
-        let ups = dtf::decode(FNAME, Some(1000));
+        let ups = dtf::decode(FNAME, Some(1000)).unwrap();
         let ob = RebinnedOrderbook::from(ups.as_slice(), step_bins, tick_bins, 2.);
 
         assert_eq!(ob.book.len(), step_bins -1);

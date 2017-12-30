@@ -27,7 +27,7 @@ fn gen_dataset() -> Record {
     let step_bins = 1000;
     let tick_bins = 100;
 
-    let ups = dtf::decode(fname, Some(2000));
+    let ups = dtf::decode(fname, Some(2000)).unwrap();
     let ob = RebinnedOrderbook::from(ups.as_slice(), step_bins, tick_bins, 1.);
 
     let mut record = Record::new(batch_size, step_bins, tick_bins);

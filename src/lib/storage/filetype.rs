@@ -21,7 +21,7 @@ impl FileType {
         let file = File::open(fname).expect("OPENING FILE");
         let mut rdr = BufReader::new(file);
 
-        if read_magic_value(&mut rdr) {
+        if read_magic_value(&mut rdr).unwrap() {
             return FileType::RawDtf;
         }
 

@@ -32,7 +32,7 @@ impl FileMetadata for DTFFileMetadata {}
 
 impl DTFFileMetadata {
     pub fn new(fname: &str) -> Result<DTFFileMetadata, io::Error> {
-        let metadata: dtf::Metadata = dtf::read_meta(fname);
+        let metadata: dtf::Metadata = dtf::read_meta(fname)?;
         let file_size = fs::metadata(fname)?.len();
         let symbol = match Symbol::from_str(&metadata.symbol) {
             Some(sym) => sym,

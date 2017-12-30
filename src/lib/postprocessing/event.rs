@@ -97,7 +97,7 @@ mod test {
 
     #[test]
     fn test_volume_filter() {
-        let records = dtf::decode(FNAME, Some(10000));
+        let records = dtf::decode(FNAME, Some(10000)).unwrap();
         let ups = records.as_slice();
 
         let evts = Events::from(ups);
@@ -125,7 +125,7 @@ mod test {
     fn should_work_with_poloniex_too() {
         // TODO: more poloniex tests
         // The raw data doesn't look correct.
-        let records = dtf::decode(POLO, Some(10000));
+        let records = dtf::decode(POLO, Some(10000)).unwrap();
 
         let ups = records.as_slice();
         let evts = Events::from(ups);

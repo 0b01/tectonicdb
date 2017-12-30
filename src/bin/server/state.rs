@@ -105,11 +105,15 @@ impl Store {
             utils::create_dir_if_not_exist(&folder);
 
             let fpath = Path::new(&fullfname);
-            if fpath.exists() {
-                dtf::append(&fullfname, &vecs.0);
+            let result = if fpath.exists() {
+                dtf::append(&fullfname, &vecs.0)
             } else {
-                dtf::encode(&fullfname, &self.name, &vecs.0);
-            }
+                dtf::encode(&fullfname, &self.name, &vecs.0)
+            };
+            match result {
+                Ok(_) => info!("Successfully flushed."),
+                Err(_) => error!("Error flushing file."),
+            };
 
             // clear
             vecs.0.clear();
@@ -130,13 +134,19 @@ impl Store {
             //     warn!("There are more items in memory than in file. Cannot load from file.");
             //     return;
             // }
-            let mut ups = dtf::decode(&fname, None);
-            let mut wtr = self.global.write().unwrap();
-            // let size = ups.len() as u64;
-            let vecs = wtr.vec_store.get_mut(&self.name).unwrap();
-            vecs.0.append(&mut ups);
-            // wtr.vec_store.insert(self.name.to_owned(), (ups, size));
-            self.in_memory = true;
+            let ups = dtf::decode(&fname, None);
+            if ups.is_err() {
+                error!("Unable to decode file during load!");
+                return;
+            } else {
+                let mut ups = ups.unwrap();
+                let mut wtr = self.global.write().unwrap();
+                // let size = ups.len() as u64;
+                let vecs = wtr.vec_store.get_mut(&self.name).unwrap();
+                vecs.0.append(&mut ups);
+                // wtr.vec_store.insert(self.name.to_owned(), (ups, size));
+                self.in_memory = true;
+            }
         }
     }
 
@@ -148,12 +158,18 @@ impl Store {
             let fname = format!("{}/{}.dtf", &folder, self.name);
             dtf::get_size(&fname)
         };
-
-        let mut wtr = self.global.write().unwrap();
-        wtr.vec_store
-            .get_mut(&self.name)
-            .expect("Key is not in vec_store")
-            .1 = header_size;
+        match header_size {
+            Ok(header_size) => {
+                let mut wtr = self.global.write().unwrap();
+                wtr.vec_store
+                    .get_mut(&self.name)
+                    .expect("Key is not in vec_store")
+                    .1 = header_size;
+            },
+            Err(_) => {
+                error!("Unable to read header size from file");
+            }
+        }
     }
 
     /// clear the vector. toggle in_memory. update size
@@ -419,7 +435,14 @@ impl State {
                 rdr.settings.dtf_folder.clone()
             };
             let ups = utils::scan_files_for_range(&folder, &self.current_store_name, min_ts, max_ts);
-            ups_from_fs.extend(ups);
+            match ups {
+                Ok(ups) => {
+                    ups_from_fs.extend(ups);
+                },
+                Err(_) => {
+                    error!("Unable to scan files for range.");
+                }
+            }
         }
 
         let result = ups_from_fs;
