@@ -375,6 +375,7 @@ impl State {
 
     /// unsubscribe
     pub fn unsub(&mut self) {
+        if !self.is_subscribed { return; }
         let old_dbname = self.subscribed_db.clone().unwrap();
         let sub_id = self.sub_id.unwrap();
 
