@@ -358,6 +358,37 @@ impl State {
         rdr.vec_store.iter().fold(0, |acc, (_name, tup)| acc + tup.1)
     }
 
+    pub fn sub(&mut self, dbname: &str) {
+        self.is_subscribed = true;
+        self.subscribed_db = Some(dbname.to_owned());
+        let glb = self.global.read().unwrap();
+        let (id, rx) = glb.subs.lock().unwrap().sub(dbname.to_owned());
+        self.rx = Some(rx);
+        self.sub_id = Some(id);
+        info!("Subscribing to channel {}. id: {}", dbname, id);
+    }
+
+    pub fn unsub_all(&mut self) {
+        let glb = self.global.read().unwrap();
+        let _ = glb.subs.lock().unwrap().unsub_all();
+    }
+
+    /// unsubscribe
+    pub fn unsub(&mut self) {
+        let old_dbname = self.subscribed_db.clone().unwrap();
+        let sub_id = self.sub_id.unwrap();
+
+        let glb = self.global.read().unwrap();
+        let _ = glb.subs.lock().unwrap().unsub(sub_id, &old_dbname);
+
+        info!("Unsubscribing from channel {}. id: {}", old_dbname, sub_id);
+
+        self.is_subscribed = false;
+        self.subscribed_db = None;
+        self.rx = None;
+        self.sub_id = None;
+    }
+
     /// remove everything in the current store
     pub fn clear(&mut self) {
         self.get_current_store().clear();
@@ -508,6 +539,7 @@ impl State {
         }
         state
     }
+
 }
 
 /// (updates, count)

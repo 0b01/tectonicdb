@@ -52,11 +52,15 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
 
     run_plugins(global.clone());
 
+    use std::rc::Rc;
+    use std::cell::RefCell;
     // main loop
     let done = listener.incoming().for_each(move |(socket, _addr)| {
         let global_copy = global.clone();
-        let mut state = State::new(&global);
-        match utils::init_dbs(&mut state) {
+        let state = Rc::new(RefCell::new(State::new(&global)));
+        let stateclone = state.clone();
+
+        match utils::init_dbs(&mut state.borrow_mut()) {
             Ok(()) => (),
             Err(_) => panic!("Cannot initialized db!"),
         };
@@ -65,7 +69,7 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
         let (rdr, wtr) = socket.split();
         let lines = lines(BufReader::new(rdr));
         let responses = lines.map(move |line| {
-            let resp = handler::gen_response(&line, &mut state);
+            let resp = handler::gen_response(&line, &mut state.borrow_mut());
             (line, resp)
         });
         let writes = responses.fold(wtr, |wtr, (line, resp)| {
@@ -93,6 +97,7 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
         });
 
         let msg = writes.then(move |_| {
+            stateclone.borrow_mut().unsub();
             on_disconnect(&global_copy);
             Ok(())
         });
