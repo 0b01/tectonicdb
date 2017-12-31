@@ -57,7 +57,10 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
     let done = listener.incoming().for_each(move |(socket, _addr)| {
         let global_copy = global.clone();
         let mut state = State::new(&global);
-        utils::init_dbs(&mut state);
+        match utils::init_dbs(&mut state) {
+            Ok(()) => (),
+            Err(_) => panic!("Cannot initialized db!"),
+        };
         on_connect(&global_copy);
 
         let (rdr, wtr) = socket.split();

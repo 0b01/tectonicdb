@@ -463,7 +463,7 @@ impl State {
         match format {
             GetFormat::DTF => {
                 let mut bytes : Vec<u8> = Vec::new();
-                dtf::write_batches(&mut bytes, &result);
+                let _ = dtf::write_batches(&mut bytes, &result);
                 Some(ReturnType::Bytes(bytes))
             },
             GetFormat::JSON => {
