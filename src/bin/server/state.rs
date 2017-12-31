@@ -248,7 +248,6 @@ impl State {
 
         let metadata = format!(r#"{{
     "cxns": {},
-    "max_threads": {},
     "ts": {},
     "autoflush_enabled": {},
     "autoflush_interval": {},
@@ -257,7 +256,6 @@ impl State {
   }}"#,
 
                 rdr.n_cxns,
-                rdr.settings.threads,
                 SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .expect("Time went backwards")

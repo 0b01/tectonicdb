@@ -34,7 +34,6 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
         warn!("Autoflush is off!");
     }
     info!("Autoflush is {}: every {} inserts.", settings.autoflush, settings.flush_interval);
-    info!("Maximum connection: {}.", settings.threads);
     info!("History granularity: {}.", settings.hist_granularity);
 
     let mut core = Core::new().unwrap();

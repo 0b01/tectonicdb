@@ -41,7 +41,6 @@ fn main() {
     let autoflush = matches.is_present("autoflush");
     let flush_interval = matches.value_of("flush_interval").unwrap_or("1000");
     let hist_granularity = matches.value_of("hist_granularity").unwrap_or("30");
-    let threads = matches.value_of("threads").unwrap_or("100");
 
     let log_file = matches.value_of("log_file").unwrap_or("tectonic.log");
 
@@ -49,7 +48,6 @@ fn main() {
         autoflush: autoflush,
         dtf_folder: dtf_folder.to_owned(),
         flush_interval: flush_interval.parse::<u32>().unwrap(),
-        threads: threads.parse::<usize>().unwrap(),
         hist_granularity: hist_granularity.parse::<u64>().unwrap(),
     };
 
@@ -117,11 +115,6 @@ fn get_matches<'a>() -> ArgMatches<'a> {
         .long("flush_interval")
         .value_name("INTERVAL")
         .help("Sets autoflush interval (default every 1000 inserts)"))
-    .arg(Arg::with_name("threads")
-        .short("t")
-        .long("threads")
-        .value_name("THREAD")
-        .help("Sets system thread count to handle the maximum number of client connection. (default 50)"))
     .arg(Arg::with_name("hist_granularity")
         .short("g")
         .long("hist_granularity")

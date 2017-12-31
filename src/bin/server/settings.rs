@@ -7,6 +7,5 @@ pub struct Settings {
     pub autoflush: bool,
     pub dtf_folder: String,
     pub flush_interval: u32,
-    pub threads: usize,
     pub hist_granularity: u64,
 }

@@ -65,7 +65,6 @@ There are several commandline options:
 * -g, --hist_granularity <HIST_GRANULARITY>: Sets the history record granularity interval. (default 60s)
 * -h, --host <HOST>: Sets the host to connect to (default 0.0.0.0)
 * -p, --port <PORT>: Sets the port to connect to (default 9001)
-* -t, --threads <THREAD>: Sets system thread count to handle the maximum number of client connection. (default 50)
 * -l, --log_file <LOG_FILE>: Sets the log file to write to
 
 
