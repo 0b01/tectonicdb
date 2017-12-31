@@ -71,17 +71,40 @@ impl Subscriptions {
         (id, o_rx)
     }
 
+    pub fn unsub_all(&mut self) {
+        let to_unsub = {
+            let mut temp = vec![];
+            for (symbol, v) in self.subs.iter() {
+                for id in 0..v.len() {
+                    temp.push((id, symbol.clone()));
+                }
+            }
+            temp
+        };
+        println!("{:?}", to_unsub);
+
+        for &(ref id, ref symbol) in to_unsub.iter() {
+            self.unsub(*id+1, &symbol);
+        }
+    }
+
     pub fn unsub(&mut self, id: usize, filter: &str) {
 
         // decrement count
-        let count = self.sub_count.get_mut(filter).unwrap();
+        let count = match self.sub_count.get_mut(filter) {
+            Some(count) => count,
+            None => return
+        };
         if *count > 0 { *count -= 1; }
 
-        let id = if id - 1 < 0 {0} else {id - 1};
+        let id = if id == 0 {0} else {id - 1};
 
         // terminate the thread
         {
-            let i_tx = &self.i_txs.get_mut(filter).unwrap()[id];
+            let i_tx = &match self.i_txs.get_mut(filter).unwrap().get(id) {
+                Some(i_tx) => i_tx,
+                None => return,
+            };
             i_tx.send(Message::Terminate).unwrap();
         }
 
@@ -96,7 +119,6 @@ impl Subscriptions {
         if let Some(thread) = sub.thread.take() {
             thread.join().unwrap();
         }
-
     }
 
     // pub fn get(&self, filter: &str) -> Arc<Mutex<mpsc::Receiver<Update>>> {

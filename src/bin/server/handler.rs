@@ -48,7 +48,7 @@ enum Command {
     Insert(Option<Update>, Option<DbName>),
     Create(DbName),
     Subscribe(DbName),
-    Unsubscribe,
+    Unsubscribe(ReqCount),
     Subscription,
     Use(DbName),
     Exists(DbName),
@@ -75,7 +75,8 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
         "PERF" => Perf,
         "BULKADD" => BulkAdd,
         "DDAKLUB" => BulkAddEnd,
-        "UNSUBSCRIBE" => Unsubscribe,
+        "UNSUBSCRIBE" => Unsubscribe(ReqCount::Count(0)),
+        "UNSUBSCRIBE ALL" => Unsubscribe(ReqCount::All),
         "COUNT" => Count(ReqCount::Count(1), Loc::Fs), 
         "COUNT ALL" => Count(ReqCount::All, Loc::Fs),
         "COUNT ALL IN MEM" => Count(ReqCount::All, Loc::Mem),
@@ -253,7 +254,13 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 }
             },
 
-        Unsubscribe =>
+        Unsubscribe(ReqCount::All)  => 
+            {
+                let glb = state.global.read().unwrap();
+                let _ = glb.subs.lock().unwrap().unsub_all();
+                return_string("Unsubscribed everything!")
+            },
+        Unsubscribe(ReqCount::Count(_))  =>
             { 
                 let old_dbname = state.subscribed_db.clone().unwrap();
                 let sub_id = state.sub_id.unwrap();
