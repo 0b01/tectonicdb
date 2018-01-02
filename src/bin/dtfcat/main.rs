@@ -1,9 +1,9 @@
 extern crate clap;
 extern crate byteorder;
-extern crate dtf;
+extern crate libtectonic;
+use libtectonic::dtf;
 
 use clap::{Arg, App};
-use std::io;
 
 fn main() {
         let matches = App::new("dtfcat")

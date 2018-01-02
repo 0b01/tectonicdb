@@ -1,5 +1,7 @@
 extern crate byteorder;
-extern crate dtf;
+extern crate libtectonic;
+
+use libtectonic::dtf;
 
 use std::net::TcpStream;
 use std::str;

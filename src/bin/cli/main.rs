@@ -1,6 +1,6 @@
 extern crate clap;
 extern crate byteorder;
-extern crate dtf;
+extern crate libtectonic;
 
 use clap::{Arg, App};
 use std::{time, str};

@@ -4,8 +4,12 @@ macro_rules! catch {
     }
 }
 
-use dtf;
-use dtf::update::Update;
+
+use libtectonic;
+use libtectonic::dtf;
+use libtectonic::dtf::update::Update;
+use libtectonic::storage::utils::scan_files_for_range;
+
 use std::collections::HashMap;
 use utils;
 use std::path::Path;
@@ -439,7 +443,7 @@ impl State {
         // if range, filter mem
         let acc = catch! {
             let (min_ts, max_ts) = range?;
-            if !utils::within_range(min_ts, max_ts, vecs.first()?.ts, vecs.last()?.ts) { return None; }
+            if !libtectonic::utils::within_range(min_ts, max_ts, vecs.first()?.ts, vecs.last()?.ts) { return None; }
             box vecs.iter()
                 .filter(|up| up.ts < max_ts && up.ts > min_ts)
                 .map(|up| up.to_owned())
@@ -464,7 +468,7 @@ impl State {
                 let rdr = self.global.read().unwrap();
                 rdr.settings.dtf_folder.clone()
             };
-            let ups = utils::scan_files_for_range(&folder, &self.current_store_name, min_ts, max_ts);
+            let ups = scan_files_for_range(&folder, &self.current_store_name, min_ts, max_ts);
             match ups {
                 Ok(ups) => {
                     ups_from_fs.extend(ups);

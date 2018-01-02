@@ -13,9 +13,8 @@ exclude = [
     "test/test-data/*",
 ]
 
-
 [lib]
-name = "dtf"
+name = "libtectonic"
 path = "src/lib/lib.rs"
 
 [[bin]]

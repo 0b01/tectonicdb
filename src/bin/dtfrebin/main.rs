@@ -1,9 +1,10 @@
 extern crate byteorder;
 extern crate clap;
-extern crate dtf;
+extern crate libtectonic;
 
 use clap::{Arg, App};
-use dtf::candle::{Candles};
+use libtectonic::dtf;
+use libtectonic::postprocessing::candle::{Candles};
 
 ///
 /// converts orderbook updates to candles, and rebin 1 minute candles into 5min/ 12hour candles

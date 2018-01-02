@@ -21,6 +21,11 @@ pub fn bigram<T: Copy>(a: &[T]) -> Vec<(T,T)> {
         .zip(a[1..].into_iter().map(|&t| t))
         .collect::<Vec<(_, _)>>()
 }
+/// check if two ranges intersect
+pub fn within_range(target_min: u64, target_max: u64,
+                file_min: u64, file_max: u64) -> bool {
+    target_min <= file_max && target_max >= file_min
+}
 
 #[cfg(test)]
 mod tests {

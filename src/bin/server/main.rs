@@ -2,7 +2,7 @@
 #![feature(box_patterns)]
 #![feature(entry_and_modify)]
 
-extern crate dtf;
+extern crate libtectonic;
 extern crate clap;
 extern crate byteorder;
 extern crate chrono;

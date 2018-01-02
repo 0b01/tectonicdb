@@ -1,7 +1,7 @@
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 
 use plugins::gstorage::serde_json::from_str;
-use dtf::file_metadata::FileMetadata;
+use libtectonic::storage::file_metadata::FileMetadata;
 
 use std::fmt;
 use std::error;

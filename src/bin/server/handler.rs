@@ -1,6 +1,6 @@
 use state::*;
 use parser;
-use dtf::{update_vec_to_json, Update};
+use libtectonic::dtf::{update_vec_to_json, Update};
 
 // BUG: subscribe, add, deadlock!!!
 

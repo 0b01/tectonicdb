@@ -7,7 +7,7 @@ use std::io::Read;
 use plugins::gstorage::conf::GStorageConfig;
 use plugins::gstorage::metadata::GStorageOpMetadata;
 
-use dtf::file_metadata;
+use libtectonic::storage::file_metadata;
 use plugins::gstorage::GStorageMetadata;
 use plugins::gstorage::serde_json;
 
@@ -135,7 +135,7 @@ pub fn post_to_dcb(json: &str) -> Result<String, Box<error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use dtf::file_metadata;
+    use libtectonic::storage::file_metadata;
     use plugins::gstorage::GStorageMetadata;
     use plugins::gstorage::serde_json;
 

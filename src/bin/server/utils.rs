@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::fs;
 use state::*;
-use dtf;
+use libtectonic::dtf;
 use std::io;
 
 pub fn create_dir_if_not_exist(dtf_folder : &str) {
@@ -50,32 +50,3 @@ pub fn init_dbs(state: &mut State) -> Result<(), io::Error> {
     Ok(())
 }
 
-/// search every matching dtf file under folder
-pub fn scan_files_for_range(folder: &str, symbol: &str, min_ts: u64, max_ts: u64) -> Result<Vec<dtf::Update>, io::Error> {
-    let mut ret = Vec::new();
-    match fs::read_dir(folder) {
-        Err(e) => error!("Unable to read dir entries: {:?}", e),
-        Ok(entries) => {
-            for entry in entries {
-                let entry = entry.unwrap();
-                let path = entry.path();
-                let fname_str = path.to_str().unwrap();
-
-                let meta = dtf::read_meta(fname_str)?;
-                if meta.symbol == symbol && within_range(
-                    min_ts, max_ts, meta.min_ts, meta.max_ts) {
-
-                    let ups = dtf::get_range_in_file(fname_str, min_ts, max_ts)?;
-                    ret.extend(ups);
-                }
-            }
-        }
-    };
-    Ok(ret)
-}
-
-/// check if two ranges intersect
-pub fn within_range(target_min: u64, target_max: u64,
-                file_min: u64, file_max: u64) -> bool {
-    target_min <= file_max && target_max >= file_min
-}

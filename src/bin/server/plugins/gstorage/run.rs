@@ -9,7 +9,7 @@ use std::time::Duration;
 use std::sync::{Arc, RwLock};
 use state::SharedState;
 use plugins::gstorage::GStorageConfig;
-use dtf::is_dtf;
+use libtectonic::dtf::is_dtf;
 use std::error;
 use std::io;
 

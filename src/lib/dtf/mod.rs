@@ -1,8 +1,8 @@
 pub mod file_format;
-pub use file_format::*;
+pub use dtf::file_format::*;
 
 pub mod update;
-pub use update::*;
+pub use dtf::update::*;
 
 pub mod symbol;
-pub use symbol::*;
+pub use dtf::symbol::*;

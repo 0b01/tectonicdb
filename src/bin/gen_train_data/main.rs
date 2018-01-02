@@ -1,12 +1,14 @@
 extern crate byteorder;
-extern crate dtf;
+extern crate libtectonic;
+
 mod write_npy;
 mod record;
 
 use record::*;
 use std::io::BufWriter;
 use std::fs::File;
-use dtf::orderbook::RebinnedOrderbook;
+use libtectonic::dtf;
+use libtectonic::postprocessing::orderbook::RebinnedOrderbook;
 
 fn main() {
     let fname = "test.npy";

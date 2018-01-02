@@ -1,7 +1,5 @@
 #![feature(conservative_impl_trait)]
 
-
-
 extern crate serde;
 extern crate serde_json;
 #[macro_use] extern crate serde_derive;
@@ -14,8 +12,5 @@ pub mod storage;
 pub mod utils;
 pub mod dtf;
 
-pub use update::*;
-pub use storage::*;
+pub use dtf::update::Update;
 pub use utils::*;
-pub use dtf::*;
-pub use postprocessing::*;

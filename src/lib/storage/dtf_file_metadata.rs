@@ -1,6 +1,6 @@
-use FileType;
+use storage::filetype::FileType;
 use dtf::{self, Symbol, AssetType};
-use file_metadata::FileMetadata;
+use storage::file_metadata::FileMetadata;
 use std::io;
 use std::fs;
 

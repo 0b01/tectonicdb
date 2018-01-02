@@ -1,5 +1,7 @@
-use dtf;
-use dtf::update::Update;
+use libtectonic;
+use libtectonic::dtf;
+use libtectonic::utils;
+use libtectonic::dtf::update::Update;
 
 /// Parses a line that looks like 
 /// 
@@ -24,7 +26,7 @@ pub fn parse_line(string : &str) -> Option<Update> {
             most_current_bool = ch == 't';
         } else if ch == ',' || ch == ';' {
             match count {
-                0 => { u.ts       = match buf.parse::<u64>() {Ok(ts) => dtf::fill_digits(ts), Err(_) => return None}},
+                0 => { u.ts       = match buf.parse::<u64>() {Ok(ts) => utils::fill_digits(ts), Err(_) => return None}},
                 1 => { u.seq      = match buf.parse::<u32>() {Ok(seq) => seq, Err(_) => return None}},
                 2 => { u.is_trade = most_current_bool; },
                 3 => { u.is_bid   = most_current_bool; },

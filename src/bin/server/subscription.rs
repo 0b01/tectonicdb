@@ -1,7 +1,7 @@
 use std::thread;
 use std::sync::{mpsc, Arc, Mutex};
 use std::collections::HashMap;
-use dtf::Update;
+use libtectonic::dtf::update::Update;
 
 pub type Event = Arc<Mutex<(String, Update)>>;
 
