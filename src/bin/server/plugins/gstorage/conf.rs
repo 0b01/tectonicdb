@@ -10,12 +10,22 @@ static GSTORAGE_CONF_FNAME: &str = "conf/gstorage/conf";
 
 #[derive(Debug)]
 pub struct GStorageConfig {
+    /// configuration object
     pub conf: HashMap<String, String>,
+    /// google cloud oauth token
     pub oauth_token: Option<String>,
+    /// name of the bucket
+    /// i.e. gs://tick-data
     pub bucket_name: String,
+    /// folder name in bucket
+    /// gs://tick-data/{folder}
     pub folder: String,
+    /// upload interval in seconds
     pub interval: u64,
+    /// remove file when it's done?
     pub remove: bool,
+    /// data collection backend - if you don't know just ignore
+    pub dcb: bool,
 }
 
 impl GStorageConfig {
@@ -47,6 +57,11 @@ impl GStorageConfig {
             Some(ref f) => f.to_owned() == "true",
             None => false
         };
+
+        let dcb = match conf.get("dcb"){
+            Some(ref f) => f.to_owned() == "true",
+            None => false
+        };
         
 
         Ok(GStorageConfig {
@@ -56,6 +71,7 @@ impl GStorageConfig {
             folder,
             interval,
             remove,
+            dcb,
         })
 
     }

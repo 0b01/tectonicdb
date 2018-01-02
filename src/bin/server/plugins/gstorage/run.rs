@@ -34,48 +34,61 @@ pub fn run(global: Arc<RwLock<SharedState>> ) {
             match fs::read_dir(folder) {
                 Err(e) => error!("Unable to read dir entries: {:?}", e),
                 Ok(entries) => {
+                    let entries = entries
+                        .filter(|entry| {
+                            let entry = match entry {
+                                &Ok(ref e) => e,
+                                &Err(ref e) => {
+                                    error!("Unable to get Dir Entry: {:?}", e);
+                                    return false;
+                                }
+                            };
+                            let path = entry.path();
+
+                            return needs_to_upload(&path, &dur).unwrap_or_else(|e| {
+                                    error!("Cannot determine whether to upload. e: {:?}", e);
+                                    false
+                            });
+                        })
+                        .collect::<Vec<_>>();
+
+
+                    let count = entries.len();
+                    info!("Need to upload {} files.", count);
+
                     for entry in entries {
-                        let entry = match entry {
-                            Ok(e) => e,
-                            Err(e) => {
-                                error!("Unable to get Dir Entry: {:?}", e);
-                                continue;
-                            }
-                        };
+                        // upload
+                        let entry = entry.unwrap();
                         let path = entry.path();
 
-                        let upload_file = needs_to_upload(&path, &dur).unwrap_or_else(|e| {
-                                error!("Cannot determine whether to upload. e: {:?}", e);
-                                false
-                        });
+                        {
+                            let fname = match path.to_str() {
+                                Some(p) => p,
+                                None => {
+                                    error!("Unable to convert filename");
+                                    continue;
+                                }
+                            };
 
-                        if upload_file {
-                            // upload
-                            {
-                                let fname = match path.to_str() {
-                                    Some(p) => p,
-                                    None => {
-                                        error!("Unable to convert filename");
-                                        continue;
-                                    }
-                                };
+                            let meta = upload::upload(fname, &conf);
+                            match meta {
+                                Ok(m) => {
+                                    info!("GS: {}", fname);
 
-                                let meta = upload::upload(fname, &conf);
-                                match meta {
-                                    Ok(m) => {
-                                        info!("Uplaoded to dcb: {}", fname);
+                                    if conf.dcb {
                                         match upload::post_to_dcb(&m) {
-                                            Ok(_) => info!("Uplaoded to dcb: {}", fname),
-                                            Err(_) => error!("Error uploading to dcb: {}", fname)
+                                            Ok(_) => info!("DCB: {}", fname),
+                                            Err(_) => error!("Error DCB: {}", fname)
                                         }
                                     }
-                                    Err(e) => error!("fname: {}, {:?}", fname, e)
-                                };
-                            }
 
-                            if conf.remove {
-                                let _ = fs::remove_file(path);
-                            }
+                                }
+                                Err(e) => error!("fname: {}, {:?}", fname, e)
+                            };
+                        }
+
+                        if conf.remove {
+                            let _ = fs::remove_file(path);
                         }
                     }
                 },

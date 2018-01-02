@@ -1,4 +1,5 @@
 bucket-name = "tick-data"
 oauth = ""
 folder = "test-data"
-interval = 3600
+interval = 86400
+remove = false
