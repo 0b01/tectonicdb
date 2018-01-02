@@ -6,7 +6,7 @@
 use byteorder::{WriteBytesExt, NetworkEndian, /*ReadBytesExt*/ };
 
 use std::str;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::net::SocketAddr;
 use std::io::{BufReader};
 

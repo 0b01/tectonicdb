@@ -5,7 +5,6 @@ extern crate libtectonic;
 use clap::{Arg, App};
 use std::{time, str};
 use std::io::{self, Write};
-use std::thread;
 
 mod db;
 
@@ -33,10 +32,6 @@ fn main() {
                .value_name("DBNAME")
                .help("subscribe to the datastore")
                .takes_value(true))
-          .arg(Arg::with_name("v")
-               .short("v")
-               .multiple(true)
-               .help("Sets the level of verbosity"))
           .arg(Arg::with_name("b")
                .short("b")
                .value_name("ITERATION")
@@ -47,9 +42,8 @@ fn main() {
 
     let host = matches.value_of("host").unwrap_or("0.0.0.0");
     let port = matches.value_of("port").unwrap_or("9001");
-    let verbosity = matches.occurrences_of("v") as u8;
 
-    let mut cxn = db::Cxn::new(host, port, verbosity).unwrap();
+    let mut cxn = db::Cxn::new(host, port).unwrap();
 
     if matches.is_present("b") {
         let times = matches.value_of("b") .unwrap_or("10")

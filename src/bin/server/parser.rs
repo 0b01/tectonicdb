@@ -1,7 +1,6 @@
-use libtectonic;
-use libtectonic::dtf;
 use libtectonic::utils;
 use libtectonic::dtf::update::Update;
+
 
 /// Parses a line that looks like 
 /// 

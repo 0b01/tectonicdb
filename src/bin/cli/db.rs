@@ -79,7 +79,7 @@ pub struct Cxn {
 }
 
 impl Cxn {
-    pub fn new(host: &str, port : &str, verbosity : u8) -> Result<Cxn, TectonicError> {
+    pub fn new(host: &str, port : &str) -> Result<Cxn, TectonicError> {
         let addr = format!("{}:{}", host, port);
 
         let stream = match TcpStream::connect(&addr) {
@@ -135,19 +135,18 @@ pub struct CxnPool{
     cxns: Vec<Cxn>,
     host: String,
     port: String,
-    verbosity: u8,
     available_workers: VecDeque<usize>,
     insert_retry_queue: Vec<InsertCommand>,
 }
 
 use std::collections::VecDeque;
 impl CxnPool {
-    pub fn new(n: usize, host: &str, port : &str, verbosity : u8) -> Result<Self, TectonicError> {
+    pub fn new(n: usize, host: &str, port : &str) -> Result<Self, TectonicError> {
         let mut v = vec![];
         let mut q = VecDeque::new();
 
         for i in 0..n {
-            let cxn = Cxn::new(host, port, verbosity)?;
+            let cxn = Cxn::new(host, port)?;
             v.push(cxn);
             q.push_back(i);
         }
@@ -156,7 +155,6 @@ impl CxnPool {
             cxns: v,
             host: host.to_owned(),
             port: host.to_owned(),
-            verbosity,
             available_workers: q,
             insert_retry_queue: vec![],
         })
@@ -168,7 +166,7 @@ impl CxnPool {
             Some(n) => n,
             None => {
                 // grow avail cxns
-                self.cxns.push(Cxn::new(&self.host, &self.port, self.verbosity)?);
+                self.cxns.push(Cxn::new(&self.host, &self.port)?);
                 self.cxns.len()
             }
         };
@@ -179,7 +177,7 @@ impl CxnPool {
             Err(TectonicError::ConnectionError) => {
                 thread::sleep(time::Duration::from_secs(1));
                 // replace current cxn
-                self.cxns[n] = Cxn::new(&self.host, &self.port, self.verbosity)?;
+                self.cxns[n] = Cxn::new(&self.host, &self.port)?;
                 result
             }
             _ => result,
@@ -200,7 +198,7 @@ impl CxnPool {
             Some(n) => n,
             None => {
                 // grow avail cxns
-                self.cxns.push(Cxn::new(&self.host, &self.port, self.verbosity)?);
+                self.cxns.push(Cxn::new(&self.host, &self.port)?);
                 self.cxns.len()
             }
         };
@@ -213,7 +211,7 @@ impl CxnPool {
                 Err(TectonicError::ConnectionError) => {
                     thread::sleep(time::Duration::from_secs(1));
                     self.insert_retry_queue.push(cmd.clone());
-                    self.cxns[n] = Cxn::new(&self.host, &self.port, self.verbosity)?;
+                    self.cxns[n] = Cxn::new(&self.host, &self.port)?;
                     return Err(TectonicError::ConnectionError);
                 },
                 Err(TectonicError::ServerError(msg)) => {
