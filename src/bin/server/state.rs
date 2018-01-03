@@ -551,14 +551,19 @@ impl State {
 
     fn _return_aux(&self, result: &[Update], format: GetFormat) -> Option<ReturnType> {
         match format {
-            GetFormat::DTF => {
+            GetFormat::Dtf => {
                 let mut bytes: Vec<u8> = Vec::new();
                 let _ = dtf::write_batches(&mut bytes, &result);
                 Some(ReturnType::Bytes(bytes))
             }
-            GetFormat::JSON => {
+            GetFormat::Json => {
                 Some(ReturnType::String(
                     format!("[{}]\n", dtf::update_vec_to_json(&result)),
+                ))
+            }
+            GetFormat::Csv => {
+                Some(ReturnType::String(
+                    format!("{}\n", dtf::update_vec_to_csv(&result)),
                 ))
             }
         }

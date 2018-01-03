@@ -19,8 +19,9 @@ pub enum ReqCount {
 
 #[derive(Debug)]
 pub enum GetFormat {
-    JSON,
-    DTF,
+    Json,
+    Csv,
+    Dtf,
 }
 
 type DbName = String;
@@ -90,8 +91,9 @@ pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
         "COUNT ALL IN MEM" => Count(ReqCount::All, Loc::Mem),
         "CLEAR" => Clear(ReqCount::Count(1)),
         "CLEAR ALL" => Clear(ReqCount::All),
-        "GET ALL AS JSON" => Get(ReqCount::All, GetFormat::JSON, None, Loc::Mem),
-        "GET ALL" => Get(ReqCount::All, GetFormat::DTF, None, Loc::Mem),
+        "GET ALL AS JSON" => Get(ReqCount::All, GetFormat::Json, None, Loc::Mem),
+        "GET ALL AS CSV" => Get(ReqCount::All, GetFormat::Csv, None, Loc::Mem),
+        "GET ALL" => Get(ReqCount::All, GetFormat::Dtf, None, Loc::Mem),
         "FLUSH" => Flush(ReqCount::Count(1)),
         "FLUSH ALL" => Flush(ReqCount::All),
         _ => {
@@ -142,8 +144,13 @@ pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
 
                 let range = parser::parse_get_range(string);
 
-                // test if is json
-                let format = if string.contains(" AS JSON") { GetFormat::JSON } else { GetFormat::DTF };
+                // test if is Json
+                let format = if string.contains(" AS JSON") {
+                    GetFormat::Json
+                } else {
+                    if string.contains(" AS CSV") { GetFormat::Csv }
+                    else { GetFormat::Dtf }
+                };
                 let loc = if string.contains(" IN MEM") { Loc::Mem } else { Loc::Fs };
 
                 Get(count, format, range, loc)
