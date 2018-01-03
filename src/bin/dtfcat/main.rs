@@ -2,7 +2,7 @@ extern crate clap;
 extern crate byteorder;
 extern crate libtectonic;
 use libtectonic::dtf;
-use libtectonic::storage::utils::scan_files_for_range;
+use libtectonic::storage::utils::{scan_files_for_range, total_folder_updates_len};
 use libtectonic::postprocessing::candle::Candles;
 
 use clap::{Arg, App};
@@ -15,6 +15,8 @@ fn main() {
 Examples:
     # filter for epoch and symbol in folder and output csv
     dtfcat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 -c > out
+    # count number of numbers across files
+    dtfcat --folder ./test/zrx -m
     # same as above but rebin into minute candle
     dtfcat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 -c -r > out
     # hour candle
@@ -114,7 +116,7 @@ Examples:
     let metadata = matches.is_present("metadata");
     let csv = matches.is_present("csv");
 
-    if input == "" && (symbol == "" || min == "" || max == "") {
+    if input == "" && (symbol == "" || min == "" || max == "") && (folder == "" && !metadata ){
         println!("Either supply a single file or construct a range query!");
         return;
     }
@@ -142,21 +144,25 @@ Examples:
 
         }
     } else {
-        let ups = scan_files_for_range(folder, symbol, min.parse().unwrap(), max.parse().unwrap())
-            .unwrap();
-        if candle {
-            let mut candles = Candles::from(ups.as_slice());
-            candles.insert_continuation_candles();
-            let rebinned = candles
-                .rebin(aligned, granularity.parse().unwrap())
-                .unwrap()
-                .to_csv();
-            format!("{}", rebinned)
+        if metadata {
+            format!("total updates in folder: {}", total_folder_updates_len(folder).unwrap())
         } else {
-            if csv {
-                format!("{}", dtf::update_vec_to_csv(&ups))
+            let ups = scan_files_for_range(folder, symbol, min.parse().unwrap(), max.parse().unwrap())
+                .unwrap();
+            if candle {
+                let mut candles = Candles::from(ups.as_slice());
+                candles.insert_continuation_candles();
+                let rebinned = candles
+                    .rebin(aligned, granularity.parse().unwrap())
+                    .unwrap()
+                    .to_csv();
+                format!("{}", rebinned)
             } else {
-                format!("[{}]", dtf::update_vec_to_json(&ups))
+                if csv {
+                    format!("{}", dtf::update_vec_to_csv(&ups))
+                } else {
+                    format!("[{}]", dtf::update_vec_to_json(&ups))
+                }
             }
         }
     };
