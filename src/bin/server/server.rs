@@ -1,14 +1,14 @@
 /// Server should handle requests similar to Redis
-/// 
+///
 /// List of commands:
 /// -------------------------------------------
 
-use byteorder::{WriteBytesExt, NetworkEndian, /*ReadBytesExt*/ };
+use byteorder::{WriteBytesExt, NetworkEndian /*ReadBytesExt*/};
 
 use std::str;
 use std::io::Write;
 use std::net::SocketAddr;
-use std::io::{BufReader};
+use std::io::BufReader;
 
 use state::*;
 use handler::ReturnType;
@@ -25,7 +25,7 @@ use tokio_io::io::{lines, write_all};
 
 use plugins::run_plugins;
 
-pub fn run_server(host : &str, port : &str, settings: &Settings) {
+pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let addr = format!("{}:{}", host, port);
     let addr = addr.parse::<SocketAddr>().unwrap();
 
@@ -33,7 +33,11 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
     if !settings.autoflush {
         warn!("Autoflush is off!");
     }
-    info!("Autoflush is {}: every {} inserts.", settings.autoflush, settings.flush_interval);
+    info!(
+        "Autoflush is {}: every {} inserts.",
+        settings.autoflush,
+        settings.flush_interval
+    );
     info!("History granularity: {}.", settings.hist_granularity);
 
     let mut core = Core::new().unwrap();
@@ -47,7 +51,7 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
     info!("Listening on addr: {}", addr);
     info!("----------------- initialized -----------------");
 
-    let global = Arc::new(RwLock::new(SharedState::new(settings.clone()))); 
+    let global = Arc::new(RwLock::new(SharedState::new(settings.clone())));
 
 
     run_plugins(global.clone());
@@ -75,15 +79,16 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
         let writes = responses.fold(wtr, |wtr, (line, resp)| {
             let mut buf: Vec<u8> = vec![];
             match resp {
-                ReturnType::Bytes(bytes)  => {
+                ReturnType::Bytes(bytes) => {
                     buf.write_u8(0x1).unwrap();
                     buf.write(&bytes).unwrap();
-                },
+                }
                 ReturnType::String(str_resp) => {
                     buf.write_u8(0x1).unwrap();
-                    buf.write_u64::<NetworkEndian>(str_resp.len() as u64).unwrap();
+                    buf.write_u64::<NetworkEndian>(str_resp.len() as u64)
+                        .unwrap();
                     buf.write(str_resp.as_bytes()).unwrap();
-                },
+                }
                 ReturnType::Error(errmsg) => {
                     error!("Req: `{}`", line);
                     error!("Err: `{}`", errmsg.clone());
@@ -93,7 +98,7 @@ pub fn run_server(host : &str, port : &str, settings: &Settings) {
                     buf.write(ret.as_bytes()).unwrap();
                 }
             };
-            write_all(wtr, buf).map(|(w,_)| w)
+            write_all(wtr, buf).map(|(w, _)| w)
         });
 
         let msg = writes.then(move |_| {
@@ -117,7 +122,10 @@ fn on_connect(global: &LockedGlobal) {
         glb_wtr.n_cxns += 1;
     }
 
-    info!("Client connected. Current: {}.", global.read().unwrap().n_cxns);
+    info!(
+        "Client connected. Current: {}.",
+        global.read().unwrap().n_cxns
+    );
 }
 
 fn on_disconnect(global: &LockedGlobal) {

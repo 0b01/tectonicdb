@@ -15,14 +15,14 @@ type OrderbookSide = BTreeMap<PriceBits, Size>;
 #[derive(Clone)]
 pub struct Orderbook {
     pub bids: OrderbookSide,
-    pub asks: OrderbookSide
+    pub asks: OrderbookSide,
 }
 
 impl Orderbook {
     fn new() -> Orderbook {
         Orderbook {
             bids: BTreeMap::new(),
-            asks: BTreeMap::new()
+            asks: BTreeMap::new(),
         }
     }
 
@@ -42,13 +42,23 @@ impl fmt::Debug for Orderbook {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let _ = write!(f, "bids: \n");
         for (&price, size) in self.bids.iter() {
-            let _ = write!(f, "- price: {} \t - size: {} \n", f64::from_bits(price), size);
+            let _ = write!(
+                f,
+                "- price: {} \t - size: {} \n",
+                f64::from_bits(price),
+                size
+            );
         }
         let _ = write!(f, "\n");
 
         let _ = write!(f, "asks: \n");
         for (&price, size) in self.asks.iter() {
-            let _ = write!(f, "- price: {} \t - size: {} \n", f64::from_bits(price), size);
+            let _ = write!(
+                f,
+                "- price: {} \t - size: {} \n",
+                f64::from_bits(price),
+                size
+            );
         }
         write!(f, "\n")
     }
@@ -57,14 +67,11 @@ impl fmt::Debug for Orderbook {
 
 pub struct RebinnedOrderbook {
     pub book: BTreeMap<u64, Orderbook>,
-    pub price_hist: Histogram
+    pub price_hist: Histogram,
 }
 
 impl RebinnedOrderbook {
-    pub fn from(ups: &[Update],
-                step_bins: Count,
-                tick_bins: Count,
-                m: f64) -> RebinnedOrderbook {
+    pub fn from(ups: &[Update], step_bins: Count, tick_bins: Count, m: f64) -> RebinnedOrderbook {
 
         // build histogram so later can put price and time into bins
         let (price_hist, step_hist) = Histogram::from(&ups, step_bins, tick_bins, m);
@@ -81,14 +88,18 @@ impl RebinnedOrderbook {
         // iterate over each update
         for up in ups.iter() {
             // ignore trades, since there should be an accompanying level update
-            if up.is_trade { continue; }
+            if up.is_trade {
+                continue;
+            }
 
             // rebinned ts, price
             let ts = step_hist.to_bin((up.ts / 1000) as f64);
             let price = price_hist.to_bin(up.price as f64);
 
             // if is an outlier, don't update orderbook
-            if ts == None || price == None { continue; }
+            if ts == None || price == None {
+                continue;
+            }
             let coarse_time = ts.unwrap().to_bits();
             let coarse_price = price.unwrap().to_bits();
 
@@ -98,18 +109,33 @@ impl RebinnedOrderbook {
                 // if the fine price does not exist in the dict, insert the current size
                 // returns a mutable reference
                 fine_level.clean();
-                let fine_book = if up.is_bid {&mut fine_level.bids} else {&mut fine_level.asks};
-                let fine_size = fine_book.entry((up.price as f64).to_bits()).or_insert(up.size);
+                let fine_book = if up.is_bid {
+                    &mut fine_level.bids
+                } else {
+                    &mut fine_level.asks
+                };
+                let fine_size = fine_book.entry((up.price as f64).to_bits()).or_insert(
+                    up.size,
+                );
 
                 // coarse_size is the size at coarse_price
-                let local_side = if up.is_bid {&mut temp_ob.bids} else {&mut temp_ob.asks};
+                let local_side = if up.is_bid {
+                    &mut temp_ob.bids
+                } else {
+                    &mut temp_ob.asks
+                };
                 let coarse_size = (*local_side).entry(coarse_price).or_insert(up.size);
 
-                if (*fine_size) == up.size {                // if level was 0, fine_size == coarse_size == up.size
-                    ()                                      // do nothing
-                } else if (*fine_size) > up.size {          // if size shrinks
+                if (*fine_size) == up.size {
+                    // if level was 0, fine_size == coarse_size == up.size
+                    () // do nothing
+                } else if (*fine_size) > up.size {
+                    // if size shrinks
                     *coarse_size -= (*fine_size) - up.size; // shrink the coarse size
-                } else /* if (*fine_size) < up.size */ {    // if size grows
+                } else
+                /* if (*fine_size) < up.size */
+                {
+                    // if size grows
                     *coarse_size += up.size - (*fine_size); // grow the coarse size
                 }
 
@@ -118,7 +144,9 @@ impl RebinnedOrderbook {
                 // XXX: important
                 // there might be orders before the first cancellation
                 // we simply ignore those by setting the size to 0
-                if *coarse_size < 0. { *coarse_size = 0.; }
+                if *coarse_size < 0. {
+                    *coarse_size = 0.;
+                }
 
                 *coarse_size
             };
@@ -131,18 +159,22 @@ impl RebinnedOrderbook {
             } else {
                 // if already in global, modify the orderbook at ts
                 let ob_at_time = ob_across_time.get_mut(&coarse_time).unwrap();
-                let global_side = if up.is_bid {&mut ob_at_time.bids} else {&mut ob_at_time.asks};
+                let global_side = if up.is_bid {
+                    &mut ob_at_time.bids
+                } else {
+                    &mut ob_at_time.asks
+                };
                 (*global_side).insert(coarse_price, coarse_size);
             }
         }
 
-        for v in ob_across_time.values_mut(){
+        for v in ob_across_time.values_mut() {
             v.clean();
         }
-        
-        RebinnedOrderbook{
+
+        RebinnedOrderbook {
             book: ob_across_time,
-            price_hist: price_hist
+            price_hist: price_hist,
         }
     }
 }
@@ -171,7 +203,7 @@ mod tests {
         let ups = dtf::decode(FNAME, Some(1000)).unwrap();
         let ob = RebinnedOrderbook::from(ups.as_slice(), step_bins, tick_bins, 2.);
 
-        assert_eq!(ob.book.len(), step_bins -1);
+        assert_eq!(ob.book.len(), step_bins - 1);
         for v in ob.book.values() {
             assert!(v.bids.values().len() < tick_bins);
             assert!(v.asks.values().len() < tick_bins);

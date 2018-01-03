@@ -2,27 +2,26 @@ use std::mem;
 use std::cmp::Ordering::{self, Equal, Greater, Less};
 use std::collections::HashMap;
 use dtf::Update;
-use utils::{ bigram, fill_digits };
+use utils::{bigram, fill_digits};
 
 pub type Price = f64;
 pub type Count = usize;
 
-#[derive(Debug)]    
+#[derive(Debug)]
 pub struct Histogram {
     pub bins: Option<Vec<Count>>,
     pub boundaries: Vec<Price>,
     pub boundary2idx: HashMap<u64, usize>,
-    pub cached_bigram: Vec<(f64,f64)>
+    pub cached_bigram: Vec<(f64, f64)>,
 }
 
 impl Histogram {
-
     pub fn new(prices: &[Price], bin_count: Count, m: f64) -> Histogram {
         let filtered = reject_outliers(prices, m);
         build_histogram(filtered, bin_count)
     }
 
-    pub fn to_bin(&self, price : Price) -> Option<Price> {
+    pub fn to_bin(&self, price: Price) -> Option<Price> {
         let cb = &self.cached_bigram;
         for &(s, b) in cb.iter() {
             if (s == price) || (b > price && price > s) {
@@ -47,18 +46,22 @@ impl Histogram {
         // cache bigram
         let cached_bigram = bigram(&boundaries);
 
-        Histogram { 
-            bins: None, 
-            boundaries, 
+        Histogram {
+            bins: None,
+            boundaries,
             boundary2idx: lookup_table,
-            cached_bigram: cached_bigram
+            cached_bigram: cached_bigram,
         }
     }
 
     /// get spatial temporal histograms
     /// m is value of z-score cutoff
-    pub fn from(ups: &[Update], step_bins: Count, tick_bins: Count, m: f64)
-            -> (Histogram, Histogram) {
+    pub fn from(
+        ups: &[Update],
+        step_bins: Count,
+        tick_bins: Count,
+        m: f64,
+    ) -> (Histogram, Histogram) {
         // build price histogram
         let prices = ups.iter().map(|up| up.price as f64).collect::<Vec<f64>>();
         let price_hist = Histogram::new(&prices, tick_bins, m);
@@ -81,18 +84,23 @@ pub fn reject_outliers(prices: &[Price], m: f64) -> Vec<Price> {
 
     // println!("len before: {}", prices.len());
     // let m = 2.;
-    let d = prices.iter().map(|p|{
-        let v = p - median;
-        if v > 0. { v } else { -v }
-    }).collect::<Vec<f64>>();
+    let d = prices
+        .iter()
+        .map(|p| {
+            let v = p - median;
+            if v > 0. { v } else { -v }
+        })
+        .collect::<Vec<f64>>();
     let mdev = d.median();
-    let s = d.iter().map(|a| {
-        if mdev > 0. {a / mdev} else {0.}
-    }).collect::<Vec<f64>>();
-    let filtered = prices.iter().enumerate()
-                        .filter(|&(i, _p)| s[i] < m)
-                        .map(|(_i, &p)| p)
-                        .collect::<Vec<f64>>();
+    let s = d.iter()
+        .map(|a| if mdev > 0. { a / mdev } else { 0. })
+        .collect::<Vec<f64>>();
+    let filtered = prices
+        .iter()
+        .enumerate()
+        .filter(|&(i, _p)| s[i] < m)
+        .map(|(_i, &p)| p)
+        .collect::<Vec<f64>>();
 
     // println!("len after: {}", filtered.len());
 
@@ -127,13 +135,13 @@ pub fn build_histogram(filtered_vals: Vec<Price>, bin_count: Count) -> Histogram
 
     // cache bigram
     let cached_bigram = bigram(&boundaries);
-    
+
 
     Histogram {
         bins: Some(bins),
         boundaries,
         boundary2idx: lookup_table,
-        cached_bigram
+        cached_bigram,
     }
 
 }
@@ -395,20 +403,18 @@ mod tests {
 
     use super::*;
     use dtf;
-    static FNAME : &str = "test/test-data/bt_btcnav.dtf";
+    static FNAME: &str = "test/test-data/bt_btcnav.dtf";
     use std::collections::HashMap;
 
     #[test]
     fn test_histogram() {
         let records = dtf::decode(FNAME, Some(10000)).unwrap();
-        let prices: Vec<Price> = records.into_iter()
-                                    .map(|up| up.price as f64) 
-                                    .collect();
+        let prices: Vec<Price> = records.into_iter().map(|up| up.price as f64).collect();
 
         let hist = Histogram::new(&prices, 100, 2.);
 
         // println!("{:?}", hist.bins);
-        
+
 
         // use std::time::Instant;
 
@@ -441,11 +447,11 @@ mod tests {
 
         let cached_bigram = bigram(&boundaries);
 
-        let step_hist = Histogram { 
+        let step_hist = Histogram {
             bins: None,
-            boundaries, 
-            boundary2idx, 
-            cached_bigram
+            boundaries,
+            boundary2idx,
+            cached_bigram,
         };
 
         assert_eq!(step_hist.boundaries.len(), step_bins as usize);

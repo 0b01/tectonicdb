@@ -3,11 +3,15 @@ use std::io::Write;
 
 use record::*;
 
-static MAGIC_VALUE : &[u8] = &[0x93, 0x4E, 0x55, 0x4D, 0x50, 0x59];
+static MAGIC_VALUE: &[u8] = &[0x93, 0x4E, 0x55, 0x4D, 0x50, 0x59];
 
 fn get_header(record: &Record) -> String {
-    format!("{{'descr': [('data', '>f4')],'fortran_order': False,'shape': ({},{},{})}}",
-        record.batch_size, record.time_step, record.input_dim)
+    format!(
+        "{{'descr': [('data', '>f4')],'fortran_order': False,'shape': ({},{},{})}}",
+        record.batch_size,
+        record.time_step,
+        record.input_dim
+    )
 }
 
 pub fn write(wtr: &mut Write, record: &Record) {

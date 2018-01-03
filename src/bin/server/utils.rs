@@ -4,7 +4,7 @@ use state::*;
 use libtectonic::dtf;
 use std::io;
 
-pub fn create_dir_if_not_exist(dtf_folder : &str) {
+pub fn create_dir_if_not_exist(dtf_folder: &str) {
     if !Path::new(dtf_folder).exists() {
         fs::create_dir(dtf_folder).unwrap();
     }
@@ -21,11 +21,7 @@ pub fn init_dbs(state: &mut State) -> Result<(), io::Error> {
         let fname_os = dtf_file.unwrap().file_name();
         let stem = fname_os.to_str().unwrap(); // sldjf-lks-djflk-sfsd--something.dtf
         if stem.ends_with(".dtf") {
-            let basename = Path::new(&fname_os)
-                       .file_stem()
-                       .unwrap()
-                       .to_str()
-                       .unwrap(); // sldjf-lks-djflk-sfsd--something
+            let basename = Path::new(&fname_os).file_stem().unwrap().to_str().unwrap(); // sldjf-lks-djflk-sfsd--something
             let full_path = &format!("{}/{}", dtf_folder, stem);
             let header_size = dtf::get_size(full_path)?;
             let symbol = dtf::read_meta(full_path)?.symbol;
@@ -33,20 +29,23 @@ pub fn init_dbs(state: &mut State) -> Result<(), io::Error> {
             {
                 let mut wtr = state.global.write().unwrap();
                 // if symbol is in vec_store, append to store
-                wtr.vec_store.entry(symbol.clone())
+                wtr.vec_store
+                    .entry(symbol.clone())
                     .and_modify(|e| e.1 += header_size)
                     .or_insert((box Vec::new(), header_size));
             }
 
             // insert a db store into user state
-            state.store.insert(symbol.to_owned(), Store {
-                name: symbol.to_owned(),
-                fname: basename.to_owned(),
-                in_memory: false,
-                global: state.global.clone()
-            });
+            state.store.insert(
+                symbol.to_owned(),
+                Store {
+                    name: symbol.to_owned(),
+                    fname: basename.to_owned(),
+                    in_memory: false,
+                    global: state.global.clone(),
+                },
+            );
         }
     }
     Ok(())
 }
-

@@ -40,8 +40,7 @@ impl Default for AssetType {
 impl fmt::Display for AssetType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &AssetType::SPOT => 
-                write!(f, "spot"),
+            &AssetType::SPOT => write!(f, "spot"),
         }
     }
 }

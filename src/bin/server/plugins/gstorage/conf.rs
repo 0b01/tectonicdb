@@ -29,13 +29,11 @@ pub struct GStorageConfig {
 }
 
 impl GStorageConfig {
-
     pub fn new() -> Result<GStorageConfig, Box<error::Error>> {
         let conf = GStorageConfig::get_conf();
         let oauth_token = {
             if conf.contains_key("oauth") {
-                Some(conf.get("oauth").unwrap()
-                         .to_owned())
+                Some(conf.get("oauth").unwrap().to_owned())
             } else {
                 None
             }
@@ -44,7 +42,7 @@ impl GStorageConfig {
         let bucket_name = conf.get("bucket-name").unwrap().to_owned();
         let folder = match conf.get("folder") {
             Some(&ref f) => f.to_owned(),
-            None => "".to_owned()
+            None => "".to_owned(),
         };
 
         // upload interval
@@ -52,17 +50,17 @@ impl GStorageConfig {
             Some(ref i) => i.parse()?,
             None => 3600,
         };
-        
-        let remove = match conf.get("remove"){
+
+        let remove = match conf.get("remove") {
             Some(ref f) => f.to_owned() == "true",
-            None => false
+            None => false,
         };
 
-        let dcb = match conf.get("dcb"){
+        let dcb = match conf.get("dcb") {
             Some(ref f) => f.to_owned() == "true",
-            None => false
+            None => false,
         };
-        
+
 
         Ok(GStorageConfig {
             conf,
@@ -78,16 +76,17 @@ impl GStorageConfig {
 
     fn get_conf() -> HashMap<String, String> {
         let mut settings = config::Config::default();
-        settings.merge(config::File::with_name(GSTORAGE_CONF_FNAME)).unwrap();
+        settings
+            .merge(config::File::with_name(GSTORAGE_CONF_FNAME))
+            .unwrap();
         settings.deserialize::<HashMap<String, String>>().unwrap()
     }
-
 }
 
 // #[cfg(test)]
 // mod tests {
 //     use super::*;
-    
+
 //     #[test]
 //     fn should_return_config() {
 //         let config = GStorageConfig::new();

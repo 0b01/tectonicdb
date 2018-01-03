@@ -2,10 +2,12 @@
 
 extern crate serde;
 extern crate serde_json;
-#[macro_use] extern crate serde_derive;
+#[macro_use]
+extern crate serde_derive;
 
 extern crate byteorder;
-#[macro_use] extern crate bitflags;
+#[macro_use]
+extern crate bitflags;
 
 pub mod postprocessing;
 pub mod storage;

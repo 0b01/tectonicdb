@@ -1,7 +1,5 @@
 use dtf::read_magic_value;
-use std::io::{
-    BufReader,
-};
+use std::io::BufReader;
 use std::fs::File;
 
 #[derive(Serialize)]

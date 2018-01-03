@@ -6,7 +6,7 @@ pub struct Record {
     pub batches: Vec<Vec<Vec<f32>>>,
     pub batch_size: usize,
     pub time_step: usize,
-    pub input_dim: usize
+    pub input_dim: usize,
 }
 
 impl Record {
@@ -17,7 +17,7 @@ impl Record {
             batches,
             batch_size,
             time_step,
-            input_dim
+            input_dim,
         }
     }
 }

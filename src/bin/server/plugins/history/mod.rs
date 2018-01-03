@@ -3,7 +3,7 @@ use std::{thread, time};
 use std::sync::{Arc, RwLock};
 use state::SharedState;
 
-pub fn run(global: Arc<RwLock<SharedState>> ) {
+pub fn run(global: Arc<RwLock<SharedState>>) {
     let global_copy_timer = global.clone();
     let granularity = {
         global.read().unwrap().settings.hist_granularity.clone()
@@ -30,9 +30,7 @@ pub fn run(global: Arc<RwLock<SharedState>> ) {
                     if !rwdr.history.contains_key(name) {
                         rwdr.history.insert(name.clone(), Vec::new());
                     }
-                    rwdr.history.get_mut(name)
-                                .unwrap()
-                                .push((current_t, size));
+                    rwdr.history.get_mut(name).unwrap().push((current_t, size));
                 }
 
                 info!("Current total count: {}", total);

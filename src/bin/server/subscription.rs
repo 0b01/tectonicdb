@@ -17,7 +17,6 @@ enum Message {
 pub struct Subscriptions {
     // /// a list of output receivers
     // o_rxs: HashMap<String, Arc<Mutex<mpsc::Receiver<Update>>>>,
-
     /// string -> Subscription multiplexer
     subs: HashMap<String, Vec<Subscription>>,
 
@@ -29,7 +28,6 @@ pub struct Subscriptions {
 }
 
 impl Subscriptions {
-
     pub fn new() -> Subscriptions {
         // let o_rxs = HashMap::new();
         let subs = HashMap::new();
@@ -63,7 +61,10 @@ impl Subscriptions {
             *count
         } else {
             self.sub_count.insert(filter.clone(), 1);
-            self.subs.insert(filter.clone(), vec![Subscription::new(filter.clone().clone(), i_rx, o_tx)] );
+            self.subs.insert(
+                filter.clone(),
+                vec![Subscription::new(filter.clone().clone(), i_rx, o_tx)],
+            );
             self.i_txs.insert(filter, vec![i_tx]);
             1
         };
@@ -84,7 +85,7 @@ impl Subscriptions {
         println!("{:?}", to_unsub);
 
         for &(ref id, ref symbol) in to_unsub.iter() {
-            self.unsub(*id+1, &symbol);
+            self.unsub(*id + 1, &symbol);
         }
     }
 
@@ -93,11 +94,13 @@ impl Subscriptions {
         // decrement count
         let count = match self.sub_count.get_mut(filter) {
             Some(count) => count,
-            None => return
+            None => return,
         };
-        if *count > 0 { *count -= 1; }
+        if *count > 0 {
+            *count -= 1;
+        }
 
-        let id = if id == 0 {0} else {id - 1};
+        let id = if id == 0 { 0 } else { id - 1 };
 
         // terminate the thread
         {
@@ -113,9 +116,7 @@ impl Subscriptions {
             &self.i_txs.get_mut(filter).unwrap().remove(id);
         }
 
-        let sub = self.subs
-                        .get_mut(filter).unwrap()
-                        .get_mut(id).unwrap();
+        let sub = self.subs.get_mut(filter).unwrap().get_mut(id).unwrap();
         if let Some(thread) = sub.thread.take() {
             thread.join().unwrap();
         }
@@ -161,29 +162,29 @@ struct Subscription {
 }
 
 impl Subscription {
-    fn new(filter: String, i_rx: Arc<Mutex<mpsc::Receiver<Message>>>, o_tx: Arc<Mutex<mpsc::Sender<Update>>>) -> Subscription {
+    fn new(
+        filter: String,
+        i_rx: Arc<Mutex<mpsc::Receiver<Message>>>,
+        o_tx: Arc<Mutex<mpsc::Sender<Update>>>,
+    ) -> Subscription {
 
-        let thread = thread::spawn(move ||{
-            loop {
-                let message = i_rx.lock().unwrap().recv().unwrap();
+        let thread = thread::spawn(move || loop {
+            let message = i_rx.lock().unwrap().recv().unwrap();
 
-                match message {
-                    Message::Msg(up) => {
-                        let (ref symbol, ref up) = *up.lock().unwrap();
-                        if symbol == &filter {
-                            let _ = o_tx.lock().unwrap().send(*up);
-                        }
-                    },
-                    Message::Terminate => {
-                        break;
-                    },
+            match message {
+                Message::Msg(up) => {
+                    let (ref symbol, ref up) = *up.lock().unwrap();
+                    if symbol == &filter {
+                        let _ = o_tx.lock().unwrap().send(*up);
+                    }
+                }
+                Message::Terminate => {
+                    break;
                 }
             }
         });
 
-        Subscription {
-            thread: Some(thread),
-        }
+        Subscription { thread: Some(thread) }
     }
 }
 
@@ -193,8 +194,14 @@ mod tests {
     #[test]
     fn test_subscription() {
 
-        let up = Update {ts: 0, seq: 0, is_bid: false,
-            is_trade: false, price: 0., size: 0.};
+        let up = Update {
+            ts: 0,
+            seq: 0,
+            is_bid: false,
+            is_trade: false,
+            price: 0.,
+            size: 0.,
+        };
         let symbol = "bt_eth_btc".to_owned();
         let event = Arc::new(Mutex::new((symbol.clone(), up)));
 

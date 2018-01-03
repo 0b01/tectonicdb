@@ -8,19 +8,19 @@ use libtectonic::dtf::{update_vec_to_json, Update};
 pub enum ReturnType {
     String(String),
     Bytes(Vec<u8>),
-    Error(String)
+    Error(String),
 }
 
 #[derive(Debug)]
 pub enum ReqCount {
     All,
-    Count(u32)
+    Count(u32),
 }
 
 #[derive(Debug)]
 pub enum GetFormat {
     JSON,
-    DTF
+    DTF,
 }
 
 type DbName = String;
@@ -28,7 +28,7 @@ type DbName = String;
 #[derive(Debug)]
 enum Loc {
     Mem,
-    Fs
+    Fs,
 }
 
 #[derive(Debug)]
@@ -41,7 +41,7 @@ enum Command {
     BulkAdd,
     BulkAddInto(DbName),
     BulkAddEnd,
-    Get(ReqCount, GetFormat, Option<(u64,u64)>),
+    Get(ReqCount, GetFormat, Option<(u64, u64)>),
     Count(ReqCount, Loc),
     Clear(ReqCount),
     Flush(ReqCount),
@@ -52,10 +52,10 @@ enum Command {
     Subscription,
     Use(DbName),
     Exists(DbName),
-    Unknown
+    Unknown,
 }
 
-static HELP_STR : &str = "PING, INFO, USE [db], CREATE [db],
+static HELP_STR: &str = "PING, INFO, USE [db], CREATE [db],
 ADD [ts],[seq],[is_trade],[is_bid],[price],[size];
 BULKADD ...; DDAKLUB
 FLUSH, FLUSHALL, GETALL, GET [count], CLEAR
@@ -64,11 +64,17 @@ FLUSH, FLUSHALL, GETALL, GET [count], CLEAR
 /// sometimes returns string, sometimes bytes, error string
 // pub type Response = (Option<String>, Option<Vec<u8>>, Option<String>);
 
-pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
+pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
     use self::Command::*;
 
     let command: Command = match string {
-        "" => { if state.is_subscribed { Subscription } else { Nothing } },
+        "" => {
+            if state.is_subscribed {
+                Subscription
+            } else {
+                Nothing
+            }
+        }
         "PING" => Ping,
         "HELP" => Help,
         "INFO" => Info,
@@ -93,203 +99,165 @@ pub fn gen_response (string : &str, state: &mut State) -> ReturnType {
                 let current_db = state.bulkadd_db.clone();
                 let dbname = current_db.unwrap();
                 Insert(parsed, Some(dbname))
-            } else
-
-            if string.starts_with("BULKADD INTO ") {
+            } else if string.starts_with("BULKADD INTO ") {
                 let (_index, dbname) = parser::parse_dbname(string);
                 BulkAddInto(dbname.to_owned())
-            } else 
-
-            if string.starts_with("SUBSCRIBE ") {
-                let dbname : &str = &string[10..];
+            } else if string.starts_with("SUBSCRIBE ") {
+                let dbname: &str = &string[10..];
                 Subscribe(dbname.to_owned())
-            } else
-
-            if string.starts_with("CREATE ") {
-                let dbname : &str = &string[7..];
+            } else if string.starts_with("CREATE ") {
+                let dbname: &str = &string[7..];
                 Create(dbname.to_owned())
-            } else
-
-            if string.starts_with("USE ") {
-                let dbname : &str = &string[4..];
+            } else if string.starts_with("USE ") {
+                let dbname: &str = &string[4..];
                 Use(dbname.to_owned())
-            } else
-
-            if string.starts_with("EXISTS ") {
-                let dbname : &str = &string[7..];
+            } else if string.starts_with("EXISTS ") {
+                let dbname: &str = &string[7..];
                 Exists(dbname.to_owned())
-            } else
-
-            if string.starts_with("ADD ") || string.starts_with("INSERT ") {
+            } else if string.starts_with("ADD ") || string.starts_with("INSERT ") {
                 let parsed = if string.contains(" INTO ") {
-                        parser::parse_add_into(&string)
-                    } else {
-                        let data_string : &str = &string[3..];
-                        match parser::parse_line(&data_string) {
-                            Some(up) => (Some(up), Some(state.current_store_name.to_owned())),
-                            None => (None, None)
-                        }
-                    };
+                    parser::parse_add_into(&string)
+                } else {
+                    let data_string: &str = &string[3..];
+                    match parser::parse_line(&data_string) {
+                        Some(up) => (Some(up), Some(state.current_store_name.to_owned())),
+                        None => (None, None),
+                    }
+                };
                 Insert(parsed.0, parsed.1)
             } else
-
-
             // get
             if string.starts_with("GET ") {
                 // how many records from memory we want...
-                let count : &str = &string.clone()[4..];
-                let count : Vec<&str> = count.split(" ").collect();
+                let count: &str = &string.clone()[4..];
+                let count: Vec<&str> = count.split(" ").collect();
                 let count = count[0].parse::<u32>().unwrap_or(1);
 
                 let range = parser::parse_get_range(string);
 
                 // test if json
-                let format =  if string.contains(" AS JSON") { GetFormat::JSON } else { GetFormat::DTF };
+                let format = if string.contains(" AS JSON") {
+                    GetFormat::JSON
+                } else {
+                    GetFormat::DTF
+                };
 
                 Get(ReqCount::Count(count), format, range)
-            } else
-
-            { Unknown }
+            } else {
+                Unknown
+            }
         }
     };
 
     match command {
-        Nothing =>
-            return_string(""),
-        Ping =>
-            return_string("PONG"),
-        Help =>
-            return_string(HELP_STR),
-        Info => 
-            return_string(&state.info()),
-        Perf =>
-            return_string(&state.perf()),
-        BulkAdd => 
-            {
-                state.is_adding = true;
-                return_string("")
-            },
-        BulkAddInto(dbname) =>
-            {
-                state.bulkadd_db = Some(dbname);
-                state.is_adding = true;
-                return_string("")
-            },
-        BulkAddEnd => 
-            {
-                state.is_adding = false;
-                state.bulkadd_db = None;
-                return_string("1")
-            },
+        Nothing => return_string(""),
+        Ping => return_string("PONG"),
+        Help => return_string(HELP_STR),
+        Info => return_string(&state.info()),
+        Perf => return_string(&state.perf()),
+        BulkAdd => {
+            state.is_adding = true;
+            return_string("")
+        }
+        BulkAddInto(dbname) => {
+            state.bulkadd_db = Some(dbname);
+            state.is_adding = true;
+            return_string("")
+        }
+        BulkAddEnd => {
+            state.is_adding = false;
+            state.bulkadd_db = None;
+            return_string("1")
+        }
         Count(ReqCount::Count(_), Loc::Fs) => return_string(&format!("{}", state.count())),
         Count(ReqCount::Count(_), Loc::Mem) => return_string(&format!("{}", state.count())), // TODO: implement count in mem
         Count(ReqCount::All, Loc::Fs) => return_string(&format!("{}", state.countall())),
         Count(ReqCount::All, Loc::Mem) => return_string(&format!("{}", state.countall_in_mem())),
-        Clear(ReqCount::Count(_)) => 
-            {
-                state.clear();
-                return_string("1")
-            },
-        Clear(ReqCount::All) => 
-            {
-                state.clearall();
-                return_string("1")
-            },
-        Flush(ReqCount::Count(_)) =>
-            {
-                state.flush();
-                return_string("1")
-            },
-        Flush(ReqCount::All) =>
-            {
-                state.flushall();
-                return_string("1")
-            },
+        Clear(ReqCount::Count(_)) => {
+            state.clear();
+            return_string("1")
+        }
+        Clear(ReqCount::All) => {
+            state.clearall();
+            return_string("1")
+        }
+        Flush(ReqCount::Count(_)) => {
+            state.flush();
+            return_string("1")
+        }
+        Flush(ReqCount::All) => {
+            state.flushall();
+            return_string("1")
+        }
 
         // update, dbname
-        Insert(Some(up), Some(dbname)) =>
-            {
-                match state.insert(up, &dbname) {
-                    Some(()) => return_string(""),
-                    None => return_err(&format!("DB {} not found.", dbname))
-                }
-            },
-        Insert(Some(up), None) =>
-            {
-                state.add(up);
-                return_string("")
-            },
-        Insert(None, _) => 
-            return_err("Unable to parse line"),
+        Insert(Some(up), Some(dbname)) => {
+            match state.insert(up, &dbname) {
+                Some(()) => return_string(""),
+                None => return_err(&format!("DB {} not found.", dbname)),
+            }
+        }
+        Insert(Some(up), None) => {
+            state.add(up);
+            return_string("")
+        }
+        Insert(None, _) => return_err("Unable to parse line"),
 
-        Create(dbname) =>
-            { 
-                state.create(&dbname);
-                return_string(&format!("Created DB `{}`.", &dbname))
-            },
+        Create(dbname) => {
+            state.create(&dbname);
+            return_string(&format!("Created DB `{}`.", &dbname))
+        }
 
-        Subscribe(dbname) =>
-            { 
-                state.sub(&dbname);
-                return_string(&format!("Subscribed to {}", dbname))
-            },
+        Subscribe(dbname) => {
+            state.sub(&dbname);
+            return_string(&format!("Subscribed to {}", dbname))
+        }
 
-        Subscription =>
-            {
-                let rxlocked = state.rx.clone().unwrap();
-                let message = rxlocked.lock().unwrap().try_recv();
-                match message {
-                    Ok(msg) => {
-                        return_string(&update_vec_to_json(&vec![msg]))
-                    },
-                    _ => {
-                        return_string("NONE")
-                    }
-                }
-            },
+        Subscription => {
+            let rxlocked = state.rx.clone().unwrap();
+            let message = rxlocked.lock().unwrap().try_recv();
+            match message {
+                Ok(msg) => return_string(&update_vec_to_json(&vec![msg])),
+                _ => return_string("NONE"),
+            }
+        }
 
-        Unsubscribe(ReqCount::All)  => 
-            {
-                state.unsub_all();
-                return_string("Unsubscribed everything!")
-            },
+        Unsubscribe(ReqCount::All) => {
+            state.unsub_all();
+            return_string("Unsubscribed everything!")
+        }
 
-        Unsubscribe(ReqCount::Count(_))  =>
-            {
-                let old_dbname = state.subscribed_db.clone().unwrap();
-                state.unsub();
-                return_string(&format!("Unsubscribed from {}", old_dbname))
-            },
+        Unsubscribe(ReqCount::Count(_)) => {
+            let old_dbname = state.subscribed_db.clone().unwrap();
+            state.unsub();
+            return_string(&format!("Unsubscribed from {}", old_dbname))
+        }
 
-        Use(dbname) => 
-            {
-                match state.use_db(&dbname) {
-                    Some(_) => return_string(&format!("SWITCHED TO DB `{}`.", &dbname)),
-                    None => return_err(&format!("No db named `{}`", dbname))
-                }
-            },
-        Exists(dbname) =>
-            {
-                if state.exists(&dbname) {
-                    return_string("1")
-                } else {
-                    return_err(&format!("No db named `{}`", dbname))
-                }
-            },
+        Use(dbname) => {
+            match state.use_db(&dbname) {
+                Some(_) => return_string(&format!("SWITCHED TO DB `{}`.", &dbname)),
+                None => return_err(&format!("No db named `{}`", dbname)),
+            }
+        }
+        Exists(dbname) => {
+            if state.exists(&dbname) {
+                return_string("1")
+            } else {
+                return_err(&format!("No db named `{}`", dbname))
+            }
+        }
 
         // get
-        Get(cnt, fmt, rng) => 
-            {
-                match state.get(cnt, fmt, rng) {
-                    Some(ReturnType::Bytes(b)) => return_bytes(b),
-                    Some(ReturnType::String(s)) => return_string(&s),
-                    Some(ReturnType::Error(e)) => return_err(&e),
-                    None => return_err("Not enough items to return."),
-                }
-            },
+        Get(cnt, fmt, rng) => {
+            match state.get(cnt, fmt, rng) {
+                Some(ReturnType::Bytes(b)) => return_bytes(b),
+                Some(ReturnType::String(s)) => return_string(&s),
+                Some(ReturnType::Error(e)) => return_err(&e),
+                None => return_err("Not enough items to return."),
+            }
+        }
 
-        Unknown => 
-            return_err("Unknown command.")
+        Unknown => return_err("Unknown command."),
     }
 }
 
@@ -333,16 +301,28 @@ mod tests {
     #[test]
     fn should_not_insert_into_empty() {
         let mut state = gen_state();
-        let resp = gen_response("ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth", &mut state);
-        assert_eq!(ReturnType::Error(String::from("DB bnc_btc_eth not found.\n")), resp);
+        let resp = gen_response(
+            "ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth",
+            &mut state,
+        );
+        assert_eq!(
+            ReturnType::Error(String::from("DB bnc_btc_eth not found.\n")),
+            resp
+        );
     }
 
     #[test]
     fn should_insert_ok() {
         let mut state = gen_state();
         let resp = gen_response("CREATE bnc_btc_eth", &mut state);
-        assert_eq!(ReturnType::String(String::from("Created DB `bnc_btc_eth`.\n")), resp);
-        let resp = gen_response("ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth", &mut state);
+        assert_eq!(
+            ReturnType::String(String::from("Created DB `bnc_btc_eth`.\n")),
+            resp
+        );
+        let resp = gen_response(
+            "ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth",
+            &mut state,
+        );
         assert_eq!(ReturnType::String(String::from("\n")), resp);
     }
 

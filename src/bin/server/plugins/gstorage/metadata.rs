@@ -14,8 +14,7 @@ enum GStorageOp {
 impl fmt::Display for GStorageOp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &GStorageOp::AddDtf => 
-                write!(f, "add.dtf"),
+            &GStorageOp::AddDtf => write!(f, "add.dtf"),
         }
     }
 }
@@ -25,26 +24,25 @@ impl fmt::Display for GStorageOp {
 
 #[derive(Serialize)]
 pub struct GStorageOpMetadata {
-
     /*-------------- returned vals -------------*/
     id: String,
-    #[serde(rename="selfLink")]
+    #[serde(rename = "selfLink")]
     self_link: String,
     name: String,
     bucket: String,
     metageneration: String,
 
-    #[serde(rename="timeCreated")]
+    #[serde(rename = "timeCreated")]
     time_created: String,
 
-    #[serde(rename="timeStorageClassUpdated")]
+    #[serde(rename = "timeStorageClassUpdated")]
     time_storage_class_updated: String,
 
     size: String,
 
-    #[serde(rename="md5Hash")]
+    #[serde(rename = "md5Hash")]
     md5_hash: String,
-    #[serde(rename="mediaLink")]
+    #[serde(rename = "mediaLink")]
     media_link: String,
 
     /*-------------- operation -------------*/
@@ -59,7 +57,6 @@ pub struct GStorageOpMetadata {
     x_of_n: u8,
     batch_hash: String,
 
-
     /*-------------- misc -------------*/
     status: String,
     dtf_spec: String,
@@ -67,7 +64,6 @@ pub struct GStorageOpMetadata {
     client_version: String,
     server_version: String,
     _prefix: String,
-
 }
 
 impl Default for GStorageOpMetadata {
@@ -109,7 +105,11 @@ impl Default for GStorageOpMetadata {
 }
 
 impl GStorageOpMetadata {
-    pub fn new(resp: String, start_ts: u32, finish_ts: u32) -> Result<GStorageOpMetadata, Box<error::Error>> {
+    pub fn new(
+        resp: String,
+        start_ts: u32,
+        finish_ts: u32,
+    ) -> Result<GStorageOpMetadata, Box<error::Error>> {
 
         let mut meta = GStorageOpMetadata::default();
 
@@ -137,19 +137,19 @@ impl GStorageOpMetadata {
 #[derive(Deserialize)]
 struct GStorageResp {
     id: String,
-    #[serde(rename="selfLink")]
+    #[serde(rename = "selfLink")]
     self_link: String,
     name: String,
     bucket: String,
     metageneration: String,
-    #[serde(rename="timeCreated")]
+    #[serde(rename = "timeCreated")]
     time_created: String,
-    #[serde(rename="timeStorageClassUpdated")]
+    #[serde(rename = "timeStorageClassUpdated")]
     time_storage_class_updated: String,
     size: String,
-    #[serde(rename="md5Hash")]
+    #[serde(rename = "md5Hash")]
     md5_hash: String,
-    #[serde(rename="mediaLink")]
+    #[serde(rename = "mediaLink")]
     media_link: String,
 }
 
@@ -161,15 +161,14 @@ pub struct GStorageMetadata<T: FileMetadata> {
     // meta section: about storage operation
     meta: GStorageOpMetadata,
     // data section: about the file itself
-    data: T
-
+    data: T,
 }
 
 impl<T: FileMetadata> GStorageMetadata<T> {
     pub fn new(op_meta: GStorageOpMetadata, file_meta: T) -> GStorageMetadata<T> {
         GStorageMetadata {
             meta: op_meta,
-            data: file_meta
+            data: file_meta,
         }
     }
 }
@@ -182,4 +181,3 @@ impl<T: FileMetadata> Default for GStorageMetadata<T> {
         }
     }
 }
-

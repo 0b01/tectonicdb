@@ -1,6 +1,4 @@
 /// runner for plugins
-
-
 // google cloud storage plugin
 #[cfg(feature = "gcs")]
 pub mod gstorage;
@@ -18,7 +16,6 @@ pub fn run_plugins(global: Arc<RwLock<SharedState>>) {
 
     history::run(global.clone());
 
-    #[cfg(feature = "gcs")]
-    gstorage::run(global.clone());
+    #[cfg(feature = "gcs")] gstorage::run(global.clone());
 
 }

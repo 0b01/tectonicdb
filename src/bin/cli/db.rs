@@ -40,7 +40,9 @@ impl fmt::Display for TectonicError {
     }
 }
 
-struct CxnStream{stream: TcpStream}
+struct CxnStream {
+    stream: TcpStream,
+}
 
 impl CxnStream {
     fn cmd(&mut self, command: &str) -> Result<String, TectonicError> {
@@ -54,9 +56,7 @@ impl CxnStream {
 
         if command.starts_with("GET") && !command.contains("AS JSON") && success {
             match dtf::read_one_batch(&mut self.stream) {
-                Ok(vecs) => {
-                    Ok(format!("[{}]\n", dtf::update_vec_to_json(&vecs)))
-                },
+                Ok(vecs) => Ok(format!("[{}]\n", dtf::update_vec_to_json(&vecs))),
                 Err(_) => Err(TectonicError::DecodeError),
             }
         } else {
@@ -79,16 +79,16 @@ pub struct Cxn {
 }
 
 impl Cxn {
-    pub fn new(host: &str, port : &str) -> Result<Cxn, TectonicError> {
+    pub fn new(host: &str, port: &str) -> Result<Cxn, TectonicError> {
         let addr = format!("{}:{}", host, port);
 
         let stream = match TcpStream::connect(&addr) {
             Ok(stm) => stm,
-            Err(_) => return Err(TectonicError::ConnectionError)
+            Err(_) => return Err(TectonicError::ConnectionError),
         };
 
         Ok(Cxn {
-            stream: Arc::new(RwLock::new(CxnStream{stream: stream})),
+            stream: Arc::new(RwLock::new(CxnStream { stream: stream })),
             subscription: None,
         })
     }
@@ -102,15 +102,13 @@ impl Cxn {
         let tx = Arc::new(Mutex::new(tx));
         let rx = Arc::new(Mutex::new(rx));
 
-        thread::spawn(move || {
-            loop {
-                let res = streamcopy.write().unwrap().cmd("\n").unwrap();
-                println!("{}", res);
-                if res == "NONE\n" {
-                    thread::sleep(time::Duration::from_millis(1));
-                } else {
-                    let _ = tx.lock().unwrap().send(res);
-                }
+        thread::spawn(move || loop {
+            let res = streamcopy.write().unwrap().cmd("\n").unwrap();
+            println!("{}", res);
+            if res == "NONE\n" {
+                thread::sleep(time::Duration::from_millis(1));
+            } else {
+                let _ = tx.lock().unwrap().send(res);
             }
         });
 
@@ -119,7 +117,7 @@ impl Cxn {
         Ok(())
     }
 
-    pub fn cmd(&mut self, command : &str) -> Result<String, TectonicError> {
+    pub fn cmd(&mut self, command: &str) -> Result<String, TectonicError> {
         self.stream.write().unwrap().cmd(command)
     }
 
@@ -131,7 +129,7 @@ impl Cxn {
     }
 }
 
-pub struct CxnPool{
+pub struct CxnPool {
     cxns: Vec<Cxn>,
     host: String,
     port: String,
@@ -141,7 +139,7 @@ pub struct CxnPool{
 
 use std::collections::VecDeque;
 impl CxnPool {
-    pub fn new(n: usize, host: &str, port : &str) -> Result<Self, TectonicError> {
+    pub fn new(n: usize, host: &str, port: &str) -> Result<Self, TectonicError> {
         let mut v = vec![];
         let mut q = VecDeque::new();
 
@@ -151,7 +149,7 @@ impl CxnPool {
             q.push_back(i);
         }
 
-        Ok(CxnPool{
+        Ok(CxnPool {
             cxns: v,
             host: host.to_owned(),
             port: host.to_owned(),
@@ -191,7 +189,9 @@ impl CxnPool {
 
     pub fn insert(&mut self, cmd: &InsertCommand) -> Result<(), TectonicError> {
 
-        for i in self.insert_retry_queue.pop() { let _ = self.insert(&i)?; }
+        for i in self.insert_retry_queue.pop() {
+            let _ = self.insert(&i)?;
+        }
 
         let n = self.available_workers.pop_front();
         let n = match n {
@@ -213,9 +213,8 @@ impl CxnPool {
                     self.insert_retry_queue.push(cmd.clone());
                     self.cxns[n] = Cxn::new(&self.host, &self.port)?;
                     return Err(TectonicError::ConnectionError);
-                },
-                Err(TectonicError::ServerError(msg)) => {
-                },
+                }
+                Err(TectonicError::ServerError(msg)) => {}
                 _ => (),
             }
         }
@@ -239,18 +238,32 @@ impl InsertCommand {
     pub fn into_string(self) -> Vec<String> {
         match self {
             InsertCommand::Add(dbname, up) => {
-                let is_trade = if up.is_trade {"t"} else {"f"};
-                let is_bid = if up.is_bid {"t"} else {"f"};
-                let s = format!("ADD {}, {}, {}, {}, {}, {}; INTO {}\n",
-                                up.ts, up.seq, is_trade, is_bid, up.price, up.size, dbname
+                let is_trade = if up.is_trade { "t" } else { "f" };
+                let is_bid = if up.is_bid { "t" } else { "f" };
+                let s = format!(
+                    "ADD {}, {}, {}, {}, {}, {}; INTO {}\n",
+                    up.ts,
+                    up.seq,
+                    is_trade,
+                    is_bid,
+                    up.price,
+                    up.size,
+                    dbname
                 );
                 vec![s]
-            },
+            }
             InsertCommand::BulkAdd(dbname, ups) => {
                 let mut cmds = vec![format!("BULKADD INTO {}\n", dbname)];
                 for up in ups {
-                    cmds.push(format!("{}, {}, {}, {}, {}, {};\n",
-                            up.ts, up.seq, up.is_trade, up.is_bid, up.price, up.size));
+                    cmds.push(format!(
+                        "{}, {}, {}, {}, {}, {};\n",
+                        up.ts,
+                        up.seq,
+                        up.is_trade,
+                        up.is_bid,
+                        up.price,
+                        up.size
+                    ));
                 }
 
                 cmds.push("DDAKLUB\n".to_owned());

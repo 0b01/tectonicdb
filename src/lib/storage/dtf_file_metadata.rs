@@ -37,10 +37,10 @@ impl DTFFileMetadata {
         let symbol = match Symbol::from_str(&metadata.symbol) {
             Some(sym) => sym,
             None => {
-                return Err(
-                io::Error::new(
+                return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
-                    format!("Unable to parse symbol {}", metadata.symbol)));
+                    format!("Unable to parse symbol {}", metadata.symbol),
+                ));
             }
         };
         let first_epoch = metadata.min_ts;
@@ -64,11 +64,9 @@ impl DTFFileMetadata {
 
             filename: fname.to_owned(),
 
-            ..Default::default()
-
-            // uuid: 
-            // tags: 
-            // errors: 
+            ..Default::default() // uuid:
+                                 // tags:
+                                 // errors:
         })
     }
 }

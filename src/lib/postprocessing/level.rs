@@ -2,7 +2,7 @@
 //! normally updates are of shape [time -> price -> size]
 //! this is [price -> time -> size] to keep track of
 //! size changes on each price level over time.
-use std::collections::{ BTreeMap, HashMap };
+use std::collections::{BTreeMap, HashMap};
 use postprocessing::histogram::{Histogram, Count};
 use utils::fill_digits;
 use dtf::Update;
@@ -10,7 +10,7 @@ use dtf::Update;
 
 #[derive(Debug)]
 struct Levels {
-    levels: HashMap<u64, BTreeMap<u32, f32>>
+    levels: HashMap<u64, BTreeMap<u32, f32>>,
 }
 
 impl Levels {
@@ -31,17 +31,21 @@ impl Levels {
             let time = step_hist.to_bin((fill_digits(up.ts) / 1000) as f64);
             match (price, time) {
                 (Some(p), Some(t)) => {
-                    let price_level = map.entry(p.to_bits()).or_insert(BTreeMap::<u32, f32>::new());
+                    let price_level = map.entry(p.to_bits()).or_insert(
+                        BTreeMap::<u32, f32>::new(),
+                    );
                     (*price_level).insert(t as u32, up.size);
-                },
-                (None, _) => { continue; },
-                (_, None) => { continue; }
+                }
+                (None, _) => {
+                    continue;
+                }
+                (_, None) => {
+                    continue;
+                }
             }
-        };
-
-        Levels {
-            levels: map
         }
+
+        Levels { levels: map }
     }
 }
 
@@ -49,7 +53,7 @@ impl Levels {
 mod tests {
     use super::*;
     use dtf;
-    static FNAME : &str = "test/test-data/bt_btcnav.dtf";
+    static FNAME: &str = "test/test-data/bt_btcnav.dtf";
 
     #[test]
     pub fn test_levels() {
@@ -58,7 +62,10 @@ mod tests {
         let step_bins = 10;
         let records = dtf::decode(FNAME, Some(100)).unwrap();
         {
-            let prices = records.iter().map(|up| up.price as f64).collect::<Vec<f64>>();
+            let prices = records
+                .iter()
+                .map(|up| up.price as f64)
+                .collect::<Vec<f64>>();
             let price_hist = Histogram::new(&prices, tick_bins, 2.0);
             let mut dict = BTreeMap::new();
             for up in records.iter() {
@@ -71,12 +78,15 @@ mod tests {
             assert_eq!(price_hist.bins.clone().unwrap().len(), tick_bins);
 
             for (val, bin) in dict.values().zip(price_hist.bins.unwrap().iter()) {
-                assert_eq!(val, bin); 
+                assert_eq!(val, bin);
             }
         }
 
         let levels = Levels::from(records.as_slice(), step_bins, tick_bins, 2.);
-        assert_eq!(levels.levels.keys().collect::<Vec<_>>().len(), tick_bins - 1);
+        assert_eq!(
+            levels.levels.keys().collect::<Vec<_>>().len(),
+            tick_bins - 1
+        );
         for level in levels.levels.values() {
             assert!(level.keys().collect::<Vec<_>>().len() <= (step_bins - 1));
         }

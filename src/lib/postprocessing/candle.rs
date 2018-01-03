@@ -11,7 +11,7 @@ type Scale = u16;
 /// utilities for rebinning candlesticks
 pub struct Candles {
     v: BTreeMap<Time, Candle>,
-    scale: Scale
+    scale: Scale,
 }
 
 impl<'a> From<&'a [Update]> for Candles {
@@ -19,27 +19,32 @@ impl<'a> From<&'a [Update]> for Candles {
     fn from(ups: &[Update]) -> Candles {
         let fix_missing = false;
 
-        let mut last_ts = 0;        // store the last timestep to test continuity
-        let mut last_close = 0.;    // 
+        let mut last_ts = 0; // store the last timestep to test continuity
+        let mut last_close = 0.; //
 
-        let mut candles : BTreeMap<Time, Candle> = BTreeMap::new();
+        let mut candles: BTreeMap<Time, Candle> = BTreeMap::new();
 
         for trade in ups.iter() {
-            if !trade.is_trade { continue; }
+            if !trade.is_trade {
+                continue;
+            }
             // floor(ts)
-            let ts = (fill_digits(trade.ts) / 1000 / 60 * 60) as Time; 
-            
+            let ts = (fill_digits(trade.ts) / 1000 / 60 * 60) as Time;
+
             if fix_missing && (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
                 //insert continuation candle(s)
                 let mut cur = last_ts + 60;
                 while cur < ts {
-                    candles.insert(cur, Candle {
-                        volume: 0.,
-                        high: last_close,
-                        low: last_close,
-                        open: last_close,
-                        close: last_close
-                    });
+                    candles.insert(
+                        cur,
+                        Candle {
+                            volume: 0.,
+                            high: last_close,
+                            low: last_close,
+                            open: last_close,
+                            close: last_close,
+                        },
+                    );
                     cur += 60;
                 }
             }
@@ -48,10 +53,18 @@ impl<'a> From<&'a [Update]> for Candles {
                 let c = candles.get(&ts).unwrap();
                 Candle {
                     volume: c.volume + trade.size,
-                    high: if trade.price >= c.high { trade.price } else { c.high },
-                    low: if trade.price <= c.low  { trade.price } else { c.low },
+                    high: if trade.price >= c.high {
+                        trade.price
+                    } else {
+                        c.high
+                    },
+                    low: if trade.price <= c.low {
+                        trade.price
+                    } else {
+                        c.low
+                    },
                     close: trade.price,
-                    open: c.open
+                    open: c.open,
                 }
             } else {
                 Candle {
@@ -59,7 +72,7 @@ impl<'a> From<&'a [Update]> for Candles {
                     high: trade.price,
                     low: trade.price,
                     close: trade.price,
-                    open: trade.price
+                    open: trade.price,
                 }
             };
 
@@ -68,21 +81,20 @@ impl<'a> From<&'a [Update]> for Candles {
             last_close = trade.price;
         }
 
-        return Candles::new(
-            candles,
-            1
-        );
+        return Candles::new(candles, 1);
     }
 }
 
 impl Candles {
     /// convert Candles vector to csv
-    /// format is 
+    /// format is
     ///     O,H,L,C,V
     pub fn to_csv(self) -> String {
-        let csvs : Vec<String> = self.v.values().into_iter()
-                .map(|candle| candle.to_csv())
-                .collect();
+        let csvs: Vec<String> = self.v
+            .values()
+            .into_iter()
+            .map(|candle| candle.to_csv())
+            .collect();
 
         csvs.join("\n")
     }
@@ -95,7 +107,7 @@ impl Candles {
 
         let mut set = HashSet::<Time>::new();
         let mut missing = Vec::<Time>::new();
-        
+
         for &ts in self.v.keys() {
             set.insert(ts);
         }
@@ -125,10 +137,10 @@ impl Candles {
     pub fn insert_continuation_candles(&mut self) {
         let (mut last_ts, mut last_close) = {
             let (&last_ts, row) = self.v.iter().next().unwrap(); // first ts here, last ts later
-            (last_ts, row.close) 
+            (last_ts, row.close)
         };
 
-        let mut temp = BTreeMap::<Time,Candle>::new();
+        let mut temp = BTreeMap::<Time, Candle>::new();
 
         for (&ts, row) in self.v.iter() {
             if (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
@@ -136,13 +148,16 @@ impl Candles {
                 //insert continuation candle(s)
                 let mut cur = last_ts + 60;
                 while cur < ts {
-                    temp.insert(cur, Candle {
-                        volume: 0.,
-                        high: last_close,
-                        low: last_close,
-                        open: last_close,
-                        close: last_close
-                    });
+                    temp.insert(
+                        cur,
+                        Candle {
+                            volume: 0.,
+                            high: last_close,
+                            low: last_close,
+                            open: last_close,
+                            close: last_close,
+                        },
+                    );
                     cur += 60;
                 }
             }
@@ -156,10 +171,7 @@ impl Candles {
 
     /// create new Candles object
     pub fn new(v: BTreeMap<Time, Candle>, scale: u16) -> Candles {
-        let ret = Candles {
-            v,
-            scale
-        };
+        let ret = Candles { v, scale };
 
         // assert!(self._test_epochs_must_be_sequential());
         ret
@@ -170,7 +182,7 @@ impl Candles {
     /// 60,    , 180 => not ok!
     fn _test_epochs_must_be_sequential(&self) -> bool {
         // all([a[0] + i * 60 * minutes == x for i, x in enumerate(a)])
-        let mut i : Time = 0;
+        let mut i: Time = 0;
         let &first = self.v.keys().next().unwrap();
         for &row in self.v.keys() {
             if first + i * 60 * (self.scale as Time) != row {
@@ -184,17 +196,20 @@ impl Candles {
 
 
     /// rebin 1 minute candles to x-minute candles
-    pub fn rebin(self, align: bool, new_scale : u16) -> Option<Candles> {
-        if new_scale < self.scale { return None }
-        else if new_scale == self.scale { return Some(self) }
+    pub fn rebin(self, align: bool, new_scale: u16) -> Option<Candles> {
+        if new_scale < self.scale {
+            return None;
+        } else if new_scale == self.scale {
+            return Some(self);
+        }
 
-        let mut res = BTreeMap::<Time,Candle>::new();
+        let mut res = BTreeMap::<Time, Candle>::new();
 
         let mut startacc = 0;
         let mut openacc = 0.;
         let mut highacc = 0.;
         let mut lowacc = 0.;
-        let mut volumeacc = 0.; 
+        let mut volumeacc = 0.;
 
         let mut aligned = false;
         let mut i = 0;
@@ -205,7 +220,7 @@ impl Candles {
             //
             // --|------|------|------|-->
             //   |
-            //   ^ discard up to this point         
+            //   ^ discard up to this point
             //
             //
             if align && !aligned {
@@ -229,20 +244,24 @@ impl Candles {
             }
 
             // accumulate new high, low and volume
-            highacc =  if row.high > highacc {row.high} else {highacc};
-            lowacc = if row.low < lowacc {row.low} else {lowacc};
+            highacc = if row.high > highacc {
+                row.high
+            } else {
+                highacc
+            };
+            lowacc = if row.low < lowacc { row.low } else { lowacc };
             volumeacc += row.volume;
 
             // if it's the last minute, insert
-            if (i % (new_scale as usize)) == ((new_scale as usize) - 1 ){
+            if (i % (new_scale as usize)) == ((new_scale as usize) - 1) {
                 let candle = Candle {
                     open: openacc,
                     high: highacc,
                     low: lowacc,
                     close: row.close,
-                    volume: volumeacc
+                    volume: volumeacc,
                 };
-                
+
                 res.insert(startacc, candle);
             }
             i += 1;
@@ -254,7 +273,7 @@ impl Candles {
 
         Some(Candles {
             v: res,
-            scale: new_scale
+            scale: new_scale,
         })
     }
 }
@@ -262,33 +281,37 @@ impl Candles {
 #[derive(PartialOrd, PartialEq, Clone, Debug)]
 /// a candlestick
 pub struct Candle {
-    open:   Price,
-    high:   Price,
-    low:    Price,
-    close:  Price,
+    open: Price,
+    high: Price,
+    low: Price,
+    close: Price,
     volume: Volume,
 }
 
 impl Eq for Candle {}
 
 impl Candle {
-
     /// convert to csv
     /// Format:
     ///     O,H,L,C,V
-    fn to_csv(&self) -> String{
-        format!("{},{},{},{},{}",
-                self.open, self.high, self.low, self.close, self.volume)
+    fn to_csv(&self) -> String {
+        format!(
+            "{},{},{},{},{}",
+            self.open,
+            self.high,
+            self.low,
+            self.close,
+            self.volume
+        )
     }
-
 }
 
 /// Check a list of sequence
-/// 
+///
 /// Returns maximum continuous sequence
-/// 
+///
 /// example: [60, 120, 180] -> [(60, 180)]
-/// 
+///
 /// The algorithm does the following:
 ///     1. a "rolling" conversion:
 ///         epochs to natural numbers
@@ -299,10 +322,10 @@ impl Candle {
 ///         [1, 1, 1, 3, 3, 3, 3] -> [3, 4]
 ///     4. convert back to begin and end epochs
 ///         [3] => [(60, 180)]
-/// 
+///
 /// :param lst: list of epochs
 /// :return: list of tuples of shape (start, end)
-fn ranges(lst: &Vec<Time>) -> Vec<(Time, Time)>{
+fn ranges(lst: &Vec<Time>) -> Vec<(Time, Time)> {
     let mut pos = Vec::new();
 
     for (i, j) in lst.iter().enumerate() {
@@ -334,7 +357,7 @@ fn ranges(lst: &Vec<Time>) -> Vec<(Time, Time)>{
             if n_groups.len() == 0 {
                 n_groups.push(count);
             } else {
-                n_groups.push(count+1);
+                n_groups.push(count + 1);
             }
             n_groups
         }
@@ -343,7 +366,7 @@ fn ranges(lst: &Vec<Time>) -> Vec<(Time, Time)>{
     for &l in n_groups.iter() {
         let el = lst.get(t).unwrap();
         t += l;
-        ret.push((el.clone(), el + 60 * (l-1) as Time));
+        ret.push((el.clone(), el + 60 * (l - 1) as Time));
     }
 
     ret
@@ -368,32 +391,38 @@ mod tests {
 
     #[test]
     fn test_candle_snap_to_grid() {
-        let mut v = BTreeMap::<Time,Candle>::new();
+        let mut v = BTreeMap::<Time, Candle>::new();
         for i in 30..121 {
             let j = 60 * i;
-            v.insert(j, Candle {
-                open: 0.,
-                close: 1.,
-                high: 2.,
-                low: 0.,
-                volume: 1.
-            });
+            v.insert(
+                j,
+                Candle {
+                    open: 0.,
+                    close: 1.,
+                    high: 2.,
+                    low: 0.,
+                    volume: 1.,
+                },
+            );
         }
 
         let candles = Candles::new(v, 1);
         let mut tree = BTreeMap::new();
-        tree.insert(1800, Candle {
+        tree.insert(
+            1800,
+            Candle {
                 open: 0.,
                 high: 2.,
                 low: 0.,
                 close: 1.,
-                volume: 60.
-            });
+                volume: 60.,
+            },
+        );
 
-        assert_eq!(Candles {
-            v: tree,
-            scale: 60
-        }, candles.rebin(true, 60).unwrap());
+        assert_eq!(
+            Candles { v: tree, scale: 60 },
+            candles.rebin(true, 60).unwrap()
+        );
     }
 
     // #[test]
@@ -430,7 +459,13 @@ mod tests {
 
     #[test]
     fn test_create_new_candles() {
-        assert_eq!(Candles::new(BTreeMap::new(), 1), Candles {v: BTreeMap::new(), scale:1});
+        assert_eq!(
+            Candles::new(BTreeMap::new(), 1),
+            Candles {
+                v: BTreeMap::new(),
+                scale: 1,
+            }
+        );
     }
 
     #[test]
@@ -442,34 +477,52 @@ mod tests {
             }
             let j = 60 * i;
 
-            v.insert(j, Candle {
-                open: 0.,
-                close: 1.,
-                high: 2.,
-                low: 0.,
-                volume: 1.
-            });
+            v.insert(
+                j,
+                Candle {
+                    open: 0.,
+                    close: 1.,
+                    high: 2.,
+                    low: 0.,
+                    volume: 1.,
+                },
+            );
         }
         let mut candles = Candles::new(v, 1);
 
-        assert_eq!(vec![3000, 3060, 3120, 3180, 3240, 3300, 3360, 3420, 3480, 3540, 3600], candles.missing_epochs());
+        assert_eq!(
+            vec![
+                3000,
+                3060,
+                3120,
+                3180,
+                3240,
+                3300,
+                3360,
+                3420,
+                3480,
+                3540,
+                3600,
+            ],
+            candles.missing_epochs()
+        );
         assert_eq!(vec![(3000, 3600)], candles.missing_ranges());
         candles.insert_continuation_candles();
         assert_eq!(Vec::<Time>::new(), candles.missing_epochs());
-        assert_eq!(Vec::<(Time,Time)>::new(), candles.missing_ranges());
+        assert_eq!(Vec::<(Time, Time)>::new(), candles.missing_ranges());
     }
 
 
     #[test]
     fn test_ranges() {
-        let v : Vec<Time> = vec![60,120,180,600,660,720];
+        let v: Vec<Time> = vec![60, 120, 180, 600, 660, 720];
         let result = ranges(&v);
-        let shouldbe : Vec<(Time,Time)> = vec![(60,180), (600, 720)];
+        let shouldbe: Vec<(Time, Time)> = vec![(60, 180), (600, 720)];
         assert_eq!(shouldbe, result);
 
-        let v : Vec<Time> = vec![0,60,120,180,240,600,660,720];
+        let v: Vec<Time> = vec![0, 60, 120, 180, 240, 600, 660, 720];
         let result = ranges(&v);
-        let shouldbe : Vec<(Time,Time)> = vec![(0,240), (600, 720)];
+        let shouldbe: Vec<(Time, Time)> = vec![(0, 240), (600, 720)];
         assert_eq!(shouldbe, result);
     }
 
@@ -478,46 +531,64 @@ mod tests {
         let mut candles = BTreeMap::new();
         for i in 1..10 {
             let j = i * 60;
-            candles.insert(j, Candle {
+            candles.insert(
+                j,
+                Candle {
+                    open: 0.,
+                    close: 0.,
+                    high: 0.,
+                    low: 0.,
+                    volume: 0.,
+                },
+            );
+        }
+
+        let c = Candles {
+            v: candles.clone(),
+            scale: 1,
+        };
+        assert!(c._test_epochs_must_be_sequential());
+
+        candles.insert(
+            10000,
+            Candle {
                 open: 0.,
                 close: 0.,
                 high: 0.,
                 low: 0.,
-                volume: 0.
-            });
-        }
-
-        let c = Candles { v: candles.clone(), scale: 1};
-        assert!(c._test_epochs_must_be_sequential());
-
-        candles.insert(10000, Candle {
-            open: 0.,
-            close: 0.,
-            high: 0.,
-            low: 0.,
-            volume: 0.
-        });
-        let g = Candles { v: candles, scale: 1};
+                volume: 0.,
+            },
+        );
+        let g = Candles {
+            v: candles,
+            scale: 1,
+        };
         assert!(!g._test_epochs_must_be_sequential());
     }
 
     #[test]
     fn test_rebin() {
         let mut candles = BTreeMap::new();
-        let to_scale :usize= 5;
-        let upto :usize = 5;
-        for i in 1..(upto+1) {
+        let to_scale: usize = 5;
+        let upto: usize = 5;
+        for i in 1..(upto + 1) {
             let j = i as Time * 60;
-            candles.insert(j, Candle {
-                open: 0.,
-                close: 0.,
-                high: 0.,
-                low: 0.,
-                volume: 0.
-            });
+            candles.insert(
+                j,
+                Candle {
+                    open: 0.,
+                    close: 0.,
+                    high: 0.,
+                    low: 0.,
+                    volume: 0.,
+                },
+            );
         }
 
-        let c = Candles { v: candles.clone(), scale: 1};
+        let c = Candles {
+            v: candles.clone(),
+            scale: 1,
+        };
         println!("{:?}", c);
         let rebinned = c.rebin(false, to_scale as u16).unwrap();
         println!("{:?}", rebinned);
@@ -528,20 +599,26 @@ mod tests {
     #[test]
     fn should_have_right_attr() {
         let mut candles = BTreeMap::new();
-        let to_scale :usize= 5;
-        let upto :usize = 5;
-        for i in 1..(upto+1) {
-            let j =  i as Time * 60;
-            candles.insert(j, Candle {
-                open: 100.*i as Price,
-                close: 100.*i as Price,
-                high: i as Price,
-                low: i as Price,
-                volume: i as Price
-            });
+        let to_scale: usize = 5;
+        let upto: usize = 5;
+        for i in 1..(upto + 1) {
+            let j = i as Time * 60;
+            candles.insert(
+                j,
+                Candle {
+                    open: 100. * i as Price,
+                    close: 100. * i as Price,
+                    high: i as Price,
+                    low: i as Price,
+                    volume: i as Price,
+                },
+            );
         }
 
-        let c = Candles { v: candles.clone(), scale: 1};
+        let c = Candles {
+            v: candles.clone(),
+            scale: 1,
+        };
         println!("{:?}", c);
         let rebinned = c.rebin(false, to_scale as u16).unwrap();
         println!("{:?}", rebinned);
@@ -553,9 +630,12 @@ mod tests {
         for bin in rebinned.v.values() {
             println!("{:?}", bin);
             assert_eq!(bin.high, (i * to_scale) as Price);
-            assert_eq!(bin.open, (100 * (i-1) * to_scale + 100) as Price);
+            assert_eq!(bin.open, (100 * (i - 1) * to_scale + 100) as Price);
             assert_eq!(bin.close, 100. * (i * to_scale) as Price);
-            assert_eq!(bin.volume, (1+(i-1)*to_scale..(i*to_scale + 1)).fold(0, |a,b| a+b) as Price);
+            assert_eq!(
+                bin.volume,
+                (1 + (i - 1) * to_scale..(i * to_scale + 1)).fold(0, |a, b| a + b) as Price
+            );
             i += 1;
         }
     }

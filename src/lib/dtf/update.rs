@@ -13,20 +13,24 @@ pub struct Update {
 
 
 impl Update {
-    pub fn serialize(&self, ref_ts : u64, ref_seq : u32) -> Vec<u8> {
+    pub fn serialize(&self, ref_ts: u64, ref_seq: u32) -> Vec<u8> {
         if self.seq < ref_seq {
             println!("{:?}", ref_seq);
             println!("{:?}", self);
             panic!("TODO: ???");
             /* TODO */
         }
-        let mut buf : Vec<u8> = Vec::new();
-        let _ = buf.write_u16::<BigEndian>((self.ts- ref_ts) as u16);
+        let mut buf: Vec<u8> = Vec::new();
+        let _ = buf.write_u16::<BigEndian>((self.ts - ref_ts) as u16);
         let _ = buf.write_u8((self.seq - ref_seq) as u8);
 
         let mut flags = Flags::FLAG_EMPTY;
-        if self.is_bid { flags |= Flags::FLAG_IS_BID; }
-        if self.is_trade { flags |= Flags::FLAG_IS_TRADE; }
+        if self.is_bid {
+            flags |= Flags::FLAG_IS_BID;
+        }
+        if self.is_trade {
+            flags |= Flags::FLAG_IS_TRADE;
+        }
         let _ = buf.write_u8(flags.bits());
 
         let _ = buf.write_f32::<BigEndian>(self.price);
@@ -35,18 +39,32 @@ impl Update {
     }
 
     pub fn to_json(&self) -> String {
-        format!(r#"{{"ts":{},"seq":{},"is_trade":{},"is_bid":{},"price":{},"size":{}}}"#,
-                  (self.ts as f64) / 1000_f64, self.seq, self.is_trade, self.is_bid, self.price, self.size)
+        format!(
+            r#"{{"ts":{},"seq":{},"is_trade":{},"is_bid":{},"price":{},"size":{}}}"#,
+            (self.ts as f64) / 1000_f64,
+            self.seq,
+            self.is_trade,
+            self.is_bid,
+            self.price,
+            self.size
+        )
     }
 
     pub fn to_csv(&self) -> String {
-        format!(r#"{},{},{},{},{},{}"#,
-                  (self.ts as f64) / 1000_f64, self.seq, self.is_trade, self.is_bid, self.price, self.size)
+        format!(
+            r#"{},{},{},{},{},{}"#,
+            (self.ts as f64) / 1000_f64,
+            self.seq,
+            self.is_trade,
+            self.is_bid,
+            self.price,
+            self.size
+        )
     }
 }
 
 impl PartialOrd for Update {
-    fn partial_cmp(&self, other : &Update) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &Update) -> Option<Ordering> {
         let selfts = self.ts;
         let otherts = other.ts;
         if selfts > otherts {

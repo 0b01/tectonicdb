@@ -2,15 +2,22 @@ use libtectonic::utils;
 use libtectonic::dtf::update::Update;
 
 
-/// Parses a line that looks like 
-/// 
+/// Parses a line that looks like
+///
 /// 1505177459.658, 139010, t, t, 0.0703629, 7.65064249;
-/// 
+///
 /// into an `Update` struct.
-/// 
-pub fn parse_line(string : &str) -> Option<Update> {
-    let mut u = Update { ts : 0, seq : 0, is_bid : false, is_trade : false, price : -0.1, size : -0.1 };
-    let mut buf : String = String::new();
+///
+pub fn parse_line(string: &str) -> Option<Update> {
+    let mut u = Update {
+        ts: 0,
+        seq: 0,
+        is_bid: false,
+        is_trade: false,
+        price: -0.1,
+        size: -0.1,
+    };
+    let mut buf: String = String::new();
     let mut count = 0;
     let mut most_current_bool = false;
 
@@ -25,13 +32,37 @@ pub fn parse_line(string : &str) -> Option<Update> {
             most_current_bool = ch == 't';
         } else if ch == ',' || ch == ';' {
             match count {
-                0 => { u.ts       = match buf.parse::<u64>() {Ok(ts) => utils::fill_digits(ts), Err(_) => return None}},
-                1 => { u.seq      = match buf.parse::<u32>() {Ok(seq) => seq, Err(_) => return None}},
-                2 => { u.is_trade = most_current_bool; },
-                3 => { u.is_bid   = most_current_bool; },
-                4 => { u.price    = match buf.parse::<f32>() {Ok(price) => price, Err(_) => return None} },
-                5 => { u.size     = match buf.parse::<f32>() {Ok(size) => size, Err(_) => return None}},
-                _ => panic!("IMPOSSIBLE")
+                0 => {
+                    u.ts = match buf.parse::<u64>() {
+                        Ok(ts) => utils::fill_digits(ts),
+                        Err(_) => return None,
+                    }
+                }
+                1 => {
+                    u.seq = match buf.parse::<u32>() {
+                        Ok(seq) => seq,
+                        Err(_) => return None,
+                    }
+                }
+                2 => {
+                    u.is_trade = most_current_bool;
+                }
+                3 => {
+                    u.is_bid = most_current_bool;
+                }
+                4 => {
+                    u.price = match buf.parse::<f32>() {
+                        Ok(price) => price,
+                        Err(_) => return None,
+                    }
+                }
+                5 => {
+                    u.size = match buf.parse::<f32>() {
+                        Ok(size) => size,
+                        Err(_) => return None,
+                    }
+                }
+                _ => panic!("IMPOSSIBLE"),
             }
             count += 1;
             buf.clear();
@@ -46,44 +77,46 @@ pub fn parse_line(string : &str) -> Option<Update> {
 }
 
 pub fn parse_dbname(string: &str) -> (usize, &str) {
-    let into_indices : Vec<_> = string.match_indices(" INTO ").collect();
+    let into_indices: Vec<_> = string.match_indices(" INTO ").collect();
     let (index, _) = into_indices[0];
-    let dbname = &string[(index+6)..];
+    let dbname = &string[(index + 6)..];
     (index, dbname)
 }
 
 /// returns Option<Update, dbname>
 pub fn parse_add_into(string: &str) -> (Option<Update>, Option<String>) {
     let (index, dbname) = parse_dbname(string);
-    let data_string : &str = {
-        if string.contains("ADD ") { &string[4..(index)] }
-        else if string.contains("INSERT ") { &string[7..(index)] }
-        else { return (None, None); }
+    let data_string: &str = {
+        if string.contains("ADD ") {
+            &string[4..(index)]
+        } else if string.contains("INSERT ") {
+            &string[7..(index)]
+        } else {
+            return (None, None);
+        }
     };
 
     match parse_line(data_string) {
         Some(up) => (Some(up), Some(dbname.to_owned())),
-        None => (None, None)
+        None => (None, None),
     }
 }
 
 pub fn parse_get_range(string: &str) -> Option<(u64, u64)> {
     if string.contains(" FROM ") {
         // range to query
-        let from_epoch = string.clone()[(string.find(" FROM ").unwrap()+6)..]
-                        .split(" ")
-                        .collect::<Vec<&str>>()
-                        [0]
-                        .parse::<u64>()
-                        .unwrap()
-                        * 1000;
-        let to_epoch = string.clone()[(string.find(" TO ").unwrap()+4)..]
-                        .split(" ")
-                        .collect::<Vec<&str>>()
-                        [0]
-                        .parse::<u64>()
-                        .unwrap()
-                        * 1000;
+        let from_epoch = string.clone()[(string.find(" FROM ").unwrap() + 6)..]
+            .split(" ")
+            .collect::<Vec<&str>>()
+            [0]
+            .parse::<u64>()
+            .unwrap() * 1000;
+        let to_epoch = string.clone()[(string.find(" TO ").unwrap() + 4)..]
+            .split(" ")
+            .collect::<Vec<&str>>()
+            [0]
+            .parse::<u64>()
+            .unwrap() * 1000;
         Some((from_epoch, to_epoch))
     } else {
         None
@@ -112,7 +145,7 @@ mod tests {
             is_trade: false,
             is_bid: true,
             price: 0.0703629,
-            size: 7.65064249
+            size: 7.65064249,
         };
         assert_eq!(target, parse_line(&string).unwrap());
 
@@ -124,17 +157,15 @@ mod tests {
             is_trade: true,
             is_bid: false,
             price: 0.0703620,
-            size: 7.65064240
+            size: 7.65064240,
         };
         assert_eq!(target1, parse_line(&string1).unwrap());
     }
 
     #[test]
     fn should_parse_dbname_ok() {
-        assert_eq!( parse_dbname("INSERT 1 INTO dbname"),
-                    (8, "dbname"));
-        assert_eq!( parse_dbname("INSERT 1000, INTO dbname1;"),
-                    (12, "dbname1;"));
+        assert_eq!(parse_dbname("INSERT 1 INTO dbname"), (8, "dbname"));
+        assert_eq!(parse_dbname("INSERT 1000, INTO dbname1;"), (12, "dbname1;"));
     }
 
     #[test]
@@ -147,10 +178,12 @@ mod tests {
             is_trade: true,
             is_bid: false,
             price: 0.0703620,
-            size: 7.65064240
+            size: 7.65064240,
         };
-        assert_eq!((Some(target), Some("dbname".to_owned())),
-                    parse_add_into(cmd));
+        assert_eq!(
+            (Some(target), Some("dbname".to_owned())),
+            parse_add_into(cmd)
+        );
     }
 
     #[test]
@@ -163,10 +196,12 @@ mod tests {
             is_trade: false,
             is_bid: false,
             price: 0.,
-            size: 0.
+            size: 0.,
         };
-        assert_eq!((Some(target), Some("default".to_owned())),
-                    parse_add_into(cmd));
+        assert_eq!(
+            (Some(target), Some("default".to_owned())),
+            parse_add_into(cmd)
+        );
     }
 
 }

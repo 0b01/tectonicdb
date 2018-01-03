@@ -1,20 +1,22 @@
-use std::collections::{BTreeMap};
+use std::collections::BTreeMap;
 use dtf::Update;
 
 type Time = u64;
 
 enum EventType {
-    CancelEvent, TradeEvent, CreateEvent
+    CancelEvent,
+    TradeEvent,
+    CreateEvent,
 }
 
 #[derive(Debug)]
 struct Events {
     cancelled: BTreeMap<Time, Vec<Update>>,
     trades: BTreeMap<Time, Vec<Update>>,
-    created: BTreeMap<Time, Vec<Update>>
+    created: BTreeMap<Time, Vec<Update>>,
 }
 
-impl<'a> From<&'a[Update]> for Events {
+impl<'a> From<&'a [Update]> for Events {
     fn from(ups: &[Update]) -> Events {
 
         let mut cancelled = BTreeMap::new();
@@ -32,17 +34,19 @@ impl<'a> From<&'a[Update]> for Events {
                 let v = trades.entry(ts).or_insert(Vec::new());
                 (*v).push(row.clone());
             } else {
-                let prev = if current_level.contains_key(&price) 
-                            { *current_level.get(&price).unwrap() }
-                           else
-                            { 0. };
+                let prev = if current_level.contains_key(&price) {
+                    *current_level.get(&price).unwrap()
+                } else {
+                    0.
+                };
                 if row.size == 0. || row.size <= prev {
                     let v = cancelled.entry(ts).or_insert(Vec::new());
                     (*v).push(row.clone());
                 } else if row.size > prev {
                     let v = created.entry(ts).or_insert(Vec::new());
                     (*v).push(row.clone());
-                } else { // size == prev
+                } else {
+                    // size == prev
                     unreachable!();
                 }
             }
@@ -53,25 +57,23 @@ impl<'a> From<&'a[Update]> for Events {
         Events {
             cancelled,
             trades,
-            created
+            created,
         }
     }
 }
 
 impl Events {
-    pub fn filter_volume(&self, event_type : EventType, from_vol: f32, to_vol: f32)
-            -> Vec<Update> {
+    pub fn filter_volume(&self, event_type: EventType, from_vol: f32, to_vol: f32) -> Vec<Update> {
         let obj = match event_type {
             EventType::CancelEvent => &self.cancelled,
             EventType::CreateEvent => &self.created,
-            EventType::TradeEvent => &self.trades
+            EventType::TradeEvent => &self.trades,
         };
 
         let mut ret = Vec::new();
         for v in obj.values() {
             for up in v.iter() {
-                if up.size >= from_vol
-                && up.size <= to_vol {
+                if up.size >= from_vol && up.size <= to_vol {
                     ret.push(up.clone());
                 }
             }
@@ -85,11 +87,11 @@ mod test {
 
     use super::*;
     use dtf;
-    static FNAME : &str = "test/test-data/bt_btcnav.dtf";
-    static POLO : &str = "test/test-data/pl_btc_nav.dtf";
+    static FNAME: &str = "test/test-data/bt_btcnav.dtf";
+    static POLO: &str = "test/test-data/pl_btc_nav.dtf";
 
     #[test]
-    fn test_into_events (){
+    fn test_into_events() {
         // let records = dtf::decode(FNAME, Some(10000));
         // let ups = records.as_slice();
         // TODO: Finish this test...

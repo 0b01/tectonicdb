@@ -31,25 +31,21 @@ pub struct GStorageFile {
 }
 
 impl GStorageFile {
-
     pub fn new(conf: &GStorageConfig, fname: &str) -> Result<GStorageFile, io::Error> {
 
-        let name = Path::new(fname).file_name()
-            .ok_or(
-                io::Error::new(
-                    io::ErrorKind::NotFound,
-                    "don't know filename"
-                )
-            )?
+        let name = Path::new(fname)
+            .file_name()
+            .ok_or(io::Error::new(
+                io::ErrorKind::NotFound,
+                "don't know filename",
+            ))?
             .to_str()
-            .ok_or(
-                io::Error::new(
-                    io::ErrorKind::NotFound,
-                    "not a valid filename"
-                )
-            )?;
+            .ok_or(io::Error::new(
+                io::ErrorKind::NotFound,
+                "not a valid filename",
+            ))?;
 
-        let remote_name = format!("{}-{}",Uuid::new_v4(), name);
+        let remote_name = format!("{}-{}", Uuid::new_v4(), name);
 
         Ok(GStorageFile {
             fname: fname.to_owned(),
@@ -74,16 +70,15 @@ impl GStorageFile {
 
         let uri = format!(
             "https://www.googleapis.com/upload/storage/v1/b/{}/o?uploadType=media&name={}/{}",
-                self.bucket_name,
-                self.folder,
-                self.remote_name);
+            self.bucket_name,
+            self.folder,
+            self.remote_name
+        );
 
         let body = self.file_content();
 
         let client = reqwest::Client::new();
-        let mut res = client.post(&uri)
-            .body(body?)
-            .send()?;
+        let mut res = client.post(&uri).body(body?).send()?;
 
 
         if res.status().is_success() {
@@ -98,20 +93,21 @@ impl GStorageFile {
             Ok(GStorageOpMetadata::new(
                 content,
                 start_ts.to_timespec().sec as u32,
-                finish_ts.to_timespec().sec as u32
+                finish_ts.to_timespec().sec as u32,
             )?)
 
         } else {
-            Err(
-                box io::Error::new(
-                    io::ErrorKind::Other,
-                    format!("Cannot upload file {}! dbg: {:?}", self.fname, res)
-                )
-            )
+            Err(box io::Error::new(
+                io::ErrorKind::Other,
+                format!(
+                    "Cannot upload file {}! dbg: {:?}",
+                    self.fname,
+                    res
+                ),
+            ))
         }
 
     }
-
 }
 
 pub fn upload(fname: &str, conf: &GStorageConfig) -> Result<String, Box<error::Error>> {
@@ -126,7 +122,8 @@ pub fn upload(fname: &str, conf: &GStorageConfig) -> Result<String, Box<error::E
 /// data collection backend is a proprietary data ingestion engine
 pub fn post_to_dcb(json: &str) -> Result<String, Box<error::Error>> {
     let client = reqwest::Client::new();
-    let mut res = client.post("http://httpbin.org/post")
+    let mut res = client
+        .post("http://httpbin.org/post")
         .body(json.to_owned())
         .send()?;
     Ok(res.text()?)
@@ -155,7 +152,7 @@ mod tests {
         println!("{}", json);
         let res = post_to_dcb(&json).unwrap();
         println!("{}", res);
-        
+
         println!("DONE");
 
     }
