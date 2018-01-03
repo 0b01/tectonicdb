@@ -478,8 +478,6 @@ impl State {
         range: Range,
         loc: Loc,
     ) -> Option<ReturnType> {
-        info!("{:?}, {:?}, {:?}, {:?}", count, format, range, loc);
-
         // return if requested 0 item
         if let ReqCount::Count(c) = count {
             if c == 0 {

@@ -6,6 +6,7 @@ import socket
 import json
 import struct
 import time
+import sys
 
 class TectonicDB():
     def __init__(self, host="localhost", port=9001):
@@ -27,7 +28,11 @@ class TectonicDB():
             current_len = len(header)
 
         success, bytes_to_read = struct.unpack('>?Q', header)
-        body = self.sock.recv(bytes_to_read)
+        body = self.sock.recv(8)
+        body_len = len(body)
+        while body_len < bytes_to_read:
+            body += self.sock.recv(32)
+            body_len = len(body)
         return success, body
 
     def destroy(self):

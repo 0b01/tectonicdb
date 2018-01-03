@@ -275,7 +275,7 @@ pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
 fn return_string(string: &str) -> ReturnType {
     let mut ret = String::new();
     ret.push_str(string);
-    ret.push_str("\n");
+    // ret.push_str("\n");
     ReturnType::String(ret)
 }
 

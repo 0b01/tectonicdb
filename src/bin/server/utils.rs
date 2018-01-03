@@ -29,6 +29,8 @@ pub fn init_dbs(state: &mut State) -> Result<(), io::Error> {
             {
                 let mut wtr = state.global.write().unwrap();
                 // if symbol is in vec_store, append to store
+                // TODO: this is not accurate at all!
+                // XXX: need to keep track of file names :(
                 wtr.vec_store
                     .entry(symbol.clone())
                     .and_modify(|e| if e.1 < header_size {e.1 += header_size})
