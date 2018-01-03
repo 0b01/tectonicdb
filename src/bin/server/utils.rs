@@ -31,7 +31,7 @@ pub fn init_dbs(state: &mut State) -> Result<(), io::Error> {
                 // if symbol is in vec_store, append to store
                 wtr.vec_store
                     .entry(symbol.clone())
-                    .and_modify(|e| e.1 += header_size)
+                    .and_modify(|e| if e.1 < header_size {e.1 += header_size})
                     .or_insert((box Vec::new(), header_size));
             }
 
