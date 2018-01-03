@@ -96,7 +96,7 @@ Examples:
 
         .get_matches();
 
-    // single file    
+    // single file
     let input = matches.value_of("input").unwrap_or("");
 
     // or range
@@ -128,25 +128,36 @@ Examples:
                 let mut candles = Candles::from(ups.as_slice());
                 candles.insert_continuation_candles();
                 let rebinned = candles
-                    .rebin(aligned, granularity.parse().unwrap()).unwrap()
+                    .rebin(aligned, granularity.parse().unwrap())
+                    .unwrap()
                     .to_csv();
                 format!("{}", rebinned)
             } else {
-                if csv {format!("{}",dtf::update_vec_to_csv(&ups))} else {format!("[{}]",dtf::update_vec_to_json(&ups))}
+                if csv {
+                    format!("{}", dtf::update_vec_to_csv(&ups))
+                } else {
+                    format!("[{}]", dtf::update_vec_to_json(&ups))
+                }
             }
 
         }
     } else {
-        let ups = scan_files_for_range(folder, symbol, min.parse().unwrap(), max.parse().unwrap()).unwrap();
+        let ups = scan_files_for_range(folder, symbol, min.parse().unwrap(), max.parse().unwrap())
+            .unwrap();
         if candle {
             let mut candles = Candles::from(ups.as_slice());
             candles.insert_continuation_candles();
             let rebinned = candles
-                .rebin(aligned, granularity.parse().unwrap()).unwrap()
+                .rebin(aligned, granularity.parse().unwrap())
+                .unwrap()
                 .to_csv();
             format!("{}", rebinned)
         } else {
-            if csv {format!("{}",dtf::update_vec_to_csv(&ups))} else {format!("[{}]",dtf::update_vec_to_json(&ups))}
+            if csv {
+                format!("{}", dtf::update_vec_to_csv(&ups))
+            } else {
+                format!("[{}]", dtf::update_vec_to_json(&ups))
+            }
         }
     };
 

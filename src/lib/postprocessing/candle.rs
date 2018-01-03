@@ -92,7 +92,7 @@ impl Candles {
     pub fn to_csv(self) -> String {
         let csvs: Vec<String> = self.v
             .into_iter()
-            .map(|(key, candle)| format!("{},{}",key, candle.to_csv()))
+            .map(|(key, candle)| format!("{},{}", key, candle.to_csv()))
             .collect();
 
         csvs.join("\n")
