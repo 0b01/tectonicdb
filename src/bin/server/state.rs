@@ -17,7 +17,7 @@ use settings::Settings;
 use std::sync::{Arc, RwLock, Mutex, mpsc};
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
-use handler::{GetFormat, ReturnType, ReqCount};
+use handler::{GetFormat, ReturnType, ReqCount, Loc, Range};
 use subscription::Subscriptions;
 
 /// name: *should* be the filename
@@ -475,15 +475,15 @@ impl State {
         &mut self,
         count: ReqCount,
         format: GetFormat,
-        range: Option<(u64, u64)>,
+        range: Range,
+        loc: Loc,
     ) -> Option<ReturnType> {
+        info!("{:?}, {:?}, {:?}, {:?}", count, format, range, loc);
 
         // return if requested 0 item
-        {
-            if let ReqCount::Count(c) = count {
-                if c == 0 {
-                    return None;
-                }
+        if let ReqCount::Count(c) = count {
+            if c == 0 {
+                return None;
             }
         }
 
@@ -501,17 +501,19 @@ impl State {
                 .collect::<Vec<_>>()
         }.unwrap_or(vecs.to_owned());
 
-        // if count <= len, return
-        match count {
-            ReqCount::Count(c) => {
-                if (c as usize) <= acc.len() {
-                    return self._return_aux(&acc[..c as usize], format);
-                }
-            }
-            ReqCount::All => (),
-        };
+        // if only requested items in memory
+        if let Loc::Mem = loc {
+            return self._return_aux(&acc, format);
+        }
 
-        // turns out we need more items to fill the req...
+        // if count <= len, return
+        if let ReqCount::Count(c) = count {
+            if (c as usize) <= acc.len() {
+                return self._return_aux(&acc[..c as usize], format);
+            }
+        }
+
+        // we need more items
         // check dtf files in folder and collect updates in requested range
         // and combine sequentially
         let mut ups_from_fs = acc;

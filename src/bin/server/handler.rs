@@ -26,10 +26,12 @@ pub enum GetFormat {
 type DbName = String;
 
 #[derive(Debug)]
-enum Loc {
+pub enum Loc {
     Mem,
     Fs,
 }
+
+pub type Range = Option<(u64, u64)>;
 
 #[derive(Debug)]
 enum Command {
@@ -41,7 +43,7 @@ enum Command {
     BulkAdd,
     BulkAddInto(DbName),
     BulkAddEnd,
-    Get(ReqCount, GetFormat, Option<(u64, u64)>),
+    Get(ReqCount, GetFormat, Range, Loc),
     Count(ReqCount, Loc),
     Clear(ReqCount),
     Flush(ReqCount),
@@ -88,8 +90,8 @@ pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
         "COUNT ALL IN MEM" => Count(ReqCount::All, Loc::Mem),
         "CLEAR" => Clear(ReqCount::Count(1)),
         "CLEAR ALL" => Clear(ReqCount::All),
-        "GET ALL AS JSON" => Get(ReqCount::All, GetFormat::JSON, None),
-        "GET ALL" => Get(ReqCount::All, GetFormat::DTF, None),
+        "GET ALL AS JSON" => Get(ReqCount::All, GetFormat::JSON, None, Loc::Mem),
+        "GET ALL" => Get(ReqCount::All, GetFormat::DTF, None, Loc::Mem),
         "FLUSH" => Flush(ReqCount::Count(1)),
         "FLUSH ALL" => Flush(ReqCount::All),
         _ => {
@@ -128,21 +130,23 @@ pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
             } else
             // get
             if string.starts_with("GET ") {
-                // how many records from memory we want...
-                let count: &str = &string.clone()[4..];
-                let count: Vec<&str> = count.split(" ").collect();
-                let count = count[0].parse::<u32>().unwrap_or(1);
+                // how many records we want...
+                let count = if string.starts_with("GET ALL ") {
+                    ReqCount::All
+                } else {
+                    let count: &str = &string.clone()[4..];
+                    let count: Vec<&str> = count.split(" ").collect();
+                    let count = count[0].parse::<u32>().unwrap_or(1);
+                    ReqCount::Count(count)
+                };
 
                 let range = parser::parse_get_range(string);
 
-                // test if json
-                let format = if string.contains(" AS JSON") {
-                    GetFormat::JSON
-                } else {
-                    GetFormat::DTF
-                };
+                // test if is json
+                let format = if string.contains(" AS JSON") { GetFormat::JSON } else { GetFormat::DTF };
+                let loc = if string.contains(" IN MEM") { Loc::Mem } else { Loc::Fs };
 
-                Get(ReqCount::Count(count), format, range)
+                Get(count, format, range, loc)
             } else {
                 Unknown
             }
@@ -248,8 +252,8 @@ pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
         }
 
         // get
-        Get(cnt, fmt, rng) => {
-            match state.get(cnt, fmt, rng) {
+        Get(cnt, fmt, rng, loc) => {
+            match state.get(cnt, fmt, rng, loc) {
                 Some(ReturnType::Bytes(b)) => return_bytes(b),
                 Some(ReturnType::String(s)) => return_string(&s),
                 Some(ReturnType::Error(e)) => return_err(&e),
