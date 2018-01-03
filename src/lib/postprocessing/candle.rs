@@ -143,7 +143,6 @@ impl Candles {
 
         for (&ts, row) in self.v.iter() {
             if (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
-                println!("{}", last_close);
                 //insert continuation candle(s)
                 let mut cur = last_ts + 60;
                 while cur < ts {

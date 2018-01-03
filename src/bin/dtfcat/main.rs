@@ -15,11 +15,15 @@ fn main() {
 Examples:
     # filter for epoch and symbol in folder and output csv
     dtfcat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 -c > out
+    # same as above but rebin into minute candle
+    dtfcat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 -c -r > out
+    # hour candle
+    dtfcat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 -c -r -g 60 > out
     # read metadata of file
     dtfcat -m -i test.dtf
     # conver to csv
     dtfcat -i test.dtf -c
-    ")
+")
         .arg(
             Arg::with_name("input")
                 .short("i")
