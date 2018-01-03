@@ -19,19 +19,30 @@ pub fn scan_files_for_range(
             ))
         }
         Ok(entries) => {
-            for entry in entries {
-                let entry = entry?;
-                let path = entry.path();
-                let fname_str = path.to_str().unwrap();
 
-                let meta = dtf::read_meta(fname_str)?;
+            let mut v = entries
+                .map(|entry| {
+                    let entry = entry.unwrap();
+                    let fname = entry.file_name();
+                    let fname = fname.to_str().unwrap().to_owned();
+                    let fname = &format!("{}/{}", folder, fname);
+                    let meta = dtf::read_meta(fname).unwrap();
+                    (fname.to_owned(), meta)
+                })
+                .filter(|&(ref _fname, ref meta)| {
+                    meta.symbol == symbol
+                    && within_range(min_ts, max_ts, meta.min_ts, meta.max_ts)
+                })
+                .collect::<Vec<_>>();
 
-                if meta.symbol == symbol && within_range(min_ts, max_ts, meta.min_ts, meta.max_ts) {
+            // sort by min_ts
+            v.sort_by(|&(ref _f0, ref m0), &(ref _f1, ref m1)| m0.cmp(m1) );
 
-                    let ups = dtf::get_range_in_file(fname_str, min_ts, max_ts)?;
-                    ret.extend(ups);
-                }
+            for &(ref fname, ref _meta) in v.iter() {
+                let ups = dtf::get_range_in_file(fname, min_ts, max_ts).unwrap();
+                ret.extend(ups);
             }
+
         }
     };
     Ok(ret)

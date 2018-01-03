@@ -88,12 +88,11 @@ impl<'a> From<&'a [Update]> for Candles {
 impl Candles {
     /// convert Candles vector to csv
     /// format is
-    ///     O,H,L,C,V
+    ///     T,O,H,L,C,V
     pub fn to_csv(self) -> String {
         let csvs: Vec<String> = self.v
-            .values()
             .into_iter()
-            .map(|candle| candle.to_csv())
+            .map(|(key, candle)| format!("{},{}",key, candle.to_csv()))
             .collect();
 
         csvs.join("\n")
