@@ -344,8 +344,9 @@ fn range(rdr: &mut BufReader<File>, min_ts: u64, max_ts: u64) -> Result<Vec<Upda
         //         [          ]
         //   |1*-----|1----|1---
         //
-        if (min_ts <= current_ref_ts && max_ts <= next_ref_ts) ||
-                   (min_ts < next_ref_ts && max_ts >= next_ref_ts)
+        if (min_ts <= current_ref_ts && max_ts <= next_ref_ts)
+                   || (min_ts < next_ref_ts && max_ts >= next_ref_ts)
+                   || (min_ts > current_ref_ts && max_ts < next_ref_ts)
         {
             // seek back
             let bytes_to_scrollback = - (bytes_to_skip as i64) - 14 /* metadata */ - 1 /* indicator byte */ ;
@@ -378,6 +379,7 @@ fn range(rdr: &mut BufReader<File>, min_ts: u64, max_ts: u64) -> Result<Vec<Upda
                 "SKIPPING n ROWS",
             );
         } else {
+            println!("{}, {}, {}, {}", min_ts, max_ts, current_ref_ts, next_ref_ts);
             panic!("Should have cover all the cases.");
         }
     }
