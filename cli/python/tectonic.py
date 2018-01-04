@@ -18,7 +18,10 @@ class TectonicDB():
         self.sock.connect(server_address)
 
     def cmd(self, command):
-        message = command + '\n'
+        if type(command) != str:
+            message = (command.decode() + '\n').encode()
+        else:
+            message = (command+'\n').encode()
         self.sock.sendall(message)
 
         header = self.sock.recv(9)
@@ -31,7 +34,10 @@ class TectonicDB():
         body = self.sock.recv(8)
         body_len = len(body)
         while body_len < bytes_to_read:
-            body += self.sock.recv(32)
+            len_to_read = bytes_to_read - body_len
+            if len_to_read > 32:
+                len_to_read = 32
+            body += self.sock.recv(len_to_read)
             body_len = len(body)
         return success, body
 
