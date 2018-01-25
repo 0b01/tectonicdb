@@ -16,6 +16,6 @@ conf/gstorage/conf.toml
 old/
 test.dtf
 *.pyc
-db
+db/*
 
 test/zrx/
