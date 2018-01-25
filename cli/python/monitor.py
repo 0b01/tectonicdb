@@ -7,7 +7,7 @@ def monitor():
     while 1:
         time.sleep(1)
         new_count = int(db.countall()[1])
-        print new_count - init
+        print(new_count - init)
         init = new_count
 
 if __name__ == '__main__':

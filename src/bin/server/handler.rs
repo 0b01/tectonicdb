@@ -306,7 +306,7 @@ mod tests {
     fn should_return_pong() {
         let mut state = gen_state();
         let resp = gen_response("PING", &mut state);
-        assert_eq!(ReturnType::String(String::from("PONG\n")), resp);
+        assert_eq!(ReturnType::String(String::from("PONG")), resp);
     }
 
     #[test]
@@ -327,7 +327,7 @@ mod tests {
         let mut state = gen_state();
         let resp = gen_response("CREATE bnc_btc_eth", &mut state);
         assert_eq!(
-            ReturnType::String(String::from("Created DB `bnc_btc_eth`.\n")),
+            ReturnType::String(String::from("Created DB `bnc_btc_eth`.")),
             resp
         );
         let resp = gen_response(
