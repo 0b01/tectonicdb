@@ -334,7 +334,7 @@ mod tests {
             "ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth",
             &mut state,
         );
-        assert_eq!(ReturnType::String(String::from("\n")), resp);
+        assert_eq!(ReturnType::String(String::from("")), resp);
     }
 
 }
