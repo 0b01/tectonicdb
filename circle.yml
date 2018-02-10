@@ -19,6 +19,8 @@ jobs:
       - image: ubuntu:latest
     steps:
       - checkout
+      - run: apt-get update
+      - run: apt-get install curl file build-essential pkg-config libssl-dev -y
       # - restore_cache:
       #     key: v2-cargo-nightly-2017-01-30-{{ arch }}
       #     paths:
