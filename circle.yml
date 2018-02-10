@@ -21,29 +21,29 @@ jobs:
       - checkout
       - run: apt-get update
       - run: apt-get install curl file build-essential pkg-config libssl-dev -y
-      # - restore_cache:
-      #     key: v2-cargo-nightly-2017-01-30-{{ arch }}
-      #     paths:
-      #       - ~/.cargo
+      - restore_cache:
+          key: v2-cargo-nightly-2017-01-30-{{ arch }}
+          paths:
+            - ~/.cargo
       - run: |
           test -f ~/.cargo/bin/cargo || (curl https://sh.rustup.rs -s > /home/install.sh &&
           chmod +x /home/install.sh &&
           sh /home/install.sh -y --verbose --default-toolchain nightly-2018-01-30)
-      # - save_cache:
-      #     key: v2-cargo-nightly-2017-01-30-{{ arch }}
-      #     paths:
-      #       - ~/.cargo
-      # - restore_cache:
-      #     key: v1-tectonicdb-test-{{ arch }}
-      #     paths:
-      #       - ~/project/target/
+      - save_cache:
+          key: v2-cargo-nightly-2017-01-30-{{ arch }}
+          paths:
+            - ~/.cargo
+      - restore_cache:
+          key: v1-tectonicdb-test-{{ arch }}
+          paths:
+            - ~/project/target/
       - run: |
           ~/.cargo/bin/rustup default nightly-2018-01-30 && \
           ~/.cargo/bin/cargo test --no-fail-fast -- --nocapture
-      # - save_cache:
-      #     key: v1-tectonicdb-test-{{ arch }}
-      #     paths:
-      #       - ~/project/target/
+      - save_cache:
+          key: v1-tectonicdb-test-{{ arch }}
+          paths:
+            - ~/project/target/
 workflows:
   version: 2
   build_and_test:
