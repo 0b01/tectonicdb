@@ -10,8 +10,8 @@ type Scale = u16;
 #[derive(Clone, Debug, PartialEq)]
 /// utilities for rebinning candlesticks
 pub struct Candles {
-    v: BTreeMap<Time, Candle>,
-    scale: Scale,
+    pub v: BTreeMap<Time, Candle>,
+    pub scale: Scale,
 }
 
 impl<'a> From<&'a [Update]> for Candles {
@@ -96,6 +96,14 @@ impl Candles {
             .collect();
 
         csvs.join("\n")
+    }
+
+    pub fn get_v(self) -> Vec<Candle> {
+        self.v.values().cloned().collect()
+    }
+
+    pub fn get_scale(self) -> Scale {
+        self.scale
     }
 
     /// Find missing epochs (in minute)
@@ -332,8 +340,6 @@ fn ranges(lst: &Vec<Time>) -> Vec<(Time, Time)> {
 
     let mut ret = Vec::new();
     let mut t = 0;
-
-    println!("{:?}", pos);
 
     // [1, 1, 1, 2, 2] -> [3, 2]
     let n_groups = {

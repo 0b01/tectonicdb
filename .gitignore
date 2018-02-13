@@ -19,3 +19,5 @@ test.dtf
 db/*
 
 test/zrx/
+
+src/bin/gen_train_data
