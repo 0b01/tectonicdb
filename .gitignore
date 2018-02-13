@@ -21,3 +21,6 @@ db/*
 test/zrx/
 
 src/bin/gen_train_data
+test.npy
+plot.py
+bnc_neo_btc.dtf
