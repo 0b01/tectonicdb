@@ -10,8 +10,8 @@ type Scale = u16;
 #[derive(Clone, Debug, PartialEq)]
 /// utilities for rebinning candlesticks
 pub struct Candles {
-    pub v: BTreeMap<Time, Candle>,
-    pub scale: Scale,
+    v: BTreeMap<Time, Candle>,
+    scale: Scale,
 }
 
 impl<'a> From<&'a [Update]> for Candles {
@@ -98,11 +98,17 @@ impl Candles {
         csvs.join("\n")
     }
 
-    pub fn get_v(self) -> Vec<Candle> {
+    pub fn get_size(&self) -> usize {
+        self.v.len()
+    }
+
+    /// returns a vector of candles
+    pub fn get_candles(&self) -> Vec<Candle> {
         self.v.values().cloned().collect()
     }
 
-    pub fn get_scale(self) -> Scale {
+    // return the scale of these candles
+    pub fn get_scale(&self) -> Scale {
         self.scale
     }
 
@@ -287,11 +293,11 @@ impl Candles {
 #[derive(PartialOrd, PartialEq, Clone, Debug)]
 /// a candlestick
 pub struct Candle {
-    open: Price,
-    high: Price,
-    low: Price,
-    close: Price,
-    volume: Volume,
+    pub open: Price,
+    pub high: Price,
+    pub low: Price,
+    pub close: Price,
+    pub volume: Volume,
 }
 
 impl Eq for Candle {}
