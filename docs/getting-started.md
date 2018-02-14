@@ -21,11 +21,8 @@ INFO
 
 Now that you have installed TectonicDB, you can now hook up a market data pipeline. To do so, you will need to use a client api.
 
-There are currently several API clients:
+Currently these language bindings are available:
 
-1. Python
-2. Javascript
-3. Rust
-
-
-
+1. [Python 3.6 (async generator)](https://github.com/rickyhan/tectonicdb/blob/master/cli/python/tectonic.py)
+2. [Javascript](https://github.com/rickyhan/tectonicdb/blob/master/cli/tectonicjs/src/tectonic.ts)
+3. [Rust](https://github.com/rickyhan/tectonicdb/blob/master/cli/db.rs)
