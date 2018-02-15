@@ -120,10 +120,10 @@ pub fn upload(fname: &str, conf: &GStorageConfig) -> Result<String, Box<error::E
 }
 
 /// data collection backend is a proprietary data ingestion engine
-pub fn post_to_dcb(json: &str) -> Result<String, Box<error::Error>> {
+pub fn post_to_dcb(url: &str, json: &str) -> Result<String, Box<error::Error>> {
     let client = reqwest::Client::new();
     let mut res = client
-        .post("http://httpbin.org/post")
+        .post(url)
         .body(json.to_owned())
         .send()?;
     Ok(res.text()?)

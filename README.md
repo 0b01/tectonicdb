@@ -5,7 +5,7 @@
 
 tectonicdb is a fast, highly compressed standalone datastore and streaming protocol for order book ticks.
 
-## Why 
+## Why
 
 This software is motivated by reducing expenditure. 1TB stored on Google Cloud PostgreSQL was too expensive and too slow. Since financial data is usually read and stored in bulk, it is possible to convert into a more efficient format.
 
@@ -63,6 +63,19 @@ For example:
 ```
 
 This sets log verbosity to max and maximum connection to 1000.
+
+### Configuration
+
+To config the Google Cloud Storage and Data Collection Backend integration, the following environment variables are used:
+
+| Variable Name             | Default     | Description                                                                                                                          |
+|---------------------------|-------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `GCLOUD_OAUTH_TOKEN`      | *unset*     | Token used to authenticate with Google Cloud for uploading DTF files                                                                 |
+| `GCLOUD_BUCKET_NAME`      | `tick_data` | Name of the bucket in which uploaded DTF files are stored                                                                            |
+| `GCLOUD_FOLDER`           | ``          | Name of the folder inside of the bucket into which the DTF files are stored                                                          |
+| `GCLOUD_UPLOAD_INTERVAL`  | 3600        | Interval in seconds between uploads of DTF files to Google Cloud                                                                     |
+| `GCLOUD_REMOVE_ON_UPLOAD` | true        | If true, the uploaded DTF files are deleted after upload                                                                             |
+| `DCB_URL`                 | ``          | The URL of the Data Collection Backend's batch ingestion endpoint (leave unset if you don't know what the DCB is or aren't using it) |
 
 ## Monitoring
 
