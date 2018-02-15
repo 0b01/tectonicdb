@@ -7,12 +7,15 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run: docker build -t tectonicdb .
-      - run: docker create --name tectonicdb tectonicdb
+      - run: docker build -t fatwhaleltd/tectonicdb .
+      - run: docker create --name tectonicdb fatwhaleltd/tectonicdb
       - run: docker cp tectonicdb:/usr/local/bin/tectonic-server /tmp/tectonic-server
       - store_artifacts:
           path: /tmp/tectonic-server
           destination: tectonic-server
+      - run: |
+          docker login --username=$DOCKER_USER --password=$DOCKER_PASSWORD
+          docker push fatwhaleltd/tectonicdb:latest
 
   test:
     docker:
