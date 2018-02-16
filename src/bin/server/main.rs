@@ -44,7 +44,7 @@ fn main() {
     let port = matches
         .value_of("port")
         .map(String::from)
-        .unwrap_or(key_or_default("TECTONICDB_PORT", "0.0.0.0"));
+        .unwrap_or(key_or_default("TECTONICDB_PORT", "9001"));
     let dtf_folder = matches
         .value_of("dtf_folder")
         .map(String::from)
