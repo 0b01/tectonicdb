@@ -23,7 +23,7 @@ RUN PKG_CONFIG_PATH=/usr/local/musl/lib/pkgconfig \
 
 # Now, we need to build the _real_ Docker container, copying in `tectonic-server`
 FROM alpine:latest
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates && update-ca-certificates
 COPY --from=builder \
     /home/rust/src/target/x86_64-unknown-linux-musl/release/tectonic-server \
     /usr/local/bin/
