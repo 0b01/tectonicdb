@@ -1,30 +1,6 @@
-use std::env;
 use std::error::Error;
-use std::str::FromStr;
 
-fn key_or_default_parse<
-    E: Into<Box<Error>>,
-    T: FromStr<Err=E>
->(key: &str, default: T) -> Result<T, Box<Error>> {
-    match env::var(key) {
-        Ok(val) => val.parse::<T>().map_err(|err| err.into()),
-        Err(_) => Ok(default),
-    }
-}
-
-fn key_or_default(key: &str, default: &str) -> String {
-   match env::var(key) {
-        Ok(val) => val,
-        Err(_) => default.into(),
-    }
-}
-
-fn key_or_none(key: &str) -> Option<String> {
-    match env::var(key) {
-        Ok(val) => Some(val),
-        Err(_) => None,
-    }
-}
+use settings::{key_or_default_parse, key_or_default, key_or_none};
 
 #[derive(Debug)]
 pub struct GStorageConfig {

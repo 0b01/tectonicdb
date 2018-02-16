@@ -32,21 +32,52 @@ mod subscription;
 
 use clap::{Arg, App, ArgMatches};
 
+use settings::{key_or_default, key_or_none};
 
 fn main() {
-
     let matches = get_matches();
 
-    let host = matches.value_of("host").unwrap_or("0.0.0.0");
-    let port = matches.value_of("port").unwrap_or("9001");
-    let dtf_folder = matches.value_of("dtf_folder").unwrap_or("db");
+    let host = matches
+        .value_of("host")
+        .map(String::from)
+        .unwrap_or(key_or_default("TECTONICDB_HOST", "0.0.0.0"));
+    let port = matches
+        .value_of("port")
+        .map(String::from)
+        .unwrap_or(key_or_default("TECTONICDB_PORT", "0.0.0.0"));
+    let dtf_folder = matches
+        .value_of("dtf_folder")
+        .map(String::from)
+        .unwrap_or(key_or_default("TECTONICDB_DTF_FOLDER", "db"));
     let verbosity = matches.occurrences_of("v") as u8;
-    let autoflush = matches.is_present("autoflush");
-    let flush_interval = matches.value_of("flush_interval").unwrap_or("1000");
-    let hist_granularity = matches.value_of("hist_granularity").unwrap_or("30");
-    let hist_q_capacity = matches.value_of("hist_q_capacity").unwrap_or("300");
+    let autoflush = {
+        let cli_setting: bool = matches.is_present("autoflush");
+        match key_or_none("TECTONICDB_AUTOFLUSH") {
+            Some(s) => match s.as_ref() {
+                "true" => true,
+                "false" => false,
+                _ => cli_setting,
+            },
+            None => cli_setting,
+        }
+    };
+    let flush_interval = matches
+        .value_of("flush_interval")
+        .map(String::from)
+        .unwrap_or(key_or_default("TECTONICDB_FLUSH_INTERVAL", "1000"));
+    let hist_granularity = matches
+        .value_of("hist_granularity")
+        .map(String::from)
+        .unwrap_or(key_or_default("TECTONICDB_HIST_GRANULARITY", "30"));
+    let hist_q_capacity = matches
+        .value_of("hist_q_capacity")
+        .map(String::from)
+        .unwrap_or(key_or_default("TECTONICDB_HIST_Q_CAPACITY", "300"));
 
-    let log_file = matches.value_of("log_file").unwrap_or("tectonic.log");
+    let log_file = matches
+        .value_of("log_file")
+        .map(String::from)
+        .unwrap_or(key_or_default("TECTONICDB_LOG_FILE_NAME", "tectonic.log"));
 
     let settings = settings::Settings {
         autoflush: autoflush,
@@ -58,11 +89,11 @@ fn main() {
 
     prepare_logger(verbosity, &log_file);
     info!(r##"
-           _/                            _/                          _/            
-        _/_/_/_/    _/_/      _/_/_/  _/_/_/_/    _/_/    _/_/_/          _/_/_/   
-         _/      _/_/_/_/  _/          _/      _/    _/  _/    _/  _/  _/          
-        _/      _/        _/          _/      _/    _/  _/    _/  _/  _/           
-         _/_/    _/_/_/    _/_/_/      _/_/    _/_/    _/    _/  _/    _/_/_/      
+           _/                            _/                          _/
+        _/_/_/_/    _/_/      _/_/_/  _/_/_/_/    _/_/    _/_/_/          _/_/_/
+         _/      _/_/_/_/  _/          _/      _/    _/  _/    _/  _/  _/
+        _/      _/        _/          _/      _/    _/  _/    _/  _/  _/
+         _/_/    _/_/_/    _/_/_/      _/_/    _/_/    _/    _/  _/    _/_/_/
     "##);
 
     server::run_server(&host, &port, &settings);
@@ -94,6 +125,8 @@ fn prepare_logger(verbosity: u8, log_file: &str) {
         .unwrap();
 }
 
+/// Gets configuration values from CLI arguments, falling back to environment variables
+/// if they don't exist and to default values if neither exist.
 fn get_matches<'a>() -> ArgMatches<'a> {
     App::new("tectonic-server")
         .version("1.0.0")
