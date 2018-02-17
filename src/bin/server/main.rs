@@ -1,13 +1,14 @@
-#![feature(box_syntax)]
-#![feature(box_patterns)]
-#![feature(entry_and_modify)]
+#![feature(box_syntax, box_patterns, conservative_impl_trait, entry_and_modify)]
 
 extern crate libtectonic;
 extern crate clap;
 extern crate byteorder;
 extern crate chrono;
+extern crate serde;
+extern crate time;
 #[macro_use]
 extern crate serde_derive;
+extern crate openssl_probe;
 
 #[macro_use]
 extern crate log;
@@ -35,6 +36,8 @@ use clap::{Arg, App, ArgMatches};
 use settings::{key_or_default, key_or_none};
 
 fn main() {
+    // Help detect OpenSSL certificates on Alpine Linux
+    openssl_probe::init_ssl_cert_env_vars();
     let matches = get_matches();
 
     let host = matches
@@ -52,7 +55,9 @@ fn main() {
     let verbosity = matches.occurrences_of("v") as u8;
     let autoflush = {
         let cli_setting: bool = matches.is_present("autoflush");
-        match key_or_none("TECTONICDB_AUTOFLUSH") {
+        let env_setting = key_or_none("TECTONICDB_AUTOFLUSH");
+        println!("ENV SETTING: {:?}", env_setting);
+        match env_setting {
             Some(s) => match s.as_ref() {
                 "true" => true,
                 "false" => false,

@@ -1,2 +1,7 @@
 ./target/*
 Dockerfile
+circle.yml
+.travis.yml
+.gitignore
+LICENSE
+docs

@@ -2,10 +2,9 @@
 name = "tectonicdb"
 version = "0.2.1"
 authors = ["Ricky Han <tectonic@rickyhan.com>"]
-description = "fast datastore server for contiguous order book ticks"
-repository = "https://github.com/rickyhan/tectonicdb"
-keywords = ["finance", "datastore", "database", "financial"]
 category = "Database"
+description = "fast datastore server for contiguous order book ticks"
+keywords = ["finance", "datastore", "database", "financial"]
 license = "MIT"
 readme = "README.md"
 exclude = [
@@ -17,6 +16,8 @@ exclude = [
 name = "libtectonic"
 path = "src/lib/lib.rs"
 crate-type = ["cdylib", "dylib", "rlib"]
+repository = "https://github.com/rickyhan/tectonicdb"
+version = "0.2.0"
 
 [[bin]]
 name = "tectonic-server"
@@ -27,39 +28,41 @@ name = "tectonic-cli"
 path = "src/bin/cli/main.rs"
 
 [[bin]]
+name = "gen_train_data"
+path = "src/bin/gen_train_data/main.rs"
+publish = false
+
+[[bin]]
 name = "dtfcat"
-publish = true
 path = "src/bin/dtfcat/main.rs"
-
-[features]
-default = ["gcs"]
-
-gcs = [ "reqwest" ]
-
-
-
+publish = true
 
 [dependencies]
-# These crates are mandatory:
-byteorder = "1.1.0"
 bitflags = "1.0.0"
-config = "0.6"
+byteorder = "1.1.0"
 clap = "~2.26"
 circular-queue = "0.2.0"
 
 # Logging
+config = "0.6"
 fern = "0.4"
+futures = "0.1.14"
 log = "0.3"
 chrono = "0.4"
 time = "0.1.38"
 
+openssl-probe = "0.1.2"
 serde = "1.0"
-serde_json = "1.0"
 serde_derive = "1.0"
-uuid = "0.5.1"
+serde_json = "1.0"
 tokio-core = "0.1"
 tokio-io = "0.1"
-futures = "0.1.14"
+uuid = { version = "0.5.1", features = ["serde"] }
 
-# google storage
-reqwest = { version = "0.8.1", optional = true }
+[dependencies.reqwest]
+optional = true
+version = "0.8.1"
+
+[features]
+default = ["gcs"]
+gcs = ["reqwest"]

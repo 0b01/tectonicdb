@@ -4,22 +4,19 @@ use plugins::gstorage::reqwest;
 use plugins::gstorage::reqwest::Body;
 use std::io::Read;
 
+use uuid::Uuid;
+use serde::Serialize;
+use time;
+
+use libtectonic::storage::file_metadata::{self, FileMetadata};
 use plugins::gstorage::conf::GStorageConfig;
 use plugins::gstorage::metadata::GStorageOpMetadata;
-
-use libtectonic::storage::file_metadata;
 use plugins::gstorage::GStorageMetadata;
-use plugins::gstorage::serde_json;
 
 use std::path::Path;
 use std::io;
 use std::error;
-
 use std::fs::File;
-extern crate time;
-extern crate uuid;
-
-use self::uuid::Uuid;
 
 #[derive(Debug)]
 pub struct GStorageFile {
@@ -78,8 +75,10 @@ impl GStorageFile {
         let body = self.file_content();
 
         let client = reqwest::Client::new();
-        let mut res = client.post(&uri).body(body?).send()?;
-
+        let mut res = client
+            .post(&uri)
+            .body(body?)
+            .send()?;
 
         if res.status().is_success() {
             let mut content = String::new();
@@ -110,21 +109,38 @@ impl GStorageFile {
     }
 }
 
-pub fn upload(fname: &str, conf: &GStorageConfig) -> Result<String, Box<error::Error>> {
+pub fn upload(
+    fname: &str, conf: &GStorageConfig
+) -> Result<GStorageMetadata<impl FileMetadata>, Box<error::Error>> {
     let mut f = GStorageFile::new(conf, fname)?;
     let op_meta = f.upload()?;
     let file_meta = file_metadata::from_fname(fname)?;
-    let metadata = GStorageMetadata::new(op_meta, file_meta);
-    let json = serde_json::to_string(&metadata)?;
-    Ok(json)
+    Ok(GStorageMetadata::new(op_meta, file_meta))
+}
+
+#[derive(Serialize)]
+struct DcbBatchRequest<T: Serialize> {
+    table: String,
+    data: Vec<T>,
+}
+
+impl<T: Serialize> DcbBatchRequest<T> {
+    pub fn new<S: Into<String>>(table: S, data: T) -> Self {
+        DcbBatchRequest {
+            table: table.into(),
+            data: vec![data],
+        }
+    }
 }
 
 /// data collection backend is a proprietary data ingestion engine
-pub fn post_to_dcb(url: &str, json: &str) -> Result<String, Box<error::Error>> {
+pub fn post_to_dcb<T: FileMetadata + Serialize>(
+    url: &str, metadata: &GStorageMetadata<T>
+) -> Result<String, Box<error::Error>> {
     let client = reqwest::Client::new();
     let mut res = client
         .post(url)
-        .body(json.to_owned())
+        .json(&DcbBatchRequest::new("bookkeeper", metadata))
         .send()?;
     Ok(res.text()?)
 }
@@ -134,7 +150,6 @@ mod tests {
     use super::*;
     use libtectonic::storage::file_metadata;
     use plugins::gstorage::GStorageMetadata;
-    use plugins::gstorage::serde_json;
 
     #[test]
     fn should_upload_file_to_gcloud() {
@@ -142,17 +157,12 @@ mod tests {
         let fname = "test/test-data/pl_btc_nav.dtf";
         let mut f = GStorageFile::new(&conf, fname).unwrap();
         let op_meta = f.upload().unwrap();
+
         let file_meta = file_metadata::from_fname(fname).unwrap();
-
         let metadata = GStorageMetadata::new(op_meta, file_meta);
-        let json = serde_json::to_string(&metadata).unwrap();
-
-        println!("{}", json);
         if let Some(ref dcb_url) = conf.dcb_url {
-            let res = post_to_dcb(&json, dcb_url).unwrap();
+            let res = post_to_dcb(dcb_url, &metadata).unwrap();
             println!("{}", res);
         }
-
-        println!("DONE");
     }
 }

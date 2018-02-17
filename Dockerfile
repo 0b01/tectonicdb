@@ -29,4 +29,4 @@ COPY --from=builder \
     /usr/local/bin/
 
 # Initialize the application
-CMD /usr/local/bin/tectonic-server
+CMD /usr/local/bin/tectonic-server -vv

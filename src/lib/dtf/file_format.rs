@@ -1,29 +1,27 @@
-///
-/// File format for Dense Tick Format (DTF)
-///
-///
-/// File Spec:
-/// Offset 00: ([u8; 5]) magic value 0x4454469001
-/// Offset 05: ([u8; 20]) Symbol
-/// Offset 25: (u64) number of records
-/// Offset 33: (u32) max ts
-/// Offset 80: -- records - see below --
-///
-///
-/// Record Spec:
-/// Offset 81: bool for `is_snapshot`
-/// 1. if is true
-///        4 bytes (u32): reference ts
-///        2 bytes (u32): reference seq
-///        2 bytes (u16): how many records between this snapshot and the next snapshot
-/// 2. record
-///        dts (u16): $ts - reference ts$, 2^16 = 65536 - ~65 seconds
-///        dseq (u8) $seq - reference seq$ , 2^8 = 256
-///        `is_trade & is_bid`: (u8): bitwise and to store two bools in one byte
-///        price: (f32)
-///        size: (f32)
-
-
+//!
+//! File format for Dense Tick Format (DTF)
+//!
+//!
+//! File Spec:
+//! Offset 00: ([u8; 5]) magic value 0x4454469001
+//! Offset 05: ([u8; 20]) Symbol
+//! Offset 25: (u64) number of records
+//! Offset 33: (u32) max ts
+//! Offset 80: -- records - see below --
+//!
+//!
+//! Record Spec:
+//! Offset 81: bool for `is_snapshot`
+//! 1. if is true
+//!        4 bytes (u32): reference ts
+//!        2 bytes (u32): reference seq
+//!        2 bytes (u16): how many records between this snapshot and the next snapshot
+//! 2. record
+//!        dts (u16): $ts - reference ts$, 2^16 = 65536 - ~65 seconds
+//!        dseq (u8) $seq - reference seq$ , 2^8 = 256
+//!        `is_trade & is_bid`: (u8): bitwise and to store two bools in one byte
+//!        price: (f32)
+//!        size: (f32)
 
 use dtf::update::*;
 use std::str;
@@ -508,7 +506,6 @@ pub fn decode_buffer(mut buf: &mut Read) -> Vec<Update> {
 }
 
 pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
-
     let (ups, new_max_ts, cur_len) = {
         let mut rdr = file_reader(fname)?;
         let _symbol = read_symbol(&mut rdr)?;

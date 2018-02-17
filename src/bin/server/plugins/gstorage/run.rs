@@ -72,11 +72,9 @@ pub fn run(global: Arc<RwLock<SharedState>>) {
 
                             let meta = upload::upload(fname, &conf);
                             match meta {
-                                Ok(metadata_json) => {
-                                    info!("GS: {}", fname);
-
+                                Ok(metadata) => {
                                     if let Some(ref dcb_url) = conf.dcb_url {
-                                        match upload::post_to_dcb(&dcb_url, &metadata_json) {
+                                        match upload::post_to_dcb(&dcb_url, &metadata) {
                                             Ok(res) => info!("Response from DCB: {:?}", res),
                                             Err(err) => error!("Error while posting data to DCB: {:?}", err),
                                         }

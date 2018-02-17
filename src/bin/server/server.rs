@@ -56,7 +56,6 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let global = Arc::new(RwLock::new(SharedState::new(settings.clone())));
     let store = Arc::new(RwLock::new(HashMap::new()));
 
-
     run_plugins(global.clone());
 
     use std::rc::Rc;
