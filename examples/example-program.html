@@ -1,0 +1,386 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Python: Trade bot · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="monitor-program.html" />
+    
+    
+    <link rel="prev" href="./" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../getting-started.html">
+            
+                <a href="../getting-started.html">
+            
+                    
+                    Getting Started
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="../API/">
+            
+                <a href="../API/">
+            
+                    
+                    API
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.3.1" data-path="../API/specs.html">
+            
+                <a href="../API/specs.html">
+            
+                    
+                    Socket Specs
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Example Programs
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter active" data-level="1.4.1" data-path="example-program.html">
+            
+                <a href="example-program.html">
+            
+                    
+                    Python: Trade bot
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4.2" data-path="monitor-program.html">
+            
+                <a href="monitor-program.html">
+            
+                    
+                    Python: Monitor
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4.3" data-path="example-plot.html">
+            
+                <a href="example-plot.html">
+            
+                    
+                    Python: Plotting
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4.4" data-path="js.html">
+            
+                <a href="js.html">
+            
+                    
+                    Javascript: Ingestor
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Python: Trade bot</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h2 id="example-algorithmic-trading-bot">Example Algorithmic Trading bot</h2>
+<pre><code class="lang-python"><span class="hljs-keyword">from</span> tectonic <span class="hljs-keyword">import</span> TectonicDB
+<span class="hljs-keyword">import</span> json
+<span class="hljs-keyword">import</span> asyncio
+
+<span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">subscribe</span><span class="hljs-params">(name)</span>:</span>
+    db = TectonicDB(host=<span class="hljs-string">&quot;localhost&quot;</span>, port=<span class="hljs-number">9001</span>)
+    _success, _text = <span class="hljs-keyword">await</span> db.subscribe(name)
+    <span class="hljs-keyword">while</span> <span class="hljs-number">1</span>:
+        _, item = <span class="hljs-keyword">await</span> db.poll()
+        <span class="hljs-keyword">if</span> <span class="hljs-string">b&quot;NONE&quot;</span> == item:
+            <span class="hljs-keyword">await</span> asyncio.sleep(<span class="hljs-number">0.01</span>)
+        <span class="hljs-keyword">else</span>:
+            <span class="hljs-keyword">yield</span> json.loads(item)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TickBatcher</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, db_name)</span>:</span>
+        self.one_batch = []
+        self.db_name = db_name
+
+    <span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">batch</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">async</span> <span class="hljs-keyword">for</span> item <span class="hljs-keyword">in</span> subscribe(self.db_name):
+            self.one_batch.append(item)
+
+    <span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">timer</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">while</span> <span class="hljs-number">1</span>:
+            <span class="hljs-keyword">await</span> asyncio.sleep(<span class="hljs-number">1</span>)     <span class="hljs-comment"># do work every n seconds</span>
+            print(len(self.one_batch)) <span class="hljs-comment"># do work here</span>
+            self.one_batch = []        <span class="hljs-comment"># clear queue</span>
+
+<span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&apos;__main__&apos;</span>:
+    loop = asyncio.get_event_loop()
+
+    proc = TickBatcher(<span class="hljs-string">&quot;bnc_xrp_btc&quot;</span>)
+    loop.create_task(proc.batch())
+    loop.create_task(proc.timer())
+
+    loop.run_forever()
+    loop.close()
+</code></pre>
+<p>This program operates on a batch of updates every n seconds. Could be useful for detecting pump and dumps.</p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="./" class="navigation navigation-prev " aria-label="Previous page: Example Programs">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="monitor-program.html" class="navigation navigation-next " aria-label="Next page: Python: Monitor">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Python: Trade bot","level":"1.4.1","depth":2,"next":{"title":"Python: Monitor","level":"1.4.2","depth":2,"path":"examples/monitor-program.md","ref":"examples/monitor-program.md","articles":[]},"previous":{"title":"Example Programs","level":"1.4","depth":1,"path":"examples/README.md","ref":"examples/README.md","articles":[{"title":"Python: Trade bot","level":"1.4.1","depth":2,"path":"examples/example-program.md","ref":"examples/example-program.md","articles":[]},{"title":"Python: Monitor","level":"1.4.2","depth":2,"path":"examples/monitor-program.md","ref":"examples/monitor-program.md","articles":[]},{"title":"Python: Plotting","level":"1.4.3","depth":2,"path":"examples/example-plot.md","ref":"examples/example-plot.md","articles":[]},{"title":"Javascript: Ingestor","level":"1.4.4","depth":2,"path":"examples/js.md","ref":"examples/js.md","articles":[]}]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"examples/example-program.md","mtime":"2018-02-14T07:20:00.007Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-02-21T05:32:07.309Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
