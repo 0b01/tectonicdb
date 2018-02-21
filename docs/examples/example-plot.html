@@ -1,0 +1,612 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Python: Plotting · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.3">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="js.html" />
+    
+    
+    <link rel="prev" href="monitor-program.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../getting-started.html">
+            
+                <a href="../getting-started.html">
+            
+                    
+                    Getting Started
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="../API/">
+            
+                <a href="../API/">
+            
+                    
+                    API
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.3.1" data-path="../API/specs.html">
+            
+                <a href="../API/specs.html">
+            
+                    
+                    Socket Specs
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Example Programs
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.4.1" data-path="example-program.html">
+            
+                <a href="example-program.html">
+            
+                    
+                    Python: Trade bot
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4.2" data-path="monitor-program.html">
+            
+                <a href="monitor-program.html">
+            
+                    
+                    Python: Monitor
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.4.3" data-path="example-plot.html">
+            
+                <a href="example-plot.html">
+            
+                    
+                    Python: Plotting
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4.4" data-path="js.html">
+            
+                <a href="js.html">
+            
+                    
+                    Javascript: Ingestor
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Python: Plotting</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="example-program-plotter">Example program: Plotter</h1>
+<pre><code class="lang-python"><span class="hljs-keyword">import</span> sys
+<span class="hljs-keyword">if</span> sys.version_info[<span class="hljs-number">0</span>] &lt; <span class="hljs-number">3</span>: 
+    <span class="hljs-keyword">from</span> StringIO <span class="hljs-keyword">import</span> StringIO
+<span class="hljs-keyword">else</span>:
+    <span class="hljs-keyword">from</span> io <span class="hljs-keyword">import</span> StringIO
+
+<span class="hljs-keyword">from</span> tectonic <span class="hljs-keyword">import</span> TectonicDB
+<span class="hljs-keyword">import</span> pandas <span class="hljs-keyword">as</span> pd
+<span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np
+<span class="hljs-keyword">from</span> math <span class="hljs-keyword">import</span> floor, ceil
+<span class="hljs-keyword">import</span> copy
+<span class="hljs-keyword">import</span> time
+
+<span class="hljs-keyword">from</span> matplotlib.ticker <span class="hljs-keyword">import</span> FormatStrFormatter
+<span class="hljs-keyword">import</span> matplotlib.ticker <span class="hljs-keyword">as</span> ticker
+
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">OrderBookPlot</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, plt, market, start, finish)</span>:</span>
+        self.db = TectonicDB(host=<span class="hljs-string">&quot;35.196.130.153&quot;</span>, port=<span class="hljs-number">9001</span>)
+        self.db.cmd(<span class="hljs-string">&quot;USE {}&quot;</span>.format(market).encode())[<span class="hljs-number">1</span>]
+        <span class="hljs-comment"># self.start = 1515019167 </span>
+        <span class="hljs-comment"># self.finish = 1515022767 </span>
+        self.start = start 
+        self.finish = finish 
+
+        self.plt = plt
+
+        self.plt.grid(<span class="hljs-keyword">False</span>)
+        self.plt.axis(<span class="hljs-string">&apos;on&apos;</span>)
+        self.plt.style.use(<span class="hljs-string">&apos;dark_background&apos;</span>)
+
+        fig, ax = self.plt.subplots(figsize=(<span class="hljs-number">20</span>, <span class="hljs-number">10</span>), dpi=<span class="hljs-number">100</span>)
+        <span class="hljs-comment"># 1 btc = 1e8 satoshi</span>
+        ax.yaxis.set_major_formatter(FormatStrFormatter(<span class="hljs-string">&apos;%.8f&apos;</span>))
+        <span class="hljs-comment"># set x axis as date</span>
+        N = <span class="hljs-number">10</span>
+        ind = np.arange(N)  <span class="hljs-comment"># the evenly spaced plot indices</span>
+        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">format_date</span><span class="hljs-params">(x, pos=None)</span>:</span>
+            x = int(x/<span class="hljs-number">1000.</span>)
+            <span class="hljs-keyword">return</span> time.strftime(<span class="hljs-string">&apos;%m-%d %H:%M:%S&apos;</span>, time.localtime(x))
+        xfmt = ticker.FuncFormatter(format_date)
+        ax.xaxis.set_major_formatter(xfmt)
+        self.plt.xlim(self.start * <span class="hljs-number">1000</span>, self.finish * <span class="hljs-number">1000</span>)
+        self.plt.title(market)
+
+        self.tick_bins_cnt = <span class="hljs-number">2000</span>
+        self.step_bins_cnt = <span class="hljs-number">2000</span>
+
+
+        data = self.db.cmd(<span class="hljs-string">&quot;GET ALL FROM {} TO {} AS CSV&quot;</span>.format(self.start, self.finish).encode())[<span class="hljs-number">1</span>]
+        <span class="hljs-comment"># data = self.db.cmd(&quot;GET ALL FROM 1514764800 TO 1514768400 AS CSV\n&quot;)[1]</span>
+        self.df = self.__csv_to_df(data)
+        print(len(self.df))
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">plot_trades</span><span class="hljs-params">(self)</span>:</span>
+        self.__separate()
+        self.__plot_trades()
+
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">plot_pl</span><span class="hljs-params">(self)</span>:</span>
+        self.prices = np.array(self.df[<span class="hljs-string">&quot;price&quot;</span>])
+        self.rejected = self.__reject_outliers(self.prices, m=<span class="hljs-number">4</span>)
+        self.updates = self.to_updates(self.df)
+        self.__plot_price_levels()
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">plot_ba</span><span class="hljs-params">(self)</span>:</span>
+        self.ob = self.__get_ob() <span class="hljs-comment"># expensive</span>
+        self.best_ba_df = self.__best_ba() <span class="hljs-comment"># expensive</span>
+        self.__plot_best_ba()
+
+    <span class="hljs-comment"># def plot_trades(self):</span>
+
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">to_updates</span><span class="hljs-params">(self, events)</span>:</span>
+
+        sizes, boundaries = np.histogram(self.rejected, self.tick_bins_cnt)
+        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">into_tick_bin</span><span class="hljs-params">(price)</span>:</span>
+            <span class="hljs-keyword">for</span> (s, b) <span class="hljs-keyword">in</span> zip(boundaries, boundaries[<span class="hljs-number">1</span>:]):
+                <span class="hljs-keyword">if</span> b &gt; price &gt; s:
+                    <span class="hljs-keyword">return</span> s
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">False</span>
+
+        min_ts = float(self.df[<span class="hljs-string">&apos;ts&apos;</span>].min())
+        min_ts = int(floor(min_ts))
+
+        max_ts = float(self.df[<span class="hljs-string">&apos;ts&apos;</span>].max())
+        max_ts = int(ceil(max_ts))
+
+        step = (max_ts - min_ts) / float(self.step_bins_cnt)
+        step = int(ceil(step))
+        step_thresholds = range(min_ts, max_ts, step)
+
+        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">into_step_bin</span><span class="hljs-params">(time)</span>:</span>
+            <span class="hljs-keyword">for</span> (s, b) <span class="hljs-keyword">in</span> zip(step_thresholds, step_thresholds[<span class="hljs-number">1</span>:]):
+                <span class="hljs-keyword">if</span> s &lt; time <span class="hljs-keyword">and</span> time &lt; b:
+                    <span class="hljs-keyword">return</span> b
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">False</span>
+
+        updates = {}
+        <span class="hljs-keyword">for</span> (_i, row) <span class="hljs-keyword">in</span> self.df.iterrows():
+            ts, seq, is_trade, is_bid, price, size = row
+            price = into_tick_bin(price)
+            time = into_step_bin(ts)
+            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> float(price) <span class="hljs-keyword">or</span> <span class="hljs-keyword">not</span> (time):
+                <span class="hljs-keyword">continue</span>
+            <span class="hljs-keyword">if</span> price <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> updates:
+                updates[price] = {}
+            <span class="hljs-keyword">if</span> time <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> updates[price]:
+                updates[price][time] = <span class="hljs-number">0</span>
+            updates[price][time] += size;
+        <span class="hljs-keyword">for</span> time_dict <span class="hljs-keyword">in</span> list(updates.values()):
+            <span class="hljs-keyword">for</span> size <span class="hljs-keyword">in</span> list(time_dict.values()):
+                <span class="hljs-keyword">if</span> size != <span class="hljs-number">0</span>:
+                    time_dict[self.finish * <span class="hljs-number">1000</span>] = size
+
+        <span class="hljs-keyword">return</span> updates
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__reject_outliers</span><span class="hljs-params">(self, data, m = <span class="hljs-number">2.</span>)</span>:</span>
+        d = np.abs(data - np.median(data))
+        mdev = np.median(d)
+        s = d/mdev <span class="hljs-keyword">if</span> mdev <span class="hljs-keyword">else</span> <span class="hljs-number">0.</span>
+        <span class="hljs-keyword">return</span> data[s&lt;m]
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__separate</span><span class="hljs-params">(self)</span>:</span>
+
+        cancelled = []
+        created = []
+        current_level = {}
+
+        <span class="hljs-keyword">for</span> row <span class="hljs-keyword">in</span> self.df.iterrows():
+            _, (ts, seq, is_trade, is_bid, price, size) = row
+            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> is_trade:
+                prev = current_level[price] <span class="hljs-keyword">if</span> price <span class="hljs-keyword">in</span> current_level <span class="hljs-keyword">else</span> <span class="hljs-number">0</span>
+                <span class="hljs-keyword">if</span> (size == <span class="hljs-number">0</span> <span class="hljs-keyword">or</span> size &lt;= prev):
+                    cancelled.append((ts, seq, prev - size, price, is_bid, is_trade))
+                <span class="hljs-keyword">elif</span> (size &gt; prev):
+                    created.append((ts, seq, size - prev, price, is_bid, is_trade))
+                <span class="hljs-keyword">else</span>: <span class="hljs-comment"># size == prev</span>
+                    <span class="hljs-keyword">raise</span> Exception(<span class="hljs-string">&quot;Impossible&quot;</span>)
+
+            current_level[price] = size
+
+        self.cancelled = pd.DataFrame.from_records(cancelled)
+        self.created =   pd.DataFrame.from_records(created)
+        self.trades = self.df[self.df[<span class="hljs-string">&apos;is_trade&apos;</span>]]
+
+        <span class="hljs-comment"># sanity check</span>
+        <span class="hljs-keyword">assert</span> len(cancelled) + len(created) + len(self.trades) == len(self.df)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__csv_to_df</span><span class="hljs-params">(self, raw_data)</span>:</span>
+        raw_data = str(raw_data, <span class="hljs-string">&apos;utf-8&apos;</span>)
+        csv = StringIO(<span class="hljs-string">&quot;ts,seq,is_trade,is_bid,price,size\n&quot;</span> + raw_data)
+        df = pd.read_csv(csv, dtype={<span class="hljs-string">&apos;ts&apos;</span>: np.float, <span class="hljs-string">&apos;seq&apos;</span>: np.int16, <span class="hljs-string">&apos;is_trade&apos;</span>: np.bool, <span class="hljs-string">&apos;is_bid&apos;</span>: np.bool, <span class="hljs-string">&apos;price&apos;</span>: np.float, <span class="hljs-string">&apos;size&apos;</span>: np.float32})
+        df.set_index(<span class="hljs-string">&quot;ts&quot;</span>)
+        df = df[:<span class="hljs-number">-1</span>]
+        df.ts *= <span class="hljs-number">1000</span>
+        df.ts = df.ts.astype(int)
+        <span class="hljs-keyword">return</span> df
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__get_ob</span><span class="hljs-params">(self)</span>:</span>
+        most_recent_orderbook = {<span class="hljs-string">&quot;bids&quot;</span>: {}, <span class="hljs-string">&quot;asks&quot;</span>: {}}
+        orderbook = {}
+        <span class="hljs-keyword">for</span> seq, e <span class="hljs-keyword">in</span> self.df.iterrows():
+            <span class="hljs-keyword">if</span> e.is_trade:
+                <span class="hljs-keyword">continue</span>
+            <span class="hljs-keyword">if</span> e.ts <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> orderbook:
+                <span class="hljs-keyword">for</span> side, sidedicts <span class="hljs-keyword">in</span> most_recent_orderbook.items():
+                    <span class="hljs-keyword">for</span> price, size <span class="hljs-keyword">in</span> sidedicts.items():
+                        <span class="hljs-keyword">if</span> size == <span class="hljs-number">0</span>:
+                            <span class="hljs-keyword">del</span> sidedicts[price]
+                most_recent_orderbook[<span class="hljs-string">&quot;bids&quot;</span> <span class="hljs-keyword">if</span> e.is_bid <span class="hljs-keyword">else</span> <span class="hljs-string">&quot;asks&quot;</span>][e.price] = e[<span class="hljs-string">&quot;size&quot;</span>]
+                orderbook[e.ts] = copy.deepcopy(most_recent_orderbook)        
+        <span class="hljs-keyword">return</span> orderbook
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__best_ba</span><span class="hljs-params">(self)</span>:</span>
+        best_bids_asks = []
+
+        <span class="hljs-keyword">for</span> ts, ob <span class="hljs-keyword">in</span> self.ob.items():
+            <span class="hljs-keyword">try</span>:
+                best_bid = max(ob[<span class="hljs-string">&quot;bids&quot;</span>].keys())
+            <span class="hljs-keyword">except</span>: <span class="hljs-comment"># sometimes L in max(L) is []</span>
+                <span class="hljs-keyword">continue</span>
+            <span class="hljs-keyword">try</span>:
+                best_ask = min(ob[<span class="hljs-string">&quot;asks&quot;</span>].keys())
+            <span class="hljs-keyword">except</span>:
+                <span class="hljs-keyword">continue</span>
+            best_bids_asks.append((ts, best_bid, best_ask))
+
+        best_bids_asks = pd.DataFrame.from_records(best_bids_asks, columns=[<span class="hljs-string">&quot;ts&quot;</span>, <span class="hljs-string">&quot;best_bid&quot;</span>, <span class="hljs-string">&quot;best_ask&quot;</span>], index=<span class="hljs-string">&quot;ts&quot;</span>).sort_index()
+        <span class="hljs-keyword">return</span> best_bids_asks
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__plot_best_ba</span><span class="hljs-params">(self)</span>:</span>
+        bhys = []    <span class="hljs-comment"># bid - horizontal - ys</span>
+        bhxmins = [] <span class="hljs-comment"># bid - horizontal - xmins</span>
+        bhxmaxs = [] <span class="hljs-comment"># ...</span>
+        bvxs = []
+        bvymins = []
+        bvymaxs = []
+        ahys = []
+        ahxmins = []
+        ahxmaxs = []
+        avxs = []
+        avymins = []
+        avymaxs = []
+
+        bba_tuple = self.best_ba_df.to_records()
+        <span class="hljs-keyword">for</span> (ts1, b1, a1), (ts2, b2, a2) <span class="hljs-keyword">in</span> zip(bba_tuple, bba_tuple[<span class="hljs-number">1</span>:]): <span class="hljs-comment"># bigram</span>
+            bhys.append(b1)
+            bhxmins.append(ts1)
+            bhxmaxs.append(ts2)
+            bvxs.append(ts2)
+            bvymins.append(b1)
+            bvymaxs.append(b2)
+            ahys.append(a1)
+            ahxmins.append(ts1)
+            ahxmaxs.append(ts2)
+            avxs.append(ts2)
+            avymins.append(a1)
+            avymaxs.append(a2)
+
+        self.plt.hlines(bhys, bhxmins, bhxmaxs, color=<span class="hljs-string">&quot;green&quot;</span>, lw=<span class="hljs-number">3</span>, alpha=<span class="hljs-number">1</span>)
+        self.plt.vlines(bvxs, bvymins, bvymaxs, color=<span class="hljs-string">&quot;green&quot;</span>, lw=<span class="hljs-number">3</span>, alpha=<span class="hljs-number">1</span>)
+        self.plt.hlines(ahys, ahxmins, ahxmaxs, color=<span class="hljs-string">&quot;red&quot;</span>, lw=<span class="hljs-number">3</span>, alpha=<span class="hljs-number">1</span>)
+        self.plt.vlines(avxs, avymins, avymaxs, color=<span class="hljs-string">&quot;red&quot;</span>, lw=<span class="hljs-number">3</span>, alpha=<span class="hljs-number">1</span>)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__plot_price_levels</span><span class="hljs-params">(self, zorder=<span class="hljs-number">0</span>, max_threshold=<span class="hljs-number">5000</span>, min_threshold=<span class="hljs-number">500</span>)</span>:</span>    
+        ys = []
+        xmins = []
+        xmaxs = []
+        colors = []
+
+        <span class="hljs-keyword">for</span> price, vdict <span class="hljs-keyword">in</span> self.updates.items():
+            vtuples = vdict.items()
+            vtuples = sorted(vtuples, key=<span class="hljs-keyword">lambda</span> tup: tup[<span class="hljs-number">0</span>])
+            <span class="hljs-keyword">for</span> (t1, s1), (t2, s2) <span class="hljs-keyword">in</span> zip(vtuples, vtuples[<span class="hljs-number">1</span>:]): <span class="hljs-comment"># bigram</span>
+                xmins.append(t1)
+                xmaxs.append(t2)
+                ys.append(price)
+                <span class="hljs-keyword">if</span> s1 &lt; min_threshold:
+                    colors.append((<span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>))
+                <span class="hljs-keyword">elif</span> s1 &gt; max_threshold:
+                    colors.append((<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>))
+                <span class="hljs-keyword">else</span>:
+                    colors.append((<span class="hljs-number">0</span>, s1/max_threshold, s1/max_threshold))
+        self.plt.hlines(ys, xmins, xmaxs, color=colors, lw=<span class="hljs-number">3</span>, alpha=<span class="hljs-number">1</span>, zorder=zorder)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__plot_trades</span><span class="hljs-params">(self, zorder=<span class="hljs-number">10</span>)</span>:</span>
+        max_size = self.trades[<span class="hljs-string">&quot;size&quot;</span>].max()
+        trades_colors = list(map(<span class="hljs-keyword">lambda</span> is_bid: <span class="hljs-string">&quot;#ff0000&quot;</span> <span class="hljs-keyword">if</span> is_bid <span class="hljs-keyword">else</span> <span class="hljs-string">&quot;#00ff00&quot;</span>, self.trades.is_bid))
+        self.plt.scatter(self.trades[<span class="hljs-string">&quot;ts&quot;</span>], self.trades[<span class="hljs-string">&quot;price&quot;</span>], s=self.trades[<span class="hljs-string">&quot;size&quot;</span>]/max_size*<span class="hljs-number">100000</span>, color=trades_colors, zorder=zorder)
+
+<span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:
+    ob = OrderBookPlot(plt, market, current_time - <span class="hljs-number">60</span> * int(minutes), current_time)
+    ob.plot_pl()
+    <span class="hljs-comment"># ob.plot_ba()</span>
+    ob.plot_trades()
+    print(<span class="hljs-string">&apos;done plotting&apos;</span>)
+    buf = io.BytesIO()
+    plt.savefig(buf, format=<span class="hljs-string">&apos;png&apos;</span>)
+</code></pre>
+<p>This generates plots like the ones on my <a href="http://rickyhan.com/jekyll/update/2017/09/24/visualizing-order-book.html" target="_blank">blog post</a>.</p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="monitor-program.html" class="navigation navigation-prev " aria-label="Previous page: Python: Monitor">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="js.html" class="navigation navigation-next " aria-label="Next page: Javascript: Ingestor">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Python: Plotting","level":"1.4.3","depth":2,"next":{"title":"Javascript: Ingestor","level":"1.4.4","depth":2,"path":"examples/js.md","ref":"examples/js.md","articles":[]},"previous":{"title":"Python: Monitor","level":"1.4.2","depth":2,"path":"examples/monitor-program.md","ref":"examples/monitor-program.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["livereload"],"pluginsConfig":{"livereload":{},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"examples/example-plot.md","mtime":"2018-02-14T07:20:00.007Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-02-21T05:27:05.216Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-livereload/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
