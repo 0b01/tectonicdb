@@ -1,5 +1,5 @@
 import { DBUpdate } from './typings';
-import TectonicDB, { SocketQuery } from './tectonic';
+import TectonicDB, { SocketQuery, TectonicResponse } from './tectonic';
 
 const THREADS = 20;
 const PORT = 9001;

@@ -8,12 +8,12 @@ const TextDecoder = textEncoding.TextDecoder;
 
 import { DBUpdate } from './typings';
 
-interface TectonicResponse {
+export interface TectonicResponse {
     success: boolean;
     data: string;
 }
 
-type SocketMsgCb = (res: TectonicResponse) => void;
+export type SocketMsgCb = (res: TectonicResponse) => void;
 
 export interface SocketQuery {
     message: string;
