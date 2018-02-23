@@ -16,16 +16,25 @@ RUN curl https://sh.rustup.rs -sSf | \
 
 WORKDIR ~
 
-# Build the application.
+# Build the `tectonic-server` application.
 RUN PKG_CONFIG_PATH=/usr/local/musl/lib/pkgconfig \
     LDFLAGS=-L/usr/local/musl/lib \
     cargo build --bin tectonic-server --target x86_64-unknown-linux-musl --release
+
+# Build the `dtfcat` application.
+RUN PKG_CONFIG_PATH=/usr/local/musl/lib/pkgconfig \
+    LDFLAGS=-L/usr/local/musl/lib \
+    cargo build --bin dtfcat --target x86_64-unknown-linux-musl --release
 
 # Now, we need to build the _real_ Docker container, copying in `tectonic-server`
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates && update-ca-certificates
 COPY --from=builder \
     /home/rust/src/target/x86_64-unknown-linux-musl/release/tectonic-server \
+    /usr/local/bin/
+
+COPY --from=builder \
+    /home/rust/src/target/x86_64-unknown-linux-musl/release/dtfcat \
     /usr/local/bin/
 
 # Initialize the application

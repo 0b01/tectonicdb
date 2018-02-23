@@ -10,9 +10,13 @@ jobs:
       - run: docker build -t fatwhaleltd/tectonicdb .
       - run: docker create --name tectonicdb fatwhaleltd/tectonicdb
       - run: docker cp tectonicdb:/usr/local/bin/tectonic-server /tmp/tectonic-server
+      - run: docker cp tectonicdb:/usr/local/bin/dtfcat /tmp/dtfcat
       - store_artifacts:
           path: /tmp/tectonic-server
           destination: tectonic-server
+      - store_artifacts:
+          path: /tmp/dtfcat
+          destination: dtfcat
       - run: |
           docker login --username=$DOCKER_USER --password=$DOCKER_PASSWORD
           docker push fatwhaleltd/tectonicdb:latest
