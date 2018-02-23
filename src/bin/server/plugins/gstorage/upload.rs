@@ -136,24 +136,24 @@ mod tests {
     use plugins::gstorage::GStorageMetadata;
     use plugins::gstorage::serde_json;
 
-    #[test]
-    fn should_upload_file_to_gcloud() {
+    // #[test]
+    // fn should_upload_file_to_gcloud() {
 
-        let conf = GStorageConfig::new().unwrap();
-        let fname = "test/test-data/pl_btc_nav.dtf";
-        let mut f = GStorageFile::new(&conf, fname).unwrap();
-        let op_meta = f.upload().unwrap();
-        let file_meta = file_metadata::from_fname(fname).unwrap();
+    //     let conf = GStorageConfig::new().unwrap();
+    //     let fname = "test/test-data/pl_btc_nav.dtf";
+    //     let mut f = GStorageFile::new(&conf, fname).unwrap();
+    //     let op_meta = f.upload().unwrap();
+    //     let file_meta = file_metadata::from_fname(fname).unwrap();
 
-        let metadata = GStorageMetadata::new(op_meta, file_meta);
+    //     let metadata = GStorageMetadata::new(op_meta, file_meta);
 
-        let json = serde_json::to_string(&metadata).unwrap();
+    //     let json = serde_json::to_string(&metadata).unwrap();
 
-        println!("{}", json);
-        let res = post_to_dcb(&json).unwrap();
-        println!("{}", res);
+    //     println!("{}", json);
+    //     let res = post_to_dcb(&json).unwrap();
+    //     println!("{}", res);
 
-        println!("DONE");
+    //     println!("DONE");
 
-    }
+    // }
 }

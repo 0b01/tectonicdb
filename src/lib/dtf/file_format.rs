@@ -74,7 +74,7 @@ impl fmt::Display for Metadata {
   "nums": {},
   "max_ts": {},
   "max_ts_human": {},
-  "min_ts": {}
+  "min_ts": {},
   "min_ts_human": {}
 }}"#,
             self.symbol,
@@ -657,7 +657,9 @@ mod tests {
   "symbol": "TEST",
   "nums": 1,
   "max_ts": 1,
-  "min_ts": 1
+  "max_ts_human": 1970-01-01 00:00:01 UTC,
+  "min_ts": 1,
+  "min_ts_human": 1970-01-01 00:00:01 UTC
 }"#
         );
     }
