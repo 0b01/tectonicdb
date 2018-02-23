@@ -98,6 +98,20 @@ impl Candles {
         csvs.join("\n")
     }
 
+    pub fn get_size(&self) -> usize {
+        self.v.len()
+    }
+
+    /// returns a vector of candles
+    pub fn get_candles(&self) -> Vec<Candle> {
+        self.v.values().cloned().collect()
+    }
+
+    // return the scale of these candles
+    pub fn get_scale(&self) -> Scale {
+        self.scale
+    }
+
     /// Find missing epochs (in minute)
     /// Some epochs may be missing from the candles for some reason.
     /// For example, some instruments may have low volatility for 1 minute, or the
@@ -279,11 +293,11 @@ impl Candles {
 #[derive(PartialOrd, PartialEq, Clone, Debug)]
 /// a candlestick
 pub struct Candle {
-    open: Price,
-    high: Price,
-    low: Price,
-    close: Price,
-    volume: Volume,
+    pub open: Price,
+    pub high: Price,
+    pub low: Price,
+    pub close: Price,
+    pub volume: Volume,
 }
 
 impl Eq for Candle {}
@@ -332,8 +346,6 @@ fn ranges(lst: &Vec<Time>) -> Vec<(Time, Time)> {
 
     let mut ret = Vec::new();
     let mut t = 0;
-
-    println!("{:?}", pos);
 
     // [1, 1, 1, 2, 2] -> [3, 2]
     let n_groups = {
