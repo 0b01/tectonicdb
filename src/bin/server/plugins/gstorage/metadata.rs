@@ -5,6 +5,7 @@ use libtectonic::storage::file_metadata::FileMetadata;
 
 use std::fmt;
 use std::error;
+use std::borrow::Cow;
 
 #[derive(Serialize)]
 enum GStorageOp {
@@ -23,27 +24,27 @@ impl fmt::Display for GStorageOp {
 //------------------------------------------------
 
 #[derive(Serialize)]
-pub struct GStorageOpMetadata {
+pub struct GStorageOpMetadata<'a> {
     /*-------------- returned vals -------------*/
-    id: String,
+    id: Cow<'a, str>,
     #[serde(rename = "selfLink")]
-    self_link: String,
-    name: String,
-    bucket: String,
-    metageneration: String,
+    self_link: Cow<'a, str>,
+    name: Cow<'a, str>,
+    bucket: Cow<'a, str>,
+    metageneration: Cow<'a, str>,
 
     #[serde(rename = "timeCreated")]
-    time_created: String,
+    time_created: Cow<'a, str>,
 
     #[serde(rename = "timeStorageClassUpdated")]
-    time_storage_class_updated: String,
+    time_storage_class_updated: Cow<'a, str>,
 
-    size: String,
+    size: Cow<'a, str>,
 
     #[serde(rename = "md5Hash")]
-    md5_hash: String,
+    md5_hash: Cow<'a, str>,
     #[serde(rename = "mediaLink")]
-    media_link: String,
+    media_link: Cow<'a, str>,
 
     /*-------------- operation -------------*/
     op_type: GStorageOp,
@@ -55,18 +56,18 @@ pub struct GStorageOpMetadata {
     chunked: bool,
     n_batch_parts: u8,
     x_of_n: u8,
-    batch_hash: String,
+    batch_hash: Cow<'a, str>,
 
     /*-------------- misc -------------*/
-    status: String,
-    dtf_spec: String,
+    status: Cow<'a, str>,
+    dtf_spec: Cow<'a, str>,
     priority: u16,
-    client_version: String,
-    server_version: String,
-    _prefix: String,
+    client_version: Cow<'a, str>,
+    server_version: Cow<'a, str>,
+    _prefix: Cow<'a, str>,
 }
 
-impl Default for GStorageOpMetadata {
+impl<'a> Default for GStorageOpMetadata<'a> {
     fn default() -> Self {
         GStorageOpMetadata {
             op_type: GStorageOp::AddDtf,
@@ -75,41 +76,41 @@ impl Default for GStorageOpMetadata {
             n_batch_parts: 1,
             x_of_n: 1,
 
-            status: "ok".to_owned(),
-            dtf_spec: "v1".to_owned(),
+            status: "ok".into(),
+            dtf_spec: "v1".into(),
             priority: 0,
-            client_version: VERSION.unwrap_or("unknown").to_owned(),
-            server_version: "?".to_owned(),
-            _prefix: "".to_owned(),
+            client_version: VERSION.unwrap_or("unknown").into(),
+            server_version: "?".into(),
+            _prefix: "".into(),
 
-            batch_hash: "".to_owned(),
+            batch_hash: "".into(),
 
             response_time: 0,
-            time_storage_class_updated: "".to_owned(),
-            size: "".to_owned(),
-            time_created: "".to_owned(),
+            time_storage_class_updated: "".into(),
+            size: "".into(),
+            time_created: "".into(),
 
             start_ts: 0,
             finish_ts: 0,
-            bucket: "".to_owned(),
-            id: "".to_owned(),
-            self_link: "".to_owned(),
-            name: "".to_owned(),
-            metageneration: "".to_owned(),
-            md5_hash: "".to_owned(),
-            media_link: "".to_owned(),
+            bucket: "".into(),
+            id: "".into(),
+            self_link: "".into(),
+            name: "".into(),
+            metageneration: "".into(),
+            md5_hash: "".into(),
+            media_link: "".into(),
 
             // ..Default::default()
         }
     }
 }
 
-impl GStorageOpMetadata {
+impl<'a> GStorageOpMetadata<'a> {
     pub fn new(
         resp: String,
         start_ts: u32,
         finish_ts: u32,
-    ) -> Result<GStorageOpMetadata, Box<error::Error>> {
+    ) -> Result<GStorageOpMetadata<'a>, Box<error::Error>> {
 
         let mut meta = GStorageOpMetadata::default();
 
@@ -135,37 +136,37 @@ impl GStorageOpMetadata {
 }
 
 #[derive(Deserialize)]
-struct GStorageResp {
-    id: String,
+struct GStorageResp<'a> {
+    id: Cow<'a, str>,
     #[serde(rename = "selfLink")]
-    self_link: String,
-    name: String,
-    bucket: String,
-    metageneration: String,
+    self_link: Cow<'a, str>,
+    name: Cow<'a, str>,
+    bucket: Cow<'a, str>,
+    metageneration: Cow<'a, str>,
     #[serde(rename = "timeCreated")]
-    time_created: String,
+    time_created: Cow<'a, str>,
     #[serde(rename = "timeStorageClassUpdated")]
-    time_storage_class_updated: String,
-    size: String,
+    time_storage_class_updated: Cow<'a, str>,
+    size: Cow<'a, str>,
     #[serde(rename = "md5Hash")]
-    md5_hash: String,
+    md5_hash: Cow<'a, str>,
     #[serde(rename = "mediaLink")]
-    media_link: String,
+    media_link: Cow<'a, str>,
 }
 
 
 //----------------------------------------------
 
 #[derive(Serialize)]
-pub struct GStorageMetadata<T: FileMetadata> {
+pub struct GStorageMetadata<'a, T: FileMetadata> {
     // meta section: about storage operation
-    meta: GStorageOpMetadata,
+    meta: GStorageOpMetadata<'a>,
     // data section: about the file itself
     data: T,
 }
 
-impl<T: FileMetadata> GStorageMetadata<T> {
-    pub fn new(op_meta: GStorageOpMetadata, file_meta: T) -> GStorageMetadata<T> {
+impl<'a, T: FileMetadata> GStorageMetadata<'a, T> {
+    pub fn new(op_meta: GStorageOpMetadata<'a>, file_meta: T) -> GStorageMetadata<'a, T> {
         GStorageMetadata {
             meta: op_meta,
             data: file_meta,
@@ -173,7 +174,7 @@ impl<T: FileMetadata> GStorageMetadata<T> {
     }
 }
 
-impl<T: FileMetadata> Default for GStorageMetadata<T> {
+impl<'a, T: FileMetadata> Default for GStorageMetadata<'a, T> {
     fn default() -> Self {
         GStorageMetadata {
             meta: Default::default(),
