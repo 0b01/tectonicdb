@@ -7,4 +7,5 @@ pub struct Settings {
     pub dtf_folder: String,
     pub flush_interval: u32,
     pub hist_granularity: u64,
+    pub hist_q_capacity: usize,
 }

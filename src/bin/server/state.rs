@@ -4,6 +4,7 @@ macro_rules! catch {
     }
 }
 
+use circular_queue::CircularQueue;
 
 use libtectonic;
 use libtectonic::dtf;
@@ -620,7 +621,7 @@ pub type VecStore = (Box<Vec<Update>>, u64);
 ///      btc_eth
 ///      ..
 ///      total
-pub type History = HashMap<String, Vec<(SystemTime, u64)>>;
+pub type History = HashMap<String, CircularQueue<(SystemTime, u64)>>;
 
 
 #[derive(Debug)]

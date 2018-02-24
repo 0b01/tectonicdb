@@ -44,6 +44,7 @@ byteorder = "1.1.0"
 bitflags = "1.0.0"
 config = "0.6"
 clap = "~2.26"
+circular-queue = "0.2.0"
 
 # Logging
 fern = "0.4"

@@ -1,12 +1,16 @@
 /// history recorder
+
+use circular_queue::CircularQueue;
 use std::{thread, time};
 use std::sync::{Arc, RwLock};
 use state::SharedState;
 
 pub fn run(global: Arc<RwLock<SharedState>>) {
     let global_copy_timer = global.clone();
-    let granularity = {
-        global.read().unwrap().settings.hist_granularity.clone()
+    let (granularity, q_capacity) = {
+        (global.read().unwrap().settings.hist_granularity.clone(),
+         global.read().unwrap().settings.hist_q_capacity.clone(),
+        )
     };
     thread::spawn(move || {
         let dur = time::Duration::from_secs(granularity);
@@ -28,7 +32,7 @@ pub fn run(global: Arc<RwLock<SharedState>>) {
                 let current_t = time::SystemTime::now();
                 for &(ref name, size) in sizes.iter() {
                     if !rwdr.history.contains_key(name) {
-                        rwdr.history.insert(name.clone(), Vec::new());
+                        rwdr.history.insert(name.clone(), CircularQueue::with_capacity(q_capacity));
                     }
                     rwdr.history.get_mut(name).unwrap().push((current_t, size));
                 }
