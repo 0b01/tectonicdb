@@ -1,6 +1,7 @@
 use state::*;
 use parser;
 use libtectonic::dtf::{update_vec_to_json, Update};
+use std::borrow::{Cow, Borrow};
 
 // BUG: subscribe, add, deadlock!!!
 
@@ -24,7 +25,7 @@ pub enum GetFormat {
     Dtf,
 }
 
-type DbName = String;
+type DbName<'a> = Cow<'a, str>;
 
 #[derive(Debug)]
 pub enum Loc {
@@ -35,26 +36,26 @@ pub enum Loc {
 pub type Range = Option<(u64, u64)>;
 
 #[derive(Debug)]
-enum Command {
+enum Command<'a> {
     Nothing,
     Ping,
     Help,
     Info,
     Perf,
     BulkAdd,
-    BulkAddInto(DbName),
+    BulkAddInto(DbName<'a>),
     BulkAddEnd,
     Get(ReqCount, GetFormat, Range, Loc),
     Count(ReqCount, Loc),
     Clear(ReqCount),
     Flush(ReqCount),
-    Insert(Option<Update>, Option<DbName>),
-    Create(DbName),
-    Subscribe(DbName),
+    Insert(Option<Update>, Option<DbName<'a>>),
+    Create(DbName<'a>),
+    Subscribe(DbName<'a>),
     Unsubscribe(ReqCount),
     Subscription,
-    Use(DbName),
-    Exists(DbName),
+    Use(DbName<'a>),
+    Exists(DbName<'a>),
     Unknown,
 }
 
@@ -102,33 +103,34 @@ pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
                 let parsed = parser::parse_line(string);
                 let current_db = state.bulkadd_db.clone();
                 let dbname = current_db.unwrap();
-                Insert(parsed, Some(dbname))
+                Insert(parsed, Some(dbname.into()))
             } else if string.starts_with("BULKADD INTO ") {
                 let (_index, dbname) = parser::parse_dbname(string);
-                BulkAddInto(dbname.to_owned())
+                BulkAddInto(dbname.into())
             } else if string.starts_with("SUBSCRIBE ") {
                 let dbname: &str = &string[10..];
-                Subscribe(dbname.to_owned())
+                Subscribe(dbname.into())
             } else if string.starts_with("CREATE ") {
                 let dbname: &str = &string[7..];
-                Create(dbname.to_owned())
+                Create(dbname.into())
             } else if string.starts_with("USE ") {
                 let dbname: &str = &string[4..];
-                Use(dbname.to_owned())
+                Use(dbname.into())
             } else if string.starts_with("EXISTS ") {
                 let dbname: &str = &string[7..];
-                Exists(dbname.to_owned())
+                Exists(dbname.into())
             } else if string.starts_with("ADD ") || string.starts_with("INSERT ") {
-                let parsed = if string.contains(" INTO ") {
-                    parser::parse_add_into(&string)
+                let (up, dbname) = if string.contains(" INTO ") {
+                    let (up, dbname) = parser::parse_add_into(&string);
+                    (up, dbname.map(|a| a.into()))
                 } else {
                     let data_string: &str = &string[3..];
                     match parser::parse_line(&data_string) {
-                        Some(up) => (Some(up), Some(state.current_store_name.to_owned())),
+                        Some(up) => (Some(up), Some(state.current_store_name.clone().into())),
                         None => (None, None),
                     }
                 };
-                Insert(parsed.0, parsed.1)
+                Insert(up, dbname)
             } else
             // get
             if string.starts_with("GET ") {
@@ -171,7 +173,7 @@ pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
             return_string("")
         }
         BulkAddInto(dbname) => {
-            state.bulkadd_db = Some(dbname);
+            state.bulkadd_db = Some(dbname.into());
             state.is_adding = true;
             return_string("")
         }
