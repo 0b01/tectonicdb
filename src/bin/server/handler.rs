@@ -82,8 +82,8 @@ FLUSH, FLUSHALL, GETALL, GET [count], CLEAR
 /// sometimes returns string, sometimes bytes, error string
 // pub type Response = (Option<String>, Option<Vec<u8>>, Option<String>);
 
-pub fn gen_response<'thread, 'global>(line: &str,
-        state: &'global mut ThreadState) -> ReturnType<'thread>
+pub fn gen_response<'closure, 'thread>(line: &str,
+        state: &'thread mut ThreadState) -> ReturnType<'closure>
     {
     use self::Command::*;
 
@@ -290,7 +290,7 @@ mod tests {
     use settings::Settings;
     use std::sync::{Arc, RwLock};
 
-    fn gen_state() -> ThreadState {
+    fn gen_state<'thr>() -> ThreadState<'thr> {
         let settings: Settings = Default::default();
         let global = Arc::new(RwLock::new(SharedState::new(settings)));
         ThreadState::new(&global)

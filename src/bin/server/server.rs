@@ -11,7 +11,7 @@ use std::net::SocketAddr;
 use std::io::BufReader;
 
 use std::borrow::{Borrow, Cow};
-use state::{SharedState, ThreadState};
+use state::{Global, SharedState, ThreadState};
 use handler::ReturnType;
 use utils;
 use handler;
@@ -117,9 +117,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     core.run(done).unwrap();
 }
 
-type LockedGlobal = Arc<RwLock<SharedState>>;
-
-fn on_connect(global: &LockedGlobal) {
+fn on_connect(global: &Global) {
     {
         let mut glb_wtr = global.write().unwrap();
         glb_wtr.n_cxns += 1;
@@ -131,7 +129,7 @@ fn on_connect(global: &LockedGlobal) {
     );
 }
 
-fn on_disconnect(global: &LockedGlobal) {
+fn on_disconnect(global: &Global) {
     {
         let mut glb_wtr = global.write().unwrap();
         glb_wtr.n_cxns -= 1;

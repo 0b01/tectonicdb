@@ -11,7 +11,7 @@ use libtectonic::dtf::update::Update;
 use libtectonic::storage::utils::scan_files_for_range;
 use libtectonic::utils::within_range;
 
-use std::borrow::Cow;
+use std::borrow::{Borrow, Cow};
 use std::collections::HashMap;
 use utils;
 use std::path::Path;
@@ -201,7 +201,7 @@ impl Store {
 }
 
 /// Each client gets its own ThreadState
-pub struct ThreadState {
+pub struct ThreadState<'thr> {
     /// Is inside a BULKADD operation?
     pub is_adding: bool,
     /// Current selected db using `BULKADD INTO [db]`
@@ -220,13 +220,13 @@ pub struct ThreadState {
     pub store: HashMap<String, Store>,
 
     /// the current STORE client is using
-    pub current_store_name: String,
+    pub current_store_name: Cow<'thr, str>,
 
     /// shared data
     pub global: Global,
 }
 
-impl ThreadState {
+impl<'thr> ThreadState<'thr> {
     /// Get information about the server
     ///
     /// Returns a JSON string.
@@ -367,7 +367,7 @@ impl ThreadState {
     /// load a datastore file into memory
     pub fn use_db(&mut self, store_name: &str) -> Option<()> {
         if self.store.contains_key(store_name) {
-            self.current_store_name = store_name.to_owned();
+            self.current_store_name = store_name.to_owned().into();
             let current_store = self.get_current_store();
             current_store.load();
             Some(())
@@ -460,7 +460,8 @@ impl ThreadState {
 
     /// returns the current store as a mutable reference
     fn get_current_store(&mut self) -> &mut Store {
-        self.store.get_mut(&self.current_store_name).expect(
+        let name: &str = self.current_store_name.borrow();
+        self.store.get_mut(name).expect(
             "KEY IS NOT IN HASHMAP",
         )
     }
@@ -485,7 +486,8 @@ impl ThreadState {
 
         // check for items in memory
         let rdr = self.global.read().unwrap();
-        let &(ref vecs, _) = rdr.vec_store.get(&self.current_store_name)?;
+        let name: &str = self.current_store_name.borrow();
+        let &(ref vecs, _) = rdr.vec_store.get(name)?;
 
         // if range, filter mem
         let acc = catch! {
@@ -568,10 +570,10 @@ impl ThreadState {
     }
 
     /// create a new store
-    pub fn new(global: &Global) -> ThreadState {
+    pub fn new<'a, 'b>(global: &'a Global) -> ThreadState<'b> {
         let dtf_folder: &str = &global.read().unwrap().settings.dtf_folder;
         let mut state = ThreadState {
-            current_store_name: "default".to_owned(),
+            current_store_name: "default".into(),
             is_adding: false,
             bulkadd_db: None,
             is_subscribed: false,
