@@ -30,7 +30,7 @@ use subscription::Subscriptions;
 ///
 /// When client connects, the following happens:
 ///
-/// 1. server creates a State
+/// 1. server creates a ThreadState
 /// 2. initialize 'default' data store
 /// 3. reads filenames under dtf_folder
 /// 4. loads metadata but not updates
@@ -200,8 +200,8 @@ impl Store {
     }
 }
 
-/// Each client gets its own State
-pub struct State {
+/// Each client gets its own ThreadState
+pub struct ThreadState {
     /// Is inside a BULKADD operation?
     pub is_adding: bool,
     /// Current selected db using `BULKADD INTO [db]`
@@ -226,7 +226,7 @@ pub struct State {
     pub global: Global,
 }
 
-impl State {
+impl ThreadState {
     /// Get information about the server
     ///
     /// Returns a JSON string.
@@ -568,9 +568,9 @@ impl State {
     }
 
     /// create a new store
-    pub fn new(global: &Global) -> State {
+    pub fn new(global: &Global) -> ThreadState {
         let dtf_folder: &str = &global.read().unwrap().settings.dtf_folder;
-        let mut state = State {
+        let mut state = ThreadState {
             current_store_name: "default".to_owned(),
             is_adding: false,
             bulkadd_db: None,

@@ -1,6 +1,6 @@
 use std::path::Path;
 use std::fs;
-use state::*;
+use state::{Store, ThreadState};
 use libtectonic::dtf;
 use std::io;
 
@@ -12,7 +12,7 @@ pub fn create_dir_if_not_exist(dtf_folder: &str) {
 
 /// Iterate through the dtf files in the folder and load some metadata into memory.
 /// Create corresponding Store objects in State.
-pub fn init_dbs(state: &mut State) -> Result<(), io::Error> {
+pub fn init_dbs(state: &mut ThreadState) -> Result<(), io::Error> {
     let dtf_folder = {
         let rdr = state.global.read().unwrap();
         rdr.settings.dtf_folder.clone()

@@ -10,7 +10,8 @@ use std::io::Write;
 use std::net::SocketAddr;
 use std::io::BufReader;
 
-use state::*;
+use std::borrow::{Borrow, Cow};
+use state::{SharedState, ThreadState};
 use handler::ReturnType;
 use utils;
 use handler;
@@ -61,7 +62,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     // main loop
     let done = listener.incoming().for_each(move |(socket, _addr)| {
         let global_copy = global.clone();
-        let state = Rc::new(RefCell::new(State::new(&global)));
+        let state = Rc::new(RefCell::new(ThreadState::new(&global)));
         let state_clone = state.clone();
 
         match utils::init_dbs(&mut state.borrow_mut()) {
@@ -73,7 +74,8 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
         let (rdr, wtr) = socket.split();
         let lines = lines(BufReader::new(rdr));
         let responses = lines.map(move |line| {
-            let resp = handler::gen_response(line.clone(), &mut state.borrow_mut());
+            let line: Cow<str> = line.into();
+            let resp = handler::gen_response(line.borrow(), &mut state.borrow_mut());
             (line, resp)
         });
         let writes = responses.fold(wtr, |wtr, (line, resp)| {
