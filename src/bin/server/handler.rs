@@ -86,7 +86,6 @@ pub fn gen_response<'thread, 'global>(line: &str,
         state: &'global mut ThreadState) -> ReturnType<'thread>
     {
     use self::Command::*;
-    use self::ReturnType::*;
 
     let command: Command = match line.borrow() {
         "" => {
@@ -285,19 +284,6 @@ pub fn gen_response<'thread, 'global>(line: &str,
     }
 }
 
-fn return_string<'a>(string: Cow<'a, str>) -> ReturnType<'a> {
-    // ret.push_str("\n");
-    ReturnType::String(string)
-}
-
-fn return_bytes<'a>(bytes: Vec<u8>) -> ReturnType <'a>{
-    ReturnType::Bytes(bytes)
-}
-
-fn return_err<'a>(err: Cow<'a, str>) -> ReturnType <'a>{
-    ReturnType::Error(err)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -314,7 +300,7 @@ mod tests {
     fn should_return_pong() {
         let mut state = gen_state();
         let resp = gen_response("PING", &mut state);
-        assert_eq!(ReturnType::String(String::from("PONG")), resp);
+        assert_eq!(ReturnType::String("PONG".into()), resp);
     }
 
     #[test]
@@ -325,7 +311,7 @@ mod tests {
             &mut state,
         );
         assert_eq!(
-            ReturnType::Error(String::from("DB bnc_btc_eth not found.\n")),
+            ReturnType::Error("DB bnc_btc_eth not found.".into()),
             resp
         );
     }
@@ -335,14 +321,14 @@ mod tests {
         let mut state = gen_state();
         let resp = gen_response("CREATE bnc_btc_eth", &mut state);
         assert_eq!(
-            ReturnType::String(String::from("Created DB `bnc_btc_eth`.")),
+            ReturnType::String("Created DB `bnc_btc_eth`.".into()),
             resp
         );
         let resp = gen_response(
             "ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth",
             &mut state,
         );
-        assert_eq!(ReturnType::String(String::from("")), resp);
+        assert_eq!(ReturnType::String("".into()), resp);
     }
 
 }
