@@ -22,6 +22,9 @@ use uuid::Uuid;
 use handler::{GetFormat, ReturnType, ReqCount, Loc, Range};
 use subscription::Subscriptions;
 
+/// An atomic reference counter for accessing shared data.
+pub type Global = Arc<RwLock<SharedState>>;
+
 /// name: *should* be the filename
 /// in_memory: are the updates read into memory?
 /// size: true number of items
@@ -42,17 +45,14 @@ use subscription::Subscriptions;
 /// the client can free the updates from memory using CLEAR or CLEARALL
 ///
 #[derive(Debug)]
-pub struct Store {
-    pub name: String,
-    pub fname: String,
+pub struct Store<'a> {
+    pub name: Cow<'a, str>,
+    pub fname: Cow<'a, str>,
     pub in_memory: bool,
     pub global: Global,
 }
 
-/// An atomic reference counter for accessing shared data.
-pub type Global = Arc<RwLock<SharedState>>;
-
-impl Store {
+impl<'a> Store<'a> {
     /// push a new `update` into the vec
     pub fn add(&mut self, new_vec: Update) {
         let is_autoflush = {
@@ -61,13 +61,14 @@ impl Store {
             // send to insertion firehose
             {
                 let tx = wtr.subs.lock().unwrap();
-                let _ = tx.msg(Arc::new(Mutex::new((self.name.clone(), new_vec))));
+                let _ = tx.msg(Arc::new(Mutex::new((self.name.to_string(), new_vec))));
             }
 
             let is_autoflush = wtr.settings.autoflush;
             let flush_interval = wtr.settings.flush_interval;
             let _folder = wtr.settings.dtf_folder.to_owned();
-            let vecs = wtr.vec_store.get_mut(&self.name).expect(
+            let name: &str = self.name.borrow();
+            let vecs = wtr.vec_store.get_mut(name).expect(
                 "KEY IS NOT IN HASHMAP",
             );
 
@@ -97,7 +98,8 @@ impl Store {
 
     pub fn count(&self) -> u64 {
         let rdr = self.global.read().unwrap();
-        let vecs = rdr.vec_store.get(&self.name).expect(
+        let name: &str = self.name.borrow();
+        let vecs = rdr.vec_store.get(name).expect(
             "KEY IS NOT IN HASHMAP",
         );
         vecs.1
@@ -111,7 +113,8 @@ impl Store {
         {
             let mut rdr = self.global.write().unwrap(); // use a write lock to block write in client processes
             let folder = rdr.settings.dtf_folder.to_owned();
-            let vecs = rdr.vec_store.get_mut(&self.name).expect(
+            let name: &str = self.name.borrow();
+            let vecs = rdr.vec_store.get_mut(name).expect(
                 "KEY IS NOT IN HASHMAP",
             );
             let fullfname = format!("{}/{}.dtf", &folder, self.fname);
@@ -155,7 +158,8 @@ impl Store {
                 let mut ups = ups.unwrap();
                 let mut wtr = self.global.write().unwrap();
                 // let size = ups.len() as u64;
-                let vecs = wtr.vec_store.get_mut(&self.name).unwrap();
+                let name: &str = self.name.borrow();
+                let vecs = wtr.vec_store.get_mut(name).unwrap();
                 vecs.0.append(&mut ups);
                 // wtr.vec_store.insert(self.name.to_owned(), (ups, size));
                 self.in_memory = true;
@@ -174,8 +178,9 @@ impl Store {
         match header_size {
             Ok(header_size) => {
                 let mut wtr = self.global.write().unwrap();
+                let name: &str = &self.name.borrow();
                 wtr.vec_store
-                    .get_mut(&self.name)
+                    .get_mut(name)
                     .expect("Key is not in vec_store")
                     .1 = header_size;
             }
@@ -189,7 +194,8 @@ impl Store {
     pub fn clear(&mut self) {
         {
             let mut rdr = self.global.write().unwrap();
-            let vecs = (*rdr).vec_store.get_mut(&self.name).expect(
+            let name: &str = self.name.borrow();
+            let vecs = (*rdr).vec_store.get_mut(name).expect(
                 "KEY IS NOT IN HASHMAP",
             );
             vecs.0.clear();
@@ -201,7 +207,7 @@ impl Store {
 }
 
 /// Each client gets its own ThreadState
-pub struct ThreadState<'thr> {
+pub struct ThreadState<'thr, 'store> {
     /// Is inside a BULKADD operation?
     pub is_adding: bool,
     /// Current selected db using `BULKADD INTO [db]`
@@ -217,7 +223,7 @@ pub struct ThreadState<'thr> {
     pub rx: Option<Arc<Mutex<mpsc::Receiver<Update>>>>,
 
     /// mapping store_name -> Store
-    pub store: HashMap<String, Store>,
+    pub store: HashMap<String, Store<'store>>,
 
     /// the current STORE client is using
     pub current_store_name: Cow<'thr, str>,
@@ -226,7 +232,7 @@ pub struct ThreadState<'thr> {
     pub global: Global,
 }
 
-impl<'thr> ThreadState<'thr> {
+impl<'thr, 'store> ThreadState<'thr, 'store> {
     /// Get information about the server
     ///
     /// Returns a JSON string.
@@ -356,8 +362,8 @@ impl<'thr> ThreadState<'thr> {
         self.store.insert(
             store_name.to_owned(),
             Store {
-                name: store_name.to_owned(),
-                fname: format!("{}--{}", Uuid::new_v4(), store_name),
+                name: store_name.to_owned().into(),
+                fname: format!("{}--{}", Uuid::new_v4(), store_name).into(),
                 in_memory: false,
                 global: self.global.clone(),
             },
@@ -459,7 +465,7 @@ impl<'thr> ThreadState<'thr> {
     }
 
     /// returns the current store as a mutable reference
-    fn get_current_store(&mut self) -> &mut Store {
+    fn get_current_store(&mut self) -> &mut Store<'store> {
         let name: &str = self.current_store_name.borrow();
         self.store.get_mut(name).expect(
             "KEY IS NOT IN HASHMAP",
@@ -570,7 +576,7 @@ impl<'thr> ThreadState<'thr> {
     }
 
     /// create a new store
-    pub fn new<'a, 'b>(global: &'a Global) -> ThreadState<'b> {
+    pub fn new<'a, 'b, 'c>(global: &'a Global) -> ThreadState<'b, 'c> {
         let dtf_folder: &str = &global.read().unwrap().settings.dtf_folder;
         let mut state = ThreadState {
             current_store_name: "default".into(),
@@ -590,8 +596,8 @@ impl<'thr> ThreadState<'thr> {
         state.store.insert(
             "default".to_owned(),
             Store {
-                name: "default".to_owned(),
-                fname: format!("{}--default", Uuid::new_v4()),
+                name: "default".into(),
+                fname: format!("{}--default", Uuid::new_v4()).into(),
                 in_memory: default_in_memory,
                 global: global.clone(),
             },
@@ -604,8 +610,8 @@ impl<'thr> ThreadState<'thr> {
             state.store.insert(
                 store_name.to_owned(),
                 Store {
-                    name: store_name.to_owned(),
-                    fname: format!("{}--{}", Uuid::new_v4(), store_name),
+                    name: store_name.to_owned().into(),
+                    fname: format!("{}--{}", Uuid::new_v4(), store_name).into(),
                     in_memory: in_memory,
                     global: global.clone(),
                 },

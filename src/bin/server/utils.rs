@@ -41,8 +41,8 @@ pub fn init_dbs(state: &mut ThreadState) -> Result<(), io::Error> {
             state.store.insert(
                 symbol.to_owned(),
                 Store {
-                    name: symbol.to_owned(),
-                    fname: basename.to_owned(),
+                    name: symbol.into(),
+                    fname: basename.to_owned().into(),
                     in_memory: false,
                     global: state.global.clone(),
                 },
