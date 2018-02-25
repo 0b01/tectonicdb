@@ -6,10 +6,24 @@ use std::borrow::{Cow, Borrow};
 // BUG: subscribe, add, deadlock!!!
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum ReturnType {
-    String(String),
+pub enum ReturnType<'thread> {
+    String(Cow<'thread, str>),
     Bytes(Vec<u8>),
-    Error(String),
+    Error(Cow<'thread, str>),
+}
+
+impl<'thread> ReturnType<'thread> {
+    pub fn string<S>(string: S) -> ReturnType<'thread>
+        where S: Into<Cow<'thread, str>>
+    {
+        ReturnType::String(string.into())
+    }
+
+    pub fn error<S>(string: S) -> ReturnType<'thread>
+        where S: Into<Cow<'thread, str>>
+    {
+        ReturnType::Error(string.into())
+    }
 }
 
 #[derive(Debug)]
@@ -68,10 +82,11 @@ FLUSH, FLUSHALL, GETALL, GET [count], CLEAR
 /// sometimes returns string, sometimes bytes, error string
 // pub type Response = (Option<String>, Option<Vec<u8>>, Option<String>);
 
-pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
+pub fn gen_response<'thread, 'global>(line: String, state: &'global mut State) -> ReturnType<'thread> {
     use self::Command::*;
+    use self::ReturnType::*;
 
-    let command: Command = match string {
+    let command: Command = match line.borrow() {
         "" => {
             if state.is_subscribed {
                 Subscription
@@ -100,31 +115,31 @@ pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
         _ => {
             // is in bulkadd
             if state.is_adding {
-                let parsed = parser::parse_line(string);
+                let parsed = parser::parse_line(&line);
                 let current_db = state.bulkadd_db.clone();
                 let dbname = current_db.unwrap();
                 Insert(parsed, Some(dbname.into()))
-            } else if string.starts_with("BULKADD INTO ") {
-                let (_index, dbname) = parser::parse_dbname(string);
+            } else if line.starts_with("BULKADD INTO ") {
+                let (_index, dbname) = parser::parse_dbname(&line);
                 BulkAddInto(dbname.into())
-            } else if string.starts_with("SUBSCRIBE ") {
-                let dbname: &str = &string[10..];
+            } else if line.starts_with("SUBSCRIBE ") {
+                let dbname: &str = &line[10..];
                 Subscribe(dbname.into())
-            } else if string.starts_with("CREATE ") {
-                let dbname: &str = &string[7..];
+            } else if line.starts_with("CREATE ") {
+                let dbname: &str = &line[7..];
                 Create(dbname.into())
-            } else if string.starts_with("USE ") {
-                let dbname: &str = &string[4..];
+            } else if line.starts_with("USE ") {
+                let dbname: &str = &line[4..];
                 Use(dbname.into())
-            } else if string.starts_with("EXISTS ") {
-                let dbname: &str = &string[7..];
+            } else if line.starts_with("EXISTS ") {
+                let dbname: &str = &line[7..];
                 Exists(dbname.into())
-            } else if string.starts_with("ADD ") || string.starts_with("INSERT ") {
-                let (up, dbname) = if string.contains(" INTO ") {
-                    let (up, dbname) = parser::parse_add_into(&string);
+            } else if line.starts_with("ADD ") || line.starts_with("INSERT ") {
+                let (up, dbname) = if line.contains(" INTO ") {
+                    let (up, dbname) = parser::parse_add_into(&line);
                     (up, dbname.map(|a| a.into()))
                 } else {
-                    let data_string: &str = &string[3..];
+                    let data_string: &str = &line[3..];
                     match parser::parse_line(&data_string) {
                         Some(up) => (Some(up), Some(state.current_store_name.clone().into())),
                         None => (None, None),
@@ -133,27 +148,27 @@ pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
                 Insert(up, dbname)
             } else
             // get
-            if string.starts_with("GET ") {
+            if line.starts_with("GET ") {
                 // how many records we want...
-                let count = if string.starts_with("GET ALL ") {
+                let count = if line.starts_with("GET ALL ") {
                     ReqCount::All
                 } else {
-                    let count: &str = &string.clone()[4..];
+                    let count: &str = &line.clone()[4..];
                     let count: Vec<&str> = count.split(" ").collect();
                     let count = count[0].parse::<u32>().unwrap_or(1);
                     ReqCount::Count(count)
                 };
 
-                let range = parser::parse_get_range(string);
+                let range = parser::parse_get_range(&line);
 
                 // test if is Json
-                let format = if string.contains(" AS JSON") {
+                let format = if line.contains(" AS JSON") {
                     GetFormat::Json
                 } else {
-                    if string.contains(" AS CSV") { GetFormat::Csv }
+                    if line.contains(" AS CSV") { GetFormat::Csv }
                     else { GetFormat::Dtf }
                 };
-                let loc = if string.contains(" IN MEM") { Loc::Mem } else { Loc::Fs };
+                let loc = if line.contains(" IN MEM") { Loc::Mem } else { Loc::Fs };
 
                 Get(count, format, range, loc)
             } else {
@@ -163,133 +178,122 @@ pub fn gen_response(string: &str, state: &mut State) -> ReturnType {
     };
 
     match command {
-        Nothing => return_string(""),
-        Ping => return_string("PONG"),
-        Help => return_string(HELP_STR),
-        Info => return_string(&state.info()),
-        Perf => return_string(&state.perf()),
+        Nothing => ReturnType::string(""),
+        Ping => ReturnType::string("PONG"),
+        Help => ReturnType::string(HELP_STR),
+        Info => ReturnType::string(state.info()),
+        Perf => ReturnType::string(state.perf()),
         BulkAdd => {
             state.is_adding = true;
-            return_string("")
+            ReturnType::string("")
         }
         BulkAddInto(dbname) => {
             state.bulkadd_db = Some(dbname.into());
             state.is_adding = true;
-            return_string("")
+            ReturnType::string("")
         }
         BulkAddEnd => {
             state.is_adding = false;
             state.bulkadd_db = None;
-            return_string("1")
+            ReturnType::string("1")
         }
-        Count(ReqCount::Count(_), Loc::Fs) => return_string(&format!("{}", state.count())),
-        Count(ReqCount::Count(_), Loc::Mem) => return_string(&format!("{}", state.count())), // TODO: implement count in mem
-        Count(ReqCount::All, Loc::Fs) => return_string(&format!("{}", state.countall())),
-        Count(ReqCount::All, Loc::Mem) => return_string(&format!("{}", state.countall_in_mem())),
+        Count(ReqCount::Count(_), Loc::Fs) => ReturnType::string(format!("{}", state.count())),
+        Count(ReqCount::Count(_), Loc::Mem) => ReturnType::string(format!("{}", state.count())), // TODO: implement count in mem
+        Count(ReqCount::All, Loc::Fs) => ReturnType::string(format!("{}", state.countall())),
+        Count(ReqCount::All, Loc::Mem) => ReturnType::string(format!("{}", state.countall_in_mem())),
         Clear(ReqCount::Count(_)) => {
             state.clear();
-            return_string("1")
+            ReturnType::string("1")
         }
         Clear(ReqCount::All) => {
             state.clearall();
-            return_string("1")
+            ReturnType::string("1")
         }
         Flush(ReqCount::Count(_)) => {
             state.flush();
-            return_string("1")
+            ReturnType::string("1")
         }
         Flush(ReqCount::All) => {
             state.flushall();
-            return_string("1")
+            ReturnType::string("1")
         }
 
         // update, dbname
         Insert(Some(up), Some(dbname)) => {
             match state.insert(up, &dbname) {
-                Some(()) => return_string(""),
-                None => return_err(&format!("DB {} not found.", dbname)),
+                Some(()) => ReturnType::string(""),
+                None => ReturnType::error(format!("DB {} not found.", dbname)),
             }
         }
         Insert(Some(up), None) => {
             state.add(up);
-            return_string("")
+            ReturnType::string("")
         }
-        Insert(None, _) => return_err("Unable to parse line"),
+        Insert(None, _) => ReturnType::error("Unable to parse line"),
 
         Create(dbname) => {
             state.create(&dbname);
-            return_string(&format!("Created DB `{}`.", &dbname))
+            ReturnType::string(format!("Created DB `{}`.", &dbname))
         }
 
         Subscribe(dbname) => {
             state.sub(&dbname);
-            return_string(&format!("Subscribed to {}", dbname))
+            ReturnType::string(format!("Subscribed to {}", dbname))
         }
 
         Subscription => {
             let rxlocked = state.rx.clone().unwrap();
             let message = rxlocked.lock().unwrap().try_recv();
             match message {
-                Ok(msg) => return_string(&update_vec_to_json(&vec![msg])),
-                _ => return_string("NONE"),
+                Ok(msg) => ReturnType::string(update_vec_to_json(&vec![msg])),
+                _ => ReturnType::string("NONE"),
             }
         }
 
         Unsubscribe(ReqCount::All) => {
             state.unsub_all();
-            return_string("Unsubscribed everything!")
+            ReturnType::string("Unsubscribed everything!")
         }
 
         Unsubscribe(ReqCount::Count(_)) => {
             let old_dbname = state.subscribed_db.clone().unwrap();
             state.unsub();
-            return_string(&format!("Unsubscribed from {}", old_dbname))
+            ReturnType::string(format!("Unsubscribed from {}", old_dbname))
         }
 
         Use(dbname) => {
             match state.use_db(&dbname) {
-                Some(_) => return_string(&format!("SWITCHED TO DB `{}`.", &dbname)),
-                None => return_err(&format!("No db named `{}`", dbname)),
+                Some(_) => ReturnType::string(format!("SWITCHED TO DB `{}`.", &dbname)),
+                None => ReturnType::error(format!("No db named `{}`", dbname)),
             }
         }
         Exists(dbname) => {
             if state.exists(&dbname) {
-                return_string("1")
+                ReturnType::string("1")
             } else {
-                return_err(&format!("No db named `{}`", dbname))
+                ReturnType::error(format!("No db named `{}`", dbname))
             }
         }
 
-        // get
-        Get(cnt, fmt, rng, loc) => {
-            match state.get(cnt, fmt, rng, loc) {
-                Some(ReturnType::Bytes(b)) => return_bytes(b),
-                Some(ReturnType::String(s)) => return_string(&s),
-                Some(ReturnType::Error(e)) => return_err(&e),
-                None => return_err("Not enough items to return."),
-            }
-        }
+        Get(cnt, fmt, rng, loc) => 
+            state.get(cnt, fmt, rng, loc)
+            .unwrap_or(ReturnType::error("Not enough items to return")),
 
-        Unknown => return_err("Unknown command."),
+        Unknown => ReturnType::error("Unknown command."),
     }
 }
 
-fn return_string(string: &str) -> ReturnType {
-    let mut ret = String::new();
-    ret.push_str(string);
+fn return_string<'a>(string: Cow<'a, str>) -> ReturnType<'a> {
     // ret.push_str("\n");
-    ReturnType::String(ret)
+    ReturnType::String(string)
 }
 
-fn return_bytes(bytes: Vec<u8>) -> ReturnType {
+fn return_bytes<'a>(bytes: Vec<u8>) -> ReturnType <'a>{
     ReturnType::Bytes(bytes)
 }
 
-fn return_err(err: &str) -> ReturnType {
-    let mut ret = String::new();
-    ret.push_str(err);
-    ret.push_str("\n");
-    ReturnType::Error(ret)
+fn return_err<'a>(err: Cow<'a, str>) -> ReturnType <'a>{
+    ReturnType::Error(err)
 }
 
 #[cfg(test)]

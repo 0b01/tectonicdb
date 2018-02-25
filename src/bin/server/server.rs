@@ -62,7 +62,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let done = listener.incoming().for_each(move |(socket, _addr)| {
         let global_copy = global.clone();
         let state = Rc::new(RefCell::new(State::new(&global)));
-        let stateclone = state.clone();
+        let state_clone = state.clone();
 
         match utils::init_dbs(&mut state.borrow_mut()) {
             Ok(()) => (),
@@ -73,23 +73,24 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
         let (rdr, wtr) = socket.split();
         let lines = lines(BufReader::new(rdr));
         let responses = lines.map(move |line| {
-            let resp = handler::gen_response(&line, &mut state.borrow_mut());
+            let resp = handler::gen_response(line.clone(), &mut state.borrow_mut());
             (line, resp)
         });
         let writes = responses.fold(wtr, |wtr, (line, resp)| {
             let mut buf: Vec<u8> = vec![];
+            use self::ReturnType::*;
             match resp {
-                ReturnType::Bytes(bytes) => {
+                Bytes(bytes) => {
                     buf.write_u8(0x1).unwrap();
                     buf.write(&bytes).unwrap();
                 }
-                ReturnType::String(str_resp) => {
+                String(str_resp) => {
                     buf.write_u8(0x1).unwrap();
                     buf.write_u64::<NetworkEndian>(str_resp.len() as u64)
                         .unwrap();
                     buf.write(str_resp.as_bytes()).unwrap();
                 }
-                ReturnType::Error(errmsg) => {
+                Error(errmsg) => {
                     error!("Req: `{}`", line);
                     error!("Err: `{}`", errmsg.clone());
                     buf.write_u8(0x0).unwrap();
@@ -102,7 +103,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
         });
 
         let msg = writes.then(move |_| {
-            stateclone.borrow_mut().unsub();
+            state_clone.borrow_mut().unsub();
             on_disconnect(&global_copy);
             Ok(())
         });

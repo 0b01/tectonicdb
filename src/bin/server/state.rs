@@ -6,11 +6,12 @@ macro_rules! catch {
 
 use circular_queue::CircularQueue;
 
-use libtectonic;
 use libtectonic::dtf;
 use libtectonic::dtf::update::Update;
 use libtectonic::storage::utils::scan_files_for_range;
+use libtectonic::utils::within_range;
 
+use std::borrow::Cow;
 use std::collections::HashMap;
 use utils;
 use std::path::Path;
@@ -472,17 +473,13 @@ impl State {
     /// if count <= len, return
     /// need more, get from fs
     ///
-    pub fn get(
-        &mut self,
-        count: ReqCount,
-        format: GetFormat,
-        range: Range,
-        loc: Loc,
-    ) -> Option<ReturnType> {
+    pub fn get<'global, 'thread>(&'global mut self, count: ReqCount,
+        format: GetFormat, range: Range, loc: Loc) -> Option<ReturnType<'thread>>
+    {
         // return if requested 0 item
         if let ReqCount::Count(c) = count {
             if c == 0 {
-                return None;
+                return None
             }
         }
 
@@ -493,7 +490,7 @@ impl State {
         // if range, filter mem
         let acc = catch! {
             let (min_ts, max_ts) = range?;
-            if !libtectonic::utils::within_range(min_ts, max_ts, vecs.first()?.ts, vecs.last()?.ts) { return None; }
+            if !within_range(min_ts, max_ts, vecs.first()?.ts, vecs.last()?.ts) { return None; }
             box vecs.iter()
                 .filter(|up| up.ts < max_ts && up.ts > min_ts)
                 .map(|up| up.to_owned())
@@ -540,7 +537,7 @@ impl State {
                     return self._return_aux(&result[..(c as usize - 1)], format);
                 } else {
                     return Some(ReturnType::Error(
-                        format!("Requested {} but only have {}.", c, result.len()),
+                        format!("Requested {} but only have {}.", c, result.len()).into(),
                     ));
                 }
             }
@@ -548,24 +545,26 @@ impl State {
         }
     }
 
-    fn _return_aux(&self, result: &[Update], format: GetFormat) -> Option<ReturnType> {
-        match format {
+    fn _return_aux<'thread, 'global>(&'global self, result: &[Update], format: GetFormat) -> Option<ReturnType<'thread>> {
+        let ret = match format {
             GetFormat::Dtf => {
                 let mut bytes: Vec<u8> = Vec::new();
                 let _ = dtf::write_batches(&mut bytes, &result);
-                Some(ReturnType::Bytes(bytes))
+                ReturnType::Bytes(bytes)
             }
             GetFormat::Json => {
-                Some(ReturnType::String(
-                    format!("[{}]\n", dtf::update_vec_to_json(&result)),
-                ))
+                ReturnType::String(
+                    Cow::Owned(format!("[{}]\n", dtf::update_vec_to_json(&result)))
+                )
             }
             GetFormat::Csv => {
-                Some(ReturnType::String(
-                    format!("{}\n", dtf::update_vec_to_csv(&result)),
-                ))
+                ReturnType::String(
+                    Cow::Owned(format!("{}\n", dtf::update_vec_to_csv(&result))),
+                )
             }
-        }
+        };
+
+        Some(ret)
     }
 
     /// create a new store
