@@ -175,15 +175,18 @@ export default class TectonicDB {
         client.readerBuffer = Buffer.concat([client.readerBuffer, data], totalLength);
 
         const success = client.readerBuffer.readUIntBE(0, 1, true);
-        const len = client.readerBuffer.readUInt32BE(5, true);
+        const len = (client.readerBuffer.readUInt32BE(1) << 8) + client.readerBuffer.readUInt32BE(5);
         const text = client.readerBuffer.subarray(9);
-
         const dataBody = new TextDecoder("utf-8").decode(text);
+
         // console.log(success, len, dataBody);
         const response = {
             success: success === 1,
             data: dataBody,
         };
+
+        const rest = client.readerBuffer.subarray(9 + len, client.readerBuffer.length);
+        client.readerBuffer = new Buffer(rest);
 
         if (client.activeQuery) {
             // execute the stored callback with the result of the query, fulfilling the promise

@@ -6,6 +6,12 @@ const db = new TectonicPool();
 async function test() {
     let pong = await db.ping();
     console.log(pong);
+    pong = await db.ping();
+    console.log(pong);
+    pong = await db.ping();
+    console.log(pong);
+    pong = await db.ping();
+    console.log(pong);
     process.exit()
 }
 
