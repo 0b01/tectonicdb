@@ -174,37 +174,31 @@ export default class TectonicDB {
         const totalLength = client.readerBuffer.length + data.length;
         client.readerBuffer = Buffer.concat([client.readerBuffer, data], totalLength);
 
-        // check if received a full response from stream, if no, store to buffer.
-        const firstResponse = client.readerBuffer.indexOf(0x0a); // chr(0x0a) == '\n'
-        if (firstResponse === -1) { // newline not found
-            return;
+        const success = client.readerBuffer.readUIntBE(0, 1, true);
+        const len = client.readerBuffer.readUInt32BE(5, true);
+        const text = client.readerBuffer.subarray(9);
+
+        const dataBody = new TextDecoder("utf-8").decode(text);
+        // console.log(success, len, dataBody);
+        const response = {
+            success: success === 1,
+            data: dataBody,
+        };
+
+        if (client.activeQuery) {
+            // execute the stored callback with the result of the query, fulfilling the promise
+            client.activeQuery.cb(response);
+        }
+
+        // if there's something left in the queue to process, do it next
+        // otherwise set the current query to empty
+        if(client.socketSendQueue.length === 0) {
+            client.activeQuery = null;
         } else {
-            // data up to first newline
-            const data = client.readerBuffer.subarray(0, firstResponse+1);
-            // remove up to first newline
-            const rest = client.readerBuffer.subarray(firstResponse+1, client.readerBuffer.length);
-            client.readerBuffer = new Buffer(rest);
-
-            const success = data.subarray(0, 8)[0] === 1;
-            // const len = new Uint32Array(data.subarray(8,9))[0];
-            const dataBody = new TextDecoder("utf-8").decode(data.subarray(9));
-            const response = {success, data: dataBody};
-
-            if (client.activeQuery) {
-                // execute the stored callback with the result of the query, fulfilling the promise
-                client.activeQuery.cb(response);
-            }
-
-            // if there's something left in the queue to process, do it next
-            // otherwise set the current query to empty
-            if(client.socketSendQueue.length === 0) {
-                client.activeQuery = null;
-            } else {
-                // equivalent to `popFront()`
-                client.activeQuery = this.socketSendQueue.shift();
-                if (client.activeQuery)
-                    client.sendSocketMsg(client.activeQuery.message);
-            }
+            // equivalent to `popFront()`
+            client.activeQuery = this.socketSendQueue.shift();
+            if (client.activeQuery)
+                client.sendSocketMsg(client.activeQuery.message);
         }
     }
 
