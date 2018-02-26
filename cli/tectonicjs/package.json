@@ -11,7 +11,7 @@
   "license": "MIT",
   "types": "./built/index.d.ts",
   "dependencies": {
-    "@types/node": "^8.0.51",
+    "@types/node": "^9.4.6",
     "text-encoding": "^0.6.4"
   }
 }
