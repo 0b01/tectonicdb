@@ -176,6 +176,12 @@ export default class TectonicDB {
 
         const success = client.readerBuffer.readUIntBE(0, 1, true);
         const len = (client.readerBuffer.readUInt32BE(1) << 8) + client.readerBuffer.readUInt32BE(5);
+
+        // if incoming socket buffer does not contain all the payload, accumulate and read again
+        if (client.readerBuffer.length - 9 < len) {
+            return;
+        }
+
         const text = client.readerBuffer.subarray(9);
         const dataBody = new TextDecoder("utf-8").decode(text);
 
