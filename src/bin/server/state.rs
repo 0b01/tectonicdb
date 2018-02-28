@@ -24,6 +24,7 @@ use subscription::Subscriptions;
 
 /// An atomic reference counter for accessing shared data.
 pub type Global = Arc<RwLock<SharedState>>;
+pub type HashMapStore<'a> = Arc<RwLock<HashMap<String, Store<'a>>>>;
 
 /// name: *should* be the filename
 /// in_memory: are the updates read into memory?
@@ -223,13 +224,44 @@ pub struct ThreadState<'thr, 'store> {
     pub rx: Option<Arc<Mutex<mpsc::Receiver<Update>>>>,
 
     /// mapping store_name -> Store
-    pub store: HashMap<String, Store<'store>>,
+    pub store: Arc<RwLock<HashMap<String, Store<'store>>>>,
 
     /// the current STORE client is using
     pub current_store_name: Cow<'thr, str>,
 
     /// shared data
     pub global: Global,
+}
+
+macro_rules! current_store {
+    ($sel:ident, $fun:ident) => {
+        {
+            let name: &str = $sel.current_store_name.borrow();
+            let mut store = $sel.store.write().unwrap();
+            store.get_mut(name).expect(
+                "KEY IS NOT IN HASHMAP",
+            ).$fun()
+        }
+    };
+
+    ($sel:ident, $fun:ident, $param:ident) => {
+        {
+            let name: &str = $sel.current_store_name.borrow();
+            let mut store = $sel.store.write().unwrap();
+            store.get_mut(name).expect(
+                "KEY IS NOT IN HASHMAP",
+            ).$fun($param)
+        }
+    };
+}
+
+macro_rules! store {
+    ($sel:ident, $fun:ident) => {
+        $sel.store.write().unwrap().$fun()
+    };
+    ($sel:ident, $fun:ident, $param:ident) => {
+        $sel.store.write().unwrap().$fun($param)
+    };
 }
 
 impl<'thr, 'store> ThreadState<'thr, 'store> {
@@ -327,7 +359,7 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
 
     /// Insert a row into store
     pub fn insert(&mut self, up: Update, store_name: &str) -> Option<()> {
-        match self.store.get_mut(store_name) {
+        match store!(self, get_mut, store_name) {
             Some(store) => {
                 store.add(up);
                 Some(())
@@ -338,13 +370,12 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
 
     /// Check if a table exists
     pub fn exists(&mut self, store_name: &str) -> bool {
-        self.store.contains_key(store_name)
+        store!(self, contains_key, store_name)
     }
 
     /// Insert a row into current store.
     pub fn add(&mut self, up: Update) {
-        let current_store = self.get_current_store();
-        current_store.add(up);
+        current_store!(self, add, up);
     }
 
 
@@ -359,7 +390,7 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
             );
         }
         // insert a store into client state hashmap
-        self.store.insert(
+        self.store.write().unwrap().insert(
             store_name.to_owned(),
             Store {
                 name: store_name.to_owned().into(),
@@ -372,10 +403,9 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
 
     /// load a datastore file into memory
     pub fn use_db(&mut self, store_name: &str) -> Option<()> {
-        if self.store.contains_key(store_name) {
+        if store!(self, contains_key, store_name) {
             self.current_store_name = store_name.to_owned().into();
-            let current_store = self.get_current_store();
-            current_store.load();
+            current_store!(self, load);
             Some(())
         } else {
             None
@@ -384,8 +414,7 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
 
     /// return the count of the current store
     pub fn count(&mut self) -> u64 {
-        let store = self.get_current_store();
-        store.count()
+        current_store!(self, count)
     }
 
     /// Returns the total count
@@ -442,34 +471,27 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
 
     /// remove everything in the current store
     pub fn clear(&mut self) {
-        self.get_current_store().clear();
+        current_store!(self, clear);
     }
 
     /// remove everything in every store
     pub fn clearall(&mut self) {
-        for store in self.store.values_mut() {
+        for store in store!(self, values_mut) {
             store.clear();
         }
     }
 
     /// save current store to file
     pub fn flush(&mut self) {
-        self.get_current_store().flush();
+        current_store!(self, flush);
+        // self.get_current_store().flush();
     }
 
     /// save all stores to corresponding files
     pub fn flushall(&mut self) {
-        for store in self.store.values_mut() {
+        for store in store!(self, values_mut) {
             store.flush();
         }
-    }
-
-    /// returns the current store as a mutable reference
-    fn get_current_store(&mut self) -> &mut Store<'store> {
-        let name: &str = self.current_store_name.borrow();
-        self.store.get_mut(name).expect(
-            "KEY IS NOT IN HASHMAP",
-        )
     }
 
     /// get `count` items from the current store
@@ -575,10 +597,10 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         Some(ret)
     }
 
-    /// create a new store
-    pub fn new<'a, 'b, 'c>(global: &'a Global) -> ThreadState<'b, 'c> {
+    /// create a new threadstate
+    pub fn new<'a, 'b>(global: Global, store: HashMapStore<'b>) -> ThreadState<'a, 'b> {
         let dtf_folder: &str = &global.read().unwrap().settings.dtf_folder;
-        let mut state = ThreadState {
+        let state = ThreadState {
             current_store_name: "default".into(),
             is_adding: false,
             bulkadd_db: None,
@@ -586,14 +608,14 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
             subscribed_db: None,
             sub_id: None,
             rx: None,
-            store: HashMap::new(),
+            store,
             global: global.clone(),
         };
 
         // insert default first, if there is a copy in memory this will be replaced
         let default_file = format!("{}/default.dtf", dtf_folder);
         let default_in_memory = !Path::new(&default_file).exists();
-        state.store.insert(
+        state.store.write().unwrap().insert(
             "default".to_owned(),
             Store {
                 name: "default".into(),
@@ -607,7 +629,7 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         for (store_name, _vec) in &rdr.vec_store {
             let fname = format!("{}/{}.dtf", dtf_folder, store_name);
             let in_memory = !Path::new(&fname).exists();
-            state.store.insert(
+            state.store.write().unwrap().insert(
                 store_name.to_owned(),
                 Store {
                     name: store_name.to_owned().into(),

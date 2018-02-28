@@ -38,7 +38,7 @@ pub fn init_dbs(state: &mut ThreadState) -> Result<(), io::Error> {
             }
 
             // insert a db store into user state
-            state.store.insert(
+            state.store.write().unwrap().insert(
                 symbol.to_owned(),
                 Store {
                     name: symbol.into(),

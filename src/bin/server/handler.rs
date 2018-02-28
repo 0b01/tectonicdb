@@ -289,11 +289,13 @@ mod tests {
     use super::*;
     use settings::Settings;
     use std::sync::{Arc, RwLock};
+    use std::collections::HashMap;
 
     fn gen_state<'thr, 'store>() -> ThreadState<'thr, 'store> {
         let settings: Settings = Default::default();
         let global = Arc::new(RwLock::new(SharedState::new(settings)));
-        ThreadState::new(&global)
+        let store = Arc::new(RwLock::new(HashMap::new()));
+        ThreadState::new(global, store)
     }
 
     #[test]
