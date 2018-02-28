@@ -1,6 +1,5 @@
 # tectonicdb
 
-[![](https://img.shields.io/crates/v/tectonicdb.svg)](https://crates.io/crates/tectonicdb)
 [![Build Status](https://travis-ci.org/rickyhan/tectonicdb.svg?branch=master)](https://travis-ci.org/rickyhan/tectonicdb)
 [![Crates.io](https://img.shields.io/crates/v/tectonicdb.svg)](https://crates.io/crates/tectonicdb)
 
@@ -72,6 +71,13 @@ There is a history granularity option that sets the interval (in second) to peri
 ## Logging
 
 Log file defaults to `tectonic.log`.
+
+## Testing
+
+```bash
+export RUST_TEST_THREADS=1
+```
+Tests must be run sequentially because of file dependencies issues: some tests generate dtf file for others.
 
 ## Using dtf files
 
