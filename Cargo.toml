@@ -1,6 +1,6 @@
 [package]
 name = "tectonicdb"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Ricky Han <tectonic@rickyhan.com>"]
 description = "fast datastore server for contiguous order book ticks"
 repository = "https://github.com/rickyhan/tectonicdb"
