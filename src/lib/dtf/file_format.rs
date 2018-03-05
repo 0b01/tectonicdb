@@ -1,29 +1,27 @@
-///
-/// File format for Dense Tick Format (DTF)
-///
-///
-/// File Spec:
-/// Offset 00: ([u8; 5]) magic value 0x4454469001
-/// Offset 05: ([u8; 20]) Symbol
-/// Offset 25: (u64) number of records
-/// Offset 33: (u32) max ts
-/// Offset 80: -- records - see below --
-///
-///
-/// Record Spec:
-/// Offset 81: bool for `is_snapshot`
-/// 1. if is true
-///        4 bytes (u32): reference ts
-///        2 bytes (u32): reference seq
-///        2 bytes (u16): how many records between this snapshot and the next snapshot
-/// 2. record
-///        dts (u16): $ts - reference ts$, 2^16 = 65536 - ~65 seconds
-///        dseq (u8) $seq - reference seq$ , 2^8 = 256
-///        `is_trade & is_bid`: (u8): bitwise and to store two bools in one byte
-///        price: (f32)
-///        size: (f32)
-
-
+//!
+//! File format for Dense Tick Format (DTF)
+//!
+//!
+//! File Spec:
+//! Offset 00: ([u8; 5]) magic value 0x4454469001
+//! Offset 05: ([u8; 20]) Symbol
+//! Offset 25: (u64) number of records
+//! Offset 33: (u32) max ts
+//! Offset 80: -- records - see below --
+//!
+//!
+//! Record Spec:
+//! Offset 81: bool for `is_snapshot`
+//! 1. if is true
+//!        4 bytes (u32): reference ts
+//!        2 bytes (u32): reference seq
+//!        2 bytes (u16): how many records between this snapshot and the next snapshot
+//! 2. record
+//!        dts (u16): $ts - reference ts$, 2^16 = 65536 - ~65 seconds
+//!        dseq (u8) $seq - reference seq$ , 2^8 = 256
+//!        `is_trade & is_bid`: (u8): bitwise and to store two bools in one byte
+//!        price: (f32)
+//!        size: (f32)
 
 use dtf::update::*;
 use std::str;
@@ -130,17 +128,17 @@ fn write_symbol(wtr: &mut Write, symbol: &str) -> Result<usize, io::Error> {
     wtr.write(padded_symbol.as_bytes())
 }
 
-fn write_len(wtr: &mut BufWriter<File>, len: u64) -> Result<(), io::Error> {
+fn write_len<T: Write + Seek>(wtr: &mut BufWriter<T>, len: u64) -> Result<(), io::Error> {
     let _ = wtr.seek(SeekFrom::Start(LEN_OFFSET));
     wtr.write_u64::<BigEndian>(len)
 }
 
-fn write_max_ts(wtr: &mut BufWriter<File>, max_ts: u64) -> Result<(), io::Error> {
+fn write_max_ts<T: Write + Seek>(wtr: &mut BufWriter<T>, max_ts: u64) -> Result<(), io::Error> {
     let _ = wtr.seek(SeekFrom::Start(MAX_TS_OFFSET));
     wtr.write_u64::<BigEndian>(max_ts)
 }
 
-fn write_metadata(wtr: &mut BufWriter<File>, ups: &[Update]) -> Result<(), io::Error> {
+fn write_metadata<T: Write + Seek>(wtr: &mut BufWriter<T>, ups: &[Update]) -> Result<(), io::Error> {
     write_len(wtr, ups.len() as u64)?;
     write_max_ts(wtr, get_max_ts(ups))
 }
@@ -189,7 +187,7 @@ pub fn write_batches(mut wtr: &mut Write, ups: &[Update]) -> Result<(), io::Erro
     wtr.write_all(buf.as_slice())
 }
 
-fn write_main(wtr: &mut BufWriter<File>, ups: &[Update]) -> Result<(), io::Error> {
+fn write_main<T: Write + Seek>(wtr: &mut BufWriter<T>, ups: &[Update]) -> Result<(), io::Error> {
     wtr.seek(SeekFrom::Start(MAIN_OFFSET))?;
     if !ups.is_empty() {
         write_batches(wtr, ups)?;
@@ -223,7 +221,6 @@ pub fn read_magic_value<T: BufRead + Seek>(rdr: &mut T) -> Result<bool, io::Erro
 }
 
 fn file_reader(fname: &str) -> Result<BufReader<File>, io::Error> {
-
     let file = File::open(fname)?;
     let mut rdr = BufReader::new(file);
 
@@ -246,7 +243,7 @@ fn read_len<T: BufRead + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
     rdr.read_u64::<BigEndian>()
 }
 
-fn read_min_ts<T: BufRead + Seek>(mut rdr: &mut T) -> Result<u64, io::Error> {
+fn read_min_ts<T: BufRead + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
     Ok(read_first(rdr)?.ts)
 }
 
@@ -385,7 +382,7 @@ pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result
             );
         } else {
             println!("{}, {}, {}, {}", min_ts, max_ts, current_ref_ts, next_ref_ts);
-            panic!("Should have cover all the cases.");
+            panic!("Should have covered all the cases.");
         }
     }
 }
@@ -459,7 +456,6 @@ pub fn read_meta(fname: &str) -> Result<Metadata, io::Error> {
         max_ts,
         min_ts,
     })
-
 }
 
 /// decode main section
@@ -494,6 +490,7 @@ pub fn decode(fname: &str, num_rows: Option<u32>) -> Result<Vec<Update>, io::Err
             }
         }
     }
+
     Ok(v)
 }
 
@@ -508,7 +505,6 @@ pub fn decode_buffer(mut buf: &mut Read) -> Vec<Update> {
 }
 
 pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
-
     let (ups, new_max_ts, cur_len) = {
         let mut rdr = file_reader(fname)?;
         let _symbol = read_symbol(&mut rdr)?;
@@ -554,6 +550,7 @@ pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[cfg(test)]
     fn sample_data() -> Vec<Update> {
         let mut ts: Vec<Update> = vec![];

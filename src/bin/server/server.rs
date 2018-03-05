@@ -56,7 +56,6 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let global = Arc::new(RwLock::new(SharedState::new(settings.clone())));
     let store = Arc::new(RwLock::new(HashMap::new()));
 
-
     run_plugins(global.clone());
 
     use std::rc::Rc;
@@ -76,6 +75,10 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
         let (rdr, wtr) = socket.split();
         let lines = lines(BufReader::new(rdr));
         let responses = lines.map(move |line| {
+            #[cfg(feature="debug")]
+            {
+                debug!("{}", line);
+            }
             let line: Cow<str> = line.into();
             let resp = handler::gen_response(line.borrow(), &mut state.borrow_mut());
             (line, resp)
