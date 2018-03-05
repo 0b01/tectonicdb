@@ -2,6 +2,7 @@
 python client for tectonic server
 """
 
+import ffi
 import socket
 import json
 import struct
@@ -61,16 +62,37 @@ class TectonicDB():
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_address = (host, port)
         self.sock.connect(server_address)
+        self.sock.settimeout(0.1)
 
     async def cmd(self, cmd):
         loop = asyncio.get_event_loop()
-
         if type(cmd) != str:
             message = (cmd.decode() + '\n').encode()
         else:
             message = (cmd+'\n').encode()
         loop.sock_sendall(self.sock, message)
 
+        if "GET" in cmd and "JSON" not in cmd and "CSV" not in cmd:
+            return await self._recv_dtf()
+        else:
+            return await self._recv_text()
+
+    async def _recv_dtf(self):
+        loop = asyncio.get_event_loop()
+        acc = b''
+        while True:
+            try:
+                data = await loop.sock_recv(self.sock, 1024)
+                acc += data
+            except socket.timeout:
+                break
+        success = acc[0] == 0x1
+        ups_bytes = acc[1:]
+        ups = ffi.parse_stream(ups_bytes)
+        return success, ups
+
+    async def _recv_text(self):
+        loop = asyncio.get_event_loop()
         header = await loop.sock_recv(self.sock, 9)
         current_len = len(header)
         while current_len < 9:
@@ -136,9 +158,9 @@ class TectonicDB():
         return json.loads(await self.cmd("GET ALL AS JSON"));
 
     async def get(self, n):
-        success, ret = await self.cmd("GET {} AS JSON".format(n))
+        success, ret = await self.cmd("GET {}".format(n))
         if success:
-            return json.loads(ret)
+            return list(map(lambda x:x.to_dict(), ret))
         else:
             return None
 
@@ -178,19 +200,3 @@ class TectonicDB():
         data = await self.cmd("GET ALL FROM {} TO {} AS CSV".format(start, finish).encode())
         data = data[1]
         return data
-
-def __csv_to_df(raw_data):
-    csv = StringIO("ts,seq,is_trade,is_bid,price,size\n" + raw_data)
-    df = pd.read_csv(csv, dtype={
-        'ts': np.float,
-        'seq': np.int16,
-        'is_trade': np.bool,
-        'is_bid': np.bool,
-        'price': np.float,
-        'size': np.float32}
-    )
-    df.set_index("ts")
-    df = df[:-1]
-    df.ts *= 1000
-    df.ts = df.ts.astype(int)
-    return df

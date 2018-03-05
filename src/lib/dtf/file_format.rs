@@ -156,7 +156,7 @@ pub fn write_batches(mut wtr: &mut Write, ups: &[Update]) -> Result<(), io::Erro
     if ups.len() == 0 {
         return Ok(());
     }
-    let mut buf: Vec<u8> = Vec::new();
+    let mut buf: Vec<u8> = vec![];
     let mut ref_ts = ups[0].ts;
     let mut ref_seq = ups[0].seq;
     let mut count = 0;
@@ -255,7 +255,7 @@ fn read_max_ts(rdr: &mut BufReader<File>) -> Result<u64, io::Error> {
     rdr.read_u64::<BigEndian>()
 }
 
-pub fn read_one_batch_meta(rdr: &mut Read) -> BatchMetadata {
+pub fn read_one_batch_meta(rdr: &mut impl Read) -> BatchMetadata {
     let ref_ts = rdr.read_u64::<BigEndian>().unwrap();
     let ref_seq = rdr.read_u32::<BigEndian>().unwrap();
     let count = rdr.read_u16::<BigEndian>().unwrap();
@@ -280,11 +280,11 @@ fn range(rdr: &mut BufReader<File>, min_ts: u64, max_ts: u64) -> Result<Vec<Upda
 
     // can't go back in time
     if min_ts > max_ts {
-        return Ok(Vec::new());
+        return Ok(vec![]);
     }
     // go to beginning of main section
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
-    let mut v: Vec<Update> = Vec::new();
+    let mut v: Vec<Update> = vec![];
 
     loop {
         // read marker byte
@@ -390,18 +390,18 @@ fn range(rdr: &mut BufReader<File>, min_ts: u64, max_ts: u64) -> Result<Vec<Upda
     }
 }
 
-pub fn read_one_batch(rdr: &mut Read) -> Result<Vec<Update>, io::Error> {
-    let is_ref = rdr.read_u8().expect("is_ref") == 0x1;
+pub fn read_one_batch(rdr: &mut impl Read) -> Result<Vec<Update>, io::Error> {
+    let is_ref = rdr.read_u8()? == 0x1;
     if !is_ref {
-        Ok(Vec::new())
+        Ok(vec![])
     } else {
         let meta = read_one_batch_meta(rdr);
         read_one_batch_main(rdr, meta)
     }
 }
 
-fn read_one_batch_main(rdr: &mut Read, meta: BatchMetadata) -> Result<Vec<Update>, io::Error> {
-    let mut v: Vec<Update> = Vec::new();
+fn read_one_batch_main(rdr: &mut impl Read, meta: BatchMetadata) -> Result<Vec<Update>, io::Error> {
+    let mut v: Vec<Update> = vec![];
     for _i in 0..meta.count {
         let up = read_one_update(rdr, &meta)?;
         v.push(up);
@@ -409,7 +409,7 @@ fn read_one_batch_main(rdr: &mut Read, meta: BatchMetadata) -> Result<Vec<Update
     Ok(v)
 }
 
-fn read_one_update(rdr: &mut Read, meta: &BatchMetadata) -> Result<Update, io::Error> {
+fn read_one_update(rdr: &mut dyn Read, meta: &BatchMetadata) -> Result<Update, io::Error> {
     let ts = u64::from(rdr.read_u16::<BigEndian>()?) + meta.ref_ts;
     let seq = u32::from(rdr.read_u8()?) + meta.ref_seq;
     let flags = rdr.read_u8()?;
@@ -464,7 +464,7 @@ pub fn read_meta(fname: &str) -> Result<Metadata, io::Error> {
 
 /// decode main section
 pub fn decode(fname: &str, num_rows: Option<u32>) -> Result<Vec<Update>, io::Error> {
-    let mut v: Vec<Update> = Vec::new();
+    let mut v: Vec<Update> = vec![];
 
     let mut rdr = file_reader(fname)?;
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");

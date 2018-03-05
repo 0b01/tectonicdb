@@ -1,5 +1,7 @@
 #![feature(conservative_impl_trait)]
 #![feature(libc)]
+#![feature(dyn_trait)]
+#![feature(universal_impl_trait)]
 
 extern crate serde;
 extern crate serde_json;
