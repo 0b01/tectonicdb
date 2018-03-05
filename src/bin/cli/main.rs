@@ -1,15 +1,40 @@
 extern crate clap;
 extern crate byteorder;
 extern crate libtectonic;
+#[macro_use] extern crate log;
+extern crate fern;
+extern crate chrono;
 
 use clap::{Arg, App};
 use std::{time, str};
 use std::io::{self, Write};
 
+pub use libtectonic::dtf;
+
 mod db;
+
+fn init_logger() {
+    fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "{}[{}][{}] {}",
+                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S:%f]"),
+                record.target(),
+                record.level(),
+                message
+            ))
+        })
+        .level(log::LogLevelFilter::Debug)
+        .chain(std::io::stdout())
+        .chain(fern::log_file("bookkeeper.log").unwrap())
+        .apply()
+        .unwrap();
+}
+
 
 
 fn main() {
+    init_logger();
     let matches = App::new("tectonic-cli")
         .version("0.0.1")
         .author("Ricky Han <tectonic@rickyhan.com>")
@@ -98,14 +123,14 @@ fn handle_query(cxn: &mut db::Cxn) {
         let mut cmd = String::new();
         io::stdin().read_line(&mut cmd).unwrap();
         match cxn.cmd(&cmd) {
-            Err(db::TectonicError::DecodeError) => {
-                panic!("Decode Error");
-            }
             Err(db::TectonicError::ConnectionError) => {
                 panic!("Connection Error");
             }
             Err(db::TectonicError::ServerError(msg)) => {
                 print!("{}", msg);
+            }
+            Err(db::TectonicError::DBNotFoundError(dbname)) => {
+                print!("DB not found: {}", dbname);
             }
             Ok(msg) => {
                 print!("{}", msg);
