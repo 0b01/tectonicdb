@@ -86,6 +86,8 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
             match resp {
                 Bytes(bytes) => {
                     buf.write_u8(0x1).unwrap();
+                    buf.write_u64::<NetworkEndian>(bytes.len() as u64)
+                        .unwrap();
                     buf.write(&bytes).unwrap();
                 }
                 String(str_resp) => {

@@ -62,7 +62,6 @@ class TectonicDB():
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_address = (host, port)
         self.sock.connect(server_address)
-        self.sock.settimeout(0.1)
 
     async def cmd(self, cmd):
         loop = asyncio.get_event_loop()
@@ -78,17 +77,8 @@ class TectonicDB():
             return await self._recv_text()
 
     async def _recv_dtf(self):
-        loop = asyncio.get_event_loop()
-        acc = b''
-        while True:
-            try:
-                data = await loop.sock_recv(self.sock, 1024)
-                acc += data
-            except socket.timeout:
-                break
-        success = acc[0] == 0x1
-        ups_bytes = acc[1:]
-        ups = ffi.parse_stream(ups_bytes)
+        success, data = await self._recv_text()
+        ups = ffi.parse_stream(data)
         return success, ups
 
     async def _recv_text(self):
@@ -155,14 +145,15 @@ class TectonicDB():
         await self.cmd("DDAKLUB")
 
     async def getall(self):
-        return json.loads(await self.cmd("GET ALL AS JSON"));
+        success, ret = await self.cmd("GET ALL")
+        return success, list(map(lambda x:x.to_dict(), ret))
 
     async def get(self, n):
         success, ret = await self.cmd("GET {}".format(n))
         if success:
-            return list(map(lambda x:x.to_dict(), ret))
+            return success, list(map(lambda x:x.to_dict(), ret))
         else:
-            return None
+            return False, None
 
     async def clear(self):
         return await self.cmd("CLEAR")

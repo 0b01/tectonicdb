@@ -31,11 +31,16 @@ impl CxnStream {
             && !command.contains("AS JSON")
             && success
         {
+            let size = self.stream.read_u64::<BigEndian>().unwrap();
+            let mut buf = vec![0_u8; size as usize];
+            let _ = self.stream.read_exact(&mut buf);
+
+            let mut buf = buf.as_slice();
             let mut v = vec![];
-            let mut res = dtf::read_one_batch(&mut self.stream);
+            let mut res = dtf::read_one_batch(&mut buf);
             while let Ok(ups) = res {
                 v.extend(ups);
-                res = dtf::read_one_batch(&mut self.stream);
+                res = dtf::read_one_batch(&mut buf);
             }
             Ok(format!("[{}]\n", dtf::update_vec_to_json(&v)))
 
@@ -56,8 +61,6 @@ impl CxnStream {
     }
 
     fn new(stream : TcpStream) -> Self {
-        let dur = time::Duration::from_millis(100);
-        let _  = stream.set_read_timeout(Some(dur));
         CxnStream { stream }
     }
 }
