@@ -54,30 +54,30 @@ pub fn get_cxn_pool() -> CxnPool {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use dtf;
-    use super::*;
-    #[test]
-    fn should_err() {
-        let mut cxn = Cxn::new("localhost", "9001").unwrap();
-        let res = cxn.cmd("USE test\n");
-        assert!(res.is_err());
-    }
-
-    #[test]
-    fn should_cxnpool_work() {
-        let mut cxn = CxnPool::new(10, "localhost", "9001", 100).unwrap();
-        cxn.cmd("COUNT ALL\n").unwrap();
-
-        let res = cxn.insert(&InsertCommand::Add("default".to_owned(), dtf::Update {
-            ts: 0,
-            seq: 0,
-            is_bid: false,
-            is_trade: false,
-            price: 0.,
-            size: 0.,
-        }));
-        println!("{:?}", res);
-    }
-}
+// #[cfg(test)]
+// mod tests {
+//     use dtf;
+//     use super::*;
+//     #[test]
+//     fn should_err() {
+//         let mut cxn = Cxn::new("localhost", "9001").unwrap();
+//         let res = cxn.cmd("USE test\n");
+//         assert!(res.is_err());
+//     }
+// 
+//     #[test]
+//     fn should_cxnpool_work() {
+//         let mut cxn = CxnPool::new(10, "localhost", "9001", 100).unwrap();
+//         cxn.cmd("COUNT ALL\n").unwrap();
+// 
+//         let res = cxn.insert(&InsertCommand::Add("default".to_owned(), dtf::Update {
+//             ts: 0,
+//             seq: 0,
+//             is_bid: false,
+//             is_trade: false,
+//             price: 0.,
+//             size: 0.,
+//         }));
+//         println!("{:?}", res);
+//     }
+// }
