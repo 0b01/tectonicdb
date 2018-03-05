@@ -1,4 +1,5 @@
 #![feature(conservative_impl_trait)]
+#![feature(libc)]
 
 extern crate serde;
 extern crate serde_json;

@@ -8,6 +8,9 @@ import struct
 import time
 import sys
 import asyncio
+from io import StringIO
+import pandas as pd
+import numpy as np
 
 class TectonicDB():
     """
@@ -176,42 +179,18 @@ class TectonicDB():
         data = data[1]
         return data
 
-def measure_latency():
-    dts = []
-
-    db = TectonicDB()
-
-    t = time.time()
-    for i in range(10000):
-        db.insert(0,0,True, True, 0., 0., 'default')
-        t_ = time.time()
-        dt = t_ - t
-        t = t_
-        dts.append(dt)
-    print("AVG:", sum(dts) / len(dts))
-    db.destroy()
-
-def insert_n(n):
-    db = TectonicDB()
-    for i in range(n):
-        db.insert(0,0,True, True, 0., 0., 'default')
-
-def example_subscribe():
-    db = TectonicDB()
-    print(db.subscribe('default'))
-
-    import threading
-    def send_req():
-        while 1:
-            print("----------------------------")
-            insert_n(100)
-            time.sleep(3)
-    t = threading.Thread(target=send_req)
-    t.start()
-
-    while 1:
-        _, item = db.poll()
-        if item == "NONE\n":
-            time.sleep(0.01)
-        else:
-            print(item[0],)
+def __csv_to_df(raw_data):
+    csv = StringIO("ts,seq,is_trade,is_bid,price,size\n" + raw_data)
+    df = pd.read_csv(csv, dtype={
+        'ts': np.float,
+        'seq': np.int16,
+        'is_trade': np.bool,
+        'is_bid': np.bool,
+        'price': np.float,
+        'size': np.float32}
+    )
+    df.set_index("ts")
+    df = df[:-1]
+    df.ts *= 1000
+    df.ts = df.ts.astype(int)
+    return df

@@ -16,6 +16,7 @@ exclude = [
 [lib]
 name = "libtectonic"
 path = "src/lib/lib.rs"
+crate-type = ["cdylib", "dylib", "rlib"]
 
 [[bin]]
 name = "tectonic-server"
