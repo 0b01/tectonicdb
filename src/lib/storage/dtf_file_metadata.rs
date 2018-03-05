@@ -4,6 +4,7 @@ use storage::file_metadata::FileMetadata;
 use std::io;
 use std::fs;
 
+use uuid::Uuid;
 
 #[derive(Default, Serialize)]
 pub struct DTFFileMetadata {
@@ -21,7 +22,7 @@ pub struct DTFFileMetadata {
     discontinuities: Vec<(u64, u64)>, // (start, finish)
     continuation_candles: bool,
 
-    uuid: String,
+    uuid: Uuid,
     filename: String,
 
     tags: Vec<String>,

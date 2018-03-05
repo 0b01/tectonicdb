@@ -20,7 +20,6 @@ impl fmt::Display for GStorageOp {
     }
 }
 
-
 //------------------------------------------------
 
 #[derive(Serialize)]
