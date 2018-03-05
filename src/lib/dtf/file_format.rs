@@ -497,6 +497,16 @@ pub fn decode(fname: &str, num_rows: Option<u32>) -> Result<Vec<Update>, io::Err
     Ok(v)
 }
 
+pub fn decode_buffer(mut buf: &mut Read) -> Vec<Update> {
+    let mut v = vec![];
+    let mut res = read_one_batch(&mut buf);
+    while let Ok(ups) = res {
+        v.extend(ups);
+        res = read_one_batch(&mut buf);
+    }
+    v
+}
+
 pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
 
     let (ups, new_max_ts, cur_len) = {

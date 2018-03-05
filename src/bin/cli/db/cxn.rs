@@ -36,12 +36,7 @@ impl CxnStream {
             let _ = self.stream.read_exact(&mut buf);
 
             let mut buf = buf.as_slice();
-            let mut v = vec![];
-            let mut res = dtf::read_one_batch(&mut buf);
-            while let Ok(ups) = res {
-                v.extend(ups);
-                res = dtf::read_one_batch(&mut buf);
-            }
+            let v = dtf::decode_buffer(&mut buf);
             Ok(format!("[{}]\n", dtf::update_vec_to_json(&v)))
 
         } else {

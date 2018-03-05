@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 use byteorder::{BigEndian, WriteBytesExt};
 
+#[repr(C)]
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Update {
     pub ts: u64,
