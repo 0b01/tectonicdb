@@ -212,7 +212,7 @@ pub fn is_dtf(fname: &str) -> Result<bool, io::Error> {
     read_magic_value(&mut rdr)
 }
 
-pub fn read_magic_value<T: Read + Seek>(rdr: &mut BufReader<T>) -> Result<bool, io::Error> {
+pub fn read_magic_value<T: BufRead + Seek>(rdr: &mut T) -> Result<bool, io::Error> {
     // magic value
     rdr.seek(SeekFrom::Start(0))?;
     let mut buf = vec![0u8; 5];
@@ -230,7 +230,7 @@ fn file_reader(fname: &str) -> Result<BufReader<File>, io::Error> {
     Ok(rdr)
 }
 
-fn read_symbol<T: Read + Seek>(rdr: &mut BufReader<T>) -> Result<String, io::Error> {
+fn read_symbol<T: BufRead + Seek>(rdr: &mut T) -> Result<String, io::Error> {
     rdr.seek(SeekFrom::Start(SYMBOL_OFFSET))?;
     let mut buffer = [0; SYMBOL_LEN];
     rdr.read_exact(&mut buffer)?;
@@ -238,16 +238,16 @@ fn read_symbol<T: Read + Seek>(rdr: &mut BufReader<T>) -> Result<String, io::Err
     Ok(ret)
 }
 
-fn read_len<T: Read + Seek>(rdr: &mut BufReader<T>) -> Result<u64, io::Error> {
+fn read_len<T: BufRead + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
     rdr.seek(SeekFrom::Start(LEN_OFFSET))?;
     rdr.read_u64::<BigEndian>()
 }
 
-fn read_min_ts<T: Read + Seek>(mut rdr: &mut BufReader<T>) -> Result<u64, io::Error> {
-    Ok(read_first(&mut rdr)?.ts)
+fn read_min_ts<T: BufRead + Seek>(mut rdr: &mut T) -> Result<u64, io::Error> {
+    Ok(read_first(rdr)?.ts)
 }
 
-fn read_max_ts<T: Read + Seek>(rdr: &mut BufReader<File>) -> Result<u64, io::Error> {
+fn read_max_ts<T: BufRead + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
     rdr.seek(SeekFrom::Start(MAX_TS_OFFSET))?;
     rdr.read_u64::<BigEndian>()
 }
@@ -272,7 +272,7 @@ pub fn get_range_in_file(fname: &str, min_ts: u64, max_ts: u64) -> Result<Vec<Up
 /// reads a vector of Update over some time interval (min_ts, max_ts) from file.
 /// :param min_ts is time in millisecond
 /// :param max_ts is time in millisecond
-fn range<T: Read + Seek>(rdr: &mut BufReader<T>, min_ts: u64, max_ts: u64) -> Result<Vec<Update>, io::Error> {
+pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result<Vec<Update>, io::Error> {
     // convert ts to match the dtf file format (in ms)
 
     // can't go back in time
@@ -424,12 +424,12 @@ fn read_one_update(rdr: &mut dyn Read, meta: &BatchMetadata) -> Result<Update, i
     })
 }
 
-fn read_first_batch<T: Read + Seek>(mut rdr: &mut BufReader<T>) -> Result<Vec<Update>, io::Error> {
+fn read_first_batch<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error> {
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
     read_one_batch(&mut rdr)
 }
 
-fn read_first<T: Read + Seek>(mut rdr: &mut BufReader<T>) -> Result<Update, io::Error> {
+fn read_first<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Update, io::Error> {
     let batch = read_first_batch(&mut rdr)?;
     Ok(batch[0].clone())
 }
@@ -443,7 +443,7 @@ pub fn read_meta(fname: &str) -> Result<Metadata, io::Error> {
     let mut rdr = file_reader(fname)?;
     let symbol = read_symbol(&mut rdr)?;
     let nums = read_len(&mut rdr)?;
-    let max_ts = read_max_ts::<File>(&mut rdr)?;
+    let max_ts = read_max_ts(&mut rdr)?;
     let min_ts = if nums > 0 {
         read_min_ts(&mut rdr)?
     } else {
@@ -509,7 +509,7 @@ pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
         let mut rdr = file_reader(fname)?;
         let _symbol = read_symbol(&mut rdr)?;
 
-        let old_max_ts = read_max_ts::<File>(&mut rdr)?;
+        let old_max_ts = read_max_ts(&mut rdr)?;
 
         let ups: Vec<Update> = ups.into_iter()
             .filter(|up| up.ts > old_max_ts)
