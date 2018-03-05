@@ -28,11 +28,6 @@ name = "tectonic-cli"
 path = "src/bin/cli/main.rs"
 
 [[bin]]
-name = "gen_train_data"
-path = "src/bin/gen_train_data/main.rs"
-publish = false
-
-[[bin]]
 name = "dtfcat"
 path = "src/bin/dtfcat/main.rs"
 publish = true

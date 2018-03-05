@@ -50,14 +50,14 @@ jobs:
           paths:
             - ~/.cargo
       - restore_cache:
-          key: v1-tectonicdb-test-{{ arch }}
+          key: v1-tectonicdb-test-{{ arch }}-{{ checksum "Cargo.lock" }}
           paths:
             - ~/project/target/
       - run: |
           ~/.cargo/bin/rustup default nightly-2018-01-30 && \
           ~/.cargo/bin/cargo test --no-fail-fast -- --nocapture
       - save_cache:
-          key: v1-tectonicdb-test-{{ arch }}
+          key: v1-tectonicdb-test-{{ arch }}-{{ checksum "Cargo.lock" }}
           paths:
             - ~/project/target/
 workflows:

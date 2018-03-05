@@ -109,12 +109,11 @@ impl GStorageFile {
     }
 }
 
-pub fn upload(
-    fname: &str, conf: &GStorageConfig
-) -> Result<GStorageMetadata<impl FileMetadata>, Box<error::Error>> {
-    let mut f = GStorageFile::new(conf, fname)?;
+pub fn upload<'a>(
+    f: &'a mut GStorageFile, filename: &str
+) -> Result<GStorageMetadata<'a, impl FileMetadata>, Box<error::Error>> {
     let op_meta = f.upload()?;
-    let file_meta = file_metadata::from_fname(fname)?;
+    let file_meta = file_metadata::from_fname(filename)?;
     Ok(GStorageMetadata::new(op_meta, file_meta))
 }
 

@@ -243,7 +243,7 @@ fn read_len<T: BufRead + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
     rdr.read_u64::<BigEndian>()
 }
 
-fn read_min_ts<T: BufRead + Seek>(mut rdr: &mut T) -> Result<u64, io::Error> {
+fn read_min_ts<T: BufRead + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
     Ok(read_first(rdr)?.ts)
 }
 

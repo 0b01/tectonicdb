@@ -13,7 +13,7 @@ use libtectonic::dtf::is_dtf;
 use std::error;
 use std::io;
 
-use plugins::gstorage::upload;
+use plugins::gstorage::upload::{self, GStorageFile};
 
 pub fn run(global: Arc<RwLock<SharedState>>) {
     let global_copy = global.clone();
@@ -70,8 +70,15 @@ pub fn run(global: Arc<RwLock<SharedState>>) {
                                 }
                             };
 
-                            let meta = upload::upload(fname, &conf);
-                            match meta {
+                            let mut f = match GStorageFile::new(&conf, fname) {
+                                Ok(f) => f,
+                                Err(e) => {
+                                    error!("fname: {}, {:?}", fname, e);
+                                    continue;
+                                },
+                            };
+
+                            match upload::upload(&mut f, fname) {
                                 Ok(metadata) => {
                                     if let Some(ref dcb_url) = conf.dcb_url {
                                         match upload::post_to_dcb(&dcb_url, &metadata) {
