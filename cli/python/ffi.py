@@ -1,5 +1,14 @@
 import ctypes
 from ctypes import *
+import os
+from os import path
+
+import numpy as np
+import pandas as pd
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 
 def __csv_to_df(raw_data):
@@ -18,8 +27,9 @@ def __csv_to_df(raw_data):
     df.ts = df.ts.astype(int)
     return df
 
-
-lib = CDLL("target/debug/liblibtectonic.so")
+cwd = path.dirname(path.realpath(__file__))
+lib_path = path.normpath(path.join(cwd, '../../target/debug/liblibtectonic.so'))
+lib = CDLL(lib_path)
 
 class Update(Structure):
     """
