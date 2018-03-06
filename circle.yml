@@ -1,0 +1,115 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: docker:17.12.0-ce
+    steps:
+      - run: apk update
+      - run: apk upgrade
+      - run: apk add --no-cache bash git openssh
+      - checkout
+      - setup_remote_docker
+      - run: docker build -t fatwhaleltd/tectonicdb .
+      - run: docker create --name tectonicdb fatwhaleltd/tectonicdb
+      - run: docker cp tectonicdb:/usr/local/bin/tectonic-server /tmp/tectonic-server
+      - run: docker cp tectonicdb:/usr/local/bin/dtfcat /tmp/dtfcat
+      - store_artifacts:
+          path: /tmp/tectonic-server
+          destination: tectonic-server
+      - store_artifacts:
+          path: /tmp/dtfcat
+          destination: dtfcat
+      - run: |
+          docker login --username=$DOCKER_USER --password=$DOCKER_PASSWORD
+          docker push fatwhaleltd/tectonicdb:latest
+      - run:
+          shell: /bin/bash
+          command: |
+            if [[ $CIRCLE_TAG =~ ^prod-.*$ ]]; then \
+            docker tag fatwhaleltd/tectonicdb fatwhaleltd/tectonicdb:prod && \
+            docker push fatwhaleltd/tectonicdb:prod; fi
+
+  build_lib:
+    docker:
+      - image: ubuntu:18.04
+    steps:
+      - checkout
+      - run: apt-get update
+      - run: apt-get install curl file build-essential pkg-config libssl-dev -y
+      - restore_cache:
+          key: v2-cargo-nightly-2017-03-16-{{ arch }}
+          paths:
+            - ~/.cargo
+      - run: |
+          test -f ~/.cargo/bin/cargo || (curl https://sh.rustup.rs -s > /home/install.sh &&
+          chmod +x /home/install.sh &&
+          sh /home/install.sh -y --verbose --default-toolchain nightly-2018-03-16)
+      - save_cache:
+          key: v2-cargo-nightly-2017-03-16-{{ arch }}
+          paths:
+            - ~/.cargo
+      - restore_cache:
+          key: v1-tectonicdb-lib-{{ arch }}-{{ checksum "Cargo.lock" }}
+          paths:
+            - ~/project/target/
+      - run: |
+          ~/.cargo/bin/rustup default nightly-2018-03-16 && \
+          ~/.cargo/bin/cargo build --lib --release
+      - save_cache:
+          key: v1-tectonicdb-lib-{{ arch }}-{{ checksum "Cargo.lock" }}
+          paths:
+            - ~/project/target/
+      - store_artifacts:
+          path: ~/project/target/release/liblibtectonic.so
+          destination: libtectonic.so
+
+  test:
+    docker:
+      - image: ubuntu:18.04
+    steps:
+      - checkout
+      - run: apt-get update
+      - run: apt-get install curl file build-essential pkg-config libssl-dev -y
+      - restore_cache:
+          key: v2-cargo-nightly-2017-03-16-{{ arch }}
+          paths:
+            - ~/.cargo
+      - run: |
+          test -f ~/.cargo/bin/cargo || (curl https://sh.rustup.rs -s > /home/install.sh &&
+          chmod +x /home/install.sh &&
+          sh /home/install.sh -y --verbose --default-toolchain nightly-2018-03-16)
+      - save_cache:
+          key: v2-cargo-nightly-2017-03-16-{{ arch }}
+          paths:
+            - ~/.cargo
+      - restore_cache:
+          key: v1-tectonicdb-test-{{ arch }}-{{ checksum "Cargo.lock" }}
+          paths:
+            - ~/project/target/
+      - run: |
+          ~/.cargo/bin/rustup default nightly-2018-03-16 && \
+          ~/.cargo/bin/cargo test --no-fail-fast -- --nocapture
+      - save_cache:
+          key: v1-tectonicdb-test-{{ arch }}-{{ checksum "Cargo.lock" }}
+          paths:
+            - ~/project/target/
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - test
+      - build:
+          filters:
+            branches:
+              only:
+                - master
+            tags:
+              only:
+                - /prod-.*/
+      - build_lib:
+          filters:
+            branches:
+              only:
+                - master
