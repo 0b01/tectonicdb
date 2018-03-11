@@ -8,4 +8,5 @@
   * [Python: Trade bot](examples/example-program.md)
   * [Python: Monitor](examples/monitor-program.md)
   * [Python: Plotting](examples/example-plot.md)
-  * [Javascript: Ingestor](examples/js.md)
+  * [Javascript: Cli example](examples/js.md)
+  * [Rust: Cli example](examples/example-rust-db.md)
