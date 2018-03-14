@@ -1,16 +1,13 @@
 use std::collections::{BTreeMap, HashSet};
+use super::candle::Candle;
+use super::{Time, Price, Volume, Scale};
 use dtf::Update;
 use utils::fill_digits;
-
-type Time = u32;
-type Price = f32;
-type Volume = f32;
-type Scale = u16;
 
 #[derive(Clone, Debug, PartialEq)]
 /// utilities for rebinning candlesticks
 pub struct Candles {
-    v: BTreeMap<Time, Candle>,
+    pub v: BTreeMap<Time, Candle>,
     scale: Scale,
 }
 
@@ -290,34 +287,6 @@ impl Candles {
     }
 }
 
-#[derive(PartialOrd, PartialEq, Clone, Debug)]
-/// a candlestick
-pub struct Candle {
-    pub open: Price,
-    pub high: Price,
-    pub low: Price,
-    pub close: Price,
-    pub volume: Volume,
-}
-
-impl Eq for Candle {}
-
-impl Candle {
-    /// convert to csv
-    /// Format:
-    ///     O,H,L,C,V
-    fn to_csv(&self) -> String {
-        format!(
-            "{},{},{},{},{}",
-            self.open,
-            self.high,
-            self.low,
-            self.close,
-            self.volume
-        )
-    }
-}
-
 /// Check a list of sequence
 ///
 /// Returns maximum continuous sequence
@@ -381,6 +350,8 @@ fn ranges(lst: &Vec<Time>) -> Vec<(Time, Time)> {
 
     ret
 }
+
+
 
 #[cfg(test)]
 mod tests {
