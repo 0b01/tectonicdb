@@ -78,9 +78,9 @@ impl fmt::Display for Metadata {
             self.symbol,
             self.nums,
             self.max_ts,
-            epoch_to_human(self.max_ts),
+            epoch_to_human(self.max_ts / 1000),
             self.min_ts,
-            epoch_to_human(self.min_ts)
+            epoch_to_human(self.min_ts / 1000)
         )
     }
 }
