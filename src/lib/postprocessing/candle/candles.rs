@@ -179,10 +179,9 @@ impl Candles {
 
 
     /// create new Candles object
-    pub fn new(v: BTreeMap<Time, Candle>, scale: u16) -> Candles {
+    fn new(v: BTreeMap<Time, Candle>, scale: u16) -> Candles {
         let ret = Candles { v, scale };
 
-        // assert!(self._test_epochs_must_be_sequential());
         ret
     }
 
@@ -278,7 +277,7 @@ impl Candles {
 
         // sanity check!
         assert_eq!(res.len(), self.v.len() / (new_scale as usize));
-        assert!(self._test_epochs_must_be_sequential());
+        debug_assert!(self._test_epochs_must_be_sequential());
 
         Some(Candles {
             v: res,

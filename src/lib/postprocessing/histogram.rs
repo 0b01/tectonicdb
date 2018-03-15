@@ -271,17 +271,17 @@ impl Stats for [f64] {
     }
 
     fn min(&self) -> f64 {
-        assert!(!self.is_empty());
+        debug_assert!(!self.is_empty());
         self.iter().fold(self[0], |p, q| p.min(*q))
     }
 
     fn max(&self) -> f64 {
-        assert!(!self.is_empty());
+        debug_assert!(!self.is_empty());
         self.iter().fold(self[0], |p, q| p.max(*q))
     }
 
     fn mean(&self) -> f64 {
-        assert!(!self.is_empty());
+        debug_assert!(!self.is_empty());
         self.sum() / (self.len() as f64)
     }
 
@@ -357,14 +357,14 @@ impl Stats for [f64] {
 // Helper function: extract a value representing the `pct` percentile of a sorted sample-set, using
 // linear interpolation. If samples are not sorted, return nonsensical value.
 fn percentile_of_sorted(sorted_samples: &[f64], pct: f64) -> f64 {
-    assert!(!sorted_samples.is_empty());
+    debug_assert!(!sorted_samples.is_empty());
     if sorted_samples.len() == 1 {
         return sorted_samples[0];
     }
     let zero: f64 = 0.0;
-    assert!(zero <= pct);
+    debug_assert!(zero <= pct);
     let hundred = 100f64;
-    assert!(pct <= hundred);
+    debug_assert!(pct <= hundred);
     if pct == hundred {
         return sorted_samples[sorted_samples.len() - 1];
     }

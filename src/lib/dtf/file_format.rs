@@ -122,7 +122,10 @@ fn write_magic_value(wtr: &mut Write) -> Result<usize, io::Error> {
 }
 
 fn write_symbol(wtr: &mut Write, symbol: &str) -> Result<usize, io::Error> {
-    assert!(symbol.len() <= SYMBOL_LEN);
+    if symbol.len() > SYMBOL_LEN {
+        return Err(io::Error::new(io::ErrorKind::InvalidData,
+            format!("Symbol length is longer than {}", SYMBOL_LEN)));
+    }
     let padded_symbol = format!("{:width$}", symbol, width = SYMBOL_LEN); // right pad w/ space
     assert_eq!(padded_symbol.len(), SYMBOL_LEN);
     wtr.write(padded_symbol.as_bytes())
