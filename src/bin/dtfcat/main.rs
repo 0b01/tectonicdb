@@ -70,9 +70,9 @@ Examples:
         )
 
         .arg(
-            Arg::with_name("metadata")
+            Arg::with_name("meta")
                 .short("m")
-                .long("metadata")
+                .long("show_metadata")
                 .help("read only the metadata"),
         )
         .arg(Arg::with_name("csv").short("c").long("csv").help(
@@ -113,16 +113,16 @@ Examples:
     let granularity = matches.value_of("minutes").unwrap_or("1");
 
     // misc
-    let metadata = matches.is_present("metadata");
+    let print_metadata = matches.is_present("meta");
     let csv = matches.is_present("csv");
 
-    if input == "" && (symbol == "" || min == "" || max == "") && (folder == "" && !metadata ){
+    if input == "" && (symbol == "" || min == "" || max == "") && (folder == "" && !print_metadata ){
         println!("Either supply a single file or construct a range query!");
         return;
     }
 
     let txt = if input != "" {
-        if metadata {
+        if print_metadata {
             format!("{}", dtf::read_meta(input).unwrap())
         } else {
             let ups = dtf::decode(input, None).unwrap();
@@ -144,7 +144,7 @@ Examples:
 
         }
     } else {
-        if metadata {
+        if print_metadata {
             format!("total updates in folder: {}", total_folder_updates_len(folder).unwrap())
         } else {
             let ups = scan_files_for_range(folder, symbol, min.parse().unwrap(), max.parse().unwrap())
