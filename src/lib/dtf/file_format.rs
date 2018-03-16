@@ -71,9 +71,9 @@ impl fmt::Display for Metadata {
   "symbol": "{}",
   "nums": {},
   "max_ts": {},
-  "max_ts_human": {},
+  "max_ts_human": "{}",
   "min_ts": {},
-  "min_ts_human": {}
+  "min_ts_human": "{}"
 }}"#,
             self.symbol,
             self.nums,
