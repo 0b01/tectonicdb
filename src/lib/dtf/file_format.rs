@@ -442,8 +442,7 @@ pub fn get_size(fname: &str) -> Result<u64, io::Error> {
     read_len(&mut rdr)
 }
 
-pub fn read_meta(fname: &str) -> Result<Metadata, io::Error> {
-    let mut rdr = file_reader(fname)?;
+pub fn read_meta_from_buf<T:BufRead + Seek>(mut rdr: &mut T) -> Result<Metadata, io::Error> {
     let symbol = read_symbol(&mut rdr)?;
     let nums = read_len(&mut rdr)?;
     let max_ts = read_max_ts(&mut rdr)?;
@@ -459,6 +458,11 @@ pub fn read_meta(fname: &str) -> Result<Metadata, io::Error> {
         max_ts,
         min_ts,
     })
+}
+
+pub fn read_meta(fname: &str) -> Result<Metadata, io::Error> {
+    let mut rdr = file_reader(fname)?;
+    read_meta_from_buf(&mut rdr)
 }
 
 /// decode main section
