@@ -19,11 +19,11 @@ pub struct CandleStickGraph {
 
 impl CandleStickGraph {
     pub fn new(height: u32, data: Candles) -> Self {
-        let global_min = data.v.values()
+        let global_min = data.get_candles().iter()
             .map(|candle| candle.low)
             .min_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap();
-        let global_max = data.v.values()
+        let global_max = data.get_candles().iter()
             .map(|candle| candle.high)
             .max_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap();
@@ -49,7 +49,7 @@ impl CandleStickGraph {
                 ret += "           "
             }
 
-            for c in self.data.v.values() {
+            for c in self.data.get_candles().iter() {
                 ret += &self.render_candle_at(c, y);
             }
             ret += "\n"

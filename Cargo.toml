@@ -28,6 +28,11 @@ name = "tectonic-cli"
 path = "src/bin/cli/main.rs"
 
 [[bin]]
+name = "dtfsplit"
+path = "src/bin/dtfsplit/main.rs"
+publish = true
+
+[[bin]]
 name = "dtfcat"
 path = "src/bin/dtfcat/main.rs"
 publish = true
