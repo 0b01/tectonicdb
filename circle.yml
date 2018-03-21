@@ -14,12 +14,20 @@ jobs:
       - run: docker create --name tectonicdb fatwhaleltd/tectonicdb
       - run: docker cp tectonicdb:/usr/local/bin/tectonic-server /tmp/tectonic-server
       - run: docker cp tectonicdb:/usr/local/bin/dtfcat /tmp/dtfcat
+      - run: docker cp tectonicdb:/usr/local/bin/dtfsplit /tmp/dtfsplit
+      - run: docker cp tectonicdb:/usr/local/bin/dtfconcat /tmp/dtfconcat
       - store_artifacts:
           path: /tmp/tectonic-server
           destination: tectonic-server
       - store_artifacts:
           path: /tmp/dtfcat
           destination: dtfcat
+      - store_artifacts:
+          path: /tmp/dtfsplit
+          destination: dtfsplit
+      - store_artifacts:
+          path: /tmp/dtfconcat
+          destination: dtfconcat
       - run: |
           docker login --username=$DOCKER_USER --password=$DOCKER_PASSWORD
           docker push fatwhaleltd/tectonicdb:latest
