@@ -705,7 +705,7 @@ mod tests {
   "max_ts": 1,
   "max_ts_human": "1970-01-01 00:00:00 UTC",
   "min_ts": 1,
-  "min_ts_human": "1970-01-01 00:00:00 UTC",
+  "min_ts_human": "1970-01-01 00:00:00 UTC"
 }"#
         );
     }
