@@ -476,7 +476,7 @@ impl DTFBufReader {
         let mut rdr = file_reader(fname).expect("Cannot open file");
         rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
         DTFBufReader {
-            rdr, 
+            rdr,
             batch_size,
         }
     }
@@ -703,9 +703,9 @@ mod tests {
   "symbol": "TEST",
   "nums": 1,
   "max_ts": 1,
-  "max_ts_human": 1970-01-01 00:00:01 UTC,
+  "max_ts_human": "1970-01-01 00:00:00 UTC",
   "min_ts": 1,
-  "min_ts_human": 1970-01-01 00:00:01 UTC
+  "min_ts_human": "1970-01-01 00:00:00 UTC"
 }"#
         );
     }
