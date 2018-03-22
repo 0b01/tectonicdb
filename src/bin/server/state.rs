@@ -107,6 +107,15 @@ impl<'a> Store<'a> {
         vecs.1
     }
 
+    pub fn count_in_mem(&self) -> u64 {
+        let rdr = self.global.read().unwrap();
+        let name: &str = self.name.borrow();
+        let vecs = rdr.vec_store.get(name).expect(
+            "KEY IS NOT IN HASHMAP",
+        );
+        vecs.0.len() as u64
+    }
+
     /// write items stored in memory into file
     /// If file exists, use append which only appends a filtered set of updates whose timestamp is larger than the old timestamp
     /// If file doesn't exists, simply encode.
@@ -422,6 +431,11 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     /// return the count of the current store
     pub fn count(&mut self) -> u64 {
         current_store!(self, count)
+    }
+
+    /// return current store count in mem
+    pub fn count_in_mem(&mut self) -> u64 {
+        current_store!(self, count_in_mem)
     }
 
     /// Returns the total count

@@ -199,7 +199,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
             ReturnType::string("1")
         }
         Count(ReqCount::Count(_), Loc::Fs) => ReturnType::string(format!("{}", state.count())),
-        Count(ReqCount::Count(_), Loc::Mem) => ReturnType::string(format!("{}", state.count())), // TODO: implement count in mem
+        Count(ReqCount::Count(_), Loc::Mem) => ReturnType::string(format!("{}", state.count_in_mem())),
         Count(ReqCount::All, Loc::Fs) => ReturnType::string(format!("{}", state.countall())),
         Count(ReqCount::All, Loc::Mem) => ReturnType::string(format!("{}", state.countall_in_mem())),
         Clear(ReqCount::Count(_)) => {
