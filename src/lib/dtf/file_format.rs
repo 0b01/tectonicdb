@@ -476,7 +476,7 @@ impl DTFBufReader {
         let mut rdr = file_reader(fname).expect("Cannot open file");
         rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
         DTFBufReader {
-            rdr, 
+            rdr,
             batch_size,
         }
     }

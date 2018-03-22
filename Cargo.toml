@@ -37,6 +37,11 @@ name = "dtfcat"
 path = "src/bin/dtfcat/main.rs"
 publish = true
 
+[[bin]]
+name = "dtfconcat"
+path = "src/bin/dtfconcat/main.rs"
+publish = true
+
 [dependencies]
 bitflags = "1.0.0"
 byteorder = "1.1.0"
