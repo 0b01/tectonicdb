@@ -385,13 +385,18 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         current_store!(self, add, up);
     }
 
+    pub fn set_autoflush(&mut self, is_autoflush: bool) {
+        let mut global = self.global.write().unwrap();
+        global.settings.autoflush = is_autoflush;
+    }
+
     pub fn set_bulkadding(&mut self, is_bulkadding: bool) {
         let mut global = self.global.write().unwrap();
         global.is_bulkadding = is_bulkadding;
     }
 
     pub fn get_bulkadding(&mut self) -> bool {
-        let mut global = self.global.read().unwrap();
+        let global = self.global.read().unwrap();
         global.is_bulkadding
     }
 

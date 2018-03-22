@@ -63,6 +63,7 @@ enum Command<'a> {
     Count(ReqCount, Loc),
     Clear(ReqCount),
     Flush(ReqCount),
+    AutoFlush(bool),
     Insert(Option<Update>, Option<DbName<'a>>),
     Create(DbName<'a>),
     Subscribe(DbName<'a>),
@@ -113,6 +114,8 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         "GET ALL" => Get(ReqCount::All, GetFormat::Dtf, None, Loc::Mem),
         "FLUSH" => Flush(ReqCount::Count(1)),
         "FLUSH ALL" => Flush(ReqCount::All),
+        "AUTOFLUSH ON" => AutoFlush(true),
+        "AUTOFLUSH Off" => AutoFlush(true),
         _ => {
             // is in bulkadd
             if state.get_bulkadding() {
@@ -216,6 +219,11 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         }
         Flush(ReqCount::All) => {
             state.flushall();
+            ReturnType::string("1")
+        }
+
+        AutoFlush(is_autoflush) =>  {
+            state.set_autoflush(is_autoflush);
             ReturnType::string("1")
         }
 
