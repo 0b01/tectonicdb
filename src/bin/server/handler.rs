@@ -115,7 +115,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         "FLUSH" => Flush(ReqCount::Count(1)),
         "FLUSH ALL" => Flush(ReqCount::All),
         "AUTOFLUSH ON" => AutoFlush(true),
-        "AUTOFLUSH Off" => AutoFlush(true),
+        "AUTOFLUSH Off" => AutoFlush(false),
         _ => {
             // is in bulkadd
             if state.get_bulkadding() {
