@@ -74,7 +74,7 @@ impl fmt::Display for Metadata {
   "max_ts": {},
   "max_ts_human": "{}",
   "min_ts": {},
-  "min_ts_human": "{}"
+  "min_ts_human": "{}",
 }}"#,
             self.symbol,
             self.nums,
@@ -705,7 +705,7 @@ mod tests {
   "max_ts": 1,
   "max_ts_human": "1970-01-01 00:00:00 UTC",
   "min_ts": 1,
-  "min_ts_human": "1970-01-01 00:00:00 UTC"
+  "min_ts_human": "1970-01-01 00:00:00 UTC",
 }"#
         );
     }
@@ -733,7 +733,7 @@ mod tests {
         let fname = "test.dtf";
         {
             // let wtr = file_writer(fname, true);
-            let ups = (1..1000)
+            let ups = (1..50)
                 .map(|i| {
                     Update {
                         ts: i * 1000 as u64,
