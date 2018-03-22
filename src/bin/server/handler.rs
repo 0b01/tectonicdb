@@ -115,7 +115,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         "FLUSH ALL" => Flush(ReqCount::All),
         _ => {
             // is in bulkadd
-            if state.is_adding {
+            if state.get_bulkadding() {
                 let parsed = parser::parse_line(&line);
                 let current_db = state.bulkadd_db.clone();
                 let dbname = current_db.unwrap();
@@ -185,16 +185,16 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         Info => ReturnType::string(state.info()),
         Perf => ReturnType::string(state.perf()),
         BulkAdd => {
-            state.is_adding = true;
+            state.set_bulkadding(true);
             ReturnType::string("")
         }
         BulkAddInto(dbname) => {
             state.bulkadd_db = Some(dbname.into());
-            state.is_adding = true;
+            state.set_bulkadding(true);
             ReturnType::string("")
         }
         BulkAddEnd => {
-            state.is_adding = false;
+            state.set_bulkadding(false);
             state.bulkadd_db = None;
             ReturnType::string("1")
         }

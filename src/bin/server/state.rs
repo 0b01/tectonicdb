@@ -56,7 +56,7 @@ pub struct Store<'a> {
 impl<'a> Store<'a> {
     /// push a new `update` into the vec
     pub fn add(&mut self, new_vec: Update) {
-        let is_autoflush = {
+        let (is_autoflush, is_bulkadding) = {
             let mut wtr = self.global.write().unwrap();
 
             // send to insertion firehose
@@ -66,6 +66,7 @@ impl<'a> Store<'a> {
             }
 
             let is_autoflush = wtr.settings.autoflush;
+            let is_bulkadding = wtr.is_bulkadding;
             let flush_interval = wtr.settings.flush_interval;
             let _folder = wtr.settings.dtf_folder.to_owned();
             let name: &str = self.name.borrow();
@@ -89,10 +90,10 @@ impl<'a> Store<'a> {
                 );
             }
 
-            is_autoflush
+            (is_autoflush, is_bulkadding)
         };
 
-        if is_autoflush {
+        if is_autoflush && !is_bulkadding {
             self.flush();
         }
     }
@@ -209,11 +210,8 @@ impl<'a> Store<'a> {
 
 /// Each client gets its own ThreadState
 pub struct ThreadState<'thr, 'store> {
-    /// Is inside a BULKADD operation?
-    pub is_adding: bool,
     /// Current selected db using `BULKADD INTO [db]`
     pub bulkadd_db: Option<String>,
-
     /// Is client subscribe?
     pub is_subscribed: bool,
     /// current subscribed db
@@ -378,6 +376,15 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         current_store!(self, add, up);
     }
 
+    pub fn set_bulkadding(&mut self, is_bulkadding: bool) {
+        let mut global = self.global.write().unwrap();
+        global.is_bulkadding = is_bulkadding;
+    }
+
+    pub fn get_bulkadding(&mut self) -> bool {
+        let mut global = self.global.read().unwrap();
+        global.is_bulkadding
+    }
 
     /// Create a new store
     pub fn create(&mut self, store_name: &str) {
@@ -602,7 +609,6 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         let dtf_folder: &str = &global.read().unwrap().settings.dtf_folder;
         let state = ThreadState {
             current_store_name: "default".into(),
-            is_adding: false,
             bulkadd_db: None,
             is_subscribed: false,
             subscribed_db: None,
@@ -656,6 +662,8 @@ pub type History = HashMap<String, CircularQueue<(SystemTime, u64)>>;
 #[derive(Debug)]
 pub struct SharedState {
     pub n_cxns: u16,
+    /// Is inside a BULKADD operation?
+    pub is_bulkadding: bool,
     pub settings: Settings,
     pub vec_store: HashMap<String, VecStore>,
     pub history: History,
@@ -669,6 +677,7 @@ impl SharedState {
         let subs = Arc::new(Mutex::new(Subscriptions::new()));
         SharedState {
             n_cxns: 0,
+            is_bulkadding: false,
             settings,
             vec_store: hashmap,
             history: HashMap::new(),
