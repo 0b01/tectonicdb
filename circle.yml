@@ -46,15 +46,15 @@ jobs:
       - run: apt-get update
       - run: apt-get install curl file build-essential pkg-config libssl-dev -y
       - restore_cache:
-          key: v2-cargo-nightly-2017-03-16-{{ arch }}
+          key: v2-cargo-nightly-2017-03-26-{{ arch }}
           paths:
             - ~/.cargo
       - run: |
           test -f ~/.cargo/bin/cargo || (curl https://sh.rustup.rs -s > /home/install.sh &&
           chmod +x /home/install.sh &&
-          sh /home/install.sh -y --verbose --default-toolchain nightly-2018-03-16)
+          sh /home/install.sh -y --verbose --default-toolchain nightly-2018-03-26)
       - save_cache:
-          key: v2-cargo-nightly-2017-03-16-{{ arch }}
+          key: v2-cargo-nightly-2017-03-26-{{ arch }}
           paths:
             - ~/.cargo
       - restore_cache:
@@ -62,7 +62,7 @@ jobs:
           paths:
             - ~/project/target/
       - run: |
-          ~/.cargo/bin/rustup default nightly-2018-03-16 && \
+          ~/.cargo/bin/rustup default nightly-2018-03-26 && \
           ~/.cargo/bin/cargo build --lib --release
       - save_cache:
           key: v1-tectonicdb-lib-{{ arch }}-{{ checksum "Cargo.lock" }}
@@ -80,15 +80,15 @@ jobs:
       - run: apt-get update
       - run: apt-get install curl file build-essential pkg-config libssl-dev -y
       - restore_cache:
-          key: v2-cargo-nightly-2017-03-16-{{ arch }}
+          key: v2-cargo-nightly-2017-03-26-{{ arch }}
           paths:
             - ~/.cargo
       - run: |
           test -f ~/.cargo/bin/cargo || (curl https://sh.rustup.rs -s > /home/install.sh &&
           chmod +x /home/install.sh &&
-          sh /home/install.sh -y --verbose --default-toolchain nightly-2018-03-16)
+          sh /home/install.sh -y --verbose --default-toolchain nightly-2018-03-26)
       - save_cache:
-          key: v2-cargo-nightly-2017-03-16-{{ arch }}
+          key: v2-cargo-nightly-2017-03-26-{{ arch }}
           paths:
             - ~/.cargo
       - restore_cache:
@@ -96,8 +96,8 @@ jobs:
           paths:
             - ~/project/target/
       - run: |
-          ~/.cargo/bin/rustup default nightly-2018-03-16 && \
-          ~/.cargo/bin/cargo test --no-fail-fast -- --nocapture
+          ~/.cargo/bin/rustup default nightly-2018-03-26 && \
+          ~/.cargo/bin/cargo test --no-fail-fast
       - save_cache:
           key: v1-tectonicdb-test-{{ arch }}-{{ checksum "Cargo.lock" }}
           paths:
