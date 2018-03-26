@@ -18,6 +18,15 @@ pub struct GStorageConfig {
     pub remove: bool,
     /// data collection backend - if you don't know just ignore
     pub dcb_url: Option<String>,
+    /// tags to insert in data uploaded to the DCB
+    pub dcb_metadata_tags: Vec<String>,
+}
+
+fn parse_dcb_metadata_tags() -> Vec<String> {
+    key_or_default("DCB_METADATA_TAGS", "")
+        .split(',')
+        .map(String::from)
+        .collect()
 }
 
 impl GStorageConfig {
@@ -31,6 +40,23 @@ impl GStorageConfig {
             interval: key_or_default_parse("GCLOUD_UPLOAD_INTERVAL", 3600)?,
             remove: key_or_default_parse("GCLOUD_REMOVE_ON_UPLOAD", true)?,
             dcb_url: key_or_none("DCB_URL"),
+            dcb_metadata_tags: parse_dcb_metadata_tags(),
         })
     }
+}
+
+#[test]
+fn dcb_metadata_tags_parsing() {
+    let sample_env = "foo,bar,key:value,test2";
+    let parsed: Vec<String> = sample_env
+        .split(',')
+        .map(String::from)
+        .collect();
+
+    let expected: Vec<String> = ["foo", "bar", "key:value", "test2"]
+        .into_iter()
+        .map(|s| String::from(*s))
+        .collect();
+
+    assert_eq!(parsed, expected);
 }

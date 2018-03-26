@@ -75,7 +75,8 @@ To config the Google Cloud Storage and Data Collection Backend integration, the 
 | `GCLOUD_FOLDER`               | ``           | Name of the folder inside of the bucket into which the DTF files are stored                                                          |
 | `GCLOUD_UPLOAD_INTERVAL`      | 3600         | Interval in seconds between uploads of DTF files to Google Cloud                                                                     |
 | `GCLOUD_REMOVE_ON_UPLOAD`     | true         | If true, the uploaded DTF files are deleted after upload                                                                             |
-| `DCB_URL`                     | ``           | The URL of the Data Collection Backend's batch ingestion endpoint (leave unset if you don't know what the DCB is or aren't using it) |
+| `DCB_URL`                     | *unset*      | The URL of the Data Collection Backend's batch ingestion endpoint (leave unset if you don't know what the DCB is or aren't using it) |
+| `DCB_METADATA_TAGS`           | `""`         | An array of tags that will be included in metadata uploaded to the DCB
 | `TECTONICDB_HOST`             | 0.0.0.0      | The host to which the database will bind
 | `TECTONICDB_PORT`             | 9001         | The port that the database will listen on
 | `TECTONICDB_DTF_FOLDER`       | db           | Name of the directory in which DTF files will be stored
