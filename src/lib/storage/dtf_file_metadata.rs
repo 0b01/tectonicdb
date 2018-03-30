@@ -1,8 +1,24 @@
-use storage::filetype::FileType;
-use dtf::{self, Symbol, AssetType};
-use storage::file_metadata::FileMetadata;
-use std::io;
+use std::env;
 use std::fs;
+use std::io;
+
+use dtf::{self, Symbol, AssetType};
+use storage::filetype::FileType;
+use storage::file_metadata::FileMetadata;
+
+fn key_or_default(key: &str, default: &str) -> String {
+   match env::var(key) {
+        Ok(val) => val,
+        Err(_) => default.into(),
+    }
+}
+
+fn parse_dtf_metadata_tags() -> Vec<String> {
+    key_or_default("DTF_METADATA_TAGS", "")
+        .split(',')
+        .map(String::from)
+        .collect()
+}
 
 use uuid::Uuid;
 
@@ -64,10 +80,26 @@ impl DTFFileMetadata {
             continuation_candles: false,
 
             filename: fname.to_owned(),
+            tags: parse_dtf_metadata_tags(),
 
             ..Default::default() // uuid:
-                                 // tags:
                                  // errors:
         })
     }
+}
+
+#[test]
+fn dtf_metadata_tags_parsing() {
+    let sample_env = "foo,bar,key:value,test2";
+    let parsed: Vec<String> = sample_env
+        .split(',')
+        .map(String::from)
+        .collect();
+
+    let expected: Vec<String> = ["foo", "bar", "key:value", "test2"]
+        .into_iter()
+        .map(|s| String::from(*s))
+        .collect();
+
+    assert_eq!(parsed, expected);
 }
