@@ -121,7 +121,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
             if state.get_bulkadding() {
                 let parsed = parser::parse_line(&line);
                 let current_db = state.bulkadd_db.clone();
-                let dbname = current_db.unwrap();
+                let dbname = current_db.unwrap_or(state.current_store_name.clone().into());
                 Insert(parsed, Some(dbname.into()))
             } else if line.starts_with("BULKADD INTO ") {
                 let (_index, dbname) = parser::parse_dbname(&line);
@@ -189,6 +189,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         Perf => ReturnType::string(state.perf()),
         BulkAdd => {
             state.set_bulkadding(true);
+            state.bulkadd_db = Some(state.current_store_name.clone().into());
             ReturnType::string("")
         }
         BulkAddInto(dbname) => {
