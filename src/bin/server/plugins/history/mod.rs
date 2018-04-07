@@ -35,6 +35,7 @@ pub fn run(global: Arc<RwLock<SharedState>>) {
                 }
                 rwdr.history.get_mut(name).unwrap().push((current_t, size));
             }
+            drop(rwdr); // Explicit drop before the sleep to release the lock
 
             info!("Current total count: {}", total);
 
