@@ -73,7 +73,6 @@ To config the Google Cloud Storage and Data Collection Backend integration, the 
 | `GCLOUD_OAUTH_TOKEN`          | *unset*      | Token used to authenticate with Google Cloud for uploading DTF files                                                                 |
 | `GCLOUD_BUCKET_NAME`          | `tick_data`  | Name of the bucket in which uploaded DTF files are stored                                                                            |
 | `GCLOUD_FOLDER`               | ``           | Name of the folder inside of the bucket into which the DTF files are stored                                                          |
-| `GCLOUD_UPLOAD_INTERVAL`      | 3600         | Interval in seconds between uploads of DTF files to Google Cloud                                                                     |
 | `GCLOUD_REMOVE_ON_UPLOAD`     | true         | If true, the uploaded DTF files are deleted after upload                                                                             |
 | `DCB_URL`                     | *unset*      | The URL of the Data Collection Backend's batch ingestion endpoint (leave unset if you don't know what the DCB is or aren't using it) |
 | `DTF_METADATA_TAGS`           | `""`         | An array of tags that will be included in metadata for DTF files

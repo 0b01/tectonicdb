@@ -2,6 +2,7 @@ extern crate serde;
 extern crate serde_json;
 extern crate config;
 extern crate reqwest;
+extern crate notify;
 
 mod upload;
 pub use self::upload::*;

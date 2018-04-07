@@ -46,7 +46,6 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let handle = core.handle();
     let listener = TcpListener::bind(&addr, &handle).expect("failed to bind");
 
-
     let dtf_folder = &settings.dtf_folder;
     utils::create_dir_if_not_exist(&dtf_folder);
 

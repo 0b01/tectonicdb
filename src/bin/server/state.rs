@@ -678,7 +678,6 @@ pub type VecStore = (Box<Vec<Update>>, u64);
 ///      total
 pub type History = HashMap<String, CircularQueue<(SystemTime, u64)>>;
 
-
 #[derive(Debug)]
 pub struct SharedState {
     pub n_cxns: u16,

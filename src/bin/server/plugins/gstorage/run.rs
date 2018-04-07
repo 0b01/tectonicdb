@@ -5,78 +5,70 @@
 /// and once confirmed, delete local files.
 
 use std::{thread, time, fs, path, io, error};
-use std::time::Duration;
+use std::path::PathBuf;
+use std::sync::mpsc::channel;
 use std::sync::{Arc, RwLock};
+use std::time::Duration;
+
+extern crate notify;
+use self::notify::{RecommendedWatcher, Watcher, RecursiveMode, DebouncedEvent};
+
 use state::SharedState;
 use plugins::gstorage::GStorageConfig;
+use plugins::gstorage::upload::{self, GStorageFile};
 use libtectonic::dtf::is_dtf;
 
-use plugins::gstorage::upload::{self, GStorageFile};
+fn upload_file(path_buf: PathBuf, conf: &GStorageConfig) {
+    let fname = match path_buf.to_str() {
+        Some(p) => p,
+        None => {
+            error!("Unable to convert filename");
+            return;
+        }
+    };
 
-fn get_files_to_upload(entries: fs::ReadDir, dur: Duration) -> Vec<io::Result<fs::DirEntry>> {
-    entries
-        .into_iter()
-        .filter(|entry| {
-            let entry = match entry {
-                &Ok(ref e) => e,
-                &Err(ref e) => {
-                    error!("Unable to get Dir Entry: {:?}", e);
-                    return false;
-                }
-            };
-            let path = entry.path();
-
-            needs_to_upload(&path, &dur).unwrap_or_else(|e| {
-                error!("Cannot determine whether to upload. e: {:?}", e);
-                false
-            })
-        })
-        .collect::<Vec<_>>()
-}
-
-fn upload_file(entry_res: io::Result<fs::DirEntry>, conf: &GStorageConfig) {
-    let entry = match entry_res {
-        Ok(entry) => entry,
-        Err(err) => {
-            error!("Error while attempting to upload directory entry: {:?}", err);
+    let mut f = match GStorageFile::new(&conf, fname) {
+        Ok(f) => f,
+        Err(e) => {
+            error!("fname: {}, {:?}", fname, e);
             return;
         },
     };
-    let path = entry.path();
 
-    {
-        let fname = match path.to_str() {
-            Some(p) => p,
-            None => {
-                error!("Unable to convert filename");
-                return;
-            }
-        };
-
-        let mut f = match GStorageFile::new(&conf, fname) {
-            Ok(f) => f,
-            Err(e) => {
-                error!("fname: {}, {:?}", fname, e);
-                return;
-            },
-        };
-
-        match upload::upload(&mut f, fname) {
-            Ok(metadata) => {
-                if let Some(ref dcb_url) = conf.dcb_url {
-                    match upload::post_to_dcb(&dcb_url, &metadata) {
-                        Ok(res) => info!("Response from DCB: {:?}", res),
-                        Err(err) => error!("Error while posting data to DCB: {:?}", err),
-                    }
+    match upload::upload(&mut f, fname) {
+        Ok(metadata) => {
+            if let Some(ref dcb_url) = conf.dcb_url {
+                match upload::post_to_dcb(&dcb_url, &metadata) {
+                    Ok(res) => info!("Response from DCB: {:?}", res),
+                    Err(err) => error!("Error while posting data to DCB: {:?}", err),
                 }
-
             }
-            Err(e) => error!("fname: {}, {:?}", fname, e),
-        };
-    }
+
+        }
+        Err(e) => error!("fname: {}, {:?}", fname, e),
+    };
 
     if conf.remove {
-        let _ = fs::remove_file(path);
+        let _ = fs::remove_file(path_buf.as_path());
+    }
+}
+
+fn watch_directory(directory: &str, conf: &GStorageConfig) -> notify::Result<()> {
+    let (tx, rx) = channel();
+
+    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(2))?;
+    watcher.watch(directory, RecursiveMode::Recursive)?;
+
+    loop {
+        let evt = rx.recv();
+        println!("Event: {:#?}", evt);
+        // match rx.recv() {
+        //     Ok(evt) => match evt {
+        //         DebouncedEvent::Create(path_buf) => upload_file(path_buf, &conf),
+        //         DebouncedEvent::Write(path_buf) => upload_file(path_buf, &conf),
+        //     },
+        //     Err(err) => error!("Watch error: {:#?}", err),
+        // }
     }
 }
 
@@ -84,33 +76,10 @@ pub fn run(global: Arc<RwLock<SharedState>>) {
     let global_copy = global.clone();
     thread::spawn(move || {
         let conf = GStorageConfig::new().unwrap();
-        info!("{:?}", conf);
-        let interval = conf.interval;
+        info!("Initializing GStorage plugin with config: {:?}", conf);
+        let dtf_directory = global_copy.read().unwrap().settings.dtf_folder.clone();
 
-        let folder = {
-            let rdr = global_copy.read().unwrap();
-            &rdr.settings.dtf_folder.clone()
-        };
-
-        loop {
-            // sleep for interval (default: 3600 secs = 1 hr)
-            let dur = Duration::from_secs(interval);
-            thread::sleep(dur);
-
-            match fs::read_dir(folder) {
-                Err(e) => error!("Unable to read dir entries: {:?}", e),
-                Ok(entries) => {
-                    let files_to_upload = get_files_to_upload(entries, dur);
-
-                    let count = files_to_upload.len();
-                    info!("Need to upload {} files.", count);
-
-                    for entry in files_to_upload {
-                        upload_file(entry, &conf);
-                    }
-                }
-            };
-        }
+        watch_directory(&dtf_directory, &conf);
     });
 }
 
