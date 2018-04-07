@@ -145,6 +145,7 @@ impl<'a> Store<'a> {
             // clear
             vecs.0.clear();
         }
+
         // continue clear
         self.in_memory = false;
         Some(true)
