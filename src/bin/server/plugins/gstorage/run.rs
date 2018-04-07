@@ -60,15 +60,13 @@ fn watch_directory(directory: &str, conf: &GStorageConfig) -> notify::Result<()>
     watcher.watch(directory, RecursiveMode::Recursive)?;
 
     loop {
-        let evt = rx.recv();
-        println!("Event: {:#?}", evt);
-        // match rx.recv() {
-        //     Ok(evt) => match evt {
-        //         DebouncedEvent::Create(path_buf) => upload_file(path_buf, &conf),
-        //         DebouncedEvent::Write(path_buf) => upload_file(path_buf, &conf),
-        //     },
-        //     Err(err) => error!("Watch error: {:#?}", err),
-        // }
+        match rx.recv() {
+            Ok(evt) => match evt {
+                DebouncedEvent::Write(path_buf) => upload_file(path_buf, &conf),
+                _ => debug!("File watch event: {:?}", evt),
+            },
+            Err(err) => error!("Watch error: {:?}", err),
+        }
     }
 }
 
@@ -79,7 +77,10 @@ pub fn run(global: Arc<RwLock<SharedState>>) {
         info!("Initializing GStorage plugin with config: {:?}", conf);
         let dtf_directory = global_copy.read().unwrap().settings.dtf_folder.clone();
 
-        watch_directory(&dtf_directory, &conf);
+        match watch_directory(&dtf_directory, &conf) {
+            Ok(_) => (),
+            Err(err) => error!("Error while attempting to watch directory in GCloud plugin: {:?}", err),
+        };
     });
 }
 
