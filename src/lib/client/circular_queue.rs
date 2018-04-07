@@ -8,7 +8,8 @@
 //! # Examples
 //!
 //! ```
-//! use circular_queue::CircularQueue;
+//! extern crate libtectonic;
+//! use libtectonic::client::circular_queue::CircularQueue;
 //!
 //! let mut queue = CircularQueue::with_capacity(3);
 //! queue.push(1);
@@ -56,7 +57,8 @@ impl<T> CircularQueue<T> {
     /// # Examples
     ///
     /// ```
-    /// use circular_queue::CircularQueue;
+    /// extern crate libtectonic;
+    /// use libtectonic::client::circular_queue::CircularQueue;
     ///
     /// let mut queue: CircularQueue<i32> = CircularQueue::with_capacity(5);
     /// ```
@@ -79,7 +81,8 @@ impl<T> CircularQueue<T> {
     /// # Examples
     ///
     /// ```
-    /// use circular_queue::CircularQueue;
+    /// extern crate libtectonic;
+    /// use libtectonic::client::circular_queue::CircularQueue;
     ///
     /// let mut queue = CircularQueue::with_capacity(5);
     /// queue.push(1);
@@ -98,7 +101,8 @@ impl<T> CircularQueue<T> {
     /// # Examples
     ///
     /// ```
-    /// use circular_queue::CircularQueue;
+    /// extern crate libtectonic;
+    /// use libtectonic::client::circular_queue::CircularQueue;
     ///
     /// let mut queue = CircularQueue::with_capacity(5);
     /// assert!(queue.is_empty());
@@ -116,7 +120,8 @@ impl<T> CircularQueue<T> {
     /// # Examples
     ///
     /// ```
-    /// use circular_queue::CircularQueue;
+    /// extern crate libtectonic;
+    /// use libtectonic::client::circular_queue::CircularQueue;
     ///
     /// let queue: CircularQueue<i32> = CircularQueue::with_capacity(5);
     /// assert_eq!(queue.capacity(), 5);
@@ -131,7 +136,8 @@ impl<T> CircularQueue<T> {
     /// # Examples
     ///
     /// ```
-    /// use circular_queue::CircularQueue;
+    /// extern crate libtectonic;
+    /// use libtectonic::client::circular_queue::CircularQueue;
     ///
     /// let mut queue = CircularQueue::with_capacity(5);
     /// queue.push(1);
@@ -154,7 +160,8 @@ impl<T> CircularQueue<T> {
     /// # Examples
     ///
     /// ```
-    /// use circular_queue::CircularQueue;
+    /// extern crate libtectonic;
+    /// use libtectonic::client::circular_queue::CircularQueue;
     ///
     /// let mut queue = CircularQueue::with_capacity(3);
     /// queue.push(1);
@@ -189,7 +196,8 @@ impl<T> CircularQueue<T> {
     /// # Examples
     ///
     /// ```
-    /// use circular_queue::CircularQueue;
+    /// extern crate libtectonic;
+    /// use libtectonic::client::circular_queue::CircularQueue;
     ///
     /// let mut queue = CircularQueue::with_capacity(3);
     /// queue.push(1);
@@ -203,7 +211,7 @@ impl<T> CircularQueue<T> {
     /// assert_eq!(queue.pop(), Some(3));
     /// assert_eq!(queue.pop(), Some(2));
     /// assert_eq!(queue.pop(), None);
-    /// 
+    ///
     /// ```
     pub fn pop(&mut self) -> Option<T> {
         if self.data.len() == 0 {
@@ -229,7 +237,8 @@ impl<T> CircularQueue<T> {
     /// # Examples
     ///
     /// ```
-    /// use circular_queue::CircularQueue;
+    /// extern crate libtectonic;
+    /// use libtectonic::client::circular_queue::CircularQueue;
     ///
     /// let mut queue = CircularQueue::with_capacity(3);
     /// queue.push(1);
@@ -256,7 +265,8 @@ impl<T> CircularQueue<T> {
     /// # Examples
     ///
     /// ```
-    /// use circular_queue::CircularQueue;
+    /// extern crate libtectonic;
+    /// use libtectonic::client::circular_queue::CircularQueue;
     ///
     /// let mut queue = CircularQueue::with_capacity(3);
     /// queue.push(1);

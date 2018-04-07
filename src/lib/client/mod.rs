@@ -2,7 +2,7 @@ use std::env;
 
 mod error;
 #[allow(dead_code)]
-mod circular_queue;
+pub mod circular_queue;
 pub mod insert_command;
 mod cxn;
 mod pool;
