@@ -3,29 +3,29 @@
 /// List of commands:
 /// -------------------------------------------
 
-use byteorder::{WriteBytesExt, NetworkEndian /*ReadBytesExt*/};
-
-use std::str;
-use std::io::Write;
-use std::net::SocketAddr;
-use std::io::BufReader;
-use std::collections::HashMap;
+use byteorder::{WriteBytesExt, NetworkEndian};
 
 use std::borrow::{Borrow, Cow};
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::io::{BufReader, Write};
+use std::net::SocketAddr;
+use std::rc::Rc;
+use std::str;
+use std::sync::{Arc, RwLock};
+
 use state::{Global, SharedState, ThreadState};
 use handler::ReturnType;
 use utils;
 use handler;
+use plugins::run_plugins;
 use settings::Settings;
-use std::sync::{Arc, RwLock};
 
 use futures::prelude::*;
 use tokio_core::net::TcpListener;
 use tokio_core::reactor::Core;
 use tokio_io::AsyncRead;
 use tokio_io::io::{lines, write_all};
-
-use plugins::run_plugins;
 
 pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let addr = format!("{}:{}", host, port);
@@ -56,11 +56,8 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let global = Arc::new(RwLock::new(SharedState::new(settings.clone())));
     let store = Arc::new(RwLock::new(HashMap::new()));
 
-
     run_plugins(global.clone());
 
-    use std::rc::Rc;
-    use std::cell::RefCell;
     // main loop
     let done = listener.incoming().for_each(move |(socket, _addr)| {
         let global_copy = global.clone();

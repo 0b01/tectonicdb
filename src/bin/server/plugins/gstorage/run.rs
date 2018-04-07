@@ -96,6 +96,7 @@ pub fn run(global: Arc<RwLock<SharedState>>) {
             // sleep for interval (default: 3600 secs = 1 hr)
             let dur = Duration::from_secs(interval);
             thread::sleep(dur);
+
             match fs::read_dir(folder) {
                 Err(e) => error!("Unable to read dir entries: {:?}", e),
                 Ok(entries) => {
