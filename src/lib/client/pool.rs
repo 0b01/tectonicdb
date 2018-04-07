@@ -1,5 +1,5 @@
-use std::collections::VecDeque;
 use std::{thread, time};
+use std::collections::VecDeque;
 
 use client::circular_queue::CircularQueue;
 use super::{Cxn, InsertCommand, TectonicError};
@@ -132,4 +132,3 @@ impl CxnPool {
         Ok(())
     }
 }
-
