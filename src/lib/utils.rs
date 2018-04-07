@@ -41,7 +41,6 @@ pub fn epoch_to_human(ts: u64) -> String {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
 
     #[test]
