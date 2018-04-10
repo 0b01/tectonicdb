@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use libtectonic::dtf::update::Update;
 
 use futures;
-use futures::{Sink, Future};
 
 pub type Event = Arc<Mutex<(String, Update)>>;
 
