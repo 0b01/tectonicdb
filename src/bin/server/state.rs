@@ -26,7 +26,7 @@ use futures;
 /// An atomic reference counter for accessing shared data.
 pub type Global = Arc<RwLock<SharedState>>;
 pub type HashMapStore<'a> = Arc<RwLock<HashMap<String, Store<'a>>>>;
-pub type SubscriptionTX = futures::sync::mpsc::Sender<Update>;
+pub type SubscriptionTX = futures::sync::mpsc::UnboundedSender<Update>;
 
 /// name: *should* be the filename
 /// in_memory: are the updates read into memory?

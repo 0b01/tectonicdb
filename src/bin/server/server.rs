@@ -64,7 +64,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
 
         // channel for pushing subscriptions directly from subscriptions thread
         // to client socket
-        let (subscriptions_tx, subscriptions_rx) = mpsc::channel::<Update>(1);
+        let (subscriptions_tx, subscriptions_rx) = mpsc::unbounded::<Update>();
 
         let global_copy = global.clone();
         let state = Rc::new(RefCell::new(

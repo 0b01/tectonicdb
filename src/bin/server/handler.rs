@@ -305,7 +305,7 @@ mod tests {
         let settings: Settings = Default::default();
         let global = Arc::new(RwLock::new(SharedState::new(settings)));
         let store = Arc::new(RwLock::new(HashMap::new()));
-        let (tx, _) = futures::sync::mpsc::channel::<Update>(1);
+        let (tx, _) = futures::sync::mpsc::unbounded::<Update>();
         ThreadState::new(global, store, tx)
     }
 

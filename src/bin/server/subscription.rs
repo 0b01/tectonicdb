@@ -47,7 +47,7 @@ impl Subscriptions {
     pub fn sub(
         &mut self,
         filter: String,
-        push_tx: futures::sync::mpsc::Sender<Update>,
+        push_tx: futures::sync::mpsc::UnboundedSender<Update>,
     ) -> (usize, Arc<Mutex<mpsc::Receiver<Update>>>) {
 
         let (i_tx, i_rx) = mpsc::channel();
@@ -174,7 +174,7 @@ impl Subscription {
         filter: String,
         i_rx: Arc<Mutex<mpsc::Receiver<Message>>>,
         o_tx: Arc<Mutex<mpsc::Sender<Update>>>,
-        push_tx: futures::sync::mpsc::Sender<Update>
+        push_tx: futures::sync::mpsc::UnboundedSender<Update>
     ) -> Subscription {
 
         let thread = thread::spawn(move || loop {
@@ -185,7 +185,7 @@ impl Subscription {
                 Message::Msg(up) => {
                     let (ref symbol, ref up) = *up.lock().unwrap();
                     if symbol == &filter {
-                        let _ = push_tx.send(*up).wait();
+                        let _ = push_tx.unbounded_send(*up);
                     }
                 }
                 Message::Terminate => {
@@ -219,7 +219,7 @@ mod tests {
         let event = Arc::new(Mutex::new((symbol.clone(), up)));
 
         let mut subs = Subscriptions::new();
-        let (subscription_tx, subscription_rx) = futures::sync::mpsc::channel::<Update>(1);
+        let (subscription_tx, subscription_rx) = futures::sync::mpsc::unbounded::<Update>();
         let (_id, rx) = subs.sub(symbol.clone(), subscription_tx);
 
         subs.msg(event);
