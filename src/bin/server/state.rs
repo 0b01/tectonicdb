@@ -643,7 +643,7 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
             subscribed_db: None,
             sub_id: None,
             rx: None,
-            subscription_tx: subscription_tx,
+            subscription_tx,
             store,
             global: global.clone(),
         };

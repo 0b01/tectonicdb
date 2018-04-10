@@ -200,7 +200,7 @@ impl Subscription {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use futures::{Stream};
+    use futures::{Stream,Future};
     use tokio_core::reactor::Core;
 
     #[test]
@@ -219,7 +219,7 @@ mod tests {
 
         let mut subs = Subscriptions::new();
         let (subscription_tx, subscription_rx) = futures::sync::mpsc::unbounded::<Update>();
-        let (_id, rx) = subs.sub(symbol.clone(), subscription_tx);
+        let (_id, _) = subs.sub(symbol.clone(), subscription_tx);
 
         subs.msg(event);
 
