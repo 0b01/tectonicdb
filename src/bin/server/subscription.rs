@@ -201,6 +201,9 @@ impl Subscription {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use futures::{Stream};
+    use tokio_core::reactor::Core;
+
     #[test]
     fn test_subscription() {
 
@@ -216,14 +219,17 @@ mod tests {
         let event = Arc::new(Mutex::new((symbol.clone(), up)));
 
         let mut subs = Subscriptions::new();
-        let (_id, rx) = subs.sub(symbol.clone());
+        let (subscription_tx, subscription_rx) = futures::sync::mpsc::channel::<Update>(1);
+        let (_id, rx) = subs.sub(symbol.clone(), subscription_tx);
 
         subs.msg(event);
 
-        for msg in rx.lock().unwrap().recv() {
-            assert_eq!(up, msg);
-            break;
-        }
+        let task = subscription_rx.take(1).collect().map(|x| {
+            assert_eq!(up, x[0]);
+        });
+
+        let mut core = Core::new().unwrap();
+        core.run(task).unwrap();
 
     }
 }
