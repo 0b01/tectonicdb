@@ -470,7 +470,8 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         self.is_subscribed = true;
         self.subscribed_db = Some(dbname.to_owned());
         let glb = self.global.read().unwrap();
-        let (id, rx) = glb.subs.lock().unwrap().sub(dbname.to_owned());
+        let (id, rx) = glb.subs.lock().unwrap()
+            .sub(dbname.to_owned(), self.subscription_tx.clone());
         self.rx = Some(rx);
         self.sub_id = Some(id);
         info!("Subscribing to channel {}. id: {}", dbname, id);

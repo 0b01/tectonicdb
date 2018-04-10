@@ -12,7 +12,7 @@ use std::io::{BufReader, Write};
 use std::net::SocketAddr;
 use std::rc::Rc;
 use std::str;
-use std::sync::{Arc, RwLock, Mutex};
+use std::sync::{Arc, RwLock};
 
 use state::{Global, SharedState, ThreadState};
 use handler::ReturnType;
