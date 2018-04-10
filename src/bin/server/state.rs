@@ -21,10 +21,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 use handler::{GetFormat, ReturnType, ReqCount, Loc, Range};
 use subscription::Subscriptions;
+use futures;
 
 /// An atomic reference counter for accessing shared data.
 pub type Global = Arc<RwLock<SharedState>>;
 pub type HashMapStore<'a> = Arc<RwLock<HashMap<String, Store<'a>>>>;
+pub type SubscriptionTX = futures::sync::mpsc::Sender<Update>;
 
 /// name: *should* be the filename
 /// in_memory: are the updates read into memory?
@@ -230,6 +232,8 @@ pub struct ThreadState<'thr, 'store> {
     pub sub_id: Option<usize>,
     /// current receiver
     pub rx: Option<Arc<Mutex<mpsc::Receiver<Update>>>>,
+
+    pub subscription_tx: SubscriptionTX,
 
     /// mapping store_name -> Store
     pub store: Arc<RwLock<HashMap<String, Store<'store>>>>,
@@ -625,7 +629,11 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     }
 
     /// create a new threadstate
-    pub fn new<'a, 'b>(global: Global, store: HashMapStore<'b>) -> ThreadState<'a, 'b> {
+    pub fn new<'a, 'b>(
+        global: Global,
+        store: HashMapStore<'b>,
+        subscription_tx: SubscriptionTX,
+    ) -> ThreadState<'a, 'b> {
         let dtf_folder: &str = &global.read().unwrap().settings.dtf_folder;
         let state = ThreadState {
             current_store_name: "default".into(),
@@ -634,6 +642,7 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
             subscribed_db: None,
             sub_id: None,
             rx: None,
+            subscription_tx: subscription_tx,
             store,
             global: global.clone(),
         };

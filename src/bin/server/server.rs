@@ -12,16 +12,18 @@ use std::io::{BufReader, Write};
 use std::net::SocketAddr;
 use std::rc::Rc;
 use std::str;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, Mutex};
 
 use state::{Global, SharedState, ThreadState};
 use handler::ReturnType;
+use libtectonic::dtf::{update_vec_to_json, Update};
 use utils;
 use handler;
 use plugins::run_plugins;
 use settings::Settings;
 
 use futures::prelude::*;
+use futures::sync::mpsc;
 use tokio_core::net::TcpListener;
 use tokio_core::reactor::Core;
 use tokio_io::AsyncRead;
@@ -59,8 +61,15 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
 
     // main loop
     let done = listener.incoming().for_each(move |(socket, _addr)| {
+
+        // channel for pushing subscriptions directly from subscriptions thread
+        // to client socket
+        let (subscriptions_tx, subscriptions_rx) = mpsc::channel::<Update>(1);
+
         let global_copy = global.clone();
-        let state = Rc::new(RefCell::new(ThreadState::new(global.clone(), store.clone())));
+        let state = Rc::new(RefCell::new(
+            ThreadState::new(global.clone(), store.clone(), subscriptions_tx.clone())
+        ));
         let state_clone = state.clone();
 
         match utils::init_dbs(&mut state.borrow_mut()) {
@@ -69,6 +78,12 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
         };
         on_connect(&global_copy);
 
+        // map incoming subscription updates to the same format as regular
+        // responses so they can be processed in the same manner.
+        let subscriptions = subscriptions_rx.map(|message| (
+            Cow::from(""), ReturnType::string(update_vec_to_json(&vec![message]))
+        ));
+
         let (rdr, wtr) = socket.split();
         let lines = lines(BufReader::new(rdr));
         let responses = lines.map(move |line| {
@@ -76,7 +91,12 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
             let resp = handler::gen_response(line.borrow(), &mut state.borrow_mut());
             (line, resp)
         });
-        let writes = responses.fold(wtr, |wtr, (line, resp)| {
+
+        // merge responses and messages pushed directly by subscriptions updates
+        // into a single stream
+        let merged = subscriptions.select(responses.map_err(|_| ()));
+
+        let writes = merged.fold(wtr, |wtr, (line, resp)| {
             let mut buf: Vec<u8> = vec![];
             use self::ReturnType::*;
             match resp {
@@ -101,7 +121,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
                     buf.write(ret.as_bytes()).unwrap();
                 }
             };
-            write_all(wtr, buf).map(|(w, _)| w)
+            write_all(wtr, buf).map(|(w, _)| w).map_err(|_| ())
         });
 
         let msg = writes.then(move |_| {
