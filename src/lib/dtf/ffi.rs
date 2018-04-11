@@ -5,7 +5,7 @@ use std::mem;
 use std::slice;
 use std::io;
 
-use dtf::{self, Update};
+use dtf::{self, Update, UpdateVecInto};
 
 #[repr(C)]
 pub struct Slice {
@@ -22,7 +22,7 @@ pub extern fn read_dtf_to_csv(fname: *const c_char) -> *mut c_char {
     let fname = c_str.to_str().unwrap();
 
     let ups = dtf::decode(fname, None).unwrap();
-    let data = dtf::update_vec_to_csv(&ups);
+    let data = ups.into_csv();
 
     let ret = String::from(data);
     let c_str_song = CString::new(ret).unwrap();
@@ -38,7 +38,7 @@ pub extern fn read_dtf_to_csv_with_limit(fname: *const c_char, num: u32) -> *mut
     let fname = c_str.to_str().unwrap();
 
     let ups = dtf::decode(fname, Some(num)).unwrap();
-    let data = dtf::update_vec_to_csv(&ups);
+    let data = ups.into_csv();
 
     let ret = String::from(data);
     let c_str_song = CString::new(ret).unwrap();

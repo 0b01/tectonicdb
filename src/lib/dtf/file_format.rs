@@ -50,6 +50,29 @@ pub struct Metadata {
     pub min_ts: u64,
 }
 
+pub trait UpdateVecInto {
+    fn into_json(&self) -> String;
+    fn into_csv(&self) -> String;
+}
+
+impl UpdateVecInto for [Update] {
+    fn into_json(&self) -> String {
+        update_vec_to_json(self)
+    }
+    fn into_csv(&self) -> String {
+        update_vec_to_csv(&self)
+    }
+}
+
+impl UpdateVecInto for Vec<Update> {
+    fn into_json(&self) -> String {
+        update_vec_to_json(self)
+    }
+    fn into_csv(&self) -> String {
+        update_vec_to_csv(&self)
+    }
+}
+
 
 impl Ord for Metadata {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
@@ -87,12 +110,12 @@ impl fmt::Display for Metadata {
 }
 
 
-pub fn update_vec_to_csv(vecs: &[Update]) -> String {
+fn update_vec_to_csv(vecs: &[Update]) -> String {
     let objects: Vec<String> = vecs.into_iter().map(|up| up.to_csv()).collect();
     objects.join("\n")
 }
 
-pub fn update_vec_to_json(vecs: &[Update]) -> String {
+fn update_vec_to_json(vecs: &[Update]) -> String {
     let objects: Vec<String> = vecs.into_iter().map(|up| up.to_json()).collect();
     objects.join(", ")
 }
