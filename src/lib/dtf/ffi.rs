@@ -102,7 +102,7 @@ struct KaikoCsvEntry {
     pub date: u64,
     pub price: f32,
     pub amount: f32,
-    pub sell: bool,
+    pub sell: Option<bool>,
 }
 
 impl Into<Update> for KaikoCsvEntry {
@@ -111,7 +111,7 @@ impl Into<Update> for KaikoCsvEntry {
             ts: self.date,
             seq: self.id.parse().unwrap_or(0),
             is_trade: true,
-            is_bid: !self.sell,
+            is_bid: !self.sell.unwrap_or(false),
             price: self.price,
             size: self.amount,
         }
