@@ -5,7 +5,7 @@ use std::ffi::{CStr, CString};
 use std::path::Path;
 
 use csv::{DeserializeRecordsIntoIter, ReaderBuilder};
-use dtf::{self, Update};
+use dtf::{self, Update, UpdateVecInto};
 use self::libc::{c_char, c_uchar};
 
 #[repr(C)]

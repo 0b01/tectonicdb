@@ -16,7 +16,7 @@ use std::sync::{Arc, RwLock};
 
 use state::{Global, SharedState, ThreadState};
 use handler::ReturnType;
-use libtectonic::dtf::{update_vec_to_json, Update};
+use libtectonic::dtf::{Update, UpdateVecInto};
 use utils;
 use handler;
 use plugins::run_plugins;
@@ -81,7 +81,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
         // map incoming subscription updates to the same format as regular
         // responses so they can be processed in the same manner.
         let subscriptions = subscriptions_rx.map(|message| (
-            Cow::from(""), ReturnType::string(update_vec_to_json(&vec![message]))
+            Cow::from(""), ReturnType::string(vec![message].into_json())
         ));
 
         let (rdr, wtr) = socket.split();
