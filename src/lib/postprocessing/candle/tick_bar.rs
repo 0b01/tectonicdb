@@ -1,19 +1,32 @@
 use std::collections::{BTreeMap, HashSet};
 use super::candle::Candle;
 use super::{Time, Price, Volume, Scale};
+use super::Bar;
 use dtf::Update;
 use utils::fill_digits;
 
 #[derive(Clone, Debug, PartialEq)]
 /// utilities for rebinning candlesticks
-pub struct Candles {
+pub struct TickBars {
     pub v: BTreeMap<Time, Candle>,
     scale: Scale,
 }
 
-impl<'a> From<&'a [Update]> for Candles {
+impl Bar for TickBars {
+    fn to_csv(&self) -> String {
+        let csvs: Vec<String> = self.v
+            .iter()
+            .map(|(key, candle)| format!("{},{}", key, candle.to_csv()))
+            .collect();
+
+        csvs.join("\n")
+    }
+
+}
+
+impl<'a> From<&'a [Update]> for TickBars {
     /// Generate a vector of 1-min candles from Updates
-    fn from(ups: &[Update]) -> Candles {
+    fn from(ups: &[Update]) -> TickBars {
         let fix_missing = false;
 
         let mut last_ts = 0; // store the last timestep to test continuity
@@ -78,22 +91,11 @@ impl<'a> From<&'a [Update]> for Candles {
             last_close = trade.price;
         }
 
-        return Candles::new(candles, 1);
+        return TickBars::new(candles, 1);
     }
 }
 
-impl Candles {
-    /// convert Candles vector to csv
-    /// format is
-    ///     T,O,H,L,C,V
-    pub fn to_csv(self) -> String {
-        let csvs: Vec<String> = self.v
-            .into_iter()
-            .map(|(key, candle)| format!("{},{}", key, candle.to_csv()))
-            .collect();
-
-        csvs.join("\n")
-    }
+impl TickBars {
 
     pub fn get_size(&self) -> usize {
         self.v.len()
@@ -178,9 +180,9 @@ impl Candles {
     }
 
 
-    /// create new Candles object
-    fn new(v: BTreeMap<Time, Candle>, scale: u16) -> Candles {
-        let ret = Candles { v, scale };
+    /// create new TickBars object
+    fn new(v: BTreeMap<Time, Candle>, scale: u16) -> TickBars {
+        let ret = TickBars { v, scale };
 
         ret
     }
@@ -204,7 +206,7 @@ impl Candles {
 
 
     /// rebin 1 minute candles to x-minute candles
-    pub fn rebin(self, align: bool, new_scale: u16) -> Option<Candles> {
+    pub fn rebin(self, align: bool, new_scale: u16) -> Option<TickBars> {
         if new_scale < self.scale {
             return None;
         } else if new_scale == self.scale {
@@ -279,7 +281,7 @@ impl Candles {
         assert_eq!(res.len(), self.v.len() / (new_scale as usize));
         debug_assert!(self._test_epochs_must_be_sequential());
 
-        Some(Candles {
+        Some(TickBars {
             v: res,
             scale: new_scale,
         })
@@ -386,7 +388,7 @@ mod tests {
             );
         }
 
-        let candles = Candles::new(v, 1);
+        let candles = TickBars::new(v, 1);
         let mut tree = BTreeMap::new();
         tree.insert(
             1800,
@@ -400,7 +402,7 @@ mod tests {
         );
 
         assert_eq!(
-            Candles { v: tree, scale: 60 },
+            TickBars { v: tree, scale: 60 },
             candles.rebin(true, 60).unwrap()
         );
     }
@@ -411,8 +413,8 @@ mod tests {
     //     let ups = &super::super::decode(FNAME)[1..100000];
 
     //     // test two ways
-    //     let first = Candles::from_updates(false, &ups);
-    //     let second = Candles::from_updates(true, &ups);
+    //     let first = TickBars::from_updates(false, &ups);
+    //     let second = TickBars::from_updates(true, &ups);
 
     //     println!("{}", *second.v.iter().next_back().unwrap().0);
 
@@ -430,18 +432,18 @@ mod tests {
     //     let ups = &super::super::decode(FNAME)[1..100000];
 
     //     // test two ways
-    //     let mut first = Candles::from_updates(false, &ups);
+    //     let mut first = TickBars::from_updates(false, &ups);
     //     first.insert_continuation_candles();
 
-    //     let second = Candles::from_updates(true, &ups);
+    //     let second = TickBars::from_updates(true, &ups);
     //     assert_eq!(first, second);
     // }
 
     #[test]
     fn test_create_new_candles() {
         assert_eq!(
-            Candles::new(BTreeMap::new(), 1),
-            Candles {
+            TickBars::new(BTreeMap::new(), 1),
+            TickBars {
                 v: BTreeMap::new(),
                 scale: 1,
             }
@@ -468,7 +470,7 @@ mod tests {
                 },
             );
         }
-        let mut candles = Candles::new(v, 1);
+        let mut candles = TickBars::new(v, 1);
 
         assert_eq!(
             vec![
@@ -523,7 +525,7 @@ mod tests {
             );
         }
 
-        let c = Candles {
+        let c = TickBars {
             v: candles.clone(),
             scale: 1,
         };
@@ -539,7 +541,7 @@ mod tests {
                 volume: 0.,
             },
         );
-        let g = Candles {
+        let g = TickBars {
             v: candles,
             scale: 1,
         };
@@ -565,7 +567,7 @@ mod tests {
             );
         }
 
-        let c = Candles {
+        let c = TickBars {
             v: candles.clone(),
             scale: 1,
         };
@@ -595,7 +597,7 @@ mod tests {
             );
         }
 
-        let c = Candles {
+        let c = TickBars {
             v: candles.clone(),
             scale: 1,
         };

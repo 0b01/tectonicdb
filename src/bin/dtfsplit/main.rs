@@ -2,6 +2,7 @@ extern crate clap;
 extern crate byteorder;
 extern crate libtectonic;
 use libtectonic::dtf;
+use libtectonic::storage::utils::{scan_files_for_range, total_folder_updates_len};
 
 use std::path::Path;
 use clap::{Arg, App};

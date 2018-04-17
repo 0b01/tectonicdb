@@ -1,9 +1,9 @@
 extern crate clap;
 extern crate byteorder;
 extern crate libtectonic;
-use libtectonic::dtf;
+use libtectonic::dtf::{self, UpdateVecInto};
 use libtectonic::storage::utils::{scan_files_for_range, total_folder_updates_len};
-use libtectonic::postprocessing::candle::Candles;
+use libtectonic::postprocessing::candle::{Bar, TickBars};
 
 use clap::{Arg, App};
 
@@ -127,7 +127,7 @@ Examples:
         } else {
             let ups = dtf::decode(input, None).unwrap();
             if candle {
-                let mut candles = Candles::from(ups.as_slice());
+                let mut candles = TickBars::from(ups.as_slice());
                 candles.insert_continuation_candles();
                 let rebinned = candles
                     .rebin(aligned, granularity.parse().unwrap())
@@ -136,9 +136,9 @@ Examples:
                 format!("{}", rebinned)
             } else {
                 if csv {
-                    format!("{}", dtf::update_vec_to_csv(&ups))
+                    format!("{}", ups.into_csv())
                 } else {
-                    format!("[{}]", dtf::update_vec_to_json(&ups))
+                    format!("[{}]", ups.into_json())
                 }
             }
 
@@ -150,7 +150,7 @@ Examples:
             let ups = scan_files_for_range(folder, symbol, min.parse().unwrap(), max.parse().unwrap())
                 .unwrap();
             if candle {
-                let mut candles = Candles::from(ups.as_slice());
+                let mut candles = TickBars::from(ups.as_slice());
                 candles.insert_continuation_candles();
                 let rebinned = candles
                     .rebin(aligned, granularity.parse().unwrap())
@@ -159,9 +159,9 @@ Examples:
                 format!("{}", rebinned)
             } else {
                 if csv {
-                    format!("{}", dtf::update_vec_to_csv(&ups))
+                    format!("{}", ups.into_csv())
                 } else {
-                    format!("[{}]", dtf::update_vec_to_json(&ups))
+                    format!("[{}]", ups.into_json())
                 }
             }
         }

@@ -1,6 +1,6 @@
 use state::*;
 use parser;
-use libtectonic::dtf::{update_vec_to_json, Update};
+use libtectonic::dtf::{UpdateVecInto, Update};
 use std::borrow::{Cow, Borrow};
 
 // BUG: subscribe, add, deadlock!!!
@@ -255,7 +255,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
             let rxlocked = state.rx.clone().unwrap();
             let message = rxlocked.lock().unwrap().try_recv();
             match message {
-                Ok(msg) => ReturnType::string(update_vec_to_json(&vec![msg])),
+                Ok(msg) => ReturnType::string(vec![msg].into_json()),
                 _ => ReturnType::string("NONE"),
             }
         }

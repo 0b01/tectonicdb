@@ -9,7 +9,7 @@ use std::thread;
 use std::time;
 
 
-use dtf;
+use dtf::{self, UpdateVecInto};
 use std::str;
 
 
@@ -37,7 +37,7 @@ impl CxnStream {
 
             let mut buf = buf.as_slice();
             let v = dtf::decode_buffer(&mut buf);
-            Ok(format!("[{}]\n", dtf::update_vec_to_json(&v)))
+            Ok(format!("[{}]\n", v.into_json()))
 
         } else {
             let size = self.stream.read_u64::<BigEndian>().unwrap();

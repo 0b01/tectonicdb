@@ -1,4 +1,4 @@
-use super::{Candles, Candle};
+use super::{TickBars, Candle};
 
 const SYMBOL_STICK: &str = "│";
 const SYMBOL_CANDLE: &str = "┃";
@@ -12,13 +12,13 @@ const SYMBOL_NOTHING: &str = " ";
 
 pub struct CandleStickGraph {
     height: u32,
-    data: Candles,
+    data: TickBars,
     global_min: f32,
     global_max: f32,
 }
 
 impl CandleStickGraph {
-    pub fn new(height: u32, data: Candles) -> Self {
+    pub fn new(height: u32, data: TickBars) -> Self {
         let global_min = data.get_candles().iter()
             .map(|candle| candle.low)
             .min_by(|a, b| a.partial_cmp(b).unwrap())
