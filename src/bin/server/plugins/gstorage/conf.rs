@@ -12,8 +12,6 @@ pub struct GStorageConfig {
     /// folder name in bucket
     /// gs://tick-data/{folder}
     pub folder: String,
-    /// upload interval in seconds
-    pub interval: u64,
     /// remove file when it's done?
     pub remove: bool,
     /// data collection backend - if you don't know just ignore
@@ -28,7 +26,6 @@ impl GStorageConfig {
             oauth_token: key_or_none("GCLOUD_OAUTH_TOKEN"),
             bucket_name: key_or_default("GCLOUD_BUCKET_NAME", "tick_data"),
             folder: key_or_default("GCLOUD_FOLDER", ""),
-            interval: key_or_default_parse("GCLOUD_UPLOAD_INTERVAL", 3600)?,
             remove: key_or_default_parse("GCLOUD_REMOVE_ON_UPLOAD", true)?,
             dcb_url: key_or_none("DCB_URL"),
         })

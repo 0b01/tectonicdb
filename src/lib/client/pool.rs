@@ -1,9 +1,8 @@
-use db::Cxn;
-use std::collections::VecDeque;
-use db::circular_queue::CircularQueue;
-use db::InsertCommand;
-use db::TectonicError;
 use std::{thread, time};
+use std::collections::VecDeque;
+
+use client::circular_queue::CircularQueue;
+use super::{Cxn, InsertCommand, TectonicError};
 
 pub type InsertQueue = CircularQueue<InsertCommand>;
 
@@ -133,4 +132,3 @@ impl CxnPool {
         Ok(())
     }
 }
-

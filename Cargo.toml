@@ -1,23 +1,13 @@
 [package]
-name = "tectonicdb"
-version = "0.2.1"
 authors = ["Ricky Han <tectonic@rickyhan.com>"]
 category = "Database"
 description = "fast datastore server for contiguous order book ticks"
+exclude = ["db/*", "test/test-data/*"]
 keywords = ["finance", "datastore", "database", "financial"]
 license = "MIT"
+name = "tectonicdb"
 readme = "README.md"
-exclude = [
-    "db/*",
-    "test/test-data/*",
-]
-
-[lib]
-name = "libtectonic"
-path = "src/lib/lib.rs"
-crate-type = ["cdylib", "dylib", "rlib"]
-repository = "https://github.com/rickyhan/tectonicdb"
-version = "0.2.0"
+version = "0.2.1"
 
 [[bin]]
 name = "tectonic-server"
@@ -45,29 +35,41 @@ publish = true
 [dependencies]
 bitflags = "1.0.0"
 byteorder = "1.1.0"
-clap = "~2.26"
+chrono = "0.4"
 circular-queue = "0.2.0"
-
-# Logging
+clap = "~2.26"
 config = "0.6"
+csv = "1.0.0-beta.5"
 fern = "0.4"
 futures = "0.1.14"
 log = "0.3"
-chrono = "0.4"
-time = "0.1.38"
-
 openssl-probe = "0.1.2"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
+time = "0.1.38"
 tokio-core = "0.1"
 tokio-io = "0.1"
-uuid = { version = "0.5.1", features = ["serde"] }
+
+[dependencies.notify]
+optional = true
+version = "4.0.0"
 
 [dependencies.reqwest]
 optional = true
 version = "0.8.1"
 
+[dependencies.uuid]
+features = ["serde"]
+version = "0.5.1"
+
 [features]
 default = ["gcs"]
-gcs = ["reqwest"]
+gcs = ["reqwest", "notify"]
+
+[lib]
+crate-type = ["cdylib", "dylib", "rlib"]
+name = "libtectonic"
+path = "src/lib/lib.rs"
+repository = "https://github.com/rickyhan/tectonicdb"
+version = "0.2.0"

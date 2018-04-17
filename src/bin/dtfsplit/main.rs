@@ -5,8 +5,6 @@ use libtectonic::dtf;
 use libtectonic::storage::utils::{scan_files_for_range, total_folder_updates_len};
 
 use std::path::Path;
-use std::str;
-use std::fmt::Display;
 use clap::{Arg, App};
 
 fn main() {

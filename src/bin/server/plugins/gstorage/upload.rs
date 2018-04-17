@@ -29,7 +29,6 @@ pub struct GStorageFile {
 
 impl GStorageFile {
     pub fn new(conf: &GStorageConfig, fname: &str) -> Result<GStorageFile, io::Error> {
-
         let name = Path::new(fname)
             .file_name()
             .ok_or(io::Error::new(
@@ -61,8 +60,6 @@ impl GStorageFile {
     }
 
     pub fn upload(&mut self) -> Result<GStorageOpMetadata, Box<error::Error>> {
-
-        // get start time
         let start_ts = time::now();
 
         let uri = format!(
@@ -143,25 +140,3 @@ pub fn post_to_dcb<T: FileMetadata + Serialize>(
         .send()?;
     Ok(res.text()?)
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use libtectonic::storage::file_metadata;
-//     use plugins::gstorage::GStorageMetadata;
-// 
-//     #[test]
-//     fn should_upload_file_to_gcloud() {
-//         let conf = GStorageConfig::new().unwrap();
-//         let fname = "test/test-data/pl_btc_nav.dtf";
-//         let mut f = GStorageFile::new(&conf, fname).unwrap();
-//         let op_meta = f.upload().unwrap();
-// 
-//         let file_meta = file_metadata::from_fname(fname).unwrap();
-//         let metadata = GStorageMetadata::new(op_meta, file_meta);
-//         if let Some(ref dcb_url) = conf.dcb_url {
-//             let res = post_to_dcb(dcb_url, &metadata).unwrap();
-//             println!("{}", res);
-//         }
-//     }
-// }

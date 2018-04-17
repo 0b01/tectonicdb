@@ -3,29 +3,31 @@
 /// List of commands:
 /// -------------------------------------------
 
-use byteorder::{WriteBytesExt, NetworkEndian /*ReadBytesExt*/};
-
-use std::str;
-use std::io::Write;
-use std::net::SocketAddr;
-use std::io::BufReader;
-use std::collections::HashMap;
+use byteorder::{WriteBytesExt, NetworkEndian};
 
 use std::borrow::{Borrow, Cow};
-use state::{Global, SharedState, ThreadState};
-use handler::ReturnType;
-use utils;
-use handler;
-use settings::Settings;
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::io::{BufReader, Write};
+use std::net::SocketAddr;
+use std::rc::Rc;
+use std::str;
 use std::sync::{Arc, RwLock};
 
+use state::{Global, SharedState, ThreadState};
+use handler::ReturnType;
+use libtectonic::dtf::{update_vec_to_json, Update};
+use utils;
+use handler;
+use plugins::run_plugins;
+use settings::Settings;
+
 use futures::prelude::*;
+use futures::sync::mpsc;
 use tokio_core::net::TcpListener;
 use tokio_core::reactor::Core;
 use tokio_io::AsyncRead;
 use tokio_io::io::{lines, write_all};
-
-use plugins::run_plugins;
 
 pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let addr = format!("{}:{}", host, port);
@@ -46,7 +48,6 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let handle = core.handle();
     let listener = TcpListener::bind(&addr, &handle).expect("failed to bind");
 
-
     let dtf_folder = &settings.dtf_folder;
     utils::create_dir_if_not_exist(&dtf_folder);
 
@@ -56,15 +57,19 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let global = Arc::new(RwLock::new(SharedState::new(settings.clone())));
     let store = Arc::new(RwLock::new(HashMap::new()));
 
-
     run_plugins(global.clone());
 
-    use std::rc::Rc;
-    use std::cell::RefCell;
     // main loop
     let done = listener.incoming().for_each(move |(socket, _addr)| {
+
+        // channel for pushing subscriptions directly from subscriptions thread
+        // to client socket
+        let (subscriptions_tx, subscriptions_rx) = mpsc::unbounded::<Update>();
+
         let global_copy = global.clone();
-        let state = Rc::new(RefCell::new(ThreadState::new(global.clone(), store.clone())));
+        let state = Rc::new(RefCell::new(
+            ThreadState::new(global.clone(), store.clone(), subscriptions_tx.clone())
+        ));
         let state_clone = state.clone();
 
         match utils::init_dbs(&mut state.borrow_mut()) {
@@ -73,6 +78,12 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
         };
         on_connect(&global_copy);
 
+        // map incoming subscription updates to the same format as regular
+        // responses so they can be processed in the same manner.
+        let subscriptions = subscriptions_rx.map(|message| (
+            Cow::from(""), ReturnType::string(update_vec_to_json(&vec![message]))
+        ));
+
         let (rdr, wtr) = socket.split();
         let lines = lines(BufReader::new(rdr));
         let responses = lines.map(move |line| {
@@ -80,7 +91,12 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
             let resp = handler::gen_response(line.borrow(), &mut state.borrow_mut());
             (line, resp)
         });
-        let writes = responses.fold(wtr, |wtr, (line, resp)| {
+
+        // merge responses and messages pushed directly by subscriptions updates
+        // into a single stream
+        let merged = subscriptions.select(responses.map_err(|_| ()));
+
+        let writes = merged.fold(wtr, |wtr, (line, resp)| {
             let mut buf: Vec<u8> = vec![];
             use self::ReturnType::*;
             match resp {
@@ -105,7 +121,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
                     buf.write(ret.as_bytes()).unwrap();
                 }
             };
-            write_all(wtr, buf).map(|(w, _)| w)
+            write_all(wtr, buf).map(|(w, _)| w).map_err(|_| ())
         });
 
         let msg = writes.then(move |_| {

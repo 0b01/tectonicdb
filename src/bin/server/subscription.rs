@@ -3,6 +3,8 @@ use std::sync::{mpsc, Arc, Mutex};
 use std::collections::HashMap;
 use libtectonic::dtf::update::Update;
 
+use futures;
+
 pub type Event = Arc<Mutex<(String, Update)>>;
 
 enum Message {
@@ -41,7 +43,11 @@ impl Subscriptions {
         }
     }
 
-    pub fn sub(&mut self, filter: String) -> (usize, Arc<Mutex<mpsc::Receiver<Update>>>) {
+    pub fn sub(
+        &mut self,
+        filter: String,
+        push_tx: futures::sync::mpsc::UnboundedSender<Update>,
+    ) -> (usize, Arc<Mutex<mpsc::Receiver<Update>>>) {
 
         let (i_tx, i_rx) = mpsc::channel();
         let (o_tx, o_rx) = mpsc::channel();
@@ -56,14 +62,14 @@ impl Subscriptions {
             let mut count = self.sub_count.get_mut(&filter).unwrap();
             *count += 1;
             let sub_v = self.subs.get_mut(&filter).unwrap();
-            sub_v.push(Subscription::new(filter.clone(), i_rx, o_tx));
+            sub_v.push(Subscription::new(filter.clone(), i_rx, o_tx, push_tx));
             self.i_txs.get_mut(&filter).unwrap().push(i_tx);
             *count
         } else {
             self.sub_count.insert(filter.clone(), 1);
             self.subs.insert(
                 filter.clone(),
-                vec![Subscription::new(filter.clone().clone(), i_rx, o_tx)],
+                vec![Subscription::new(filter.clone().clone(), i_rx, o_tx, push_tx)],
             );
             self.i_txs.insert(filter, vec![i_tx]);
             1
@@ -136,6 +142,7 @@ impl Subscriptions {
             }
         }
     }
+
 }
 
 impl Drop for Subscriptions {
@@ -166,16 +173,18 @@ impl Subscription {
         filter: String,
         i_rx: Arc<Mutex<mpsc::Receiver<Message>>>,
         o_tx: Arc<Mutex<mpsc::Sender<Update>>>,
+        push_tx: futures::sync::mpsc::UnboundedSender<Update>
     ) -> Subscription {
 
         let thread = thread::spawn(move || loop {
+            let push_tx = push_tx.clone();
             let message = i_rx.lock().unwrap().recv().unwrap();
 
             match message {
                 Message::Msg(up) => {
                     let (ref symbol, ref up) = *up.lock().unwrap();
                     if symbol == &filter {
-                        let _ = o_tx.lock().unwrap().send(*up);
+                        let _ = push_tx.unbounded_send(*up);
                     }
                 }
                 Message::Terminate => {
@@ -191,6 +200,9 @@ impl Subscription {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use futures::{Stream,Future};
+    use tokio_core::reactor::Core;
+
     #[test]
     fn test_subscription() {
 
@@ -206,14 +218,17 @@ mod tests {
         let event = Arc::new(Mutex::new((symbol.clone(), up)));
 
         let mut subs = Subscriptions::new();
-        let (_id, rx) = subs.sub(symbol.clone());
+        let (subscription_tx, subscription_rx) = futures::sync::mpsc::unbounded::<Update>();
+        let (_id, _) = subs.sub(symbol.clone(), subscription_tx);
 
         subs.msg(event);
 
-        for msg in rx.lock().unwrap().recv() {
-            assert_eq!(up, msg);
-            break;
-        }
+        let task = subscription_rx.take(1).collect().map(|x| {
+            assert_eq!(up, x[0]);
+        });
+
+        let mut core = Core::new().unwrap();
+        core.run(task).unwrap();
 
     }
 }
