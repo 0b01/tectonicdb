@@ -1,6 +1,6 @@
 use state::*;
 use parser;
-use libtectonic::dtf::{update_vec_to_json, Update};
+use libtectonic::dtf::{UpdateVecInto, Update};
 use std::borrow::{Cow, Borrow};
 
 // BUG: subscribe, add, deadlock!!!
@@ -63,6 +63,7 @@ enum Command<'a> {
     Count(ReqCount, Loc),
     Clear(ReqCount),
     Flush(ReqCount),
+    AutoFlush(bool),
     Insert(Option<Update>, Option<DbName<'a>>),
     Create(DbName<'a>),
     Subscribe(DbName<'a>),
@@ -113,12 +114,14 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         "GET ALL" => Get(ReqCount::All, GetFormat::Dtf, None, Loc::Mem),
         "FLUSH" => Flush(ReqCount::Count(1)),
         "FLUSH ALL" => Flush(ReqCount::All),
+        "AUTOFLUSH ON" => AutoFlush(true),
+        "AUTOFLUSH Off" => AutoFlush(false),
         _ => {
             // is in bulkadd
-            if state.is_adding {
+            if state.get_bulkadding() {
                 let parsed = parser::parse_line(&line);
                 let current_db = state.bulkadd_db.clone();
-                let dbname = current_db.unwrap();
+                let dbname = current_db.unwrap_or(state.current_store_name.clone().into());
                 Insert(parsed, Some(dbname.into()))
             } else if line.starts_with("BULKADD INTO ") {
                 let (_index, dbname) = parser::parse_dbname(&line);
@@ -185,21 +188,22 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         Info => ReturnType::string(state.info()),
         Perf => ReturnType::string(state.perf()),
         BulkAdd => {
-            state.is_adding = true;
+            state.set_bulkadding(true);
+            state.bulkadd_db = Some(state.current_store_name.clone().into());
             ReturnType::string("")
         }
         BulkAddInto(dbname) => {
             state.bulkadd_db = Some(dbname.into());
-            state.is_adding = true;
+            state.set_bulkadding(true);
             ReturnType::string("")
         }
         BulkAddEnd => {
-            state.is_adding = false;
+            state.set_bulkadding(false);
             state.bulkadd_db = None;
             ReturnType::string("1")
         }
         Count(ReqCount::Count(_), Loc::Fs) => ReturnType::string(format!("{}", state.count())),
-        Count(ReqCount::Count(_), Loc::Mem) => ReturnType::string(format!("{}", state.count())), // TODO: implement count in mem
+        Count(ReqCount::Count(_), Loc::Mem) => ReturnType::string(format!("{}", state.count_in_mem())),
         Count(ReqCount::All, Loc::Fs) => ReturnType::string(format!("{}", state.countall())),
         Count(ReqCount::All, Loc::Mem) => ReturnType::string(format!("{}", state.countall_in_mem())),
         Clear(ReqCount::Count(_)) => {
@@ -216,6 +220,11 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         }
         Flush(ReqCount::All) => {
             state.flushall();
+            ReturnType::string("1")
+        }
+
+        AutoFlush(is_autoflush) =>  {
+            state.set_autoflush(is_autoflush);
             ReturnType::string("1")
         }
 
@@ -246,7 +255,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
             let rxlocked = state.rx.clone().unwrap();
             let message = rxlocked.lock().unwrap().try_recv();
             match message {
-                Ok(msg) => ReturnType::string(update_vec_to_json(&vec![msg])),
+                Ok(msg) => ReturnType::string(vec![msg].into_json()),
                 _ => ReturnType::string("NONE"),
             }
         }

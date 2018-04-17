@@ -26,6 +26,16 @@ RUN PKG_CONFIG_PATH=/usr/local/musl/lib/pkgconfig \
     LDFLAGS=-L/usr/local/musl/lib \
     cargo build --bin dtfcat --target x86_64-unknown-linux-musl --release
 
+# Build the `dtfsplit` application.
+RUN PKG_CONFIG_PATH=/usr/local/musl/lib/pkgconfig \
+    LDFLAGS=-L/usr/local/musl/lib \
+    cargo build --bin dtfsplit --target x86_64-unknown-linux-musl --release
+
+# Build the `dtfconcat` application.
+RUN PKG_CONFIG_PATH=/usr/local/musl/lib/pkgconfig \
+    LDFLAGS=-L/usr/local/musl/lib \
+    cargo build --bin dtfconcat --target x86_64-unknown-linux-musl --release
+
 # Now, we need to build the _real_ Docker container, copying in `tectonic-server`
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates && update-ca-certificates
@@ -35,6 +45,14 @@ COPY --from=builder \
 
 COPY --from=builder \
     /home/rust/src/target/x86_64-unknown-linux-musl/release/dtfcat \
+    /usr/local/bin/
+
+COPY --from=builder \
+    /home/rust/src/target/x86_64-unknown-linux-musl/release/dtfsplit \
+    /usr/local/bin/
+
+COPY --from=builder \
+    /home/rust/src/target/x86_64-unknown-linux-musl/release/dtfconcat \
     /usr/local/bin/
 
 # Initialize the application

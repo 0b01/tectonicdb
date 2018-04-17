@@ -29,6 +29,7 @@ use std::fs;
 use std::fs::File;
 use std::fmt;
 use std::cmp;
+use std::io::ErrorKind::InvalidData;
 use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
 use std::io::{self, Write, Read, Seek, BufRead, BufWriter, BufReader, SeekFrom};
 use utils::epoch_to_human;
@@ -47,6 +48,29 @@ pub struct Metadata {
     pub nums: u64,
     pub max_ts: u64,
     pub min_ts: u64,
+}
+
+pub trait UpdateVecInto {
+    fn into_json(&self) -> String;
+    fn into_csv(&self) -> String;
+}
+
+impl UpdateVecInto for [Update] {
+    fn into_json(&self) -> String {
+        update_vec_to_json(self)
+    }
+    fn into_csv(&self) -> String {
+        update_vec_to_csv(&self)
+    }
+}
+
+impl UpdateVecInto for Vec<Update> {
+    fn into_json(&self) -> String {
+        update_vec_to_json(self)
+    }
+    fn into_csv(&self) -> String {
+        update_vec_to_csv(&self)
+    }
 }
 
 
@@ -73,7 +97,7 @@ impl fmt::Display for Metadata {
   "max_ts": {},
   "max_ts_human": "{}",
   "min_ts": {},
-  "min_ts_human": "{}"
+  "min_ts_human": "{}",
 }}"#,
             self.symbol,
             self.nums,
@@ -86,12 +110,12 @@ impl fmt::Display for Metadata {
 }
 
 
-pub fn update_vec_to_csv(vecs: &[Update]) -> String {
+fn update_vec_to_csv(vecs: &[Update]) -> String {
     let objects: Vec<String> = vecs.into_iter().map(|up| up.to_csv()).collect();
     objects.join("\n")
 }
 
-pub fn update_vec_to_json(vecs: &[Update]) -> String {
+fn update_vec_to_json(vecs: &[Update]) -> String {
     let objects: Vec<String> = vecs.into_iter().map(|up| up.to_json()).collect();
     objects.join(", ")
 }
@@ -413,8 +437,8 @@ fn read_one_update(rdr: &mut dyn Read, meta: &BatchMetadata) -> Result<Update, i
     let ts = u64::from(rdr.read_u16::<BigEndian>()?) + meta.ref_ts;
     let seq = u32::from(rdr.read_u8()?) + meta.ref_seq;
     let flags = rdr.read_u8()?;
-    let is_trade = (Flags::from_bits(flags).unwrap() & Flags::FLAG_IS_TRADE).to_bool();
-    let is_bid = (Flags::from_bits(flags).unwrap() & Flags::FLAG_IS_BID).to_bool();
+    let is_trade = (Flags::from_bits(flags).ok_or(InvalidData)? & Flags::FLAG_IS_TRADE).to_bool();
+    let is_bid = (Flags::from_bits(flags).ok_or(InvalidData)? & Flags::FLAG_IS_BID).to_bool();
     let price = rdr.read_f32::<BigEndian>()?;
     let size = rdr.read_f32::<BigEndian>()?;
     Ok(Update {
@@ -465,40 +489,71 @@ pub fn read_meta(fname: &str) -> Result<Metadata, io::Error> {
     read_meta_from_buf(&mut rdr)
 }
 
+pub struct DTFBufReader {
+    pub rdr: BufReader<File>,
+    batch_size: u32,
+}
+
+impl DTFBufReader {
+    pub fn new(fname: &str, batch_size: u32) -> Self {
+        let mut rdr = file_reader(fname).expect("Cannot open file");
+        rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
+        DTFBufReader {
+            rdr,
+            batch_size,
+        }
+    }
+}
+
+impl Iterator for DTFBufReader {
+    type Item = Vec<Update>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let v = read_n_batches(&mut self.rdr, self.batch_size).ok()?;
+        // let v = read_all(&mut self.rdr).ok()?;
+        if 0 != v.len() { Some(v) }
+        else { None }
+    }
+}
+
+fn read_n_batches<T: BufRead + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<Vec<Update>, io::Error> {
+    let mut v: Vec<Update> = vec![];
+    let mut count = 0;
+    while let Ok(is_ref) = rdr.read_u8() {
+        if count > num_rows {
+            break;
+        }
+
+        if is_ref == 0x1 {
+            rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
+            v.extend(read_one_batch(&mut rdr)?);
+        }
+
+        count += 1;
+    }
+    Ok(v)
+}
+
+fn read_all<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error> {
+    let mut v: Vec<Update> = vec![];
+    while let Ok(is_ref) = rdr.read_u8() {
+        if is_ref == 0x1 {
+            rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
+            v.extend(read_one_batch(&mut rdr)?);
+        }
+    }
+    Ok(v)
+}
+
 /// decode main section
 pub fn decode(fname: &str, num_rows: Option<u32>) -> Result<Vec<Update>, io::Error> {
-    let mut v: Vec<Update> = vec![];
 
     let mut rdr = file_reader(fname)?;
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
 
     match num_rows {
-        Some(num_rows) => {
-            let mut count = 0;
-            while let Ok(is_ref) = rdr.read_u8() {
-                if count > num_rows {
-                    break;
-                }
-
-                if is_ref == 0x1 {
-                    rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
-                    v.extend(read_one_batch(&mut rdr)?);
-                }
-
-                count += 1;
-            }
-        }
-        None => {
-            while let Ok(is_ref) = rdr.read_u8() {
-                if is_ref == 0x1 {
-                    rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
-                    v.extend(read_one_batch(&mut rdr)?);
-                }
-            }
-        }
+        Some(num_rows) => read_n_batches(&mut rdr, num_rows),
+        None => read_all(&mut rdr),
     }
-
-    Ok(v)
 }
 
 pub fn decode_buffer(mut buf: &mut Read) -> Vec<Update> {
@@ -671,9 +726,9 @@ mod tests {
   "symbol": "TEST",
   "nums": 1,
   "max_ts": 1,
-  "max_ts_human": 1970-01-01 00:00:01 UTC,
+  "max_ts_human": "1970-01-01 00:00:00 UTC",
   "min_ts": 1,
-  "min_ts_human": 1970-01-01 00:00:01 UTC
+  "min_ts_human": "1970-01-01 00:00:00 UTC",
 }"#
         );
     }
@@ -701,7 +756,7 @@ mod tests {
         let fname = "test.dtf";
         {
             // let wtr = file_writer(fname, true);
-            let ups = (1..1000)
+            let ups = (1..50)
                 .map(|i| {
                     Update {
                         ts: i * 1000 as u64,

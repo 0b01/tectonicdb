@@ -1,7 +1,7 @@
 extern crate clap;
 extern crate byteorder;
 extern crate libtectonic;
-use libtectonic::dtf;
+use libtectonic::dtf::{self, UpdateVecInto};
 use libtectonic::storage::utils::{scan_files_for_range, total_folder_updates_len};
 use libtectonic::postprocessing::candle::{Bar, TickBars};
 
@@ -136,9 +136,9 @@ Examples:
                 format!("{}", rebinned)
             } else {
                 if csv {
-                    format!("{}", dtf::update_vec_to_csv(&ups))
+                    format!("{}", ups.into_csv())
                 } else {
-                    format!("[{}]", dtf::update_vec_to_json(&ups))
+                    format!("[{}]", ups.into_json())
                 }
             }
 
@@ -159,9 +159,9 @@ Examples:
                 format!("{}", rebinned)
             } else {
                 if csv {
-                    format!("{}", dtf::update_vec_to_csv(&ups))
+                    format!("{}", ups.into_csv())
                 } else {
-                    format!("[{}]", dtf::update_vec_to_json(&ups))
+                    format!("[{}]", ups.into_json())
                 }
             }
         }

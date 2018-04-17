@@ -14,9 +14,11 @@ type Volume = f32;
 type Scale = u16;
 
 pub fn draw_updates(ups: &[dtf::Update]) -> String {
-    let candles = TickBars::from(ups);
+    let mut candles = TickBars::from(ups);
+    candles.insert_continuation_candles();
     candlestick_graph::CandleStickGraph::new(20, candles.clone()).draw()
 }
+
 
 pub trait Bar {
     /// convert TickBars vector to csv

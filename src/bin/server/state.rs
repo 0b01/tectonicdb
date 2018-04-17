@@ -6,7 +6,7 @@ macro_rules! catch {
 
 use circular_queue::CircularQueue;
 
-use libtectonic::dtf;
+use libtectonic::dtf::{self, UpdateVecInto};
 use libtectonic::dtf::update::Update;
 use libtectonic::storage::utils::scan_files_for_range;
 use libtectonic::utils::within_range;
@@ -56,7 +56,7 @@ pub struct Store<'a> {
 impl<'a> Store<'a> {
     /// push a new `update` into the vec
     pub fn add(&mut self, new_vec: Update) {
-        let is_autoflush = {
+        let (is_autoflush, is_bulkadding) = {
             let mut wtr = self.global.write().unwrap();
 
             // send to insertion firehose
@@ -66,6 +66,7 @@ impl<'a> Store<'a> {
             }
 
             let is_autoflush = wtr.settings.autoflush;
+            let is_bulkadding = wtr.is_bulkadding;
             let flush_interval = wtr.settings.flush_interval;
             let _folder = wtr.settings.dtf_folder.to_owned();
             let name: &str = self.name.borrow();
@@ -89,10 +90,10 @@ impl<'a> Store<'a> {
                 );
             }
 
-            is_autoflush
+            (is_autoflush, is_bulkadding)
         };
 
-        if is_autoflush {
+        if is_autoflush && !is_bulkadding {
             self.flush();
         }
     }
@@ -104,6 +105,15 @@ impl<'a> Store<'a> {
             "KEY IS NOT IN HASHMAP",
         );
         vecs.1
+    }
+
+    pub fn count_in_mem(&self) -> u64 {
+        let rdr = self.global.read().unwrap();
+        let name: &str = self.name.borrow();
+        let vecs = rdr.vec_store.get(name).expect(
+            "KEY IS NOT IN HASHMAP",
+        );
+        vecs.0.len() as u64
     }
 
     /// write items stored in memory into file
@@ -209,11 +219,8 @@ impl<'a> Store<'a> {
 
 /// Each client gets its own ThreadState
 pub struct ThreadState<'thr, 'store> {
-    /// Is inside a BULKADD operation?
-    pub is_adding: bool,
     /// Current selected db using `BULKADD INTO [db]`
     pub bulkadd_db: Option<String>,
-
     /// Is client subscribe?
     pub is_subscribed: bool,
     /// current subscribed db
@@ -378,6 +385,20 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         current_store!(self, add, up);
     }
 
+    pub fn set_autoflush(&mut self, is_autoflush: bool) {
+        let mut global = self.global.write().unwrap();
+        global.settings.autoflush = is_autoflush;
+    }
+
+    pub fn set_bulkadding(&mut self, is_bulkadding: bool) {
+        let mut global = self.global.write().unwrap();
+        global.is_bulkadding = is_bulkadding;
+    }
+
+    pub fn get_bulkadding(&mut self) -> bool {
+        let global = self.global.read().unwrap();
+        global.is_bulkadding
+    }
 
     /// Create a new store
     pub fn create(&mut self, store_name: &str) {
@@ -415,6 +436,11 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     /// return the count of the current store
     pub fn count(&mut self) -> u64 {
         current_store!(self, count)
+    }
+
+    /// return current store count in mem
+    pub fn count_in_mem(&mut self) -> u64 {
+        current_store!(self, count_in_mem)
     }
 
     /// Returns the total count
@@ -584,12 +610,12 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
             }
             GetFormat::Json => {
                 ReturnType::String(
-                    Cow::Owned(format!("[{}]\n", dtf::update_vec_to_json(&result)))
+                    Cow::Owned(format!("[{}]\n", result.into_json()))
                 )
             }
             GetFormat::Csv => {
                 ReturnType::String(
-                    Cow::Owned(format!("{}\n", dtf::update_vec_to_csv(&result))),
+                    Cow::Owned(format!("{}\n", result.into_csv())),
                 )
             }
         };
@@ -602,7 +628,6 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         let dtf_folder: &str = &global.read().unwrap().settings.dtf_folder;
         let state = ThreadState {
             current_store_name: "default".into(),
-            is_adding: false,
             bulkadd_db: None,
             is_subscribed: false,
             subscribed_db: None,
@@ -656,6 +681,8 @@ pub type History = HashMap<String, CircularQueue<(SystemTime, u64)>>;
 #[derive(Debug)]
 pub struct SharedState {
     pub n_cxns: u16,
+    /// Is inside a BULKADD operation?
+    pub is_bulkadding: bool,
     pub settings: Settings,
     pub vec_store: HashMap<String, VecStore>,
     pub history: History,
@@ -669,6 +696,7 @@ impl SharedState {
         let subs = Arc::new(Mutex::new(Subscriptions::new()));
         SharedState {
             n_cxns: 0,
+            is_bulkadding: false,
             settings,
             vec_store: hashmap,
             history: HashMap::new(),
