@@ -6,6 +6,7 @@ pub mod volume_bar;
 pub mod candle;
 
 pub use self::tick_bar::TickBars;
+pub use self::volume_bar::VolumeBars;
 pub use self::candle::Candle;
 
 type Time = u32;
