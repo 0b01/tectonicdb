@@ -31,7 +31,7 @@ impl VolumeBars {
     /// let volume interval be 1,000 shares traded, then each candle
     /// is built from the trade updates that occurred during the interval
     /// in which 1k shares are traded.
-    fn from(ups: &[Update], vol_interval: f32) -> VolumeBars {
+    fn from_updates(ups: &[Update], vol_interval: f32) -> VolumeBars {
 
         let mut vol_acc = 0.; // accumulator for traded volume
         let mut epoch = 0;
@@ -49,7 +49,7 @@ impl VolumeBars {
                 epoch += 1;
                 continue;
             }
-            
+
             let new_candle = if candles.contains_key(&epoch) {
                 let c = candles.get(&epoch).unwrap();
                 Candle {
