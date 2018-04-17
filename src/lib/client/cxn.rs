@@ -8,7 +8,7 @@ use std::time;
 
 use byteorder::{BigEndian, ReadBytesExt};
 use dtf;
-use dtf::file_format::{read_one_batch, update_vec_to_json};
+use dtf::file_format::{read_one_batch, UpdateVecInto};
 
 use client::insert_command::InsertCommand;
 use super::error::TectonicError;
@@ -37,7 +37,7 @@ impl CxnStream {
 
             let mut buf = buf.as_slice();
             let v = dtf::decode_buffer(&mut buf);
-            Ok(format!("[{}]\n", update_vec_to_json(&v)))
+            Ok(format!("[{}]\n", v.into_json()))
 
         } else {
             let size = self.stream.read_u64::<BigEndian>().unwrap();
@@ -103,7 +103,7 @@ impl Cxn {
             && success
         {
             let vecs = read_one_batch(&mut self.stream).unwrap();
-            Ok(format!("[{}]\n", update_vec_to_json(&vecs)))
+            Ok(format!("[{}]\n", vecs.into_json()))
         } else {
             let size = self.stream.read_u64::<BigEndian>().unwrap();
             let mut buf = vec![0; size as usize];
