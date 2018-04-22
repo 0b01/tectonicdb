@@ -6,6 +6,7 @@ extern crate libtectonic;
 extern crate serde_json;
 
 use std::collections::HashSet;
+use std::fs::remove_file;
 use std::process::exit;
 
 use clap::{App, Arg};
@@ -222,9 +223,9 @@ fn dtf_merging() {
     let updates2 = map_into_updates(update_timestamps_2, 1006);
 
     // Write into DTF files
-    let filename1 = "dtfconcat1.dtf";
-    let filename2 = "dtfconcat2.dtf";
-    let output_filename = "dtfconcat_out.dtf";
+    let filename1 = "test/test-data/dtfconcat1.dtf";
+    let filename2 = "test/test-data/dtfconcat2.dtf";
+    let output_filename = "test/test-data/dtfconcat_out.dtf";
 
     dtf::encode(filename1, "test", &updates1).unwrap();
     dtf::encode(filename2, "test", &updates2).unwrap();
@@ -251,6 +252,10 @@ fn dtf_merging() {
     // Concat the files and verify that they contain the correct data
     combine_files(filename1, metadata1, filename2, metadata2, output_filename).unwrap();
     let merged_updates: Vec<Update> = dtf::decode(output_filename, None).unwrap();
+
+    remove_file(filename1).unwrap();
+    remove_file(filename2).unwrap();
+    remove_file(output_filename).unwrap();
 
     let actual_ts_price: Vec<(u64, f32)> = merged_updates
         .into_iter()

@@ -20,7 +20,7 @@ impl Bar for VolumeBars {
     fn to_csv(&self) -> String {
         let csvs: Vec<String> = self.v
             .iter()
-            .map(|(key, (candle, ts))| format!("{},{},{}", key, ts, candle.to_csv()))
+            .map(|(key, &(ref candle, ref ts))| format!("{},{},{}", key, ts, candle.to_csv()))
             .collect();
 
         csvs.join("\n")
@@ -109,7 +109,5 @@ mod tests {
         let ret = VolumeBars::from_updates(&trades, 0.2);
 
         println!("{:#?}", ret);
-
-
     }
 }
