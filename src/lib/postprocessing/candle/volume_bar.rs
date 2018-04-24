@@ -106,7 +106,7 @@ mod tests {
         })
         .collect::<Vec<_>>();
 
-        let ret = VolumeBars::from(&trades, 0.2);
+        let ret = VolumeBars::from_updates(&trades, 0.2);
 
         println!("{:#?}", ret);
 
