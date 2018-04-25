@@ -109,13 +109,12 @@ impl fmt::Display for Metadata {
     }
 }
 
-
 fn update_vec_to_csv(vecs: &[Update]) -> String {
     let objects: Vec<String> = vecs.into_iter().map(|up| up.to_csv()).collect();
     objects.join("\n")
 }
 
-fn update_vec_to_json(vecs: &[Update]) -> String {
+pub fn update_vec_to_json(vecs: &[Update]) -> String {
     let objects: Vec<String> = vecs.into_iter().map(|up| up.to_json()).collect();
     objects.join(", ")
 }
