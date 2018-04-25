@@ -24,13 +24,12 @@ fn init_logger() {
                 message
             ))
         })
-        .level(log::LogLevelFilter::Debug)
+        .level(log::LevelFilter::Debug)
         .chain(std::io::stdout())
         .chain(fern::log_file("bookkeeper.log").unwrap())
         .apply()
         .unwrap();
 }
-
 
 
 fn main() {

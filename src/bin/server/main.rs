@@ -106,11 +106,11 @@ fn main() {
 
 fn prepare_logger(verbosity: u8, log_file: &str) {
     let level = match verbosity {
-        0 => log::LogLevelFilter::Error,
-        1 => log::LogLevelFilter::Warn,
-        2 => log::LogLevelFilter::Info,
-        3 => log::LogLevelFilter::Debug,
-        _ => log::LogLevelFilter::max(),
+        0 => log::LevelFilter::Error,
+        1 => log::LevelFilter::Warn,
+        2 => log::LevelFilter::Info,
+        3 => log::LevelFilter::Debug,
+        _ => log::LevelFilter::max(),
     };
 
     fern::Dispatch::new()
@@ -124,6 +124,9 @@ fn prepare_logger(verbosity: u8, log_file: &str) {
             ))
         })
         .level(level)
+        .level_for("tokio_core", log::LevelFilter::Info)
+        .level_for("tokio_reactor", log::LevelFilter::Info)
+        .level_for("hyper", log::LevelFilter::Info)
         .chain(std::io::stdout())
         .chain(fern::log_file(log_file).unwrap())
         .apply()
