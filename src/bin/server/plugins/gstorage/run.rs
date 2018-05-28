@@ -37,9 +37,10 @@ fn upload_file(path_buf: PathBuf, conf: &GStorageConfig) {
 
     match upload::upload(&mut f, fname) {
         Ok(metadata) => {
+            debug!("DTF file {} successfully uploaded to google cloud storage.", fname);
             if let Some(ref dcb_url) = conf.dcb_url {
                 match upload::post_to_dcb(&dcb_url, &metadata) {
-                    Ok(res) => info!("Response from DCB: {:?}", res),
+                    Ok(res) => info!("DTF file metadata posted to the DCB: {:?}", res),
                     Err(err) => error!("Error while posting data to DCB: {:?}", err),
                 }
             }
@@ -49,7 +50,10 @@ fn upload_file(path_buf: PathBuf, conf: &GStorageConfig) {
     };
 
     if conf.remove {
-        let _ = fs::remove_file(path_buf.as_path());
+        match fs::remove_file(path_buf.as_path()) {
+            Ok(_) => debug!("DTF file successfully deleted."),
+            Err(err) => error!("Error while deleting DTF file: {:?}", err),
+        }
     }
 }
 

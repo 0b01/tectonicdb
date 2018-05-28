@@ -1,7 +1,4 @@
-#![feature(conservative_impl_trait)]
 #![feature(libc)]
-#![feature(dyn_trait)]
-#![feature(universal_impl_trait)]
 
 extern crate csv;
 extern crate serde;

@@ -91,7 +91,6 @@ impl GStorageFile {
                 start_ts.to_timespec().sec as u32,
                 finish_ts.to_timespec().sec as u32,
             )?)
-
         } else {
             Err(box io::Error::new(
                 io::ErrorKind::Other,

@@ -1,4 +1,4 @@
-#![feature(box_syntax, box_patterns, conservative_impl_trait, entry_and_modify)]
+#![feature(box_syntax, box_patterns, entry_and_modify)]
 
 extern crate libtectonic;
 extern crate clap;
