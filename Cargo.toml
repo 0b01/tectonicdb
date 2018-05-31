@@ -52,17 +52,17 @@ time = "0.1.38"
 tokio-core = "0.1"
 tokio-io = "0.1"
 
-[dependencies.notify]
-optional = true
-version = "4.0.0"
-
 [dependencies.uuid]
-features = ["serde"]
+features = ["serde", "v4"]
 version = "0.5.1"
+
+[dependencies.tempdir]
+optional = true
+version = "0.3.7"
 
 [features]
 default = ["gcs"]
-gcs = ["notify"]
+gcs = ["tempdir"]
 
 [lib]
 crate-type = ["cdylib", "dylib", "rlib"]

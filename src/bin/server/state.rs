@@ -18,7 +18,6 @@ use std::path::Path;
 use settings::Settings;
 use std::sync::{Arc, RwLock, Mutex, mpsc};
 use std::time::{SystemTime, UNIX_EPOCH};
-use uuid::Uuid;
 use handler::{GetFormat, ReturnType, ReqCount, Loc, Range};
 use subscription::Subscriptions;
 use futures;
@@ -415,12 +414,14 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
                 (box Vec::new(), 0),
             );
         }
+
         // insert a store into client state hashmap
+        let store_name = String::from(store_name);
         self.store.write().unwrap().insert(
-            store_name.to_owned(),
+            store_name.clone(),
             Store {
-                name: store_name.to_owned().into(),
-                fname: format!("{}--{}", Uuid::new_v4(), store_name).into(),
+                name: store_name.clone().into(),
+                fname: store_name.into(),
                 in_memory: false,
                 global: self.global.clone(),
             },
@@ -655,7 +656,7 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
             "default".to_owned(),
             Store {
                 name: "default".into(),
-                fname: format!("{}--default", Uuid::new_v4()).into(),
+                fname: "default".into(),
                 in_memory: default_in_memory,
                 global: global.clone(),
             },
@@ -669,7 +670,7 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
                 store_name.to_owned(),
                 Store {
                     name: store_name.to_owned().into(),
-                    fname: format!("{}--{}", Uuid::new_v4(), store_name).into(),
+                    fname: store_name.clone().into(),
                     in_memory: in_memory,
                     global: global.clone(),
                 },

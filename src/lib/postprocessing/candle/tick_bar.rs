@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashSet};
 use super::candle::Candle;
-use super::{Time, Price, Volume, Scale};
+use super::{Time, Scale};
 use super::Bar;
 use dtf::Update;
 use utils::fill_digits;
@@ -580,6 +580,8 @@ mod tests {
 
     #[test]
     fn should_have_right_attr() {
+        use super::super::*;
+
         let mut candles = BTreeMap::new();
         let to_scale: usize = 5;
         let upto: usize = 5;

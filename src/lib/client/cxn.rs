@@ -1,10 +1,6 @@
 use std::net::TcpStream;
 use std::io::{Read, Write};
 use std::str;
-use std::sync::mpsc::{Receiver, channel};
-use std::sync::{Arc, RwLock, Mutex};
-use std::thread;
-use std::time;
 
 use byteorder::{BigEndian, ReadBytesExt};
 use dtf;

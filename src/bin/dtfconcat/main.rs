@@ -6,7 +6,6 @@ extern crate libtectonic;
 extern crate serde_json;
 
 use std::collections::HashSet;
-use std::fs::remove_file;
 use std::process::exit;
 
 use clap::{App, Arg};
@@ -189,6 +188,8 @@ fn combine_files(
 
 #[test]
 fn dtf_merging() {
+    use std::fs::remove_file;
+
     let mut update_timestamps_1: Vec<u64> = (0..1000).collect();
     update_timestamps_1.append(
         &mut vec![1001, 1002, 1003, 1004, 1004, 1007, 1008, 1009, 1009, 1010]

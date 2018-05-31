@@ -31,7 +31,7 @@ impl CandleStickGraph {
         CandleStickGraph {
             height,
             data,
-            global_min, 
+            global_min,
             global_max,
         }
     }
@@ -42,8 +42,8 @@ impl CandleStickGraph {
         for y in (0..self.height).rev() {
             if y % 4 == 0 {
                 ret += &format!("{:8.8} ",
-                    self.global_min + 
-                    (y as f32 * (self.global_max - self.global_min) 
+                    self.global_min +
+                    (y as f32 * (self.global_max - self.global_min)
                         / self.height as f32))
             } else {
                 ret += "           "
@@ -121,12 +121,12 @@ impl CandleStickGraph {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
 
     // #[test]
     // fn should_print_candlestick_graph_ok() {
-    //     static HOUR : u64 = 60 * 60 * 1000 - 1000; 
-    //     static MINUTE : u64 = 60 * 1000; 
+    //     static HOUR : u64 = 60 * 60 * 1000 - 1000;
+    //     static MINUTE : u64 = 60 * 1000;
 
     //     let fname: &str = "./bt_btcneo.dtf";
     //     let meta = dtf::read_meta(fname).unwrap();

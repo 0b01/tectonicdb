@@ -918,7 +918,7 @@ mod tests {
             .collect();
         let new_size = append_data.len() + old_data.len();
 
-        append(fname, &append_data);
+        append(fname, &append_data).unwrap();
 
         println!("----APPENDED----");
 
@@ -966,7 +966,7 @@ mod tests {
             size: 0.,
         };
         let mut bytes = vec![];
-        write_batches(&mut bytes, &vec![up]);
+        write_batches(&mut bytes, &vec![up]).unwrap();
         assert_eq!(
             vec![
                 1,

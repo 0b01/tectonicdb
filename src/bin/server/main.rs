@@ -56,10 +56,9 @@ fn main() {
     let autoflush = {
         let cli_setting: bool = matches.is_present("autoflush");
         let env_setting = key_or_none("TECTONICDB_AUTOFLUSH");
-        println!("ENV SETTING: {:?}", env_setting);
         match env_setting {
             Some(s) => match s.as_ref() {
-                "true" => true,
+                "true" | "1" => true,
                 "false" => false,
                 _ => cli_setting,
             },

@@ -14,10 +14,6 @@ struct Levels {
 }
 
 impl Levels {
-    fn new() -> Levels {
-        unimplemented!()
-    }
-
     /// converts a slice of Update to [price, time, size]
     /// see how price levels evolve over time...
     fn from(ups: &[Update], step_bins: Count, tick_bins: Count, m: f64) -> Levels {

@@ -11,6 +11,7 @@ use std::io::{self, Write};
 
 pub use libtectonic::dtf;
 
+#[allow(dead_code)]
 mod db;
 
 fn init_logger() {
