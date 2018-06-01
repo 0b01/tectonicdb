@@ -44,7 +44,7 @@ fn create_signal_handler(
             info!("`TERM` signal recieved; flushing all stores...");
             state.flushall();
             info!("All stores flushed; calling plugin exit hooks...");
-            run_plugin_exit_hooks();
+            run_plugin_exit_hooks(&state);
             info!("Plugin exit hooks called; exiting...");
             exit(0);
 

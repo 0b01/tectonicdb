@@ -12,7 +12,7 @@ use std::time::Duration;
 extern crate tempdir;
 use self::tempdir::TempDir;
 
-use state::SharedState;
+use state::{SharedState, ThreadState};
 use plugins::gstorage::GStorageConfig;
 use plugins::gstorage::upload::{self, GStorageFile};
 
@@ -134,6 +134,7 @@ pub fn run(global: Arc<RwLock<SharedState>>) {
 }
 
 /// Called when the database is being shut down.  Upload all files, regardless of size.
-pub fn run_exit_hook() {
-    upload_all_files(&TMP_DIR.path())
+pub fn run_exit_hook(state: &ThreadState<'static, 'static>) {
+    let dtf_dir_path = &state.global.read().unwrap().settings.dtf_folder;
+    upload_all_files(&Path::new(dtf_dir_path))
 }
