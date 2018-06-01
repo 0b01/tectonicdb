@@ -20,7 +20,7 @@ use handler::ReturnType;
 use libtectonic::dtf::{Update, UpdateVecInto};
 use utils;
 use handler;
-use plugins::run_plugins;
+use plugins::{run_plugins, run_plugin_exit_hooks};
 use settings::Settings;
 
 use futures::prelude::*;
@@ -43,7 +43,9 @@ fn create_signal_handler(
             println!("Signal: {}", signal);
             info!("`TERM` signal recieved; flushing all stores...");
             state.flushall();
-            info!("All stores flushed; exiting...");
+            info!("All stores flushed; calling plugin exit hooks...");
+            run_plugin_exit_hooks();
+            info!("Plugin exit hooks called; exiting...");
             exit(0);
 
             #[allow(unreachable_code)]

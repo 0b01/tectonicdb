@@ -16,3 +16,7 @@ pub fn run_plugins(global: Arc<RwLock<SharedState>>) {
 
     #[cfg(feature = "gcs")] gstorage::run(global.clone());
 }
+
+pub fn run_plugin_exit_hooks() {
+    #[cfg(feature = "gcs")] gstorage::run_exit_hook();
+}
