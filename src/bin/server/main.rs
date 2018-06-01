@@ -20,6 +20,7 @@ extern crate circular_queue;
 extern crate futures;
 extern crate tokio_io;
 extern crate tokio_core;
+extern crate tokio_signal;
 
 mod plugins;
 
