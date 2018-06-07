@@ -172,7 +172,7 @@ impl Subscription {
     fn new(
         filter: String,
         i_rx: Arc<Mutex<mpsc::Receiver<Message>>>,
-        o_tx: Arc<Mutex<mpsc::Sender<Update>>>,
+        _o_tx: Arc<Mutex<mpsc::Sender<Update>>>,
         push_tx: futures::sync::mpsc::UnboundedSender<Update>
     ) -> Subscription {
 

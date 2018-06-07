@@ -11,6 +11,7 @@ use std::io::{self, Write};
 
 pub use libtectonic::dtf;
 
+#[allow(dead_code)]
 mod db;
 
 fn init_logger() {
@@ -24,13 +25,12 @@ fn init_logger() {
                 message
             ))
         })
-        .level(log::LogLevelFilter::Debug)
+        .level(log::LevelFilter::Debug)
         .chain(std::io::stdout())
         .chain(fern::log_file("bookkeeper.log").unwrap())
         .apply()
         .unwrap();
 }
-
 
 
 fn main() {

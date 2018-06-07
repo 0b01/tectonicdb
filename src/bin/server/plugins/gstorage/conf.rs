@@ -16,6 +16,10 @@ pub struct GStorageConfig {
     pub remove: bool,
     /// data collection backend - if you don't know just ignore
     pub dcb_url: Option<String>,
+    /// amount of seconds between upload checks
+    pub upload_interval_secs: u64,
+    /// min file size that will be uploaded to google cloud storage
+    pub min_file_size: u64,
 }
 
 impl GStorageConfig {
@@ -28,6 +32,8 @@ impl GStorageConfig {
             folder: key_or_default("GCLOUD_FOLDER", ""),
             remove: key_or_default_parse("GCLOUD_REMOVE_ON_UPLOAD", true)?,
             dcb_url: key_or_none("DCB_URL"),
+            upload_interval_secs: key_or_default_parse("GCLOUD_UPLOAD_INTERVAL_SECS", 30)?,
+            min_file_size: key_or_default_parse("GCLOUD_MIN_FILE_SIZE_BYTES", 1024 * 1024)?,
         })
     }
 }

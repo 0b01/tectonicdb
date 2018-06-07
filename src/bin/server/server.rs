@@ -13,6 +13,7 @@ use std::net::SocketAddr;
 use std::rc::Rc;
 use std::str;
 use std::sync::{Arc, RwLock};
+use std::process::exit;
 
 use state::{Global, SharedState, ThreadState};
 use handler::ReturnType;
@@ -28,6 +29,28 @@ use tokio_core::net::TcpListener;
 use tokio_core::reactor::Core;
 use tokio_io::AsyncRead;
 use tokio_io::io::{lines, write_all};
+use tokio_signal;
+
+/// Creates a listener for Unix signals that takes care of flushing all stores to file before
+/// shutting down the server.
+fn create_signal_handler(
+    mut state: ThreadState<'static, 'static>
+) -> impl Future<Item=(), Error=()> {
+    // Catches `TERM` signals, which are sent by Kubernetes during graceful shutdown.
+    tokio_signal::unix::Signal::new(15)
+        .flatten_stream()
+        .for_each(move |signal| {
+            println!("Signal: {}", signal);
+            info!("`TERM` signal recieved; flushing all stores...");
+            state.flushall();
+            info!("All stores flushed; exiting...");
+            exit(0);
+
+            #[allow(unreachable_code)]
+            Ok(())
+        })
+        .map_err(|err| error!("Error in signal handler future: {:?}", err))
+}
 
 pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let addr = format!("{}:{}", host, port);
@@ -46,6 +69,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
 
     let mut core = Core::new().unwrap();
     let handle = core.handle();
+
     let listener = TcpListener::bind(&addr, &handle).expect("failed to bind");
 
     let dtf_folder = &settings.dtf_folder;
@@ -57,18 +81,27 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let global = Arc::new(RwLock::new(SharedState::new(settings.clone())));
     let store = Arc::new(RwLock::new(HashMap::new()));
 
+    // initialize the signal handler
+    let (subscriptions_tx, _) = mpsc::unbounded::<Update>();
+    let signal_handler_threadstate = ThreadState::new(
+        Arc::clone(&global),
+        Arc::clone(&store),
+        subscriptions_tx
+    );
+    let signal_handler = create_signal_handler(signal_handler_threadstate);
+    handle.spawn(signal_handler);
+
     run_plugins(global.clone());
 
     // main loop
     let done = listener.incoming().for_each(move |(socket, _addr)| {
-
         // channel for pushing subscriptions directly from subscriptions thread
         // to client socket
         let (subscriptions_tx, subscriptions_rx) = mpsc::unbounded::<Update>();
 
         let global_copy = global.clone();
         let state = Rc::new(RefCell::new(
-            ThreadState::new(global.clone(), store.clone(), subscriptions_tx.clone())
+            ThreadState::new(Arc::clone(&global), Arc::clone(&store), subscriptions_tx.clone())
         ));
         let state_clone = state.clone();
 

@@ -1,9 +1,7 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use super::candle::Candle;
-use super::{Price, Volume, Scale};
 use super::Bar;
 use dtf::Update;
-use utils::fill_digits;
 
 /// interval during which some fixed number of volume occurred
 type Epoch = u64;
@@ -20,7 +18,7 @@ impl Bar for VolumeBars {
     fn to_csv(&self) -> String {
         let csvs: Vec<String> = self.v
             .iter()
-            .map(|(key, (candle, ts))| format!("{},{},{}", key, ts, candle.to_csv()))
+            .map(|(key, &(ref candle, ref ts))| format!("{},{},{}", key, ts, candle.to_csv()))
             .collect();
 
         csvs.join("\n")
@@ -109,7 +107,5 @@ mod tests {
         let ret = VolumeBars::from_updates(&trades, 0.2);
 
         println!("{:#?}", ret);
-
-
     }
 }

@@ -109,13 +109,12 @@ impl fmt::Display for Metadata {
     }
 }
 
-
 fn update_vec_to_csv(vecs: &[Update]) -> String {
     let objects: Vec<String> = vecs.into_iter().map(|up| up.to_csv()).collect();
     objects.join("\n")
 }
 
-fn update_vec_to_json(vecs: &[Update]) -> String {
+pub fn update_vec_to_json(vecs: &[Update]) -> String {
     let objects: Vec<String> = vecs.into_iter().map(|up| up.to_json()).collect();
     objects.join(", ")
 }
@@ -919,7 +918,7 @@ mod tests {
             .collect();
         let new_size = append_data.len() + old_data.len();
 
-        append(fname, &append_data);
+        append(fname, &append_data).unwrap();
 
         println!("----APPENDED----");
 
@@ -967,7 +966,7 @@ mod tests {
             size: 0.,
         };
         let mut bytes = vec![];
-        write_batches(&mut bytes, &vec![up]);
+        write_batches(&mut bytes, &vec![up]).unwrap();
         assert_eq!(
             vec![
                 1,

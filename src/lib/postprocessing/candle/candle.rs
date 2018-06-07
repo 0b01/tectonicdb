@@ -1,4 +1,4 @@
-use super::{Time, Price, Volume, Scale};
+use super::{Price, Volume};
 
 #[derive(PartialOrd, PartialEq, Clone, Debug)]
 /// a candlestick

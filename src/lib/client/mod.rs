@@ -4,6 +4,7 @@ mod error;
 #[allow(dead_code)]
 pub mod circular_queue;
 pub mod insert_command;
+#[allow(dead_code)]
 mod cxn;
 mod pool;
 

@@ -1,4 +1,4 @@
-#![feature(box_syntax, box_patterns, conservative_impl_trait, entry_and_modify)]
+#![feature(box_syntax, box_patterns, entry_and_modify)]
 
 extern crate libtectonic;
 extern crate clap;
@@ -20,6 +20,7 @@ extern crate circular_queue;
 extern crate futures;
 extern crate tokio_io;
 extern crate tokio_core;
+extern crate tokio_signal;
 
 mod plugins;
 
@@ -56,10 +57,9 @@ fn main() {
     let autoflush = {
         let cli_setting: bool = matches.is_present("autoflush");
         let env_setting = key_or_none("TECTONICDB_AUTOFLUSH");
-        println!("ENV SETTING: {:?}", env_setting);
         match env_setting {
             Some(s) => match s.as_ref() {
-                "true" => true,
+                "true" | "1" => true,
                 "false" => false,
                 _ => cli_setting,
             },
@@ -106,11 +106,11 @@ fn main() {
 
 fn prepare_logger(verbosity: u8, log_file: &str) {
     let level = match verbosity {
-        0 => log::LogLevelFilter::Error,
-        1 => log::LogLevelFilter::Warn,
-        2 => log::LogLevelFilter::Info,
-        3 => log::LogLevelFilter::Debug,
-        _ => log::LogLevelFilter::max(),
+        0 => log::LevelFilter::Error,
+        1 => log::LevelFilter::Warn,
+        2 => log::LevelFilter::Info,
+        3 => log::LevelFilter::Debug,
+        _ => log::LevelFilter::max(),
     };
 
     fern::Dispatch::new()
@@ -124,6 +124,9 @@ fn prepare_logger(verbosity: u8, log_file: &str) {
             ))
         })
         .level(level)
+        .level_for("tokio_core", log::LevelFilter::Info)
+        .level_for("tokio_reactor", log::LevelFilter::Info)
+        .level_for("hyper", log::LevelFilter::Info)
         .chain(std::io::stdout())
         .chain(fern::log_file(log_file).unwrap())
         .apply()
