@@ -56,7 +56,7 @@ fn create_signal_handler(
 
 pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let addr = format!("{}:{}", host, port);
-    let addr = addr.parse::<SocketAddr>().unwrap();
+    let addr: SocketAddr = addr.parse().expect("Invalid host or port provided!");
 
     info!("Trying to bind to addr: {}", addr);
     if !settings.autoflush {
@@ -107,10 +107,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
         ));
         let state_clone = state.clone();
 
-        match utils::init_dbs(&mut state.borrow_mut()) {
-            Ok(()) => (),
-            Err(_) => panic!("Cannot initialized db!"),
-        };
+        utils::init_dbs(&mut state.borrow_mut());
         on_connect(&global_copy);
 
         // map incoming subscription updates to the same format as regular
