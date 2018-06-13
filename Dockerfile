@@ -11,7 +11,7 @@ RUN sudo chown -R rust:rust /home/rust
 # This is necessary due to a bug in Rust: https://github.com/rust-lang-nursery/rustup.rs/issues/1239
 RUN rm -rf ~/.rustup
 RUN curl https://sh.rustup.rs -sSf | \
-    sh -s -- -y --default-toolchain nightly-2018-05-25 && \
+    sh -s -- -y --default-toolchain nightly-2018-06-13 && \
     rustup target add x86_64-unknown-linux-musl
 
 WORKDIR ~
