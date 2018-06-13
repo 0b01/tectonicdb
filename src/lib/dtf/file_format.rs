@@ -517,10 +517,8 @@ impl Iterator for DTFBufReader {
 fn read_n_batches<T: BufRead + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<Vec<Update>, io::Error> {
     let mut v: Vec<Update> = vec![];
     let mut count = 0;
+    if num_rows == 0 { return Ok(v); }
     while let Ok(is_ref) = rdr.read_u8() {
-        if count > num_rows {
-            break;
-        }
 
         if is_ref == 0x1 {
             rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
@@ -528,6 +526,10 @@ fn read_n_batches<T: BufRead + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<V
         }
 
         count += 1;
+
+        if count > num_rows {
+            break;
+        }
     }
     Ok(v)
 }
