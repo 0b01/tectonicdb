@@ -15,7 +15,7 @@ use std::str;
 use std::sync::{Arc, RwLock};
 use std::process::exit;
 
-use state::{Global, SharedState, ThreadState};
+use state::{Global, SharedState, ThreadState, HashMapStore};
 use handler::ReturnType;
 use libtectonic::dtf::{Update, UpdateVecInto};
 use utils;
@@ -26,30 +26,49 @@ use settings::Settings;
 use futures::prelude::*;
 use futures::sync::mpsc;
 use tokio_core::net::TcpListener;
-use tokio_core::reactor::Core;
+use tokio_core::reactor::{Core, Handle};
 use tokio_io::AsyncRead;
 use tokio_io::io::{lines, write_all};
 use tokio_signal;
 
-/// Creates a listener for Unix signals that takes care of flushing all stores to file before
-/// shutting down the server.
-fn create_signal_handler(
-    mut state: ThreadState<'static, 'static>
-) -> impl Future<Item=(), Error=()> {
+#[cfg(unix)]
+fn enable_platform_hook<'a>(
+    handle: &Handle, 
+    global: Global,
+    store: HashMapStore<'a>) {
+    let (subscriptions_tx, _) = mpsc::unbounded::<Update>();
+    let signal_handler_threadstate = ThreadState::new(
+        Arc::clone(&global),
+        Arc::clone(&store),
+        subscriptions_tx
+    );
+
+    /// Creates a listener for Unix signals that takes care of flushing all stores to file before
+    /// shutting down the server.
     // Catches `TERM` signals, which are sent by Kubernetes during graceful shutdown.
-    tokio_signal::unix::Signal::new(15)
+    let signal_handler = tokio_signal::unix::Signal::new(15)
         .flatten_stream()
         .for_each(move |signal| {
             println!("Signal: {}", signal);
             info!("`TERM` signal recieved; flushing all stores...");
-            state.flushall();
+            signal_handler_threadstate.flushall();
             info!("All stores flushed; exiting...");
             exit(0);
 
             #[allow(unreachable_code)]
             Ok(())
         })
-        .map_err(|err| error!("Error in signal handler future: {:?}", err))
+        .map_err(|err| error!("Error in signal handler future: {:?}", err));
+
+    handle.spawn(signal_handler);
+}
+
+#[cfg(windows)]
+fn enable_platform_hook<'a>(
+    handle: &Handle, 
+    global: Global,
+    store: HashMapStore<'a>) {
+
 }
 
 pub fn run_server(host: &str, port: &str, settings: &Settings) {
@@ -81,16 +100,8 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let global = Arc::new(RwLock::new(SharedState::new(settings.clone())));
     let store = Arc::new(RwLock::new(HashMap::new()));
 
-    // initialize the signal handler
-    let (subscriptions_tx, _) = mpsc::unbounded::<Update>();
-    let signal_handler_threadstate = ThreadState::new(
-        Arc::clone(&global),
-        Arc::clone(&store),
-        subscriptions_tx
-    );
-    let signal_handler = create_signal_handler(signal_handler_threadstate);
-    handle.spawn(signal_handler);
-
+    enable_platform_hook(&handle, Arc::clone(&global), Arc::clone(&store));
+    
     run_plugins(global.clone());
 
     // main loop
