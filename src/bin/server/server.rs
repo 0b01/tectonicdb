@@ -32,16 +32,12 @@ use tokio_io::io::{lines, write_all};
 use tokio_signal;
 
 #[cfg(unix)]
-fn enable_platform_hook<'a>(
+fn enable_platform_hook(
     handle: &Handle, 
     global: Global,
-    store: HashMapStore<'a>) {
+    store: HashMapStore<'static>) {
     let (subscriptions_tx, _) = mpsc::unbounded::<Update>();
-    let signal_handler_threadstate = ThreadState::new(
-        Arc::clone(&global),
-        Arc::clone(&store),
-        subscriptions_tx
-    );
+    let mut signal_handler_threadstate = ThreadState::new(global, store, subscriptions_tx);
 
     /// Creates a listener for Unix signals that takes care of flushing all stores to file before
     /// shutting down the server.
@@ -68,7 +64,6 @@ fn enable_platform_hook<'a>(
     handle: &Handle, 
     global: Global,
     store: HashMapStore<'a>) {
-
 }
 
 pub fn run_server(host: &str, port: &str, settings: &Settings) {
