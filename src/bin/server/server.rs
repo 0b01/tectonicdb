@@ -36,12 +36,12 @@ use tokio_signal;
 fn create_signal_handler(
     mut state: ThreadState<'static, 'static>
 ) -> impl Future<Item=(), Error=()> {
-    // Catches `TERM` signals, which are sent by Kubernetes during graceful shutdown.
-    tokio_signal::unix::Signal::new(15)
+    // Catches `SIGKILL` signals, which are sent by Kubernetes during graceful shutdown.
+    tokio_signal::ctrl_c()
         .flatten_stream()
         .for_each(move |signal| {
             println!("Signal: {}", signal);
-            info!("`TERM` signal recieved; flushing all stores...");
+            info!("`SIGKILL` signal recieved; flushing all stores...");
             state.flushall();
             info!("All stores flushed; exiting...");
             exit(0);
