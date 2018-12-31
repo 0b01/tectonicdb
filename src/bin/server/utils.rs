@@ -2,7 +2,6 @@ use std::path::Path;
 use std::fs;
 use state::{Store, ThreadState};
 use libtectonic::dtf;
-use std::io;
 
 pub fn create_dir_if_not_exist(dtf_folder: &str) {
     if !Path::new(dtf_folder).exists() {
@@ -12,7 +11,7 @@ pub fn create_dir_if_not_exist(dtf_folder: &str) {
 
 /// Iterate through the dtf files in the folder and load some metadata into memory.
 /// Create corresponding Store objects in State.
-pub fn init_dbs(state: &mut ThreadState) -> Result<(), io::Error> {
+pub fn init_dbs(state: &mut ThreadState) {
     let dtf_folder = {
         let rdr = state.global.read().unwrap();
         rdr.settings.dtf_folder.clone()
@@ -23,8 +22,20 @@ pub fn init_dbs(state: &mut ThreadState) -> Result<(), io::Error> {
         if stem.ends_with(".dtf") {
             let basename = Path::new(&fname_os).file_stem().unwrap().to_str().unwrap(); // sldjf-lks-djflk-sfsd--something
             let full_path = &format!("{}/{}", dtf_folder, stem);
-            let header_size = dtf::get_size(full_path)?;
-            let symbol = dtf::read_meta(full_path)?.symbol;
+            let header_size = match dtf::get_size(full_path) {
+                Ok(size) => size,
+                Err(err) => {
+                    warn!("Error while retrieving size of DTF file {}: {:?}", full_path, err);
+                    continue;
+                }
+            };
+            let symbol = match dtf::read_meta(full_path) {
+                Ok(meta) => meta.symbol,
+                Err(err) => {
+                    warn!("Error parsing metadata for DTF file {}: {:?}", full_path, err);
+                    continue;
+                }
+            };
 
             {
                 let mut wtr = state.global.write().unwrap();
@@ -49,5 +60,4 @@ pub fn init_dbs(state: &mut ThreadState) -> Result<(), io::Error> {
             );
         }
     }
-    Ok(())
 }

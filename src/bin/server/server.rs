@@ -20,7 +20,7 @@ use handler::ReturnType;
 use libtectonic::dtf::{Update, UpdateVecInto};
 use utils;
 use handler;
-use plugins::run_plugins;
+use plugins::{run_plugins, run_plugin_exit_hooks};
 use settings::Settings;
 
 use futures::prelude::*;
@@ -47,8 +47,11 @@ fn enable_platform_hook(
         .for_each(move |signal| {
             println!("Signal: {}", signal);
             info!("`TERM` signal recieved; flushing all stores...");
+            state.flushall();
+            info!("All stores flushed; calling plugin exit hooks...");
+            run_plugin_exit_hooks(&state);
+            info!("Plugin exit hooks called; exiting...");
             signal_handler_threadstate.flushall();
-            info!("All stores flushed; exiting...");
             exit(0);
 
             #[allow(unreachable_code)]
@@ -68,7 +71,7 @@ fn enable_platform_hook<'a>(
 
 pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let addr = format!("{}:{}", host, port);
-    let addr = addr.parse::<SocketAddr>().unwrap();
+    let addr: SocketAddr = addr.parse().expect("Invalid host or port provided!");
 
     info!("Trying to bind to addr: {}", addr);
     if !settings.autoflush {
@@ -111,10 +114,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
         ));
         let state_clone = state.clone();
 
-        match utils::init_dbs(&mut state.borrow_mut()) {
-            Ok(()) => (),
-            Err(_) => panic!("Cannot initialized db!"),
-        };
+        utils::init_dbs(&mut state.borrow_mut());
         on_connect(&global_copy);
 
         // map incoming subscription updates to the same format as regular

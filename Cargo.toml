@@ -42,6 +42,7 @@ config = "0.6"
 csv = "1.0.0-beta.5"
 fern = "0.5"
 futures = "0.1.14"
+lazy_static = "1.0.1"
 log = "0.4"
 openssl-probe = "0.1.2"
 reqwest = "0.8.1"
@@ -53,13 +54,13 @@ tokio-core = "0.1"
 tokio-io = "0.1"
 tokio-signal = "0.2.1"
 
-[dependencies.uuid]
-features = ["serde", "v4"]
-version = "0.5.1"
-
 [dependencies.tempdir]
 optional = true
 version = "0.3.7"
+
+[dependencies.uuid]
+features = ["serde", "v4"]
+version = "0.5.1"
 
 [features]
 default = ["gcs"]
