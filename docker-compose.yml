@@ -1,0 +1,24 @@
+version: "3.2"
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9001:9001"
+    restart: on-failure
+    environment:
+      - TECTONICDB_LOG_FILE_NAME=/dev/null
+      - TECTONICDB_DTF_FOLDER=/export/db
+    volumes:
+      - type: volume
+        source: tectonic
+        target: /export
+        volume:
+          nocopy: true
+    command: /usr/local/bin/tectonic-server -vv
+
+volumes:
+  tectonic:
+
