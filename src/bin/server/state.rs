@@ -43,7 +43,7 @@ pub type SubscriptionTX = futures::sync::mpsc::UnboundedSender<Update>;
 ///
 /// When client adds some updates using ADD or BULKADD,
 /// size increments and updates are added to memory
-/// finally, call FLUSH to commit to disk the current store or FLUSHALL to commit all available stores.
+/// finally, call FLUSH to commit to disk the current store or FLUSH ALL to commit all available stores.
 /// the client can free the updates from memory using CLEAR or CLEARALL
 ///
 #[derive(Debug)]

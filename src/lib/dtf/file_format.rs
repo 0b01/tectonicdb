@@ -6,7 +6,7 @@
 //! Offset 00: ([u8; 5]) magic value 0x4454469001
 //! Offset 05: ([u8; 20]) Symbol
 //! Offset 25: (u64) number of records
-//! Offset 33: (u32) max ts
+//! Offset 33: (u64) max ts
 //! Offset 80: -- records - see below --
 //!
 //!
