@@ -77,7 +77,7 @@ enum Command<'a> {
 static HELP_STR: &str = "PING, INFO, USE [db], CREATE [db],
 ADD [ts],[seq],[is_trade],[is_bid],[price],[size];
 BULKADD ...; DDAKLUB
-FLUSH, FLUSHALL, GETALL, GET [count], CLEAR
+FLUSH, FLUSH ALL, GET ALL, GET [count], CLEAR
 ";
 
 /// sometimes returns string, sometimes bytes, error string
