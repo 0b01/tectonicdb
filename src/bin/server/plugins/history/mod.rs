@@ -3,7 +3,7 @@
 use circular_queue::CircularQueue;
 use std::{thread, time};
 use std::sync::{Arc, RwLock};
-use state::SharedState;
+use crate::state::SharedState;
 
 pub fn run(global: Arc<RwLock<SharedState>>) {
     let global_copy_timer = global.clone();

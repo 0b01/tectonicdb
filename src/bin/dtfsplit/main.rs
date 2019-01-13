@@ -39,11 +39,11 @@ Examples:
     let file_stem = Path::new(fname).file_stem().expect("Input not a valid file").to_str().unwrap();
 
     println!("Reading: {}", fname);
-    let meta = dtf::read_meta(fname).unwrap();
-    let rdr = dtf::DTFBufReader::new(fname, batch_size);
+    let meta = dtf::file_format::read_meta(fname).unwrap();
+    let rdr = dtf::file_format::DTFBufReader::new(fname, batch_size);
     for (i, batch) in rdr.enumerate() {
         let outname = format!("{}-{}.dtf", file_stem, i);
         println!("Writing to {}", outname);
-        dtf::encode(&outname, &meta.symbol, &batch).unwrap();
+        dtf::file_format::encode(&outname, &meta.symbol, &batch).unwrap();
     }
 }

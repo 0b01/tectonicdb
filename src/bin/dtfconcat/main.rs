@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use std::process::exit;
 
 use clap::{App, Arg};
-use libtectonic::dtf::{self, Update};
+use libtectonic::dtf::{self, update::Update};
 use libtectonic::dtf::file_format::Metadata;
 
 const USAGE: &'static str = "Usage: `dtfconcat input1 input2 output`";
@@ -60,8 +60,8 @@ Examples:
         .expect(USAGE);
 
     // Get metadata for both of the input files to determine which one starts first
-    let input1_metadata = dtf::read_meta(input1_filename).expect(DTF_ERROR);
-    let input2_metadata = dtf::read_meta(input2_filename).expect(DTF_ERROR);
+    let input1_metadata = dtf::file_format::read_meta(input1_filename).expect(DTF_ERROR);
+    let input2_metadata = dtf::file_format::read_meta(input2_filename).expect(DTF_ERROR);
 
     // Sanity checks to make sure they're the same symbol and continuous
     if input1_metadata.symbol != input2_metadata.symbol {
@@ -109,7 +109,7 @@ fn combine_files(
     //     start_metadata.min_ts,
     //     start_metadata.max_ts - 1
     // ).map_err(|_| DTF_ERROR)?;
-    let full_file1 = dtf::decode(start_filename, None).map_err(|_| DTF_ERROR)?;
+    let full_file1 = dtf::file_format::decode(start_filename, None).map_err(|_| DTF_ERROR)?;
     let file1_updates: Vec<Update> = full_file1
         .iter()
         .filter(|&&Update { ts, .. }| ts >= start_metadata.min_ts && ts < start_metadata.max_ts)
@@ -130,7 +130,7 @@ fn combine_files(
         .cloned()
         .collect();
     drop(full_file1);
-    let full_file2 = dtf::decode(end_filename, None).map_err(|_| DTF_ERROR)?;
+    let full_file2 = dtf::file_format::decode(end_filename, None).map_err(|_| DTF_ERROR)?;
     // let mut overlap_updates_2: Vec<Update> = dtf::get_range_in_file(
     //     end_filename,
     //     start_metadata.max_ts,
@@ -180,7 +180,7 @@ fn combine_files(
     joined_updates.append(&mut overlapping_updates);
     joined_updates.append(&mut file2_updates);
 
-    dtf::encode(output_filename, &symbol, &joined_updates)
+    dtf::file_format::encode(output_filename, &symbol, &joined_updates)
         .map_err(|_| String::from("Error while writing output file!"))?;
 
     Ok(())
@@ -228,11 +228,11 @@ fn dtf_merging() {
     let filename2 = "test/test-data/dtfconcat2.dtf";
     let output_filename = "test/test-data/dtfconcat_out.dtf";
 
-    dtf::encode(filename1, "test", &updates1).unwrap();
-    dtf::encode(filename2, "test", &updates2).unwrap();
+    dtf::file_format::encode(filename1, "test", &updates1).unwrap();
+    dtf::file_format::encode(filename2, "test", &updates2).unwrap();
 
-    let metadata1 = dtf::read_meta(filename1).unwrap();
-    let metadata2 = dtf::read_meta(filename2).unwrap();
+    let metadata1 = dtf::file_format::read_meta(filename1).unwrap();
+    let metadata2 = dtf::file_format::read_meta(filename2).unwrap();
 
     let expected_ts_price: &[(u64, f32)] = &[
         (1001, 1001.),
@@ -252,7 +252,7 @@ fn dtf_merging() {
 
     // Concat the files and verify that they contain the correct data
     combine_files(filename1, metadata1, filename2, metadata2, output_filename).unwrap();
-    let merged_updates: Vec<Update> = dtf::decode(output_filename, None).unwrap();
+    let merged_updates: Vec<Update> = dtf::file_format::decode(output_filename, None).unwrap();
 
     remove_file(filename1).unwrap();
     remove_file(filename2).unwrap();

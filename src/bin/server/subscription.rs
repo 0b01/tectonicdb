@@ -59,7 +59,7 @@ impl Subscriptions {
         // upsert
         // if there is a subscription on dbname
         let id = if self.subs.contains_key(&filter) {
-            let mut count = self.sub_count.get_mut(&filter).unwrap();
+            let count = self.sub_count.get_mut(&filter).unwrap();
             *count += 1;
             let sub_v = self.subs.get_mut(&filter).unwrap();
             sub_v.push(Subscription::new(filter.clone(), i_rx, o_tx, push_tx));

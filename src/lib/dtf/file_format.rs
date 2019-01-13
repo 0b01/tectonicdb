@@ -23,7 +23,6 @@
 //!        price: (f32)
 //!        size: (f32)
 
-use dtf::update::*;
 use std::str;
 use std::fs;
 use std::fs::File;
@@ -32,7 +31,9 @@ use std::cmp;
 use std::io::ErrorKind::InvalidData;
 use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
 use std::io::{self, Write, Read, Seek, BufRead, BufWriter, BufReader, SeekFrom};
-use utils::epoch_to_human;
+
+use crate::dtf::update::*;
+use crate::utils::epoch_to_human;
 
 static MAGIC_VALUE: &[u8] = &[0x44, 0x54, 0x46, 0x90, 0x01]; // DTF9001
 const SYMBOL_LEN: usize = 20;
@@ -48,29 +49,6 @@ pub struct Metadata {
     pub nums: u64,
     pub max_ts: u64,
     pub min_ts: u64,
-}
-
-pub trait UpdateVecInto {
-    fn into_json(&self) -> String;
-    fn into_csv(&self) -> String;
-}
-
-impl UpdateVecInto for [Update] {
-    fn into_json(&self) -> String {
-        update_vec_to_json(self)
-    }
-    fn into_csv(&self) -> String {
-        update_vec_to_csv(&self)
-    }
-}
-
-impl UpdateVecInto for Vec<Update> {
-    fn into_json(&self) -> String {
-        update_vec_to_json(self)
-    }
-    fn into_csv(&self) -> String {
-        update_vec_to_csv(&self)
-    }
 }
 
 
@@ -107,16 +85,6 @@ impl fmt::Display for Metadata {
             epoch_to_human(self.min_ts / 1000)
         )
     }
-}
-
-fn update_vec_to_csv(vecs: &[Update]) -> String {
-    let objects: Vec<String> = vecs.into_iter().map(|up| up.to_csv()).collect();
-    objects.join("\n")
-}
-
-pub fn update_vec_to_json(vecs: &[Update]) -> String {
-    let objects: Vec<String> = vecs.into_iter().map(|up| up.to_json()).collect();
-    objects.join(", ")
 }
 
 pub fn get_max_ts(updates: &[Update]) -> u64 {

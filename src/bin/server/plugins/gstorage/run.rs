@@ -12,9 +12,9 @@ use std::time::Duration;
 extern crate tempdir;
 use self::tempdir::TempDir;
 
-use state::{SharedState, ThreadState};
-use plugins::gstorage::GStorageConfig;
-use plugins::gstorage::upload::{self, GStorageFile};
+use crate::state::{SharedState, ThreadState};
+use crate::plugins::gstorage::GStorageConfig;
+use crate::plugins::gstorage::upload::{self, GStorageFile};
 
 /// Posts a DTF file's metadata to the DCB, uploads it to Google Cloud Storage, and then
 /// optionally deletes it after.

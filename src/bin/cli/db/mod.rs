@@ -6,9 +6,9 @@ mod cxn;
 mod pool;
 
 pub use self::error::TectonicError;
-pub use db::cxn::Cxn;
-pub use db::pool::CxnPool;
-pub use db::insert_command::InsertCommand;
+pub use self::cxn::Cxn;
+pub use self::pool::CxnPool;
+pub use self::insert_command::InsertCommand;
 
 use std::env;
 
@@ -64,12 +64,12 @@ pub fn get_cxn_pool() -> CxnPool {
 //         let res = cxn.cmd("USE test\n");
 //         assert!(res.is_err());
 //     }
-// 
+//
 //     #[test]
 //     fn should_cxnpool_work() {
 //         let mut cxn = CxnPool::new(10, "localhost", "9001", 100).unwrap();
 //         cxn.cmd("COUNT ALL\n").unwrap();
-// 
+//
 //         let res = cxn.insert(&InsertCommand::Add("default".to_owned(), dtf::Update {
 //             ts: 0,
 //             seq: 0,

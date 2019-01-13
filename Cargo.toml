@@ -1,13 +1,15 @@
 [package]
 authors = ["Ricky Han <tectonic@rickyhan.com>"]
-category = "Database"
 description = "fast datastore server for contiguous order book ticks"
 exclude = ["db/*", "test/test-data/*"]
 keywords = ["finance", "datastore", "database", "financial"]
+repository = "https://github.com/rickyhan/tectonicdb"
 license = "MIT"
 name = "tectonicdb"
 readme = "README.md"
+edition = "2018"
 version = "0.2.1"
+autobins = false
 
 [[bin]]
 name = "tectonic-server"
@@ -20,17 +22,14 @@ path = "src/bin/cli/main.rs"
 [[bin]]
 name = "dtfsplit"
 path = "src/bin/dtfsplit/main.rs"
-publish = true
 
 [[bin]]
 name = "dtfcat"
 path = "src/bin/dtfcat/main.rs"
-publish = true
 
 [[bin]]
 name = "dtfconcat"
 path = "src/bin/dtfconcat/main.rs"
-publish = true
 
 [dependencies]
 bitflags = "1.0.0"
@@ -67,8 +66,6 @@ default = ["gcs"]
 gcs = ["tempdir"]
 
 [lib]
-crate-type = ["cdylib", "dylib", "rlib"]
+crate-type = ["dylib", "rlib"]
 name = "libtectonic"
 path = "src/lib/lib.rs"
-repository = "https://github.com/rickyhan/tectonicdb"
-version = "0.2.0"

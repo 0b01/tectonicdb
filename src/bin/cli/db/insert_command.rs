@@ -1,9 +1,9 @@
-use dtf;
+use crate::dtf::update::Update;
 
 #[derive(Clone)]
 pub enum InsertCommand {
-    Add(String, dtf::Update),
-    BulkAdd(String, Vec<dtf::Update>),
+    Add(String, Update),
+    BulkAdd(String, Vec<Update>),
 }
 
 impl InsertCommand {

@@ -1,4 +1,5 @@
 #![feature(libc)]
+#![feature(rustc_private)]
 
 extern crate csv;
 extern crate serde;
@@ -19,5 +20,4 @@ pub mod utils;
 pub mod dtf;
 pub mod client;
 
-pub use dtf::update::Update;
-pub use utils::*;
+pub use self::dtf::update::Update;

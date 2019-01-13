@@ -2,9 +2,12 @@ use std::env;
 use std::fs;
 use std::io;
 
-use dtf::{self, Symbol, AssetType};
-use storage::filetype::FileType;
-use storage::file_metadata::FileMetadata;
+use crate::dtf::file_format::{Metadata, read_meta};
+use crate::dtf::symbol::{ Symbol, AssetType };
+use crate::storage::{
+    filetype::FileType,
+    file_metadata::FileMetadata,
+};
 
 fn key_or_default(key: &str, default: &str) -> String {
    match env::var(key) {
@@ -49,7 +52,7 @@ impl FileMetadata for DTFFileMetadata {}
 
 impl DTFFileMetadata {
     pub fn new(fname: &str) -> Result<DTFFileMetadata, io::Error> {
-        let metadata: dtf::Metadata = dtf::read_meta(fname)?;
+        let metadata: Metadata = read_meta(fname)?;
         let file_size = fs::metadata(fname)?.len();
         let symbol = match Symbol::from_str(&metadata.symbol) {
             Some(sym) => sym,

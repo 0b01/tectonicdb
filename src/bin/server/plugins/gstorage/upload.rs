@@ -1,22 +1,23 @@
 /// upload saved dtf file to google cloud storage
 
-use plugins::gstorage::reqwest;
-use plugins::gstorage::reqwest::Body;
 use std::io::Read;
+use std::path::Path;
+use std::io;
+use std::error;
+use std::fs::File;
 
 use uuid::Uuid;
 use serde::Serialize;
 use time;
 
 use libtectonic::storage::file_metadata::{self, FileMetadata};
-use plugins::gstorage::conf::GStorageConfig;
-use plugins::gstorage::metadata::GStorageOpMetadata;
-use plugins::gstorage::GStorageMetadata;
-
-use std::path::Path;
-use std::io;
-use std::error;
-use std::fs::File;
+use crate::plugins::gstorage::{
+    conf::GStorageConfig,
+    metadata::GStorageOpMetadata,
+    GStorageMetadata,
+    reqwest,
+    reqwest::Body,
+};
 
 #[derive(Debug)]
 pub struct GStorageFile {

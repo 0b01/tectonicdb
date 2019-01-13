@@ -1,7 +1,7 @@
 use std::{thread, time};
 use std::collections::VecDeque;
 
-use client::circular_queue::CircularQueue;
+use crate::client::circular_queue::CircularQueue;
 use super::{Cxn, InsertCommand, TectonicError};
 
 pub type InsertQueue = CircularQueue<InsertCommand>;

@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use super::candle::Candle;
 use super::Bar;
-use dtf::Update;
+use crate::dtf::update::Update;
 
 /// interval during which some fixed number of volume occurred
 type Epoch = u64;

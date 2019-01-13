@@ -15,13 +15,13 @@ use std::str;
 use std::sync::{Arc, RwLock};
 use std::process::exit;
 
-use state::{Global, SharedState, ThreadState, HashMapStore};
-use handler::ReturnType;
-use libtectonic::dtf::{Update, UpdateVecInto};
-use utils;
-use handler;
-use plugins::{run_plugins, run_plugin_exit_hooks};
-use settings::Settings;
+use libtectonic::dtf::update::{Update, UpdateVecInto};
+use crate::state::{Global, SharedState, ThreadState, HashMapStore};
+use crate::handler::ReturnType;
+use crate::utils;
+use crate::handler;
+use crate::plugins::{run_plugins, run_plugin_exit_hooks};
+use crate::settings::Settings;
 
 use futures::prelude::*;
 use futures::sync::mpsc;
@@ -33,25 +33,24 @@ use tokio_signal;
 
 #[cfg(unix)]
 fn enable_platform_hook(
-    handle: &Handle, 
+    handle: &Handle,
     global: Global,
     store: HashMapStore<'static>) {
     let (subscriptions_tx, _) = mpsc::unbounded::<Update>();
-    let mut signal_handler_threadstate = ThreadState::new(global, store, subscriptions_tx);
+    let mut state = ThreadState::new(global, store, subscriptions_tx);
 
-    /// Creates a listener for Unix signals that takes care of flushing all stores to file before
-    /// shutting down the server.
+    // Creates a listener for Unix signals that takes care of flushing all stores to file before
+    // shutting down the server.
     // Catches `TERM` signals, which are sent by Kubernetes during graceful shutdown.
     let signal_handler = tokio_signal::unix::Signal::new(15)
         .flatten_stream()
         .for_each(move |signal| {
             println!("Signal: {}", signal);
             info!("`TERM` signal recieved; flushing all stores...");
-            state.flushall();
             info!("All stores flushed; calling plugin exit hooks...");
             run_plugin_exit_hooks(&state);
             info!("Plugin exit hooks called; exiting...");
-            signal_handler_threadstate.flushall();
+            state.flushall();
             exit(0);
 
             #[allow(unreachable_code)]
@@ -64,9 +63,10 @@ fn enable_platform_hook(
 
 #[cfg(windows)]
 fn enable_platform_hook<'a>(
-    handle: &Handle, 
+    handle: &Handle,
     global: Global,
-    store: HashMapStore<'a>) {
+    store: HashMapStore<'a>
+) {
 }
 
 pub fn run_server(host: &str, port: &str, settings: &Settings) {
@@ -99,7 +99,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     let store = Arc::new(RwLock::new(HashMap::new()));
 
     enable_platform_hook(&handle, Arc::clone(&global), Arc::clone(&store));
-    
+
     run_plugins(global.clone());
 
     // main loop

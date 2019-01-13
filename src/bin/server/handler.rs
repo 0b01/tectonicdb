@@ -1,6 +1,6 @@
-use state::*;
-use parser;
-use libtectonic::dtf::{UpdateVecInto, Update};
+use crate::state::*;
+use crate::parser;
+use libtectonic::dtf::update::{UpdateVecInto, Update};
 use std::borrow::{Cow, Borrow};
 
 // BUG: subscribe, add, deadlock!!!
@@ -104,7 +104,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         "DDAKLUB" => BulkAddEnd,
         "UNSUBSCRIBE" => Unsubscribe(ReqCount::Count(0)),
         "UNSUBSCRIBE ALL" => Unsubscribe(ReqCount::All),
-        "COUNT" => Count(ReqCount::Count(1), Loc::Fs), 
+        "COUNT" => Count(ReqCount::Count(1), Loc::Fs),
         "COUNT ALL" => Count(ReqCount::All, Loc::Fs),
         "COUNT ALL IN MEM" => Count(ReqCount::All, Loc::Mem),
         "CLEAR" => Clear(ReqCount::Count(1)),
@@ -285,7 +285,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
             }
         }
 
-        Get(cnt, fmt, rng, loc) => 
+        Get(cnt, fmt, rng, loc) =>
             state.get(cnt, fmt, rng, loc)
             .unwrap_or(ReturnType::error("Not enough items to return")),
 
@@ -296,7 +296,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
 #[cfg(test)]
 mod tests {
     use super::*;
-    use settings::Settings;
+    use crate::settings::Settings;
     use std::sync::{Arc, RwLock};
     use std::collections::HashMap;
     use futures;

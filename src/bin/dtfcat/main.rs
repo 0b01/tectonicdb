@@ -1,7 +1,7 @@
 extern crate clap;
 extern crate byteorder;
 extern crate libtectonic;
-use libtectonic::dtf::{self, UpdateVecInto};
+use libtectonic::dtf::{self, update::UpdateVecInto};
 use libtectonic::storage::utils::{scan_files_for_range, total_folder_updates_len};
 use libtectonic::postprocessing::candle::{Bar, TickBars};
 
@@ -123,9 +123,9 @@ Examples:
 
     let txt = if input != "" {
         if print_metadata {
-            format!("{}", dtf::read_meta(input).unwrap())
+            format!("{}", dtf::file_format::read_meta(input).unwrap())
         } else {
-            let ups = dtf::decode(input, None).unwrap();
+            let ups = dtf::file_format::decode(input, None).unwrap();
             if candle {
                 let mut candles = TickBars::from(ups.as_slice());
                 candles.insert_continuation_candles();

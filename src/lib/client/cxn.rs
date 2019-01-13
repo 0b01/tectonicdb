@@ -3,10 +3,9 @@ use std::io::{Read, Write};
 use std::str;
 
 use byteorder::{BigEndian, ReadBytesExt};
-use dtf;
-use dtf::file_format::{read_one_batch, UpdateVecInto};
-
-use client::insert_command::InsertCommand;
+use crate::dtf::file_format::{read_one_batch,  decode_buffer};
+use crate::dtf::update::UpdateVecInto;
+use crate::client::insert_command::InsertCommand;
 use super::error::TectonicError;
 
 struct CxnStream {
@@ -32,7 +31,7 @@ impl CxnStream {
             let _ = self.stream.read_exact(&mut buf);
 
             let mut buf = buf.as_slice();
-            let v = dtf::decode_buffer(&mut buf);
+            let v = decode_buffer(&mut buf);
             Ok(format!("[{}]\n", v.into_json()))
 
         } else {

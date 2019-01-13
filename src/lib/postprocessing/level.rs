@@ -3,9 +3,9 @@
 //! this is [price -> time -> size] to keep track of
 //! size changes on each price level over time.
 use std::collections::{BTreeMap, HashMap};
-use postprocessing::histogram::{Histogram, Count};
-use utils::fill_digits;
-use dtf::Update;
+use crate::postprocessing::histogram::{Histogram, Count};
+use crate::utils::fill_digits;
+use crate::dtf::update::Update;
 
 
 #[derive(Debug)]
@@ -48,7 +48,7 @@ impl Levels {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use dtf;
+    use crate::dtf;
     static FNAME: &str = "test/test-data/bt_btcnav.dtf";
 
     #[test]
@@ -56,7 +56,7 @@ mod tests {
         // rebin price
         let tick_bins = 10; // or 9 thresholds
         let step_bins = 10;
-        let records = dtf::decode(FNAME, Some(100)).unwrap();
+        let records = dtf::file_format::decode(FNAME, Some(100)).unwrap();
         {
             let prices = records
                 .iter()

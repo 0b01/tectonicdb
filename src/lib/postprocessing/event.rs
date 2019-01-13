@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use dtf::Update;
+use crate::dtf::update::Update;
 
 type Time = u64;
 
@@ -86,7 +86,7 @@ impl Events {
 mod test {
 
     use super::*;
-    use dtf;
+    use crate::dtf;
     static FNAME: &str = "test/test-data/bt_btcnav.dtf";
     static POLO: &str = "test/test-data/pl_btc_nav.dtf";
 
@@ -99,7 +99,7 @@ mod test {
 
     #[test]
     fn test_volume_filter() {
-        let records = dtf::decode(FNAME, Some(10000)).unwrap();
+        let records = dtf::file_format::decode(FNAME, Some(10000)).unwrap();
         let ups = records.as_slice();
 
         let evts = Events::from(ups);
@@ -127,7 +127,7 @@ mod test {
     fn should_work_with_poloniex_too() {
         // TODO: more poloniex tests
         // The raw data doesn't look correct.
-        let records = dtf::decode(POLO, Some(10000)).unwrap();
+        let records = dtf::file_format::decode(POLO, Some(10000)).unwrap();
 
         let ups = records.as_slice();
         let evts = Events::from(ups);

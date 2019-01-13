@@ -2,8 +2,8 @@ use std::collections::{BTreeMap, HashSet};
 use super::candle::Candle;
 use super::{Time, Scale};
 use super::Bar;
-use dtf::Update;
-use utils::fill_digits;
+use crate::dtf::update::Update;
+use crate::utils::fill_digits;
 
 #[derive(Clone, Debug, PartialEq)]
 /// utilities for rebinning candlesticks

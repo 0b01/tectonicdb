@@ -5,7 +5,18 @@ use std::ffi::{CStr, CString};
 use std::path::Path;
 
 use csv::{DeserializeRecordsIntoIter, ReaderBuilder};
-use dtf::{self, Update, UpdateVecInto};
+use crate::dtf::{
+    update::{
+        Update,
+        UpdateVecInto
+    },
+    file_format::{
+        encode,
+        decode,
+        append,
+        decode_buffer,
+    },
+};
 use self::libc::{c_char, c_uchar};
 
 #[repr(C)]
@@ -28,7 +39,7 @@ pub extern fn read_dtf_to_csv(fname: *const c_char) -> *mut c_char {
     };
     let fname = c_str.to_str().unwrap();
 
-    let ups = dtf::decode(fname, None).unwrap();
+    let ups = decode(fname, None).unwrap();
     let data = ups.into_csv();
 
     let ret = String::from(data);
@@ -44,7 +55,7 @@ pub extern fn read_dtf_to_csv_with_limit(fname: *const c_char, num: u32) -> *mut
     };
     let fname = c_str.to_str().unwrap();
 
-    let ups = dtf::decode(fname, Some(num)).unwrap();
+    let ups = decode(fname, Some(num)).unwrap();
     let data = ups.into_csv();
 
     let ret = String::from(data);
@@ -60,7 +71,7 @@ pub extern fn read_dtf_to_arr(fname: *const c_char) -> Slice {
     };
     let fname = c_str.to_str().unwrap();
 
-    let mut ups = dtf::decode(fname, None).unwrap();
+    let mut ups = decode(fname, None).unwrap();
 
     let p = ups.as_mut_ptr();
     let len = ups.len();
@@ -79,7 +90,7 @@ pub extern fn read_dtf_to_arr_with_limit(fname: *const c_char, num: u32) -> Slic
     };
     let fname = c_str.to_str().unwrap();
 
-    let mut ups = dtf::decode(fname, Some(num)).unwrap();
+    let mut ups = decode(fname, Some(num)).unwrap();
 
     let p = ups.as_mut_ptr();
     let len = ups.len();
@@ -138,9 +149,9 @@ fn parse_kaiko_csv_to_dtf_inner(symbol: &str, filename: &str, csv_str: &str) -> 
     // Write or append the updates into the target DTF file
     let fpath = Path::new(&filename);
     let res = if fpath.exists() {
-        dtf::append(filename, &updates)
+        append(filename, &updates)
     } else {
-        dtf::encode(filename, symbol, &updates)
+        encode(filename, symbol, &updates)
     };
 
     match res {
@@ -186,7 +197,7 @@ pub extern fn parse_stream(n: *mut c_uchar, len: u32) -> Slice {
         slice::from_raw_parts(n, len as usize)
     };
 
-    let mut v = dtf::decode_buffer(&mut byte_arr);
+    let mut v = decode_buffer(&mut byte_arr);
 
     let p = v.as_mut_ptr();
     let len = v.len();

@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use settings::{key_or_default_parse, key_or_default, key_or_none};
+use crate::settings::{key_or_default_parse, key_or_default, key_or_none};
 
 #[derive(Debug)]
 pub struct GStorageConfig {

@@ -1,7 +1,7 @@
 // this module handles orderbook ops on Updates
 use std::collections::BTreeMap;
-use postprocessing::histogram::{Histogram, Count};
-use dtf::Update;
+use crate::postprocessing::histogram::{Histogram, Count};
+use crate::dtf::update::Update;
 use std::fmt;
 use std::f64;
 
@@ -192,7 +192,7 @@ impl fmt::Debug for RebinnedOrderbook {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use dtf;
+    use crate::dtf;
     static FNAME: &str = "test/test-data/bt_btcnav.dtf";
 
     #[test]
@@ -200,7 +200,7 @@ mod tests {
         let step_bins = 100;
         let tick_bins = 100;
 
-        let ups = dtf::decode(FNAME, Some(1000)).unwrap();
+        let ups = dtf::file_format::decode(FNAME, Some(1000)).unwrap();
         let ob = RebinnedOrderbook::from(ups.as_slice(), step_bins, tick_bins, 2.);
 
         assert_eq!(ob.book.len(), step_bins - 1);

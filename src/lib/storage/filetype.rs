@@ -1,4 +1,4 @@
-use dtf::read_magic_value;
+use crate::dtf::file_format::read_magic_value;
 use std::io::BufReader;
 use std::fs::File;
 

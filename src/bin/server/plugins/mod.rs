@@ -8,7 +8,7 @@ pub mod history;
 
 use std::sync::{Arc, RwLock};
 
-use state::{SharedState, ThreadState};
+use crate::state::{SharedState, ThreadState};
 
 /// Run each plugin in a separate thread
 pub fn run_plugins(global: Arc<RwLock<SharedState>>) {

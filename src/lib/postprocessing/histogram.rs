@@ -1,8 +1,8 @@
 use std::mem;
 use std::cmp::Ordering::{self, Equal, Greater, Less};
 use std::collections::HashMap;
-use dtf::Update;
-use utils::{bigram, fill_digits};
+use crate::dtf::update::Update;
+use crate::utils::{bigram, fill_digits};
 
 pub type Price = f64;
 pub type Count = usize;
@@ -402,13 +402,13 @@ fn local_cmp(x: f64, y: f64) -> Ordering {
 mod tests {
 
     use super::*;
-    use dtf;
+    use crate::dtf;
     static FNAME: &str = "test/test-data/bt_btcnav.dtf";
     use std::collections::HashMap;
 
     #[test]
     fn test_histogram() {
-        let records = dtf::decode(FNAME, Some(10000)).unwrap();
+        let records = dtf::file_format::decode(FNAME, Some(10000)).unwrap();
         let prices: Vec<Price> = records.into_iter().map(|up| up.price as f64).collect();
 
         let _hist = Histogram::new(&prices, 100, 2.);

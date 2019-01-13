@@ -1,6 +1,6 @@
 use std::path::Path;
 use std::fs;
-use state::{Store, ThreadState};
+use crate::state::{Store, ThreadState};
 use libtectonic::dtf;
 
 pub fn create_dir_if_not_exist(dtf_folder: &str) {
@@ -22,14 +22,14 @@ pub fn init_dbs(state: &mut ThreadState) {
         if stem.ends_with(".dtf") {
             let basename = Path::new(&fname_os).file_stem().unwrap().to_str().unwrap(); // sldjf-lks-djflk-sfsd--something
             let full_path = &format!("{}/{}", dtf_folder, stem);
-            let header_size = match dtf::get_size(full_path) {
+            let header_size = match dtf::file_format::get_size(full_path) {
                 Ok(size) => size,
                 Err(err) => {
                     warn!("Error while retrieving size of DTF file {}: {:?}", full_path, err);
                     continue;
                 }
             };
-            let symbol = match dtf::read_meta(full_path) {
+            let symbol = match dtf::file_format::read_meta(full_path) {
                 Ok(meta) => meta.symbol,
                 Err(err) => {
                     warn!("Error parsing metadata for DTF file {}: {:?}", full_path, err);
