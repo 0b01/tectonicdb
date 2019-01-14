@@ -986,7 +986,7 @@ dependencies = [
 
 [[package]]
 name = "tectonicdb"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder 1.2.7 (registry+https://github.com/rust-lang/crates.io-index)",

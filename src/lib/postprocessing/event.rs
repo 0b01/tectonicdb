@@ -3,17 +3,26 @@ use crate::dtf::update::Update;
 
 type Time = u64;
 
-enum EventType {
+/// Enum for events
+pub enum EventType {
+    /// Cancel order event
     CancelEvent,
+    /// Trade matched event
     TradeEvent,
+    /// Create order event
     CreateEvent,
 }
 
+/// Data structure for storing events.
+/// Each is a map from time to list of updates happened at or near that discrete time
 #[derive(Debug)]
-struct Events {
-    cancelled: BTreeMap<Time, Vec<Update>>,
-    trades: BTreeMap<Time, Vec<Update>>,
-    created: BTreeMap<Time, Vec<Update>>,
+pub struct Events {
+    /// cancelled orders
+    pub cancelled: BTreeMap<Time, Vec<Update>>,
+    /// trade events
+    pub trades: BTreeMap<Time, Vec<Update>>,
+    /// created orders
+    pub created: BTreeMap<Time, Vec<Update>>,
 }
 
 impl<'a> From<&'a [Update]> for Events {
@@ -63,7 +72,8 @@ impl<'a> From<&'a [Update]> for Events {
 }
 
 impl Events {
-    pub fn filter_volume(&self, event_type: EventType, from_vol: f32, to_vol: f32) -> Vec<Update> {
+    /// Filter order events based on size
+    pub fn filter_size(&self, event_type: EventType, from_size: f32, to_size: f32) -> Vec<Update> {
         let obj = match event_type {
             EventType::CancelEvent => &self.cancelled,
             EventType::CreateEvent => &self.created,
@@ -73,7 +83,7 @@ impl Events {
         let mut ret = Vec::new();
         for v in obj.values() {
             for up in v.iter() {
-                if up.size >= from_vol && up.size <= to_vol {
+                if up.size >= from_size && up.size <= to_size {
                     ret.push(up.clone());
                 }
             }
@@ -98,25 +108,25 @@ mod test {
     }
 
     #[test]
-    fn test_volume_filter() {
+    fn test_size_filter() {
         let records = dtf::file_format::decode(FNAME, Some(10000)).unwrap();
         let ups = records.as_slice();
 
         let evts = Events::from(ups);
 
-        let cancels = evts.filter_volume(EventType::CancelEvent, 100., 200.);
+        let cancels = evts.filter_size(EventType::CancelEvent, 100., 200.);
         assert!(cancels.len() > 0);
         for up in cancels.iter() {
             assert!(up.size >= 100. && up.size <= 200.);
         }
 
-        let creates = evts.filter_volume(EventType::CreateEvent, 100., 200.);
+        let creates = evts.filter_size(EventType::CreateEvent, 100., 200.);
         assert!(creates.len() > 0);
         for up in creates.iter() {
             assert!(up.size >= 100. && up.size <= 200.);
         }
 
-        let trades = evts.filter_volume(EventType::TradeEvent, 100., 200.);
+        let trades = evts.filter_size(EventType::TradeEvent, 100., 200.);
         assert!(trades.len() > 0);
         for up in trades.iter() {
             assert!(up.size >= 100. && up.size <= 200.);
@@ -132,7 +142,7 @@ mod test {
         let ups = records.as_slice();
         let evts = Events::from(ups);
 
-        let trades = evts.filter_volume(EventType::TradeEvent, 100., 200.);
+        let trades = evts.filter_size(EventType::TradeEvent, 100., 200.);
         assert!(trades.len() > 0);
         for up in trades.iter() {
             assert!(up.size >= 100. && up.size <= 200.);
