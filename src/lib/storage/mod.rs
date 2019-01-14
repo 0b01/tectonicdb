@@ -1,8 +1,8 @@
+/// Metadata data structure for dtf file
 pub mod dtf_file_metadata;
+/// Financial data file types
 pub mod filetype;
-
-pub use self::dtf_file_metadata::*;
-pub use self::filetype::*;
-
+/// Get file metadata from filename
 pub mod file_metadata;
+/// Utility functions
 pub mod utils;

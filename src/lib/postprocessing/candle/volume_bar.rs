@@ -1,7 +1,6 @@
-use std::collections::BTreeMap;
 use super::candle::Candle;
-use super::Bar;
 use crate::dtf::update::Update;
+use indexmap::IndexMap;
 
 /// interval during which some fixed number of volume occurred
 type Epoch = u64;
@@ -11,21 +10,21 @@ type EndingTimeStamp = u64;
 #[derive(Clone, Debug, PartialEq)]
 /// utilities for rebinning candlesticks
 pub struct VolumeBars {
-    pub v: BTreeMap<Epoch, (Candle, EndingTimeStamp)>,
-}
-
-impl Bar for VolumeBars {
-    fn to_csv(&self) -> String {
-        let csvs: Vec<String> = self.v
-            .iter()
-            .map(|(key, &(ref candle, ref ts))| format!("{},{},{}", key, ts, candle.to_csv()))
-            .collect();
-
-        csvs.join("\n")
-    }
+    v: IndexMap<Epoch, (Candle, EndingTimeStamp)>,
 }
 
 impl VolumeBars {
+
+    /// convert VolumeBars vector to csv
+    /// format is
+    ///     T,O,H,L,C,V
+    pub fn as_csv(&self) -> String {
+        let csvs: Vec<String> = self.v
+            .iter()
+            .map(|(key, &(ref candle, ref ts))| format!("{},{},{}", key, ts, candle.as_csv()))
+            .collect();
+        csvs.join("\n")
+    }
 
     /// Generate a vector of candles sampled by volume traded.
     /// let volume interval be 1,000 shares traded, then each candle
@@ -36,7 +35,7 @@ impl VolumeBars {
         let mut vol_acc = 0.; // accumulator for traded volume
         let mut epoch = 0;
 
-        let mut candles: BTreeMap<Epoch, (Candle, EndingTimeStamp)> = BTreeMap::new();
+        let mut candles = IndexMap::new();
 
         let mut candle: Option<Candle> = None;
 

@@ -3,20 +3,24 @@
 //! this is [price -> time -> size] to keep track of
 //! size changes on each price level over time.
 use std::collections::{BTreeMap, HashMap};
-use crate::postprocessing::histogram::{Histogram, Count};
+use crate::postprocessing::histogram::{Histogram, BinCount};
 use crate::utils::fill_digits;
 use crate::dtf::update::Update;
 
+type Price = u64;
+type Time = u32;
+type Size = f32;
 
+/// data structure for storing levels
 #[derive(Debug)]
-struct Levels {
-    levels: HashMap<u64, BTreeMap<u32, f32>>,
+pub struct Levels {
+    levels: HashMap<Price, BTreeMap<Time, Size>>,
 }
 
 impl Levels {
     /// converts a slice of Update to [price, time, size]
     /// see how price levels evolve over time...
-    fn from(ups: &[Update], step_bins: Count, tick_bins: Count, m: f64) -> Levels {
+    pub fn from(ups: &[Update], step_bins: BinCount, tick_bins: BinCount, m: f64) -> Levels {
         let (price_hist, step_hist) = Histogram::from(&ups, step_bins, tick_bins, m);
         println!("{:?}", step_hist);
 
@@ -28,9 +32,9 @@ impl Levels {
             match (price, time) {
                 (Some(p), Some(t)) => {
                     let price_level = map.entry(p.to_bits()).or_insert(
-                        BTreeMap::<u32, f32>::new(),
+                        BTreeMap::<Time, Size>::new(),
                     );
-                    (*price_level).insert(t as u32, up.size);
+                    (*price_level).insert(t as Time, up.size);
                 }
                 (None, _) => {
                     continue;

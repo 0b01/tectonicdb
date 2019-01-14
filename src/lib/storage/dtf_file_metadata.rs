@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::env;
 use std::fs;
 use std::io;
@@ -25,38 +26,56 @@ fn parse_dtf_metadata_tags() -> Vec<String> {
 
 use uuid::Uuid;
 
+/// Data structure for storing metadata for dtf files
 #[derive(Default, Serialize)]
 pub struct DTFFileMetadata {
-    file_type: FileType,
+    /// file type is dtf
+    pub file_type: FileType,
 
-    file_size: u64, // in byte
-    exchange: String,
-    currency: String,
-    asset: String,
-    asset_type: AssetType,
-    first_epoch: u64,
-    last_epoch: u64,
-    total_updates: u64,
-    assert_continuity: bool,
-    discontinuities: Vec<(u64, u64)>, // (start, finish)
-    continuation_candles: bool,
+    /// File size on disk
+    pub file_size: u64, // in byte
+    /// Which exchange is the data from
+    pub exchange: String,
+    /// Name of currency
+    pub currency: String,
+    /// Name of asset
+    pub asset: String,
+    /// Type of asset: Spot, Future, other derivatives
+    pub asset_type: AssetType,
+    /// Timestamp of the first update
+    pub first_epoch: u64,
+    /// Timestamp of the Last update
+    pub last_epoch: u64,
+    /// Number of updates in the file
+    pub total_updates: u64,
+    /// Is the data continuous, currently it's always true
+    pub assert_continuity: bool,
+    /// Discrete jumps in data, currently unimplemented!()
+    pub discontinuities: Vec<(u64, u64)>, // (start, finish)
+    /// If there are continuation candles
+    pub continuation_candles: bool,
 
-    uuid: Uuid,
-    filename: String,
+    /// Unique ID of the file
+    pub uuid: Uuid,
+    /// Filename
+    pub filename: String,
 
-    tags: Vec<String>,
-    errors: Vec<String>,
+    /// Tags
+    pub tags: Vec<String>,
+    /// Errors in file
+    pub errors: Vec<String>,
 }
 
 impl FileMetadata for DTFFileMetadata {}
 
 impl DTFFileMetadata {
+    /// Read dtf file metadata
     pub fn new(fname: &str) -> Result<DTFFileMetadata, io::Error> {
         let metadata: Metadata = read_meta(fname)?;
         let file_size = fs::metadata(fname)?.len();
         let symbol = match Symbol::from_str(&metadata.symbol) {
-            Some(sym) => sym,
-            None => {
+            Ok(sym) => sym,
+            Err(()) => {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
                     format!("Unable to parse symbol {}", metadata.symbol),

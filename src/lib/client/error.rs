@@ -1,10 +1,14 @@
 use std::error;
 use std::fmt;
 
+/// Client errors
 #[derive(Debug)]
 pub enum TectonicError {
+    /// Error as sent by server
     ServerError(String),
+    /// DB does not exist
     DBNotFoundError(String),
+    /// Client connection issues
     ConnectionError,
 }
 use self::TectonicError::*;

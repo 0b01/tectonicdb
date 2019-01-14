@@ -6,7 +6,7 @@ macro_rules! catch {
 
 use circular_queue::CircularQueue;
 use futures;
-use libtectonic::dtf::{self, update::{Update, UpdateVecInto}};
+use libtectonic::dtf::{self, update::{Update, UpdateVecConvert}};
 use libtectonic::storage::utils::scan_files_for_range;
 use libtectonic::utils::within_range;
 
@@ -615,12 +615,12 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
             }
             GetFormat::Json => {
                 ReturnType::String(
-                    Cow::Owned(format!("[{}]\n", result.into_json()))
+                    Cow::Owned(format!("[{}]\n", result.as_json()))
                 )
             }
             GetFormat::Csv => {
                 ReturnType::String(
-                    Cow::Owned(format!("{}\n", result.into_csv())),
+                    Cow::Owned(format!("{}\n", result.as_csv())),
                 )
             }
         };

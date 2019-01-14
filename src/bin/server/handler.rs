@@ -1,6 +1,6 @@
 use crate::state::*;
 use crate::parser;
-use libtectonic::dtf::update::{UpdateVecInto, Update};
+use libtectonic::dtf::update::{UpdateVecConvert, Update};
 use std::borrow::{Cow, Borrow};
 
 // BUG: subscribe, add, deadlock!!!
@@ -255,7 +255,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
             let rxlocked = state.rx.clone().unwrap();
             let message = rxlocked.lock().unwrap().try_recv();
             match message {
-                Ok(msg) => ReturnType::string(vec![msg].into_json()),
+                Ok(msg) => ReturnType::string(vec![msg].as_json()),
                 _ => ReturnType::string("NONE"),
             }
         }

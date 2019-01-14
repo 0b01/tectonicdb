@@ -1,21 +1,25 @@
 use std::fmt;
-
+use std::str::FromStr;
 
 /// parse symbol from string
 /// from `bt_usdt_btc`
 pub struct Symbol {
+    /// name of exchange
     pub exchange: String,
+    /// name of currency
     pub currency: String,
+    /// name of asset
     pub asset: String,
 }
 
-impl Symbol {
-    pub fn from_str(symbol: &str) -> Option<Symbol> {
+impl FromStr for Symbol {
+    type Err = ();
+    fn from_str(symbol: &str) -> Result<Self, Self::Err> {
         let parts = symbol.split("_").collect::<Vec<&str>>();
         if parts.len() != 3 {
-            None
+            Err(())
         } else {
-            Some(Symbol {
+            Ok(Symbol {
                 exchange: parts.get(0).unwrap().to_owned().to_owned(),
                 currency: parts.get(1).unwrap().to_owned().to_owned(),
                 asset: parts.get(2).unwrap().to_owned().to_owned(),
@@ -28,6 +32,7 @@ impl Symbol {
 /// asset type:
 /// spot, futures, options ...
 pub enum AssetType {
+    /// spot
     SPOT,
 }
 

@@ -1,9 +1,9 @@
 extern crate clap;
 extern crate byteorder;
 extern crate libtectonic;
-use libtectonic::dtf::{self, update::UpdateVecInto};
+use libtectonic::dtf::{self, update::UpdateVecConvert};
 use libtectonic::storage::utils::{scan_files_for_range, total_folder_updates_len};
-use libtectonic::postprocessing::candle::{Bar, TickBars};
+use libtectonic::postprocessing::candle::TickBars;
 
 use clap::{Arg, App};
 
@@ -132,13 +132,13 @@ Examples:
                 let rebinned = candles
                     .rebin(aligned, granularity.parse().unwrap())
                     .unwrap()
-                    .to_csv();
+                    .as_csv();
                 format!("{}", rebinned)
             } else {
                 if csv {
-                    format!("{}", ups.into_csv())
+                    format!("{}", ups.as_csv())
                 } else {
-                    format!("[{}]", ups.into_json())
+                    format!("[{}]", ups.as_json())
                 }
             }
 
@@ -155,13 +155,13 @@ Examples:
                 let rebinned = candles
                     .rebin(aligned, granularity.parse().unwrap())
                     .unwrap()
-                    .to_csv();
+                    .as_csv();
                 format!("{}", rebinned)
             } else {
                 if csv {
-                    format!("{}", ups.into_csv())
+                    format!("{}", ups.as_csv())
                 } else {
-                    format!("[{}]", ups.into_json())
+                    format!("[{}]", ups.as_json())
                 }
             }
         }

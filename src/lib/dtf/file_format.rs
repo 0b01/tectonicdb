@@ -43,11 +43,16 @@ static MAX_TS_OFFSET: u64 = 33;
 static MAIN_OFFSET: u64 = 80; // main section start at 80
 // static ITEM_OFFSET : u64 = 13; // each item has 13 bytes
 
+/// Metadata block, one per file
 #[derive(Debug, Eq, PartialEq, PartialOrd)]
 pub struct Metadata {
+    /// Symbol name
     pub symbol: String,
+    /// Number of `Update`s in the file
     pub nums: u64,
+    /// The timestamp of the last item
     pub max_ts: u64,
+    /// The smallest timestamp
     pub min_ts: u64,
 }
 
@@ -58,10 +63,14 @@ impl Ord for Metadata {
     }
 }
 
+/// Metadata block for each Batch
 #[derive(Clone)]
 pub struct BatchMetadata {
+    /// reference timestamp
     pub ref_ts: u64,
+    /// reference seq
     pub ref_seq: u32,
+    /// count of updates in the block that follows
     pub count: u16,
 }
 
@@ -87,15 +96,9 @@ impl fmt::Display for Metadata {
     }
 }
 
-pub fn get_max_ts(updates: &[Update]) -> u64 {
-    let mut max = 0;
-    for update in updates.iter() {
-        let current = update.ts;
-        if current > max {
-            max = current;
-        }
-    }
-    max
+/// Get max timestamp from a slice of sorted updates
+pub fn get_max_ts_sorted(updates: &[Update]) -> u64 {
+    updates.last().unwrap().ts
 }
 
 fn file_writer(fname: &str, create: bool) -> Result<BufWriter<File>, io::Error> {
@@ -134,7 +137,7 @@ fn write_max_ts<T: Write + Seek>(wtr: &mut BufWriter<T>, max_ts: u64) -> Result<
 
 fn write_metadata<T: Write + Seek>(wtr: &mut BufWriter<T>, ups: &[Update]) -> Result<(), io::Error> {
     write_len(wtr, ups.len() as u64)?;
-    write_max_ts(wtr, get_max_ts(ups))
+    write_max_ts(wtr, get_max_ts_sorted(ups))
 }
 
 fn write_reference(wtr: &mut Write, ref_ts: u64, ref_seq: u32, len: u16) -> Result<(), io::Error> {
@@ -144,6 +147,7 @@ fn write_reference(wtr: &mut Write, ref_ts: u64, ref_seq: u32, len: u16) -> Resu
     wtr.write_u16::<BigEndian>(len)
 }
 
+/// write a list of updates as batches
 pub fn write_batches(mut wtr: &mut Write, ups: &[Update]) -> Result<(), io::Error> {
     if ups.len() == 0 {
         return Ok(());
@@ -189,6 +193,7 @@ fn write_main<T: Write + Seek>(wtr: &mut BufWriter<T>, ups: &[Update]) -> Result
     Ok(())
 }
 
+/// write a list of updates to file
 pub fn encode(fname: &str, symbol: &str, ups: &[Update]) -> Result<(), io::Error> {
     let mut wtr = file_writer(fname, true)?;
 
@@ -200,12 +205,14 @@ pub fn encode(fname: &str, symbol: &str, ups: &[Update]) -> Result<(), io::Error
     wtr.flush()
 }
 
+/// check magic value
 pub fn is_dtf(fname: &str) -> Result<bool, io::Error> {
     let file = File::open(fname)?;
     let mut rdr = BufReader::new(file);
     read_magic_value(&mut rdr)
 }
 
+/// reads magic value from buffer and checks it
 pub fn read_magic_value<T: BufRead + Seek>(rdr: &mut T) -> Result<bool, io::Error> {
     // magic value
     rdr.seek(SeekFrom::Start(0))?;
@@ -246,18 +253,7 @@ fn read_max_ts<T: BufRead + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
     rdr.read_u64::<BigEndian>()
 }
 
-pub fn read_one_batch_meta(rdr: &mut impl Read) -> BatchMetadata {
-    let ref_ts = rdr.read_u64::<BigEndian>().unwrap();
-    let ref_seq = rdr.read_u32::<BigEndian>().unwrap();
-    let count = rdr.read_u16::<BigEndian>().unwrap();
-
-    BatchMetadata {
-        ref_ts,
-        ref_seq,
-        count,
-    }
-}
-
+/// get updates within time range from file
 pub fn get_range_in_file(fname: &str, min_ts: u64, max_ts: u64) -> Result<Vec<Update>, io::Error> {
     let mut rdr = file_reader(fname)?;
     range(&mut rdr, min_ts, max_ts)
@@ -381,6 +377,7 @@ pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result
     }
 }
 
+/// Read metadata block and main batch block
 pub fn read_one_batch(rdr: &mut impl Read) -> Result<Vec<Update>, io::Error> {
     let is_ref = rdr.read_u8()? == 0x1;
     if !is_ref {
@@ -388,6 +385,19 @@ pub fn read_one_batch(rdr: &mut impl Read) -> Result<Vec<Update>, io::Error> {
     } else {
         let meta = read_one_batch_meta(rdr);
         read_one_batch_main(rdr, meta)
+    }
+}
+
+/// reach one `BatchMetadata` block
+pub fn read_one_batch_meta(rdr: &mut impl Read) -> BatchMetadata {
+    let ref_ts = rdr.read_u64::<BigEndian>().unwrap();
+    let ref_seq = rdr.read_u32::<BigEndian>().unwrap();
+    let count = rdr.read_u16::<BigEndian>().unwrap();
+
+    BatchMetadata {
+        ref_ts,
+        ref_seq,
+        count,
     }
 }
 
@@ -428,11 +438,13 @@ fn read_first<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Update, io::Error> {
     Ok(batch[0].clone())
 }
 
+/// Get number of updates in file
 pub fn get_size(fname: &str) -> Result<u64, io::Error> {
     let mut rdr = file_reader(fname)?;
     read_len(&mut rdr)
 }
 
+/// Read Metadata block from buffer
 pub fn read_meta_from_buf<T:BufRead + Seek>(mut rdr: &mut T) -> Result<Metadata, io::Error> {
     let symbol = read_symbol(&mut rdr)?;
     let nums = read_len(&mut rdr)?;
@@ -451,17 +463,21 @@ pub fn read_meta_from_buf<T:BufRead + Seek>(mut rdr: &mut T) -> Result<Metadata,
     })
 }
 
+/// Read Metadata file from file
 pub fn read_meta(fname: &str) -> Result<Metadata, io::Error> {
     let mut rdr = file_reader(fname)?;
     read_meta_from_buf(&mut rdr)
 }
 
+/// BufReader for DTF files with batch block of size `block_size`
 pub struct DTFBufReader {
+    /// raw BufReader
     pub rdr: BufReader<File>,
     batch_size: u32,
 }
 
 impl DTFBufReader {
+    /// create a new DTFBufReader
     pub fn new(fname: &str, batch_size: u32) -> Self {
         let mut rdr = file_reader(fname).expect("Cannot open file");
         rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
@@ -513,7 +529,8 @@ fn read_all<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error
     Ok(v)
 }
 
-/// decode main section
+/// Decode the main section in a dtf file.
+/// Optionally read all or some `num_rows` batches.
 pub fn decode(fname: &str, num_rows: Option<u32>) -> Result<Vec<Update>, io::Error> {
 
     let mut rdr = file_reader(fname)?;
@@ -525,6 +542,7 @@ pub fn decode(fname: &str, num_rows: Option<u32>) -> Result<Vec<Update>, io::Err
     }
 }
 
+/// Decode an entire buffer to Updates
 pub fn decode_buffer(mut buf: &mut Read) -> Vec<Update> {
     let mut v = vec![];
     let mut res = read_one_batch(&mut buf);
@@ -535,6 +553,8 @@ pub fn decode_buffer(mut buf: &mut Read) -> Vec<Update> {
     v
 }
 
+/// append a list of Updates to file
+/// Panic when range is wrong (new_min_ts <= old_max_ts)
 pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
     let (ups, new_max_ts, cur_len) = {
         let mut rdr = file_reader(fname)?;
@@ -848,7 +868,7 @@ mod tests {
         let fname = "test.dtf";
         let mut rdr = file_reader(fname).unwrap();
         let max_ts = read_max_ts(&mut rdr).unwrap();
-        assert_eq!(max_ts, get_max_ts(&vs));
+        assert_eq!(max_ts, get_max_ts_sorted(&vs));
     }
 
     // #[cfg(test)]
@@ -881,7 +901,7 @@ mod tests {
 
         let fname = "test.dtf";
         let old_data = sample_data();
-        let old_max_ts = get_max_ts(&old_data);
+        let old_max_ts = get_max_ts_sorted(&old_data);
         let append_data: Vec<Update> = sample_data_append()
             .into_iter()
             .filter(|up| up.ts >= old_max_ts)
@@ -896,7 +916,7 @@ mod tests {
 
         // max_ts
         let max_ts = read_max_ts(&mut rdr).unwrap();
-        assert_eq!(max_ts, get_max_ts(&append_data));
+        assert_eq!(max_ts, get_max_ts_sorted(&append_data));
 
         // total len
         let mut rdr = file_reader(fname).unwrap();
@@ -921,7 +941,7 @@ mod tests {
             price: 5100.01,
             size: 1.14564564645,
         };
-        assert_eq!(r#"{"ts":20000.001,"seq":113,"is_trade":false,"is_bid":false,"price":5100.01,"size":1.1456456}"#, t1.to_json());
+        assert_eq!(r#"{"ts":20000.001,"seq":113,"is_trade":false,"is_bid":false,"price":5100.01,"size":1.1456456}"#, t1.as_json());
     }
 
     #[test]

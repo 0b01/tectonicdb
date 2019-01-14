@@ -1,12 +1,17 @@
-use crate::Update;
+use crate::dtf::update::Update;
 
+/// (`dbname`, Update)
+/// (`dname`, Vec<Update>)
 #[derive(Clone)]
 pub enum InsertCommand {
+    /// Add a single `Update` to database
     Add(String, Update),
+    /// Add a batch of `Update`s to database
     BulkAdd(String, Vec<Update>),
 }
 
 impl InsertCommand {
+    /// consumes InsertCommand and create into command string
     pub fn into_string(self) -> Vec<String> {
         match self {
             InsertCommand::Add(dbname, up) => {

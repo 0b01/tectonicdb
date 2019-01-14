@@ -1,12 +1,16 @@
+//! Rust implementation of tectonicdb client
 use std::env;
 
 mod error;
-#[allow(dead_code)]
+
+/// ring buffer
 pub mod circular_queue;
+/// builder for insertion command, add or bulk add
 pub mod insert_command;
-#[allow(dead_code)]
-mod cxn;
-mod pool;
+/// implementation for Cxn struct
+pub mod cxn;
+/// implementation for CxnPool struct
+pub mod pool;
 
 pub use self::error::TectonicError;
 pub use self::cxn::Cxn;
@@ -20,6 +24,7 @@ fn key_or_default(key: &str, default: &str) -> String {
     }
 }
 
+/// get a
 fn get_tectonic_conf_from_env() -> (String, String, usize) {
     let tectonic_hostname: String = key_or_default("TECTONICDB_HOSTNAME", "localhost");
     let tectonic_port: String     = key_or_default("TECTONICDB_PORT", "9001");
@@ -42,6 +47,8 @@ pub fn get_cxn() -> Cxn {
     }
 }
 
+/// Creates a new connection pool to TectonicDB, using configuration values from environment values
+/// or defaults to localhost:9001 if none are set.
 pub fn get_cxn_pool() -> CxnPool {
     let (tectonic_hostname, tectonic_port, capacity) = get_tectonic_conf_from_env();
 

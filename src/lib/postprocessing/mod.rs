@@ -1,9 +1,10 @@
+/// candle data structure
 pub mod candle;
+/// orderbook data structure: [time -> price -> size]
 pub mod orderbook;
-#[allow(dead_code)]
+/// orderbook data structure: [price -> time -> size]
 pub mod level;
-#[allow(dead_code)]
+/// events stream from slice of updates
 pub mod event;
+///
 pub mod histogram;
-
-pub use self::orderbook::*;

@@ -1,61 +1,65 @@
-// this module handles orderbook ops on Updates
-use std::collections::BTreeMap;
-use crate::postprocessing::histogram::{Histogram, Count};
+/// this module handles orderbook operations
+
+use indexmap::IndexMap;
+use crate::postprocessing::histogram::{Histogram, BinCount};
 use crate::dtf::update::Update;
 use std::fmt;
 use std::f64;
 
-
-// type Price = f32;
 type PriceBits = u64;
 type Size = f32;
 type Time = u64;
-type OrderbookSide = BTreeMap<PriceBits, Size>;
+type OrderbookSide = IndexMap<PriceBits, Size>;
 
+/// data structure for orderbook
 #[derive(Clone)]
 pub struct Orderbook {
+    /// bids side
     pub bids: OrderbookSide,
+    /// asks side
     pub asks: OrderbookSide,
 }
 
 impl Orderbook {
-    fn new() -> Orderbook {
+    /// Create empty orderbook
+    pub fn new() -> Orderbook {
         Orderbook {
-            bids: BTreeMap::new(),
-            asks: BTreeMap::new(),
+            bids: IndexMap::new(),
+            asks: IndexMap::new(),
         }
     }
 
-    fn clean(&mut self) {
-        // self.bids = self.bids.iter()
-        //         .map(|(&a,&b)| (a,b))
-        //         .filter(|&(_p,s)|s != 0.)
-        //         .collect::<BTreeMap<PriceBits, Size>>();
-        // self.asks = self.asks.iter()
-        //         .map(|(&a,&b)| (a,b))
-        //         .filter(|&(_p,s)|s != 0.)
-        //         .collect::<BTreeMap<PriceBits, Size>>();
+    /// Remove zero levels from books
+    pub fn clean(&mut self) {
+        self.bids = self.bids.iter()
+                .map(|(&a,&b)| (a,b))
+                .filter(|&(_p,s)|s != 0.)
+                .collect::<IndexMap<PriceBits, Size>>();
+        self.asks = self.asks.iter()
+                .map(|(&a,&b)| (a,b))
+                .filter(|&(_p,s)|s != 0.)
+                .collect::<IndexMap<PriceBits, Size>>();
     }
 }
 
 impl fmt::Debug for Orderbook {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let _ = write!(f, "bids: \n");
+        let _ = write!(f, "bids:\n");
         for (&price, size) in self.bids.iter() {
             let _ = write!(
                 f,
-                "- price: {} \t - size: {} \n",
+                "- price: {} \t - size: {}\n",
                 f64::from_bits(price),
                 size
             );
         }
         let _ = write!(f, "\n");
 
-        let _ = write!(f, "asks: \n");
+        let _ = write!(f, "asks:\n");
         for (&price, size) in self.asks.iter() {
             let _ = write!(
                 f,
-                "- price: {} \t - size: {} \n",
+                "- price: {} \t - size: {}\n",
                 f64::from_bits(price),
                 size
             );
@@ -65,25 +69,34 @@ impl fmt::Debug for Orderbook {
 }
 
 
+/// Data structure for rebinning orderbooks
+///
+/// If you think of an order as a 2D image, rebinning is lowering the resolution
+/// For example, the raw orderbook is 1 nano second apart, you can "zoom out" to 1 second
+///
+/// Price rebinning is similar.
 pub struct RebinnedOrderbook {
-    pub book: BTreeMap<u64, Orderbook>,
+    /// a map from time to orderbook
+    pub book: IndexMap<u64, Orderbook>,
+    /// histogram of price
     pub price_hist: Histogram,
 }
 
 impl RebinnedOrderbook {
-    pub fn from(ups: &[Update], step_bins: Count, tick_bins: Count, m: f64) -> RebinnedOrderbook {
+    /// convert a list of updates to rebinned orderbook with fixed number of time steps bins and ticks bins
+    pub fn from(ups: &[Update], step_bins: BinCount, tick_bins: BinCount, m: f64) -> RebinnedOrderbook {
 
         // build histogram so later can put price and time into bins
         let (price_hist, step_hist) = Histogram::from(&ups, step_bins, tick_bins, m);
 
         // raw_price -> size
         // using a fine_level to track individual price level instead of a batched one
-        let mut fine_level = Orderbook::new(); // BTreeMap::<u32, f32>::new();
+        let mut fine_level = Orderbook::new();
         // coarse grained books, temp_ob keeps track of current level
         // coarse means rebinned(like snap to grid)
         let mut temp_ob = Orderbook::new();
         // coarse price orderbook across coarse time
-        let mut ob_across_time = BTreeMap::<Time, Orderbook>::new();
+        let mut ob_across_time = IndexMap::<Time, Orderbook>::new();
 
         // iterate over each update
         for up in ups.iter() {
@@ -209,6 +222,25 @@ mod tests {
             assert!(v.asks.values().len() < tick_bins);
         }
 
-        println!("{:?}", ob.book.values().next_back());
+        assert_eq!(
+            format!("{:?}", ob.book.values().next_back().unwrap()),
+            "".to_owned()+
+"bids:
+- price: 0.00010943656738475906 	 - size: 266.0109
+- price: 0.00011011131470576117 	 - size: 600
+- price: 0.00010923414318845842 	 - size: 157.5617
+- price: 0.00010936909265265885 	 - size: 269.10645
+- price: 0.00010754727488595314 	 - size: 587.0855
+- price: 0.00010997636524156074 	 - size: 69.96973
+- price: 0.00011132585988356497 	 - size: 247.91327
+- price: 0.00011004383997366096 	 - size: 149.29991
+
+asks:
+- price: 0.00011173070827616624 	 - size: 1768.4296
+- price: 0.00011098848622306392 	 - size: 0.00012207031
+
+"
+,
+        );
     }
 }

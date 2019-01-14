@@ -1,27 +1,15 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::HashSet;
 use super::candle::Candle;
 use super::{Time, Scale};
-use super::Bar;
 use crate::dtf::update::Update;
 use crate::utils::fill_digits;
+use indexmap::IndexMap;
 
 #[derive(Clone, Debug, PartialEq)]
 /// utilities for rebinning candlesticks
 pub struct TickBars {
-    pub v: BTreeMap<Time, Candle>,
+    v: IndexMap<Time, Candle>,
     scale: Scale,
-}
-
-impl Bar for TickBars {
-    fn to_csv(&self) -> String {
-        let csvs: Vec<String> = self.v
-            .iter()
-            .map(|(key, candle)| format!("{},{}", key, candle.to_csv()))
-            .collect();
-
-        csvs.join("\n")
-    }
-
 }
 
 impl<'a> From<&'a [Update]> for TickBars {
@@ -32,7 +20,7 @@ impl<'a> From<&'a [Update]> for TickBars {
         let mut last_ts = 0; // store the last timestep to test continuity
         let mut last_close = 0.; //
 
-        let mut candles: BTreeMap<Time, Candle> = BTreeMap::new();
+        let mut candles = IndexMap::new();
 
         for trade in ups.iter() {
             if !trade.is_trade {
@@ -97,18 +85,31 @@ impl<'a> From<&'a [Update]> for TickBars {
 
 impl TickBars {
 
+    /// Get total length of candles
     pub fn get_size(&self) -> usize {
         self.v.len()
     }
 
-    /// returns a vector of candles
-    pub fn get_candles(&self) -> Vec<Candle> {
-        self.v.values().cloned().collect()
+    /// Get tick bars as a slice
+    pub fn get_candles<'a>(&'a self) -> indexmap::map::Values<'a, Time, Candle> {
+        self.v.values()
     }
 
-    // return the scale of these candles
+    /// return the scale of candles
     pub fn get_scale(&self) -> Scale {
         self.scale
+    }
+
+    /// convert TickBars vector to csv
+    /// format is
+    ///     T,O,H,L,C,V
+    pub fn as_csv(&self) -> String {
+        let csvs: Vec<String> = self.v
+            .iter()
+            .map(|(key, candle)| format!("{},{}", key, candle.as_csv()))
+            .collect();
+
+        csvs.join("\n")
     }
 
     /// Find missing epochs (in minute)
@@ -152,7 +153,7 @@ impl TickBars {
             (last_ts, row.close)
         };
 
-        let mut temp = BTreeMap::<Time, Candle>::new();
+        let mut temp = IndexMap::<Time, Candle>::new();
 
         for (&ts, row) in self.v.iter() {
             if (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
@@ -181,7 +182,7 @@ impl TickBars {
 
 
     /// create new TickBars object
-    fn new(v: BTreeMap<Time, Candle>, scale: u16) -> TickBars {
+    fn new(v: IndexMap<Time, Candle>, scale: u16) -> TickBars {
         let ret = TickBars { v, scale };
 
         ret
@@ -213,7 +214,7 @@ impl TickBars {
             return Some(self);
         }
 
-        let mut res = BTreeMap::<Time, Candle>::new();
+        let mut res = IndexMap::new();
 
         let mut startacc = 0;
         let mut openacc = 0.;
@@ -368,12 +369,12 @@ mod tests {
             volume: 0.,
         };
         let target = "0,0,0,0,0";
-        assert_eq!(inp.to_csv(), target);
+        assert_eq!(inp.as_csv(), target);
     }
 
     #[test]
     fn test_candle_snap_to_grid() {
-        let mut v = BTreeMap::<Time, Candle>::new();
+        let mut v = IndexMap::<Time, Candle>::new();
         for i in 30..121 {
             let j = 60 * i;
             v.insert(
@@ -389,7 +390,7 @@ mod tests {
         }
 
         let candles = TickBars::new(v, 1);
-        let mut tree = BTreeMap::new();
+        let mut tree = IndexMap::new();
         tree.insert(
             1800,
             Candle {
@@ -442,9 +443,9 @@ mod tests {
     #[test]
     fn test_create_new_candles() {
         assert_eq!(
-            TickBars::new(BTreeMap::new(), 1),
+            TickBars::new(IndexMap::new(), 1),
             TickBars {
-                v: BTreeMap::new(),
+                v: IndexMap::new(),
                 scale: 1,
             }
         );
@@ -452,7 +453,7 @@ mod tests {
 
     #[test]
     fn test_fix_missing_candles() {
-        let mut v = BTreeMap::new();
+        let mut v = IndexMap::new();
         for i in 30..121 {
             if i >= 50 && i <= 60 {
                 continue;
@@ -510,7 +511,7 @@ mod tests {
 
     #[test]
     fn test_must_be_sequential() {
-        let mut candles = BTreeMap::new();
+        let mut candles = IndexMap::new();
         for i in 1..10 {
             let j = i * 60;
             candles.insert(
@@ -550,7 +551,7 @@ mod tests {
 
     #[test]
     fn test_rebin() {
-        let mut candles = BTreeMap::new();
+        let mut candles = IndexMap::new();
         let to_scale: usize = 5;
         let upto: usize = 5;
         for i in 1..(upto + 1) {
@@ -582,7 +583,7 @@ mod tests {
     fn should_have_right_attr() {
         use super::super::*;
 
-        let mut candles = BTreeMap::new();
+        let mut candles = IndexMap::new();
         let to_scale: usize = 5;
         let upto: usize = 5;
         for i in 1..(upto + 1) {

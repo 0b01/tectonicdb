@@ -3,7 +3,7 @@ use std::{io, fs};
 use crate::dtf::{self, update::Update};
 use crate::utils::within_range;
 
-/// search every matching dtf file under folder
+/// search every matching dtf file under folder for timestamp range
 pub fn scan_files_for_range(
     folder: &str,
     symbol: &str,
@@ -47,6 +47,7 @@ pub fn scan_files_for_range(
     Ok(ret)
 }
 
+/// Get total number of updates from all files in a folder
 pub fn total_folder_updates_len(folder: &str) -> Result<usize, io::Error> {
     match fs::read_dir(folder) {
         Err(e) => {

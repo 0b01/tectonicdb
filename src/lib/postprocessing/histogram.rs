@@ -1,26 +1,35 @@
+/// Binning algorithms and data structures
+
 use std::mem;
 use std::cmp::Ordering::{self, Equal, Greater, Less};
 use std::collections::HashMap;
 use crate::dtf::update::Update;
 use crate::utils::{bigram, fill_digits};
 
-pub type Price = f64;
-pub type Count = usize;
+type Price = f64;
+/// Count of bins
+pub type BinCount = usize;
 
+/// Create a histogram along some dimension, for example price
+/// Basically, put a list of prices into bins
 #[derive(Debug)]
 pub struct Histogram {
-    pub bins: Option<Vec<Count>>,
+    pub(crate) bins: Option<Vec<BinCount>>,
+    /// lower boundary of the bin
     pub boundaries: Vec<Price>,
-    pub boundary2idx: HashMap<u64, usize>,
-    pub cached_bigram: Vec<(f64, f64)>,
+    boundary2idx: HashMap<u64, usize>,
+    cached_bigram: Vec<(f64, f64)>,
 }
 
 impl Histogram {
-    pub fn new(prices: &[Price], bin_count: Count, m: f64) -> Histogram {
+    /// create a new histogram from a list of price and reject outliers
+    /// m is the threshold for z-score
+    pub fn new(prices: &[Price], bin_count: BinCount, m: f64) -> Histogram {
         let filtered = reject_outliers(prices, m);
         build_histogram(filtered, bin_count)
     }
 
+    /// convert value to lower boundary of the bin
     pub fn to_bin(&self, price: Price) -> Option<Price> {
         let cb = &self.cached_bigram;
         for &(s, b) in cb.iter() {
@@ -54,12 +63,13 @@ impl Histogram {
         }
     }
 
-    /// get spatial temporal histograms
+    /// get spatial temporal histograms from a list of update
+    /// returns price history and time histogram
     /// m is value of z-score cutoff
     pub fn from(
         ups: &[Update],
-        step_bins: Count,
-        tick_bins: Count,
+        step_bins: BinCount,
+        tick_bins: BinCount,
         m: f64,
     ) -> (Histogram, Histogram) {
         // build price histogram
@@ -74,12 +84,13 @@ impl Histogram {
         (price_hist, step_hist)
     }
 
+    /// get index of the bin based on boundary price which is the lower boundary of the bin
     pub fn index(&self, price: Price) -> usize {
         *self.boundary2idx.get(&price.to_bits()).unwrap()
     }
 }
 
-pub fn reject_outliers(prices: &[Price], m: f64) -> Vec<Price> {
+fn reject_outliers(prices: &[Price], m: f64) -> Vec<Price> {
     let median = (*prices).median();
 
     // println!("len before: {}", prices.len());
@@ -107,7 +118,7 @@ pub fn reject_outliers(prices: &[Price], m: f64) -> Vec<Price> {
     filtered
 }
 
-pub fn build_histogram(filtered_vals: Vec<Price>, bin_count: Count) -> Histogram {
+fn build_histogram(filtered_vals: Vec<Price>, bin_count: BinCount) -> Histogram {
     let max = &filtered_vals.max();
     let min = &filtered_vals.min();
     let bucket_size = (max - min) / ((bin_count - 1) as f64);

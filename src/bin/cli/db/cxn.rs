@@ -9,7 +9,7 @@ use std::str;
 
 use crate::db::TectonicError;
 use crate::db::insert_command::InsertCommand;
-use crate::dtf::{update::UpdateVecInto, file_format::decode_buffer};
+use crate::dtf::{update::UpdateVecConvert, file_format::decode_buffer};
 
 
 struct CxnStream {
@@ -36,7 +36,7 @@ impl CxnStream {
 
             let mut buf = buf.as_slice();
             let v = decode_buffer(&mut buf);
-            Ok(format!("[{}]\n", v.into_json()))
+            Ok(format!("[{}]\n", v.as_json()))
 
         } else {
             let size = self.stream.read_u64::<BigEndian>().unwrap();

@@ -10,6 +10,7 @@ const SYMBOL_HALF_STICK_TOP: &str = "╷";
 const SYMBOL_HALF_STICK_BOTTOM: &str = "╵";
 const SYMBOL_NOTHING: &str = " ";
 
+/// plot candle stick graph in terminal
 pub struct CandleStickGraph {
     height: u32,
     data: TickBars,
@@ -18,12 +19,13 @@ pub struct CandleStickGraph {
 }
 
 impl CandleStickGraph {
+    /// create a new graph
     pub fn new(height: u32, data: TickBars) -> Self {
-        let global_min = data.get_candles().iter()
+        let global_min = data.get_candles()
             .map(|candle| candle.low)
             .min_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap();
-        let global_max = data.get_candles().iter()
+        let global_max = data.get_candles()
             .map(|candle| candle.high)
             .max_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap();
@@ -36,6 +38,7 @@ impl CandleStickGraph {
         }
     }
 
+    /// render the graph to string
     pub fn draw(&self) -> String {
         let mut ret = String::new();
 
@@ -49,7 +52,7 @@ impl CandleStickGraph {
                 ret += "           "
             }
 
-            for c in self.data.get_candles().iter() {
+            for c in self.data.get_candles() {
                 ret += &self.render_candle_at(c, y);
             }
             ret += "\n"
@@ -121,23 +124,48 @@ impl CandleStickGraph {
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
+    use super::*;
+    use crate::dtf;
 
-    // #[test]
-    // fn should_print_candlestick_graph_ok() {
-    //     static HOUR : u64 = 60 * 60 * 1000 - 1000;
-    //     static MINUTE : u64 = 60 * 1000;
+    #[test]
+    fn should_print_candlestick_graph_ok() {
+        static HOUR : u64 = 60 * 60 * 1000 - 1000;
+        static MINUTE : u64 = 60 * 1000;
 
-    //     let fname: &str = "./bt_btcneo.dtf";
-    //     let meta = dtf::read_meta(fname).unwrap();
+        let fname: &str = "test/test-data/bt_btceth.dtf";
+        let meta = dtf::file_format::read_meta(fname).unwrap();
 
-    //     let min_ts = meta.min_ts + HOUR;
-    //     let y_ts = 10 * MINUTE;
-    //     let max_ts = min_ts + HOUR + y_ts;
+        let min_ts = meta.min_ts + HOUR;
+        let y_ts = 10 * MINUTE;
+        let max_ts = min_ts + HOUR + y_ts;
 
-    //     let ups = dtf::get_range_in_file(fname, min_ts, max_ts).unwrap();
-    //     let mut candles = Candles::from(ups.as_slice());
-    //     candles.insert_continuation_candles();
-    //     let graph = CandleStickGraph::new(21, candles);
-    // }
+        let ups = dtf::file_format::get_range_in_file(fname, min_ts, max_ts).unwrap();
+        let mut candles = TickBars::from(ups.as_slice());
+        candles.insert_continuation_candles();
+        let graph = CandleStickGraph::new(21, candles);
+        let plot = graph.draw();
+        assert_eq!(plot.replace(" ", "").as_str(), "".to_owned()+
+"0.04068785 ╽╽
+           │
+           │                    ╻
+           │ ╷    ╻╷╷           ┃
+0.04055928 │ │    ┃││    ╻    │ ┃╹╻
+           │ │    ┃││╻ ╻ ┃    │ ┃  ╷
+           ╵ ││ ┃ ┃││┃   ┃ ││╻│ ┃  │   ╻  ╻
+                         ┃ ││┃│ ┃  │   ┃  │┃
+0.04043070            ┃  ┃ ││┃│ ┃  │   ┃  │┃ ┃┃│
+                         ┃ ││┃│ ┃  │   ┃  │┃ ┃┃│  ┃
+                         ┃ │╽┃│ ┃  │   ┃  │┃ │┃┃╿╻╹╷ ╻│ ╻╷╻╷
+                         ┃ │┃┃│ ┃  │   ┃  │┃ │┃┃│┃ │ ││ │││┃ ┃    ╻  ╻╻╻
+0.04030213              ┃ ┃┃       ┃┃┃┃│ ╻│┃ │┃┃│┃ │ ││ │││┃ │    ╹╻╻  ┃
+                                       ╵╻╹╵╿ │┃┃│┃ │ │ ┃ ┃   │┃    ┃┃  │ ┃┃┃ │┃
+                                           ╵╻╵╹╹╵╹ ╽╻╵         ┃┃┃ ┃┃  │┃┃┃┃ │┃
+                                                               │┃┃ ┃┃  │┃┃┃┃ │┃
+0.04017356                                                     │┃┃ ┃┃  │┃┃┃┃ │┃
+                                                               │┃┃ ┃┃  │┃┃┃┃ │┃
+                                                               │┃┃ ┃┃  │┃┃┃┃ │┃
+                                                               │┃┃ ┃┃   ┃┃┃┃ ╽┃
+0.04004499                                                     │╹╹ ╹      │
+".replace(" ", "").as_str());
+    }
 }

@@ -15,7 +15,7 @@ use std::str;
 use std::sync::{Arc, RwLock};
 use std::process::exit;
 
-use libtectonic::dtf::update::{Update, UpdateVecInto};
+use libtectonic::dtf::update::{Update, UpdateVecConvert};
 use crate::state::{Global, SharedState, ThreadState, HashMapStore};
 use crate::handler::ReturnType;
 use crate::utils;
@@ -120,7 +120,7 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
         // map incoming subscription updates to the same format as regular
         // responses so they can be processed in the same manner.
         let subscriptions = subscriptions_rx.map(|message| (
-            Cow::from(""), ReturnType::string(vec![message].into_json())
+            Cow::from(""), ReturnType::string(vec![message].as_json())
         ));
 
         let (rdr, wtr) = socket.split();

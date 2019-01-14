@@ -4,8 +4,9 @@ use std::collections::VecDeque;
 use crate::client::circular_queue::CircularQueue;
 use super::{Cxn, InsertCommand, TectonicError};
 
-pub type InsertQueue = CircularQueue<InsertCommand>;
+type InsertQueue = CircularQueue<InsertCommand>;
 
+/// A pool of workers that operate on an internal circular queue of InsertionCommand.
 pub struct CxnPool {
     cxns: Vec<Cxn>,
     host: String,
@@ -15,6 +16,7 @@ pub struct CxnPool {
 }
 
 impl CxnPool {
+    /// Create a pool of connections
     pub fn new(n_workers: usize, host: &str, port: &str, capacity: usize) -> Result<Self, TectonicError> {
         let mut cxns = vec![];
         let mut workers = VecDeque::new();
@@ -36,11 +38,13 @@ impl CxnPool {
         })
     }
 
+    /// Create a new datastore
     pub fn create_db(&mut self, dbname: &str) -> Result<String, TectonicError> {
         info!("Creating db {}", dbname);
         self.cmd(&format!("CREATE {}\n", dbname))
     }
 
+    /// Send custom command
     pub fn cmd(&mut self, command: &str) -> Result<String, TectonicError> {
         let n = self.available_workers.pop_front();
         let n = match n {
@@ -72,6 +76,7 @@ impl CxnPool {
         ret
     }
 
+    /// Insert to current datastore
     pub fn insert(&mut self, cmd: &InsertCommand) -> Result<(), TectonicError> {
 
         let n = self.available_workers.pop_front();
