@@ -1,8 +1,7 @@
 //! libtectonic is a financial data storage library
 #![deny(missing_docs)]
-#![feature(libc)]
-#![feature(rustc_private)]
 
+extern crate libc;
 extern crate csv;
 extern crate indexmap;
 extern crate serde;

@@ -3,9 +3,9 @@ use std::error::Error;
 use std::str::FromStr;
 
 pub fn key_or_default_parse<
-    E: Into<Box<Error>>,
+    E: Into<Box<dyn Error>>,
     T: FromStr<Err=E>
->(key: &str, default: T) -> Result<T, Box<Error>> {
+>(key: &str, default: T) -> Result<T, Box<dyn Error>> {
     match env::var(key) {
         Ok(val) => val.parse::<T>().map_err(|err| err.into()),
         Err(_) => Ok(default),

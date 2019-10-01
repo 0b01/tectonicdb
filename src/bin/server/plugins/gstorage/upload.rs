@@ -60,7 +60,7 @@ impl GStorageFile {
         Ok(body)
     }
 
-    pub fn upload(&mut self) -> Result<GStorageOpMetadata, Box<error::Error>> {
+    pub fn upload(&mut self) -> Result<GStorageOpMetadata, Box<dyn error::Error>> {
         let start_ts = time::now();
 
         let uri = format!(
@@ -93,14 +93,14 @@ impl GStorageFile {
                 finish_ts.to_timespec().sec as u32,
             )?)
         } else {
-            Err(box io::Error::new(
+            Err(Box::new(io::Error::new(
                 io::ErrorKind::Other,
                 format!(
                     "Cannot upload file {}! dbg: {:?}",
                     self.fname,
                     res
                 ),
-            ))
+            )))
         }
 
     }
@@ -108,7 +108,7 @@ impl GStorageFile {
 
 pub fn upload<'a>(
     f: &'a mut GStorageFile, filename: &str
-) -> Result<GStorageMetadata<'a, impl FileMetadata>, Box<error::Error>> {
+) -> Result<GStorageMetadata<'a, impl FileMetadata>, Box<dyn error::Error>> {
     let op_meta = f.upload()?;
     let file_meta = file_metadata::from_fname(filename)?;
     Ok(GStorageMetadata::new(op_meta, file_meta))
@@ -132,7 +132,7 @@ impl<T: Serialize> DcbBatchRequest<T> {
 /// data collection backend is a proprietary data ingestion engine
 pub fn post_to_dcb<T: FileMetadata + Serialize>(
     url: &str, metadata: &GStorageMetadata<T>
-) -> Result<String, Box<error::Error>> {
+) -> Result<String, Box<dyn error::Error>> {
     let client = reqwest::Client::new();
     let mut res = client
         .post(url)

@@ -409,7 +409,7 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
             let mut global = self.global.write().unwrap();
             global.vec_store.insert(
                 store_name.to_owned(),
-                (box Vec::new(), 0),
+                (Box::new(Vec::new()), 0),
             );
         }
 
@@ -552,10 +552,11 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         let acc = catch! {
             let (min_ts, max_ts) = range?;
             if !within_range(min_ts, max_ts, vecs.first()?.ts, vecs.last()?.ts) { return None; }
-            box vecs.iter()
+            Box::new(vecs.iter()
                 .filter(|up| up.ts < max_ts && up.ts > min_ts)
                 .map(|up| up.to_owned())
                 .collect::<Vec<_>>()
+            )
         }.unwrap_or(vecs.to_owned());
 
         // if only requested items in memory
@@ -701,7 +702,7 @@ pub struct SharedState {
 impl SharedState {
     pub fn new(settings: Settings) -> SharedState {
         let mut hashmap = HashMap::new();
-        hashmap.insert("default".to_owned(), (box Vec::new(), 0));
+        hashmap.insert("default".to_owned(), (Box::new(Vec::new()), 0));
         let subs = Arc::new(Mutex::new(Subscriptions::new()));
         SharedState {
             n_cxns: 0,

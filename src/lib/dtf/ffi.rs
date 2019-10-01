@@ -14,7 +14,7 @@ use crate::dtf::{
     },
 };
 use crate::storage::filetype::parse_kaiko_csv_to_dtf_inner;
-use self::libc::{c_char, c_uchar};
+use libc::{c_char, c_uchar};
 
 /// struct containting a pointer to an array of `Update` and length of slice
 #[repr(C)]

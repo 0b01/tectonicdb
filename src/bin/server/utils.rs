@@ -45,7 +45,7 @@ pub fn init_dbs(state: &mut ThreadState) {
                 wtr.vec_store
                     .entry(symbol.clone())
                     .and_modify(|e| if e.1 < header_size {e.1 += header_size})
-                    .or_insert((box Vec::new(), header_size));
+                    .or_insert((Box::new(Vec::new()), header_size));
             }
 
             // insert a db store into user state

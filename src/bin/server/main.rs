@@ -1,5 +1,3 @@
-#![feature(box_syntax, box_patterns)]
-
 extern crate libtectonic;
 extern crate clap;
 extern crate byteorder;

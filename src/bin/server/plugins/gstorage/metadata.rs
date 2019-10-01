@@ -109,7 +109,7 @@ impl<'a> GStorageOpMetadata<'a> {
         resp: String,
         start_ts: u32,
         finish_ts: u32,
-    ) -> Result<GStorageOpMetadata<'a>, Box<error::Error>> {
+    ) -> Result<GStorageOpMetadata<'a>, Box<dyn error::Error>> {
 
         let mut meta = GStorageOpMetadata::default();
 

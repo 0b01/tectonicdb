@@ -25,7 +25,7 @@ pub struct GStorageConfig {
 impl GStorageConfig {
     /// Creates a new `GStorageConfig` from environment variables, filling in the remaining values with
     /// defaults if not available.
-    pub fn new() -> Result<Self, Box<Error>> {
+    pub fn new() -> Result<Self, Box<dyn Error>> {
         Ok(GStorageConfig {
             oauth_token: key_or_none("GCLOUD_OAUTH_TOKEN"),
             bucket_name: key_or_default("GCLOUD_BUCKET_NAME", "tick_data"),
