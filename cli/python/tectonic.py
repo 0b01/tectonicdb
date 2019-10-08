@@ -39,13 +39,13 @@ class TectonicDB():
                 generator = subscribe(self.db_name)
                 async for item in generator:
                     self.one_batch.append(item)
-            
+
             async def timer(self):
                 while 1:
                     await asyncio.sleep(5)
                     print(len(self.one_batch))
-                
-            
+
+
         if __name__ == '__main__':
             loop = asyncio.get_event_loop()
             proc = TickBatcher("bnc_xrp_btc")
@@ -117,32 +117,22 @@ class TectonicDB():
 
     async def ping(self):
         return await self.cmd("PING")
-    
+
     async def help(self):
         return await self.cmd("HELP")
 
     async def insert(self, ts, seq, is_trade, is_bid, price, size, dbname):
         return await self.cmd("INSERT {}, {}, {} ,{}, {}, {}; INTO {}"
-                        .format( ts, seq, 
+                        .format( ts, seq,
                             't' if is_trade else 'f',
                             't' if is_bid else 'f', price, size,
                             dbname))
 
     async def add(self, ts, seq, is_trade, is_bid, price, size):
         return await self.cmd("ADD {}, {}, {} ,{}, {}, {};"
-                        .format( ts, seq, 
+                        .format( ts, seq,
                             't' if is_trade else 'f',
                             't' if is_bid else 'f', price, size))
-    async def bulkadd(self, updates):
-        await self.cmd("BULKADD")
-        for update in updates:
-            ts, seq, is_trade, is_bid, price, size = update
-
-            await self.cmd("{}, {}, {} ,{}, {}, {};"
-                    .format( ts, seq,
-                            't' if is_trade else 'f', 
-                            't' if is_bid else 'f', price, size))
-        await self.cmd("DDAKLUB")
 
     async def getall(self):
         success, ret = await self.cmd("GET ALL")
@@ -182,7 +172,7 @@ class TectonicDB():
         if res[0]:
             self.subscribed = True
         return res
-    
+
     async def poll(self):
         return await self.cmd("")
 

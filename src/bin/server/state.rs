@@ -1,3 +1,17 @@
+/// When client connects, the following happens:
+///
+/// 1. server creates a ThreadState
+/// 2. initialize 'default' data store
+/// 3. reads filenames under dtf_folder
+/// 4. loads metadata but not updates
+/// 5. client can retrieve server status using INFO command
+///
+/// When client adds some updates using ADD,
+/// size increments and updates are added to memory
+/// finally, call FLUSH to commit to disk the current store or FLUSH ALL to commit all available stores.
+/// the client can free the updates from memory using CLEAR or CLEARALL
+///
+
 macro_rules! catch {
     ($($code:tt)*) => {
         (|| { Some({ $($code)* }) })()
@@ -25,25 +39,6 @@ pub type Global = Arc<RwLock<SharedState>>;
 pub type HashMapStore<'a> = Arc<RwLock<HashMap<String, Store<'a>>>>;
 pub type SubscriptionTX = futures::sync::mpsc::UnboundedSender<Update>;
 
-/// name: *should* be the filename
-/// in_memory: are the updates read into memory?
-/// size: true number of items
-/// v: vector of updates
-///
-///
-/// When client connects, the following happens:
-///
-/// 1. server creates a ThreadState
-/// 2. initialize 'default' data store
-/// 3. reads filenames under dtf_folder
-/// 4. loads metadata but not updates
-/// 5. client can retrieve server status using INFO command
-///
-/// When client adds some updates using ADD or BULKADD,
-/// size increments and updates are added to memory
-/// finally, call FLUSH to commit to disk the current store or FLUSH ALL to commit all available stores.
-/// the client can free the updates from memory using CLEAR or CLEARALL
-///
 #[derive(Debug)]
 pub struct Store<'a> {
     pub name: Cow<'a, str>,
@@ -55,17 +50,16 @@ pub struct Store<'a> {
 impl<'a> Store<'a> {
     /// push a new `update` into the vec
     pub fn add(&mut self, new_vec: Update) {
-        let (is_autoflush, is_bulkadding) = {
+        let (is_autoflush) = {
             let mut wtr = self.global.write().unwrap();
 
             // send to insertion firehose
             {
                 let tx = wtr.subs.lock().unwrap();
-                let _ = tx.msg(Arc::new(Mutex::new((self.name.to_string(), new_vec))));
+                let _ = tx.msg((self.name.to_string(), new_vec));
             }
 
             let is_autoflush = wtr.settings.autoflush;
-            let is_bulkadding = wtr.is_bulkadding;
             let flush_interval = wtr.settings.flush_interval;
             let _folder = wtr.settings.dtf_folder.to_owned();
             let name: &str = self.name.borrow();
@@ -89,10 +83,10 @@ impl<'a> Store<'a> {
                 );
             }
 
-            (is_autoflush, is_bulkadding)
+            is_autoflush
         };
 
-        if is_autoflush && !is_bulkadding {
+        if is_autoflush {
             self.flush();
         }
     }
@@ -219,8 +213,6 @@ impl<'a> Store<'a> {
 
 /// Each client gets its own ThreadState
 pub struct ThreadState<'thr, 'store> {
-    /// Current selected db using `BULKADD INTO [db]`
-    pub bulkadd_db: Option<String>,
     /// Is client subscribe?
     pub is_subscribed: bool,
     /// current subscribed db
@@ -228,7 +220,7 @@ pub struct ThreadState<'thr, 'store> {
     /// current receiver
     pub sub_id: Option<usize>,
     /// current receiver
-    pub rx: Option<Arc<Mutex<mpsc::Receiver<Update>>>>,
+    pub rx: Option<mpsc::Receiver<Update>>,
 
     pub subscription_tx: SubscriptionTX,
 
@@ -243,20 +235,20 @@ pub struct ThreadState<'thr, 'store> {
 }
 
 macro_rules! current_store {
-    ($sel:ident, $fun:ident) => {
+    ($self:ident, $fun:ident) => {
         {
-            let name: &str = $sel.current_store_name.borrow();
-            let mut store = $sel.store.write().unwrap();
+            let name: &str = $self.current_store_name.borrow();
+            let mut store = $self.store.write().unwrap();
             store.get_mut(name).expect(
                 "KEY IS NOT IN HASHMAP",
             ).$fun()
         }
     };
 
-    ($sel:ident, $fun:ident, $param:ident) => {
+    ($self:ident, $fun:ident, $param:ident) => {
         {
-            let name: &str = $sel.current_store_name.borrow();
-            let mut store = $sel.store.write().unwrap();
+            let name: &str = $self.current_store_name.borrow();
+            let mut store = $self.store.write().unwrap();
             store.get_mut(name).expect(
                 "KEY IS NOT IN HASHMAP",
             ).$fun($param)
@@ -265,11 +257,11 @@ macro_rules! current_store {
 }
 
 macro_rules! store {
-    ($sel:ident, $fun:ident) => {
-        $sel.store.write().unwrap().$fun()
+    ($self:ident, $fun:ident) => {
+        $self.store.write().unwrap().$fun()
     };
-    ($sel:ident, $fun:ident, $param:ident) => {
-        $sel.store.write().unwrap().$fun($param)
+    ($self:ident, $fun:ident, $param:ident) => {
+        $self.store.write().unwrap().$fun($param)
     };
 }
 
@@ -390,16 +382,6 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     pub fn set_autoflush(&mut self, is_autoflush: bool) {
         let mut global = self.global.write().unwrap();
         global.settings.autoflush = is_autoflush;
-    }
-
-    pub fn set_bulkadding(&mut self, is_bulkadding: bool) {
-        let mut global = self.global.write().unwrap();
-        global.is_bulkadding = is_bulkadding;
-    }
-
-    pub fn get_bulkadding(&mut self) -> bool {
-        let global = self.global.read().unwrap();
-        global.is_bulkadding
     }
 
     /// Create a new store
@@ -561,13 +543,13 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
 
         // if only requested items in memory
         if let Loc::Mem = loc {
-            return self._return_aux(&acc, format);
+            return self.into_format(&acc, format);
         }
 
         // if count <= len, return
         if let ReqCount::Count(c) = count {
             if (c as usize) <= acc.len() {
-                return self._return_aux(&acc[..c as usize], format);
+                return self.into_format(&acc[..c as usize], format);
             }
         }
 
@@ -596,18 +578,18 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         match count {
             ReqCount::Count(c) => {
                 if result.len() >= c as usize {
-                    return self._return_aux(&result[..(c as usize - 1)], format);
+                    return self.into_format(&result[..(c as usize - 1)], format);
                 } else {
                     return Some(ReturnType::Error(
                         format!("Requested {} but only have {}.", c, result.len()).into(),
                     ));
                 }
             }
-            ReqCount::All => self._return_aux(&result, format),
+            ReqCount::All => self.into_format(&result, format),
         }
     }
 
-    fn _return_aux<'thread, 'global>(&'global self, result: &[Update], format: GetFormat) -> Option<ReturnType<'thread>> {
+    fn into_format<'thread, 'global>(&'global self, result: &[Update], format: GetFormat) -> Option<ReturnType<'thread>> {
         let ret = match format {
             GetFormat::Dtf => {
                 let mut bytes: Vec<u8> = Vec::new();
@@ -638,7 +620,6 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         let dtf_folder: &str = &global.read().unwrap().settings.dtf_folder;
         let state = ThreadState {
             current_store_name: "default".into(),
-            bulkadd_db: None,
             is_subscribed: false,
             subscribed_db: None,
             sub_id: None,
@@ -682,35 +663,35 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
 /// (updates, count)
 pub type VecStore = (Box<Vec<Update>>, u64);
 
-/// key: btc_neo
-///      btc_eth
-///      ..
-///      total
-pub type History = HashMap<String, CircularQueue<(SystemTime, u64)>>;
+/// key: { btc_neo => [(t0, c0), (t1, c1), ...]
+///        ...
+///      { total => [...]}
+pub type CountHistory = HashMap<String, CircularQueue<(SystemTime, u64)>>;
 
 #[derive(Debug)]
 pub struct SharedState {
     pub n_cxns: u16,
-    /// Is inside a BULKADD operation?
-    pub is_bulkadding: bool,
     pub settings: Settings,
     pub vec_store: HashMap<String, VecStore>,
-    pub history: History,
+    pub history: CountHistory,
     pub subs: Arc<Mutex<Subscriptions>>,
+    pub rx: futures::sync::mpsc::UnboundedReceiver<Update>,
+    pub subs_txs: HashMap<::std::thread::ThreadId, SubscriptionTX>,
 }
 
 impl SharedState {
-    pub fn new(settings: Settings) -> SharedState {
+    pub fn new(rx: futures::sync::mpsc::UnboundedReceiver<Update>, settings: Settings) -> SharedState {
         let mut hashmap = HashMap::new();
         hashmap.insert("default".to_owned(), (Box::new(Vec::new()), 0));
         let subs = Arc::new(Mutex::new(Subscriptions::new()));
         SharedState {
             n_cxns: 0,
-            is_bulkadding: false,
             settings,
             vec_store: hashmap,
             history: HashMap::new(),
+            rx,
             subs,
+            subs_txs:  HashMap::new(),
         }
     }
 }

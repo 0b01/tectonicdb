@@ -5,10 +5,8 @@ use libtectonic::dtf::update::Update;
 
 use futures;
 
-pub type Event = Arc<Mutex<(String, Update)>>;
-
 enum Message {
-    Msg(Event),
+    Msg((String, Update)),
     Terminate,
 }
 
@@ -47,14 +45,14 @@ impl Subscriptions {
         &mut self,
         filter: String,
         push_tx: futures::sync::mpsc::UnboundedSender<Update>,
-    ) -> (usize, Arc<Mutex<mpsc::Receiver<Update>>>) {
+    ) -> (usize, mpsc::Receiver<Update>) {
 
         let (i_tx, i_rx) = mpsc::channel();
         let (o_tx, o_rx) = mpsc::channel();
 
-        let i_rx = Arc::new(Mutex::new(i_rx));
-        let o_rx = Arc::new(Mutex::new(o_rx));
-        let o_tx = Arc::new(Mutex::new(o_tx));
+        let i_rx = i_rx;
+        let o_rx = o_rx;
+        let o_tx = o_tx;
 
         // upsert
         // if there is a subscription on dbname
@@ -62,14 +60,14 @@ impl Subscriptions {
             let count = self.sub_count.get_mut(&filter).unwrap();
             *count += 1;
             let sub_v = self.subs.get_mut(&filter).unwrap();
-            sub_v.push(Subscription::new(filter.clone(), i_rx, o_tx, push_tx));
+            sub_v.push(Subscription::new(filter.clone(), i_rx, push_tx));
             self.i_txs.get_mut(&filter).unwrap().push(i_tx);
             *count
         } else {
             self.sub_count.insert(filter.clone(), 1);
             self.subs.insert(
                 filter.clone(),
-                vec![Subscription::new(filter.clone().clone(), i_rx, o_tx, push_tx)],
+                vec![Subscription::new(filter.clone().clone(), i_rx, push_tx)],
             );
             self.i_txs.insert(filter, vec![i_tx]);
             1
@@ -132,7 +130,7 @@ impl Subscriptions {
     //     self.o_rxs.get(filter).unwrap().clone()
     // }
 
-    pub fn msg(&self, f: Event) {
+    pub fn msg(&self, f: (String, Update)) {
         for i_tx_v in self.i_txs.values() {
             for i_tx in i_tx_v {
                 match i_tx.send(Message::Msg(f.clone())) {
@@ -171,18 +169,17 @@ struct Subscription {
 impl Subscription {
     fn new(
         filter: String,
-        i_rx: Arc<Mutex<mpsc::Receiver<Message>>>,
-        _o_tx: Arc<Mutex<mpsc::Sender<Update>>>,
+        i_rx: mpsc::Receiver<Message>,
         push_tx: futures::sync::mpsc::UnboundedSender<Update>
     ) -> Subscription {
 
         let thread = thread::spawn(move || loop {
             let push_tx = push_tx.clone();
-            let message = i_rx.lock().unwrap().recv().unwrap();
+            let message = i_rx.recv().unwrap();
 
             match message {
                 Message::Msg(up) => {
-                    let (ref symbol, ref up) = *up.lock().unwrap();
+                    let (symbol, up) = &up;
                     if symbol == &filter {
                         let _ = push_tx.unbounded_send(*up);
                     }

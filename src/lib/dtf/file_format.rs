@@ -111,11 +111,11 @@ fn file_writer(fname: &str, create: bool) -> Result<BufWriter<File>, io::Error> 
     Ok(BufWriter::new(new_file))
 }
 
-fn write_magic_value(wtr: &mut Write) -> Result<usize, io::Error> {
+fn write_magic_value(wtr: &mut dyn Write) -> Result<usize, io::Error> {
     wtr.write(MAGIC_VALUE)
 }
 
-fn write_symbol(wtr: &mut Write, symbol: &str) -> Result<usize, io::Error> {
+fn write_symbol(wtr: &mut dyn Write, symbol: &str) -> Result<usize, io::Error> {
     if symbol.len() > SYMBOL_LEN {
         return Err(io::Error::new(io::ErrorKind::InvalidData,
             format!("Symbol length is longer than {}", SYMBOL_LEN)));
@@ -140,7 +140,7 @@ fn write_metadata<T: Write + Seek>(wtr: &mut BufWriter<T>, ups: &[Update]) -> Re
     write_max_ts(wtr, get_max_ts_sorted(ups))
 }
 
-fn write_reference(wtr: &mut Write, ref_ts: u64, ref_seq: u32, len: u16) -> Result<(), io::Error> {
+fn write_reference(wtr: &mut dyn Write, ref_ts: u64, ref_seq: u32, len: u16) -> Result<(), io::Error> {
     wtr.write_u8(true as u8)?;
     wtr.write_u64::<BigEndian>(ref_ts)?;
     wtr.write_u32::<BigEndian>(ref_seq)?;
@@ -148,7 +148,7 @@ fn write_reference(wtr: &mut Write, ref_ts: u64, ref_seq: u32, len: u16) -> Resu
 }
 
 /// write a list of updates as batches
-pub fn write_batches(mut wtr: &mut Write, ups: &[Update]) -> Result<(), io::Error> {
+pub fn write_batches(mut wtr: &mut dyn Write, ups: &[Update]) -> Result<(), io::Error> {
     if ups.len() == 0 {
         return Ok(());
     }
@@ -543,7 +543,7 @@ pub fn decode(fname: &str, num_rows: Option<u32>) -> Result<Vec<Update>, io::Err
 }
 
 /// Decode an entire buffer to Updates
-pub fn decode_buffer(mut buf: &mut Read) -> Vec<Update> {
+pub fn decode_buffer(mut buf: &mut dyn Read) -> Vec<Update> {
     let mut v = vec![];
     let mut res = read_one_batch(&mut buf);
     while let Ok(ups) = res {

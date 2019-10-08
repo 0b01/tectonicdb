@@ -135,11 +135,8 @@ async function watch() {
         listen(mkts, (v) => {
             const updates : DBUpdate[] = formatUpdate(v);
             const pair = updates[0].pair;
-            if (updates.length === 1) {
-                const up = updates[0];
+            for (const up of updates){
                 db.insert(up, "bt_"+pair);
-            } else {
-                db.bulkadd_into(updates, "bt_"+pair);
             }
         });
     } catch (e) {

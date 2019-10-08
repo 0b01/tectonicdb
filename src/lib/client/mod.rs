@@ -5,7 +5,7 @@ mod error;
 
 /// ring buffer
 pub mod circular_queue;
-/// builder for insertion command, add or bulk add
+/// builder for insertion command
 pub mod insert_command;
 /// implementation for Cxn struct
 pub mod cxn;

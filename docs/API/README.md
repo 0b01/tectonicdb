@@ -6,9 +6,6 @@
 | PING | Responds PONG |
 | INFO | Returns info about table schemas |
 | PERF | Returns the answercount of items over time |
-| BULKADD | See below |
-| BULKADD INTO \[dbname\] | See below |
-| DDAKLUB | End of bulkadd |
 | USE \[dbname\] | Switch the current store |
 | CREATE \[dbname\] | Create store |
 | GET \[n\] FROM \[dbname\] | Returns items |
@@ -30,16 +27,6 @@
 ```
 USE [dbname]
 ADD [ts], [seq], [is_trade], [is_bid], [price], [size];
-```
-
-## BULKADD
-
-```
-BULKADD INTO [dbname]
-[ts], [seq], [is_trade], [is_bid], [price], [size];
-[ts], [seq], [is_trade], [is_bid], [price], [size];
-[ts], [seq], [is_trade], [is_bid], [price], [size];
-DDAKLUB
 ```
 
 ## INSERT

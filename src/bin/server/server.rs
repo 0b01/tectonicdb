@@ -95,7 +95,8 @@ pub fn run_server(host: &str, port: &str, settings: &Settings) {
     info!("Listening on addr: {}", addr);
     info!("----------------- initialized -----------------");
 
-    let global = Arc::new(RwLock::new(SharedState::new(settings.clone())));
+    let (update_tx, update_rx) = mpsc::unbounded::<Update>();
+    let global = Arc::new(RwLock::new(SharedState::new(update_rx, settings.clone())));
     let store = Arc::new(RwLock::new(HashMap::new()));
 
     enable_platform_hook(&handle, Arc::clone(&global), Arc::clone(&store));

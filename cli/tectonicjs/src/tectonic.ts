@@ -96,26 +96,6 @@ export default class TectonicDB {
         return this.cmd(`ADD ${timestamp}, ${seq}, ${is_trade ? 't' : 'f'}, ${is_bid ? 't':'f'}, ${price}, ${size};`);
     }
 
-    async bulkadd(updates : DBUpdate[]) {
-        const ret = [];
-        ret.push('BULKADD');
-        for (const { timestamp, seq, is_trade, is_bid, price, size} of updates) {
-            ret.push(`${timestamp}, ${seq}, ${is_trade ? 't' : 'f'}, ${is_bid ? 't':'f'}, ${price}, ${size};`);
-        }
-        ret.push('DDAKLUB');
-        this.cmd(ret);
-    }
-
-    async bulkadd_into(updates : DBUpdate[], db: string) {
-        const ret = [];
-        ret.push('BULKADD INTO '+ db);
-        for (const { timestamp, seq, is_trade, is_bid, price, size} of updates) {
-            ret.push(`${timestamp}, ${seq}, ${is_trade ? 't' : 'f'}, ${is_bid ? 't':'f'}, ${price}, ${size};`);
-        }
-        ret.push('DDAKLUB');
-        this.cmd(ret);
-    }
-
     async insert(update: DBUpdate, db : string) {
         const { timestamp, seq, is_trade, is_bid, price, size } = update;
         return this.cmd(`ADD ${timestamp}, ${seq}, ${is_trade ? 't' : 'f'}, ${is_bid ? 't':'f'}, ${price}, ${size}; INTO ${db}`);

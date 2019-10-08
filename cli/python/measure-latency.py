@@ -20,5 +20,5 @@ async def measure_latency():
 
 if __name__ == "__main__":
     loop = get_event_loop()
-    loop.create_task(measure_latency())
-    loop.run_forever()
+    measure = measure_latency()
+    loop.run_until_complete(measure)

@@ -58,14 +58,6 @@ export default class TectonicPool {
         return this.bestSocket().add(update);
     }
 
-    async bulkadd(updates : DBUpdate[]) {
-        return this.bestSocket().bulkadd(updates);
-    }
-
-    async bulkadd_into(updates : DBUpdate[], db: string) {
-        this.bestSocket().bulkadd_into(updates, db);
-    }
-
     async insert(update: DBUpdate, db : string) {
         this.bestSocket().insert(update, db);
     }

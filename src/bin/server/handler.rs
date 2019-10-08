@@ -56,9 +56,6 @@ enum Command<'a> {
     Help,
     Info,
     Perf,
-    BulkAdd,
-    BulkAddInto(DbName<'a>),
-    BulkAddEnd,
     Get(ReqCount, GetFormat, Range, Loc),
     Count(ReqCount, Loc),
     Clear(ReqCount),
@@ -76,7 +73,6 @@ enum Command<'a> {
 
 static HELP_STR: &str = "PING, INFO, USE [db], CREATE [db],
 ADD [ts],[seq],[is_trade],[is_bid],[price],[size];
-BULKADD ...; DDAKLUB
 FLUSH, FLUSH ALL, GET ALL, GET [count], CLEAR
 ";
 
@@ -100,8 +96,6 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         "HELP" => Help,
         "INFO" => Info,
         "PERF" => Perf,
-        "BULKADD" => BulkAdd,
-        "DDAKLUB" => BulkAddEnd,
         "UNSUBSCRIBE" => Unsubscribe(ReqCount::Count(0)),
         "UNSUBSCRIBE ALL" => Unsubscribe(ReqCount::All),
         "COUNT" => Count(ReqCount::Count(1), Loc::Fs),
@@ -117,16 +111,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         "AUTOFLUSH ON" => AutoFlush(true),
         "AUTOFLUSH Off" => AutoFlush(false),
         _ => {
-            // is in bulkadd
-            if state.get_bulkadding() {
-                let parsed = parser::parse_line(&line);
-                let current_db = state.bulkadd_db.clone();
-                let dbname = current_db.unwrap_or(state.current_store_name.clone().into());
-                Insert(parsed, Some(dbname.into()))
-            } else if line.starts_with("BULKADD INTO ") {
-                let (_index, dbname) = parser::parse_dbname(&line);
-                BulkAddInto(dbname.into())
-            } else if line.starts_with("SUBSCRIBE ") {
+            if line.starts_with("SUBSCRIBE ") {
                 let dbname: &str = &line[10..];
                 Subscribe(dbname.into())
             } else if line.starts_with("CREATE ") {
@@ -187,21 +172,6 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         Help => ReturnType::string(HELP_STR),
         Info => ReturnType::string(state.info()),
         Perf => ReturnType::string(state.perf()),
-        BulkAdd => {
-            state.set_bulkadding(true);
-            state.bulkadd_db = Some(state.current_store_name.clone().into());
-            ReturnType::string("")
-        }
-        BulkAddInto(dbname) => {
-            state.bulkadd_db = Some(dbname.into());
-            state.set_bulkadding(true);
-            ReturnType::string("")
-        }
-        BulkAddEnd => {
-            state.set_bulkadding(false);
-            state.bulkadd_db = None;
-            ReturnType::string("1")
-        }
         Count(ReqCount::Count(_), Loc::Fs) => ReturnType::string(format!("{}", state.count())),
         Count(ReqCount::Count(_), Loc::Mem) => ReturnType::string(format!("{}", state.count_in_mem())),
         Count(ReqCount::All, Loc::Fs) => ReturnType::string(format!("{}", state.countall())),
@@ -252,10 +222,9 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
         }
 
         Subscription => {
-            let rxlocked = state.rx.clone().unwrap();
-            let message = rxlocked.lock().unwrap().try_recv();
+            let message = state.rx.as_ref().unwrap().try_recv();
             match message {
-                Ok(msg) => ReturnType::string(vec![msg].as_json()),
+                Ok(msg) => ReturnType::string([msg].as_json()),
                 _ => ReturnType::string("NONE"),
             }
         }
