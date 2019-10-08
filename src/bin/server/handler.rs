@@ -1,4 +1,5 @@
-use crate::state::*;
+use crate::prelude::*;
+
 use crate::parser;
 use libtectonic::dtf::update::{UpdateVecConvert, Update};
 use std::borrow::{Cow, Borrow};
@@ -274,7 +275,7 @@ mod tests {
         let settings: Settings = Default::default();
         let global = Arc::new(RwLock::new(SharedState::new(settings)));
         let store = Arc::new(RwLock::new(HashMap::new()));
-        let (tx, _) = futures::sync::mpsc::unbounded::<Update>();
+        let (tx, _) = mpsc::unbounded::<Update>();
         ThreadState::new(global, store, tx)
     }
 

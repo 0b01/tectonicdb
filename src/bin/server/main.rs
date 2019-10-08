@@ -1,3 +1,4 @@
+#![allow(unused)]
 extern crate libtectonic;
 extern crate clap;
 extern crate byteorder;
@@ -17,24 +18,25 @@ extern crate fern;
 extern crate uuid;
 extern crate circular_queue;
 
+#[macro_use]
 extern crate futures;
-extern crate tokio_io;
-extern crate tokio_core;
-extern crate tokio_signal;
+#[macro_use]
+extern crate async_std;
 
 mod plugins;
 
-mod server;
-mod state;
-mod utils;
-mod parser;
-mod handler;
-mod settings;
-mod subscription;
+pub mod server;
+pub mod state;
+pub mod utils;
+pub mod parser;
+pub mod handler;
+pub mod settings;
+pub mod subscription;
+pub mod prelude;
 
-use clap::{Arg, App, ArgMatches};
+#[macro_use]
+use crate::prelude::*;
 
-use self::settings::{key_or_default, key_or_none};
 
 fn main() {
     // Help detect OpenSSL certificates on Alpine Linux
@@ -101,7 +103,8 @@ fn main() {
          _/_/    _/_/_/    _/_/_/      _/_/    _/_/    _/    _/  _/    _/_/_/
     "##);
 
-    server::run_server(&host, &port, &settings);
+    let fut =  server::run_server(&host, &port, &settings);
+    task::block_on(fut);
 }
 
 fn prepare_logger(verbosity: u8, log_file: &str) {
@@ -124,8 +127,6 @@ fn prepare_logger(verbosity: u8, log_file: &str) {
             ))
         })
         .level(level)
-        .level_for("tokio_core", log::LevelFilter::Info)
-        .level_for("tokio_reactor", log::LevelFilter::Info)
         .level_for("hyper", log::LevelFilter::Info)
         .chain(std::io::stdout())
         .chain(fern::log_file(log_file).unwrap())

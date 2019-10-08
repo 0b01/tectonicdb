@@ -10,7 +10,8 @@
 /// size increments and updates are added to memory
 /// finally, call FLUSH to commit to disk the current store or FLUSH ALL to commit all available stores.
 /// the client can free the updates from memory using CLEAR or CLEARALL
-///
+
+use crate::prelude::*;
 
 macro_rules! catch {
     ($($code:tt)*) => {
@@ -37,9 +38,8 @@ use crate::subscription::Subscriptions;
 /// An atomic reference counter for accessing shared data.
 pub type Global = Arc<RwLock<SharedState>>;
 pub type HashMapStore<'a> = Arc<RwLock<HashMap<String, Store<'a>>>>;
-pub type SubscriptionTX = futures::sync::mpsc::UnboundedSender<Update>;
+pub type SubscriptionTX = UnboundedSender<Update>;
 
-#[derive(Debug)]
 pub struct Store<'a> {
     pub name: Cow<'a, str>,
     pub fname: Cow<'a, str>,
@@ -48,45 +48,38 @@ pub struct Store<'a> {
 }
 
 impl<'a> Store<'a> {
-    /// push a new `update` into the vec
+    /// push a new `Update` into current Store
     pub fn add(&mut self, new_vec: Update) {
-        let (is_autoflush) = {
-            let mut wtr = self.global.write().unwrap();
+        let mut wtr = self.global.write().unwrap();
 
-            // send to insertion firehose
-            {
-                let tx = wtr.subs.lock().unwrap();
-                let _ = tx.msg((self.name.to_string(), new_vec));
-            }
+        // // send to subscription firehose
+        // {
+        //     let tx = wtr.subs.lock().unwrap();
+        //     let _ = tx.msg((self.name.to_string(), new_vec));
+        // }
 
-            let is_autoflush = wtr.settings.autoflush;
-            let flush_interval = wtr.settings.flush_interval;
-            let _folder = wtr.settings.dtf_folder.to_owned();
-            let name: &str = self.name.borrow();
-            let vecs = wtr.vec_store.get_mut(name).expect(
-                "KEY IS NOT IN HASHMAP",
-            );
+        let is_autoflush = wtr.settings.autoflush;
+        let flush_interval = wtr.settings.flush_interval;
+        let name: &str = self.name.borrow();
+        let vecs = wtr.vec_store.get_mut(name).expect(
+            "KEY IS NOT IN HASHMAP",
+        );
 
-            vecs.0.push(new_vec);
-            vecs.1 += 1;
+        vecs.0.push(new_vec);
+        vecs.1 += 1;
 
-            // Saves current store into disk after n items is inserted.
-            let size = vecs.0.len(); // using the raw len so won't have race condition with load_size_from_file
-            let is_autoflush = is_autoflush && size != 0 && (size as u32) % flush_interval == 0;
-
-            if is_autoflush {
-                info!(
-                    "AUTOFLUSHING {}! Size: {} Last: {:?}",
-                    self.name,
-                    vecs.1,
-                    vecs.0.last().clone().unwrap()
-                );
-            }
-
-            is_autoflush
-        };
+        // Saves current store into disk after n items is inserted.
+        let size = vecs.0.len(); // using the raw len so won't have race condition with load_size_from_file
+        let is_autoflush = is_autoflush && size != 0 && (size as u32) % flush_interval == 0;
 
         if is_autoflush {
+            info!(
+                "AUTOFLUSHING {}! Size: {} Last: {:?}",
+                self.name,
+                vecs.1,
+                vecs.0.last().clone().unwrap()
+            );
+            drop(wtr);
             self.flush();
         }
     }
@@ -448,38 +441,38 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     }
 
     pub fn sub(&mut self, dbname: &str) {
-        self.is_subscribed = true;
-        self.subscribed_db = Some(dbname.to_owned());
-        let glb = self.global.read().unwrap();
-        let (id, rx) = glb.subs.lock().unwrap()
-            .sub(dbname.to_owned(), self.subscription_tx.clone());
-        self.rx = Some(rx);
-        self.sub_id = Some(id);
-        info!("Subscribing to channel {}. id: {}", dbname, id);
+        // self.is_subscribed = true;
+        // self.subscribed_db = Some(dbname.to_owned());
+        // let glb = self.global.read().unwrap();
+        // let (id, rx) = glb.subs.lock().unwrap()
+        //     .sub(dbname.to_owned(), self.subscription_tx.clone());
+        // self.rx = Some(rx);
+        // self.sub_id = Some(id);
+        // info!("Subscribing to channel {}. id: {}", dbname, id);
     }
 
     pub fn unsub_all(&mut self) {
-        let glb = self.global.read().unwrap();
-        let _ = glb.subs.lock().unwrap().unsub_all();
+        // let glb = self.global.read().unwrap();
+        // let _ = glb.subs.lock().unwrap().unsub_all();
     }
 
     /// unsubscribe
     pub fn unsub(&mut self) {
-        if !self.is_subscribed {
-            return;
-        }
-        let old_dbname = self.subscribed_db.clone().unwrap();
-        let sub_id = self.sub_id.unwrap();
+        // if !self.is_subscribed {
+        //     return;
+        // }
+        // let old_dbname = self.subscribed_db.clone().unwrap();
+        // let sub_id = self.sub_id.unwrap();
 
-        let glb = self.global.read().unwrap();
-        let _ = glb.subs.lock().unwrap().unsub(sub_id, &old_dbname);
+        // let glb = self.global.read().unwrap();
+        // let _ = glb.subs.lock().unwrap().unsub(sub_id, &old_dbname);
 
-        info!("Unsubscribing from channel {}. id: {}", old_dbname, sub_id);
+        // info!("Unsubscribing from channel {}. id: {}", old_dbname, sub_id);
 
-        self.is_subscribed = false;
-        self.subscribed_db = None;
-        self.rx = None;
-        self.sub_id = None;
+        // self.is_subscribed = false;
+        // self.subscribed_db = None;
+        // self.rx = None;
+        // self.sub_id = None;
     }
 
     /// remove everything in the current store
@@ -668,19 +661,16 @@ pub type VecStore = (Box<Vec<Update>>, u64);
 ///      { total => [...]}
 pub type CountHistory = HashMap<String, CircularQueue<(SystemTime, u64)>>;
 
-#[derive(Debug)]
 pub struct SharedState {
     pub n_cxns: u16,
     pub settings: Settings,
     pub vec_store: HashMap<String, VecStore>,
     pub history: CountHistory,
     pub subs: Arc<Mutex<Subscriptions>>,
-    pub rx: futures::sync::mpsc::UnboundedReceiver<Update>,
-    pub subs_txs: HashMap<::std::thread::ThreadId, SubscriptionTX>,
 }
 
 impl SharedState {
-    pub fn new(rx: futures::sync::mpsc::UnboundedReceiver<Update>, settings: Settings) -> SharedState {
+    pub fn new(settings: Settings) -> SharedState {
         let mut hashmap = HashMap::new();
         hashmap.insert("default".to_owned(), (Box::new(Vec::new()), 0));
         let subs = Arc::new(Mutex::new(Subscriptions::new()));
@@ -689,9 +679,7 @@ impl SharedState {
             settings,
             vec_store: hashmap,
             history: HashMap::new(),
-            rx,
             subs,
-            subs_txs:  HashMap::new(),
         }
     }
 }
