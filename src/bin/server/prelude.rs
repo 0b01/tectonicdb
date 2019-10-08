@@ -4,7 +4,7 @@ pub use libtectonic::dtf::update::{Update, UpdateVecConvert};
 pub use crate::state::{Global, SharedState, ThreadState, HashMapStore};
 pub use crate::handler::ReturnType;
 pub use crate::utils;
-pub use crate::handler;
+pub use crate::handler::{Event, Void};
 
 pub use std::{
     collections::hash_map::{Entry, HashMap},
@@ -16,7 +16,7 @@ pub use futures::{channel::mpsc, FutureExt, SinkExt};
 pub use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub use async_std::{
-    io::BufReader,
+    io::{BufReader, BufWriter},
     net::{TcpListener, TcpStream, ToSocketAddrs},
     prelude::*,
     task,
@@ -25,3 +25,5 @@ pub use async_std::{
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 pub type Sender<T> = mpsc::UnboundedSender<T>;
 pub type Receiver<T> = mpsc::UnboundedReceiver<T>;
+
+pub use std::net::SocketAddr;

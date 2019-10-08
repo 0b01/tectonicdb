@@ -153,14 +153,10 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
     let reader = BufReader::new(&*stream);
     let mut lines = reader.lines();
 
-    let name = match lines.next().await {
-        None => Err("peer disconnected immediately")?,
-        Some(line) => line?,
-    };
     let (_shutdown_sender, shutdown_receiver) = mpsc::unbounded::<Void>();
     broker
         .send(Event::NewPeer {
-            name: name.clone(),
+            name: stream.peer_addr()?.clone(),
             stream: Arc::clone(&stream),
             shutdown: shutdown_receiver,
         })
@@ -168,10 +164,12 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
         .unwrap();
 
     while let Some(line) = lines.next().await {
-        let line = line?;
-        // TODO: parse and send to broker
+        println!("received line {:?}", line);
+        let event = crate::handler::parse_to_event(&line?);
+        dbg!(event);
+
         broker
-            .send(Event::Message { from: name.clone(), })
+            .send(Event::TestMessage{from: stream.peer_addr()?.clone()})
             .await
             .unwrap();
     }
@@ -179,26 +177,11 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
     Ok(())
 }
 
-#[derive(Debug)]
-enum Void {}
-
-#[derive(Debug)]
-enum Event {
-    NewPeer {
-        name: String,
-        stream: Arc<TcpStream>,
-        shutdown: Receiver<Void>,
-    },
-    Message {
-        from: String,
-    }
-}
-
 
 async fn broker_loop(mut events: Receiver<Event>) {
     let (disconnect_sender, mut disconnect_receiver) =
-        mpsc::unbounded::<(String, Receiver<String>)>();
-    let mut peers: HashMap<String, Sender<String>> = HashMap::new();
+        mpsc::unbounded::<(SocketAddr, Receiver<String>)>();
+    let mut connections: HashMap<SocketAddr, Sender<String>> = HashMap::new();
 
     loop {
         let event = select! {
@@ -208,13 +191,13 @@ async fn broker_loop(mut events: Receiver<Event>) {
             },
             disconnect = disconnect_receiver.next().fuse() => {
                 let (name, _pending_messages) = disconnect.unwrap();
-                assert!(peers.remove(&name).is_some());
+                assert!(connections.remove(&name).is_some());
                 continue;
             },
         };
         match event {
-            Event::Message { from } => {
-                if let Some(peer) = peers.get_mut(&from) {
+            Event::TestMessage { from } => {
+                if let Some(peer) = connections.get_mut(&from) {
                     let msg = "hi".to_owned();
                     peer.send(msg).await.unwrap();
                 }
@@ -223,15 +206,14 @@ async fn broker_loop(mut events: Receiver<Event>) {
                 name,
                 stream,
                 shutdown,
-            } => match peers.entry(name.clone()) {
+            } => match connections.entry(name.clone()) {
                 Entry::Occupied(..) => (),
                 Entry::Vacant(entry) => {
                     let (client_sender, mut client_receiver) = mpsc::unbounded();
                     entry.insert(client_sender);
                     let mut disconnect_sender = disconnect_sender.clone();
                     spawn_and_log_error(async move {
-                        let res =
-                            connection_writer_loop(&mut client_receiver, stream, shutdown).await;
+                        let res = connection_writer_loop(&mut client_receiver, stream, shutdown).await;
                         disconnect_sender
                             .send((name, client_receiver))
                             .await
@@ -240,9 +222,10 @@ async fn broker_loop(mut events: Receiver<Event>) {
                     });
                 }
             },
+            _ => {},
         }
     }
-    drop(peers);
+    drop(connections);
     drop(disconnect_sender);
     while let Some((_name, _pending_messages)) = disconnect_receiver.next().await {}
 }
@@ -269,7 +252,7 @@ pub async fn run_server(host: &str, port: &str, settings: &Settings) -> Result<(
     let mut incoming = listener.incoming();
     while let Some(stream) = incoming.next().await {
         let stream = stream?;
-        println!("Accepting from: {}", stream.peer_addr()?);
+        info!("Accepting from: {}", stream.peer_addr()?);
         spawn_and_log_error(connection_loop(broker_sender.clone(), stream));
     }
     drop(broker_sender);
@@ -287,7 +270,12 @@ async fn connection_writer_loop(
     loop {
         select! {
             msg = messages.next().fuse() => match msg {
-                Some(msg) => stream.write_all(msg.as_bytes()).await?,
+                Some(msg) => {
+                    stream.write(&[0x1]).await?;
+                    stream.write(&msg.len().to_be_bytes()).await?;
+                    stream.write(&msg.as_bytes()).await?;
+                    stream.flush().await?;
+                }
                 None => break,
             },
             void = shutdown.next().fuse() => match void {

@@ -40,8 +40,6 @@ pub enum GetFormat {
     Dtf,
 }
 
-type DbName<'a> = Cow<'a, str>;
-
 #[derive(Debug)]
 pub enum Loc {
     Mem,
@@ -51,8 +49,11 @@ pub enum Loc {
 pub type Range = Option<(u64, u64)>;
 
 #[derive(Debug)]
-enum Command<'a> {
-    Nothing,
+pub enum Void {}
+
+#[derive(Debug)]
+pub enum Command {
+    Noop,
     Ping,
     Help,
     Info,
@@ -62,14 +63,30 @@ enum Command<'a> {
     Clear(ReqCount),
     Flush(ReqCount),
     AutoFlush(bool),
-    Insert(Option<Update>, Option<DbName<'a>>),
-    Create(DbName<'a>),
-    Subscribe(DbName<'a>),
+    Insert(Option<Update>, Option<String>),
+    Create(String),
+    Subscribe(String),
     Unsubscribe(ReqCount),
     Subscription,
-    Use(DbName<'a>),
-    Exists(DbName<'a>),
+    Use(String),
+    Exists(String),
     Unknown,
+}
+
+#[derive(Debug)]
+pub enum Event {
+    NewPeer {
+        name: SocketAddr,
+        stream: Arc<TcpStream>,
+        shutdown: Receiver<Void>,
+    },
+    TestMessage {
+        from: SocketAddr,
+    },
+    Command {
+        from: SocketAddr,
+        command: Command
+    },
 }
 
 static HELP_STR: &str = "PING, INFO, USE [db], CREATE [db],
@@ -80,19 +97,11 @@ FLUSH, FLUSH ALL, GET ALL, GET [count], CLEAR
 /// sometimes returns string, sometimes bytes, error string
 // pub type Response = (Option<String>, Option<Vec<u8>>, Option<String>);
 
-pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
-        state: &'b mut ThreadState<'a, 'c>) -> ReturnType<'a>
-    {
+pub fn parse_to_event(line: &str) -> Command {
     use self::Command::*;
 
-    let command: Command = match line.borrow() {
-        "" => {
-            if state.is_subscribed {
-                Subscription
-            } else {
-                Nothing
-            }
-        }
+    match line.borrow() {
+        "" => Noop,
         "PING" => Ping,
         "HELP" => Help,
         "INFO" => Info,
@@ -131,7 +140,7 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
                 } else {
                     let data_string: &str = &line[3..];
                     match parser::parse_line(&data_string) {
-                        Some(up) => (Some(up), Some(state.current_store_name.clone().into())),
+                        Some(up) => (Some(up), None),
                         None => (None, None),
                     }
                 };
@@ -165,103 +174,109 @@ pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
                 Unknown
             }
         }
-    };
-
-    match command {
-        Nothing => ReturnType::string(""),
-        Ping => ReturnType::string("PONG"),
-        Help => ReturnType::string(HELP_STR),
-        Info => ReturnType::string(state.info()),
-        Perf => ReturnType::string(state.perf()),
-        Count(ReqCount::Count(_), Loc::Fs) => ReturnType::string(format!("{}", state.count())),
-        Count(ReqCount::Count(_), Loc::Mem) => ReturnType::string(format!("{}", state.count_in_mem())),
-        Count(ReqCount::All, Loc::Fs) => ReturnType::string(format!("{}", state.countall())),
-        Count(ReqCount::All, Loc::Mem) => ReturnType::string(format!("{}", state.countall_in_mem())),
-        Clear(ReqCount::Count(_)) => {
-            state.clear();
-            ReturnType::string("1")
-        }
-        Clear(ReqCount::All) => {
-            state.clearall();
-            ReturnType::string("1")
-        }
-        Flush(ReqCount::Count(_)) => {
-            state.flush();
-            ReturnType::string("1")
-        }
-        Flush(ReqCount::All) => {
-            state.flushall();
-            ReturnType::string("1")
-        }
-
-        AutoFlush(is_autoflush) =>  {
-            state.set_autoflush(is_autoflush);
-            ReturnType::string("1")
-        }
-
-        // update, dbname
-        Insert(Some(up), Some(dbname)) => {
-            match state.insert(up, &dbname) {
-                Some(()) => ReturnType::string(""),
-                None => ReturnType::error(format!("DB {} not found.", dbname)),
-            }
-        }
-        Insert(Some(up), None) => {
-            state.add(up);
-            ReturnType::string("")
-        }
-        Insert(None, _) => ReturnType::error("Unable to parse line"),
-
-        Create(dbname) => {
-            state.create(&dbname);
-            ReturnType::string(format!("Created DB `{}`.", &dbname))
-        }
-
-        Subscribe(dbname) => {
-            state.sub(&dbname);
-            ReturnType::string(format!("Subscribed to {}", dbname))
-        }
-
-        Subscription => {
-            let message = state.rx.as_ref().unwrap().try_recv();
-            match message {
-                Ok(msg) => ReturnType::string([msg].as_json()),
-                _ => ReturnType::string("NONE"),
-            }
-        }
-
-        Unsubscribe(ReqCount::All) => {
-            state.unsub_all();
-            ReturnType::string("Unsubscribed everything!")
-        }
-
-        Unsubscribe(ReqCount::Count(_)) => {
-            let old_dbname = state.subscribed_db.clone().unwrap();
-            state.unsub();
-            ReturnType::string(format!("Unsubscribed from {}", old_dbname))
-        }
-
-        Use(dbname) => {
-            match state.use_db(&dbname) {
-                Some(_) => ReturnType::string(format!("SWITCHED TO DB `{}`.", &dbname)),
-                None => ReturnType::error(format!("No db named `{}`", dbname)),
-            }
-        }
-        Exists(dbname) => {
-            if state.exists(&dbname) {
-                ReturnType::string("1")
-            } else {
-                ReturnType::error(format!("No db named `{}`", dbname))
-            }
-        }
-
-        Get(cnt, fmt, rng, loc) =>
-            state.get(cnt, fmt, rng, loc)
-            .unwrap_or(ReturnType::error("Not enough items to return")),
-
-        Unknown => ReturnType::error("Unknown command."),
     }
 }
+
+
+
+// pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
+//         state: &'b mut ThreadState<'a, 'c>) -> ReturnType<'a>
+//     {
+//     match command {
+//         Noop => ReturnType::string(""),
+//         Ping => ReturnType::string("PONG"),
+//         Help => ReturnType::string(HELP_STR),
+//         Info => ReturnType::string(state.info()),
+//         Perf => ReturnType::string(state.perf()),
+//         Count(ReqCount::Count(_), Loc::Fs) => ReturnType::string(format!("{}", state.count())),
+//         Count(ReqCount::Count(_), Loc::Mem) => ReturnType::string(format!("{}", state.count_in_mem())),
+//         Count(ReqCount::All, Loc::Fs) => ReturnType::string(format!("{}", state.countall())),
+//         Count(ReqCount::All, Loc::Mem) => ReturnType::string(format!("{}", state.countall_in_mem())),
+//         Clear(ReqCount::Count(_)) => {
+//             state.clear();
+//             ReturnType::string("1")
+//         }
+//         Clear(ReqCount::All) => {
+//             state.clearall();
+//             ReturnType::string("1")
+//         }
+//         Flush(ReqCount::Count(_)) => {
+//             state.flush();
+//             ReturnType::string("1")
+//         }
+//         Flush(ReqCount::All) => {
+//             state.flushall();
+//             ReturnType::string("1")
+//         }
+
+//         AutoFlush(is_autoflush) =>  {
+//             state.set_autoflush(is_autoflush);
+//             ReturnType::string("1")
+//         }
+
+//         // update, dbname
+//         Insert(Some(up), Some(dbname)) => {
+//             match state.insert(up, &dbname) {
+//                 Some(()) => ReturnType::string(""),
+//                 None => ReturnType::error(format!("DB {} not found.", dbname)),
+//             }
+//         }
+//         Insert(Some(up), None) => {
+//             state.add(up);
+//             ReturnType::string("")
+//         }
+//         Insert(None, _) => ReturnType::error("Unable to parse line"),
+
+//         Create(dbname) => {
+//             state.create(&dbname);
+//             ReturnType::string(format!("Created DB `{}`.", &dbname))
+//         }
+
+//         Subscribe(dbname) => {
+//             state.sub(&dbname);
+//             ReturnType::string(format!("Subscribed to {}", dbname))
+//         }
+
+//         Subscription => {
+//             let message = state.rx.as_ref().unwrap().try_recv();
+//             match message {
+//                 Ok(msg) => ReturnType::string([msg].as_json()),
+//                 _ => ReturnType::string("NONE"),
+//             }
+//         }
+
+//         Unsubscribe(ReqCount::All) => {
+//             state.unsub_all();
+//             ReturnType::string("Unsubscribed everything!")
+//         }
+
+//         Unsubscribe(ReqCount::Count(_)) => {
+//             let old_dbname = state.subscribed_db.clone().unwrap();
+//             state.unsub();
+//             ReturnType::string(format!("Unsubscribed from {}", old_dbname))
+//         }
+
+//         Use(dbname) => {
+//             match state.use_db(&dbname) {
+//                 Some(_) => ReturnType::string(format!("SWITCHED TO DB `{}`.", &dbname)),
+//                 None => ReturnType::error(format!("No db named `{}`", dbname)),
+//             }
+//         }
+//         Exists(dbname) => {
+//             if state.exists(&dbname) {
+//                 ReturnType::string("1")
+//             } else {
+//                 ReturnType::error(format!("No db named `{}`", dbname))
+//             }
+//         }
+
+//         Get(cnt, fmt, rng, loc) =>
+//             state.get(cnt, fmt, rng, loc)
+//             .unwrap_or(ReturnType::error("Not enough items to return")),
+
+//         Unknown => ReturnType::error("Unknown command."),
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
