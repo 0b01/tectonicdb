@@ -1,6 +1,6 @@
+use crate::prelude::*;
 use std::path::Path;
 use std::fs;
-use crate::state::{Store, ThreadState};
 use libtectonic::dtf;
 
 pub fn create_dir_if_not_exist(dtf_folder: &str) {
@@ -11,11 +11,8 @@ pub fn create_dir_if_not_exist(dtf_folder: &str) {
 
 /// Iterate through the dtf files in the folder and load some metadata into memory.
 /// Create corresponding Store objects in State.
-pub fn init_dbs(state: &mut ThreadState) {
-    let dtf_folder = {
-        let rdr = state.global.read().unwrap();
-        rdr.settings.dtf_folder.clone()
-    };
+pub async fn init_dbs(state: &mut GlobalState) {
+    let dtf_folder = state.settings.dtf_folder.clone();
     for dtf_file in fs::read_dir(&dtf_folder).unwrap() {
         let fname_os = dtf_file.unwrap().file_name();
         let stem = fname_os.to_str().unwrap(); // sldjf-lks-djflk-sfsd--something.dtf
@@ -37,27 +34,13 @@ pub fn init_dbs(state: &mut ThreadState) {
                 }
             };
 
-            {
-                let mut wtr = state.global.write().unwrap();
-                // if symbol is in vec_store, append to store
-                // TODO: this is not accurate at all!
-                // XXX: need to keep track of file names :(
-                wtr.vec_store
-                    .entry(symbol.clone())
-                    .and_modify(|e| if e.1 < header_size {e.1 += header_size})
-                    .or_insert((Box::new(Vec::new()), header_size));
-            }
-
-            // insert a db store into user state
-            state.store.write().unwrap().insert(
-                symbol.to_owned(),
-                Store {
-                    name: symbol.into(),
-                    fname: basename.to_owned().into(),
-                    in_memory: false,
-                    global: state.global.clone(),
-                },
-            );
+            // if symbol is in vec_store, append to store
+            // TODO: this is not accurate at all!
+            // XXX: need to keep track of file names :(
+            state.books
+                .entry(symbol.clone())
+                .and_modify(|e| if e.nominal_count < header_size {e.nominal_count += header_size})
+                .or_insert(Book::new(&symbol, state.settings.clone()));
         }
     }
 }

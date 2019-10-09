@@ -7,25 +7,36 @@ use std::borrow::{Cow, Borrow};
 // BUG: subscribe, add, deadlock!!!
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum ReturnType<'thread> {
-    String(Cow<'thread, str>),
+pub enum ReturnType {
+    String(Cow<'static, str>),
     Bytes(Vec<u8>),
-    Error(Cow<'thread, str>),
+    Error(Cow<'static, str>),
 }
 
-impl<'thread> ReturnType<'thread> {
-    pub fn string<S>(string: S) -> ReturnType<'thread>
-        where S: Into<Cow<'thread, str>>
+impl ReturnType {
+
+    pub const HELP_STR: &'static str = "
+    PING, INFO, USE [db], CREATE [db],
+    ADD [ts],[seq],[is_trade],[is_bid],[price],[size];
+    FLUSH, FLUSH ALL, GET ALL, GET [count], CLEAR";
+
+    pub fn ok() -> ReturnType {
+        ReturnType::String("1".into())
+    }
+
+    pub fn string<S>(string: S) -> ReturnType
+        where S: Into<Cow<'static, str>>
     {
         ReturnType::String(string.into())
     }
 
-    pub fn error<S>(string: S) -> ReturnType<'thread>
-        where S: Into<Cow<'thread, str>>
+    pub fn error<S>(string: S) -> ReturnType
+        where S: Into<Cow<'static, str>>
     {
         ReturnType::Error(string.into())
     }
 }
+
 
 #[derive(Debug)]
 pub enum ReqCount {
@@ -41,7 +52,7 @@ pub enum GetFormat {
 }
 
 #[derive(Debug)]
-pub enum Loc {
+pub enum ReadLocation {
     Mem,
     Fs,
 }
@@ -58,16 +69,14 @@ pub enum Command {
     Help,
     Info,
     Perf,
-    Get(ReqCount, GetFormat, Range, Loc),
-    Count(ReqCount, Loc),
+    Get(ReqCount, GetFormat, Range, ReadLocation),
+    Count(ReqCount, ReadLocation),
     Clear(ReqCount),
     Flush(ReqCount),
     AutoFlush(bool),
     Insert(Option<Update>, Option<String>),
     Create(String),
     Subscribe(String),
-    Unsubscribe(ReqCount),
-    Subscription,
     Use(String),
     Exists(String),
     Unknown,
@@ -76,7 +85,7 @@ pub enum Command {
 #[derive(Debug)]
 pub enum Event {
     NewPeer {
-        name: SocketAddr,
+        sock: SocketAddr,
         stream: Arc<TcpStream>,
         shutdown: Receiver<Void>,
     },
@@ -88,11 +97,6 @@ pub enum Event {
         command: Command
     },
 }
-
-static HELP_STR: &str = "PING, INFO, USE [db], CREATE [db],
-ADD [ts],[seq],[is_trade],[is_bid],[price],[size];
-FLUSH, FLUSH ALL, GET ALL, GET [count], CLEAR
-";
 
 /// sometimes returns string, sometimes bytes, error string
 // pub type Response = (Option<String>, Option<Vec<u8>>, Option<String>);
@@ -106,16 +110,14 @@ pub fn parse_to_event(line: &str) -> Command {
         "HELP" => Help,
         "INFO" => Info,
         "PERF" => Perf,
-        "UNSUBSCRIBE" => Unsubscribe(ReqCount::Count(0)),
-        "UNSUBSCRIBE ALL" => Unsubscribe(ReqCount::All),
-        "COUNT" => Count(ReqCount::Count(1), Loc::Fs),
-        "COUNT ALL" => Count(ReqCount::All, Loc::Fs),
-        "COUNT ALL IN MEM" => Count(ReqCount::All, Loc::Mem),
+        "COUNT" => Count(ReqCount::Count(1), ReadLocation::Fs),
+        "COUNT ALL" => Count(ReqCount::All, ReadLocation::Fs),
+        "COUNT ALL IN MEM" => Count(ReqCount::All, ReadLocation::Mem),
         "CLEAR" => Clear(ReqCount::Count(1)),
         "CLEAR ALL" => Clear(ReqCount::All),
-        "GET ALL AS JSON" => Get(ReqCount::All, GetFormat::Json, None, Loc::Mem),
-        "GET ALL AS CSV" => Get(ReqCount::All, GetFormat::Csv, None, Loc::Mem),
-        "GET ALL" => Get(ReqCount::All, GetFormat::Dtf, None, Loc::Mem),
+        "GET ALL AS JSON" => Get(ReqCount::All, GetFormat::Json, None, ReadLocation::Mem),
+        "GET ALL AS CSV" => Get(ReqCount::All, GetFormat::Csv, None, ReadLocation::Mem),
+        "GET ALL" => Get(ReqCount::All, GetFormat::Dtf, None, ReadLocation::Mem),
         "FLUSH" => Flush(ReqCount::Count(1)),
         "FLUSH ALL" => Flush(ReqCount::All),
         "AUTOFLUSH ON" => AutoFlush(true),
@@ -167,7 +169,7 @@ pub fn parse_to_event(line: &str) -> Command {
                     if line.contains(" AS CSV") { GetFormat::Csv }
                     else { GetFormat::Dtf }
                 };
-                let loc = if line.contains(" IN MEM") { Loc::Mem } else { Loc::Fs };
+                let loc = if line.contains(" IN MEM") { ReadLocation::Mem } else { ReadLocation::Fs };
 
                 Get(count, format, range, loc)
             } else {
@@ -177,106 +179,6 @@ pub fn parse_to_event(line: &str) -> Command {
     }
 }
 
-
-
-// pub fn gen_response<'a: 'b, 'b, 'c>(line: &'b str,
-//         state: &'b mut ThreadState<'a, 'c>) -> ReturnType<'a>
-//     {
-//     match command {
-//         Noop => ReturnType::string(""),
-//         Ping => ReturnType::string("PONG"),
-//         Help => ReturnType::string(HELP_STR),
-//         Info => ReturnType::string(state.info()),
-//         Perf => ReturnType::string(state.perf()),
-//         Count(ReqCount::Count(_), Loc::Fs) => ReturnType::string(format!("{}", state.count())),
-//         Count(ReqCount::Count(_), Loc::Mem) => ReturnType::string(format!("{}", state.count_in_mem())),
-//         Count(ReqCount::All, Loc::Fs) => ReturnType::string(format!("{}", state.countall())),
-//         Count(ReqCount::All, Loc::Mem) => ReturnType::string(format!("{}", state.countall_in_mem())),
-//         Clear(ReqCount::Count(_)) => {
-//             state.clear();
-//             ReturnType::string("1")
-//         }
-//         Clear(ReqCount::All) => {
-//             state.clearall();
-//             ReturnType::string("1")
-//         }
-//         Flush(ReqCount::Count(_)) => {
-//             state.flush();
-//             ReturnType::string("1")
-//         }
-//         Flush(ReqCount::All) => {
-//             state.flushall();
-//             ReturnType::string("1")
-//         }
-
-//         AutoFlush(is_autoflush) =>  {
-//             state.set_autoflush(is_autoflush);
-//             ReturnType::string("1")
-//         }
-
-//         // update, dbname
-//         Insert(Some(up), Some(dbname)) => {
-//             match state.insert(up, &dbname) {
-//                 Some(()) => ReturnType::string(""),
-//                 None => ReturnType::error(format!("DB {} not found.", dbname)),
-//             }
-//         }
-//         Insert(Some(up), None) => {
-//             state.add(up);
-//             ReturnType::string("")
-//         }
-//         Insert(None, _) => ReturnType::error("Unable to parse line"),
-
-//         Create(dbname) => {
-//             state.create(&dbname);
-//             ReturnType::string(format!("Created DB `{}`.", &dbname))
-//         }
-
-//         Subscribe(dbname) => {
-//             state.sub(&dbname);
-//             ReturnType::string(format!("Subscribed to {}", dbname))
-//         }
-
-//         Subscription => {
-//             let message = state.rx.as_ref().unwrap().try_recv();
-//             match message {
-//                 Ok(msg) => ReturnType::string([msg].as_json()),
-//                 _ => ReturnType::string("NONE"),
-//             }
-//         }
-
-//         Unsubscribe(ReqCount::All) => {
-//             state.unsub_all();
-//             ReturnType::string("Unsubscribed everything!")
-//         }
-
-//         Unsubscribe(ReqCount::Count(_)) => {
-//             let old_dbname = state.subscribed_db.clone().unwrap();
-//             state.unsub();
-//             ReturnType::string(format!("Unsubscribed from {}", old_dbname))
-//         }
-
-//         Use(dbname) => {
-//             match state.use_db(&dbname) {
-//                 Some(_) => ReturnType::string(format!("SWITCHED TO DB `{}`.", &dbname)),
-//                 None => ReturnType::error(format!("No db named `{}`", dbname)),
-//             }
-//         }
-//         Exists(dbname) => {
-//             if state.exists(&dbname) {
-//                 ReturnType::string("1")
-//             } else {
-//                 ReturnType::error(format!("No db named `{}`", dbname))
-//             }
-//         }
-
-//         Get(cnt, fmt, rng, loc) =>
-//             state.get(cnt, fmt, rng, loc)
-//             .unwrap_or(ReturnType::error("Not enough items to return")),
-
-//         Unknown => ReturnType::error("Unknown command."),
-//     }
-// }
 
 #[cfg(test)]
 mod tests {

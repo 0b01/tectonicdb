@@ -30,117 +30,64 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::{Arc, RwLock, Mutex, mpsc};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::utils;
 use crate::settings::Settings;
-use crate::handler::{GetFormat, ReturnType, ReqCount, Loc, Range};
+use crate::handler::{GetFormat, ReturnType, ReqCount, ReadLocation, Range};
 use crate::subscription::Subscriptions;
 
-/// An atomic reference counter for accessing shared data.
-pub type Global = Arc<RwLock<SharedState>>;
-pub type HashMapStore<'a> = Arc<RwLock<HashMap<String, Store<'a>>>>;
-pub type SubscriptionTX = UnboundedSender<Update>;
 
-pub struct Store<'a> {
-    pub name: Cow<'a, str>,
-    pub fname: Cow<'a, str>,
-    pub in_memory: bool,
-    pub global: Global,
+pub fn into_format(result: &[Update], format: &GetFormat) -> Option<ReturnType> {
+    let ret = match format {
+        GetFormat::Dtf => {
+            let mut bytes: Vec<u8> = Vec::new();
+            let _ = dtf::file_format::write_batches(&mut bytes, &result);
+            ReturnType::Bytes(bytes)
+        }
+        GetFormat::Json => {
+            ReturnType::String(
+                Cow::Owned(format!("[{}]\n", result.as_json()))
+            )
+        }
+        GetFormat::Csv => {
+            ReturnType::String(
+                Cow::Owned(format!("{}\n", result.as_csv()))
+            )
+        }
+    };
+    Some(ret)
 }
 
-impl<'a> Store<'a> {
-    /// push a new `Update` into current Store
-    pub fn add(&mut self, new_vec: Update) {
-        let mut wtr = self.global.write().unwrap();
 
-        // // send to subscription firehose
-        // {
-        //     let tx = wtr.subs.lock().unwrap();
-        //     let _ = tx.msg((self.name.to_string(), new_vec));
-        // }
 
-        let is_autoflush = wtr.settings.autoflush;
-        let flush_interval = wtr.settings.flush_interval;
-        let name: &str = self.name.borrow();
-        let vecs = wtr.vec_store.get_mut(name).expect(
-            "KEY IS NOT IN HASHMAP",
-        );
+/// (updates, nominal count)
+pub struct Book {
+    pub vec: Vec<Update>,
+    pub nominal_count: u64,
+    pub name: String,
+    pub in_memory: bool,
+    pub settings: Settings,
+}
 
-        vecs.0.push(new_vec);
-        vecs.1 += 1;
+impl Book {
 
-        // Saves current store into disk after n items is inserted.
-        let size = vecs.0.len(); // using the raw len so won't have race condition with load_size_from_file
-        let is_autoflush = is_autoflush && size != 0 && (size as u32) % flush_interval == 0;
-
-        if is_autoflush {
-            info!(
-                "AUTOFLUSHING {}! Size: {} Last: {:?}",
-                self.name,
-                vecs.1,
-                vecs.0.last().clone().unwrap()
-            );
-            drop(wtr);
-            self.flush();
-        }
-    }
-
-    pub fn count(&self) -> u64 {
-        let rdr = self.global.read().unwrap();
-        let name: &str = self.name.borrow();
-        let vecs = rdr.vec_store.get(name).expect(
-            "KEY IS NOT IN HASHMAP",
-        );
-        vecs.1
-    }
-
-    pub fn count_in_mem(&self) -> u64 {
-        let rdr = self.global.read().unwrap();
-        let name: &str = self.name.borrow();
-        let vecs = rdr.vec_store.get(name).expect(
-            "KEY IS NOT IN HASHMAP",
-        );
-        vecs.0.len() as u64
-    }
-
-    /// write items stored in memory into file
-    /// If file exists, use append which only appends a filtered set of updates whose timestamp is larger than the old timestamp
-    /// If file doesn't exists, simply encode.
-    ///
-    pub fn flush(&mut self) -> Option<bool> {
-        {
-            let mut rdr = self.global.write().unwrap(); // use a write lock to block write in client processes
-            let folder = rdr.settings.dtf_folder.to_owned();
-            let name: &str = self.name.borrow();
-            let vecs = rdr.vec_store.get_mut(name).expect(
-                "KEY IS NOT IN HASHMAP",
-            );
-            let fullfname = format!("{}/{}.dtf", &folder, self.fname);
-            utils::create_dir_if_not_exist(&folder);
-
-            let fpath = Path::new(&fullfname);
-            let result = if fpath.exists() {
-                dtf::file_format::append(&fullfname, &vecs.0)
-            } else {
-                dtf::file_format::encode(&fullfname, &self.name, &vecs.0)
-            };
-            match result {
-                Ok(_) => info!("Successfully flushed."),
-                Err(_) => error!("Error flushing file."),
-            };
-
-            // clear
-            vecs.0.clear();
-        }
-
-        // continue clear
-        self.in_memory = false;
-        Some(true)
+    pub fn new(name: &str, settings: Settings) -> Self {
+        let vec = vec![];
+        let nominal_count = 0;
+        let name = name.to_owned();
+        let in_memory = false;
+        let mut ret = Self {
+            vec,
+            nominal_count,
+            name,
+            in_memory,
+            settings,
+        };
+        ret.load();
+        ret
     }
 
     /// load items from dtf file
     fn load(&mut self) {
-        let folder = self.global.read().unwrap().settings.dtf_folder.to_owned();
-        let fname = format!("{}/{}.dtf", &folder, self.name);
+        let fname = format!("{}/{}.dtf", &self.settings.dtf_folder, self.name);
         if Path::new(&fname).exists() && !self.in_memory {
             // let file_item_count = dtf::read_meta(&fname).nums;
             // // when we have more items in memory, don't load
@@ -154,11 +101,9 @@ impl<'a> Store<'a> {
                 return;
             } else {
                 let mut ups = ups.unwrap();
-                let mut wtr = self.global.write().unwrap();
                 // let size = ups.len() as u64;
                 let name: &str = self.name.borrow();
-                let vecs = wtr.vec_store.get_mut(name).unwrap();
-                vecs.0.append(&mut ups);
+                self.vec.append(&mut ups);
                 // wtr.vec_store.insert(self.name.to_owned(), (ups, size));
                 self.in_memory = true;
             }
@@ -168,19 +113,12 @@ impl<'a> Store<'a> {
     /// load size from file
     pub fn load_size_from_file(&mut self) {
         let header_size = {
-            let rdr = self.global.read().unwrap();
-            let folder = rdr.settings.dtf_folder.to_owned();
-            let fname = format!("{}/{}.dtf", &folder, self.name);
+            let fname = format!("{}/{}.dtf", &self.settings.dtf_folder, self.name);
             dtf::file_format::get_size(&fname)
         };
         match header_size {
             Ok(header_size) => {
-                let mut wtr = self.global.write().unwrap();
-                let name: &str = &self.name.borrow();
-                wtr.vec_store
-                    .get_mut(name)
-                    .expect("Key is not in vec_store")
-                    .1 = header_size;
+                self.nominal_count = header_size;
             }
             Err(_) => {
                 error!("Unable to read header size from file");
@@ -188,77 +126,199 @@ impl<'a> Store<'a> {
         }
     }
 
-    /// clear the vector. toggle in_memory. update size
-    pub fn clear(&mut self) {
-        {
-            let mut rdr = self.global.write().unwrap();
-            let name: &str = self.name.borrow();
-            let vecs = (*rdr).vec_store.get_mut(name).expect(
-                "KEY IS NOT IN HASHMAP",
+    fn add(&mut self, up: Update) {
+        let name: &str = self.name.borrow();
+
+        self.vec.push(up);
+        // self.nominal_count += 1; // don't increment
+
+        // Saves current store into disk after n items is inserted.
+        let len = self.vec.len() as u32;
+        if self.settings.autoflush && len != 0 && len % self.settings.flush_interval == 0 {
+            info!(
+                "AUTOFLUSHING {}! Size: {}",
+                self.name,
+                len,
             );
-            vecs.0.clear();
-            // vecs.1 = 0;
+            self.flush();
         }
+    }
+
+    fn flush(&mut self) -> Option<()> {
+
+        let name: &str = self.name.borrow();
+
+        let fullfname = format!("{}/{}.dtf", &self.settings.dtf_folder, self.name);
+        utils::create_dir_if_not_exist(&self.settings.dtf_folder);
+
+        let fpath = Path::new(&fullfname);
+        let result = if fpath.exists() {
+            dtf::file_format::append(&fullfname, &self.vec)
+        } else {
+            dtf::file_format::encode(&fullfname, &self.name, &self.vec)
+        };
+        match result {
+            Ok(_) => info!("Successfully flushed."),
+            Err(_) => error!("Error flushing file."),
+        };
+
+        self.vec.clear();
         self.in_memory = false;
-        self.load_size_from_file();
+
+        Some(())
     }
 }
 
+
+/// key: { btc_neo => [(t0, c0), (t1, c1), ...]
+///        ...
+///      { total => [...]}
+pub type CountHistory = HashMap<String, CircularQueue<(SystemTime, u64)>>;
+
 /// Each client gets its own ThreadState
-pub struct ThreadState<'thr, 'store> {
-    /// Is client subscribe?
-    pub is_subscribed: bool,
-    /// current subscribed db
-    pub subscribed_db: Option<String>,
-    /// current receiver
-    pub sub_id: Option<usize>,
-    /// current receiver
-    pub rx: Option<mpsc::Receiver<Update>>,
+pub struct Connection {
+    pub outbound: Sender<ReturnType>,
+    // pub subscription_tx: SubscriptionTX,
 
-    pub subscription_tx: SubscriptionTX,
-
-    /// mapping store_name -> Store
-    pub store: Arc<RwLock<HashMap<String, Store<'store>>>>,
-
-    /// the current STORE client is using
-    pub current_store_name: Cow<'thr, str>,
-
-    /// shared data
-    pub global: Global,
+    /// the current Store client is using
+    pub book_name: String,
 }
 
-macro_rules! current_store {
-    ($self:ident, $fun:ident) => {
-        {
-            let name: &str = $self.current_store_name.borrow();
-            let mut store = $self.store.write().unwrap();
-            store.get_mut(name).expect(
-                "KEY IS NOT IN HASHMAP",
-            ).$fun()
+impl Connection {
+    pub fn new(outbound: Sender<ReturnType>) -> Self {
+        Self {
+            outbound,
+            book_name: "default".into(),
         }
-    };
+    }
+}
 
-    ($self:ident, $fun:ident, $param:ident) => {
-        {
-            let name: &str = $self.current_store_name.borrow();
-            let mut store = $self.store.write().unwrap();
-            store.get_mut(name).expect(
-                "KEY IS NOT IN HASHMAP",
-            ).$fun($param)
+pub struct GlobalState {
+    pub connections: HashMap<SocketAddr, Connection>,
+    pub settings: Settings,
+    pub books: HashMap<String, Book>,
+    pub history: CountHistory,
+    // pub subs: Arc<Mutex<Subscriptions>>,
+}
+
+impl GlobalState {
+    pub fn new(settings: Settings) -> Self {
+        let mut connections = HashMap::new();
+        let mut books = HashMap::new();
+        books.insert(
+            "default".to_owned(),
+            Book::new("default", settings.clone())
+        );
+        // let subs = Arc::new(Mutex::new(Subscriptions::new()));
+        let history = HashMap::new();
+        Self {
+            settings,
+            books,
+            history,
+            // subs,
+            connections,
         }
-    };
-}
+    }
 
-macro_rules! store {
-    ($self:ident, $fun:ident) => {
-        $self.store.write().unwrap().$fun()
-    };
-    ($self:ident, $fun:ident, $param:ident) => {
-        $self.store.write().unwrap().$fun($param)
-    };
-}
+    pub async fn process_command(&mut self, command: &Command, sock: &SocketAddr) -> ReturnType {
+        use Command::*;
+        match &command {
+            Noop => ReturnType::string(""),
+            Ping => ReturnType::string("PONG"),
+            Help => ReturnType::string(ReturnType::HELP_STR),
+            Info => ReturnType::string(self.info()),
+            Perf => ReturnType::string(self.perf()),
+            Count(ReqCount::Count(_), ReadLocation::Fs) => {
+                self.count(sock)
+                    .map(|c| ReturnType::string(format!("{}", c)))
+                    .unwrap_or_else(|| ReturnType::error("Unable to get count"))
+            },
+            Count(ReqCount::Count(_), ReadLocation::Mem) => {
+                self.count_in_mem(sock)
+                    .map(|c| ReturnType::string(format!("{}", c)))
+                    .unwrap_or_else(|| ReturnType::error("Unable to get count in memory"))
+            },
+            Count(ReqCount::All, ReadLocation::Fs) => ReturnType::string(format!("{}", self.countall())),
+            Count(ReqCount::All, ReadLocation::Mem) => ReturnType::string(format!("{}", self.countall_in_mem())),
+            Clear(ReqCount::Count(_)) => {
+                self.clear(sock);
+                ReturnType::ok()
+            }
+            Clear(ReqCount::All) => {
+                self.clearall();
+                ReturnType::ok()
+            }
+            Flush(ReqCount::Count(_)) => {
+                self.flush(sock);
+                ReturnType::ok()
+            }
+            Flush(ReqCount::All) => {
+                self.flushall(sock);
+                ReturnType::ok()
+            }
+            AutoFlush(is_autoflush) =>  {
+                self.set_autoflush(*is_autoflush);
+                ReturnType::ok()
+            }
+            // update, dbname
+            Insert(Some(up), Some(dbname)) => {
+                match self.insert(*up, dbname.as_str()) {
+                    Some(()) => ReturnType::string(""),
+                    None => ReturnType::Error(Cow::Owned(format!("DB {} not found.", &dbname))),
+                }
+            }
+            Insert(Some(up), None) => {
+                let book_name = self.conn(sock).unwrap().book_name.clone();
+                match self.insert(*up, book_name.as_str()) {
+                    Some(()) => ReturnType::string(""),
+                    None => ReturnType::Error(Cow::Owned(format!("DB {} not found.", &book_name))),
+                }
+            }
+            Insert(None, _) => ReturnType::error("Unable to parse line"),
+            Create(dbname) => {
+                self.create(&dbname);
+                ReturnType::string(format!("Created DB `{}`.", &dbname))
+            }
+            Subscribe(dbname) => {
+                self.sub(&dbname);
+                ReturnType::string(format!("Subscribed to {}", dbname))
+            }
+            // Subscription => {
+            //     let message = state.rx.as_ref().unwrap().try_recv();
+            //     match message {
+            //         Ok(msg) => ReturnType::string([msg].as_json()),
+            //         _ => ReturnType::string("NONE"),
+            //     }
+            // }
+            // Unsubscribe(ReqCount::All) => {
+            //     self.unsub_all();
+            //     ReturnType::string("Unsubscribed everything!")
+            // }
+            // Unsubscribe(ReqCount::Count(_)) => {
+            //     let old_dbname = state.subscribed_db.clone().unwrap();
+            //     self.unsub();
+            //     ReturnType::string(format!("Unsubscribed from {}", old_dbname))
+            // }
+            Use(dbname) => {
+                match self.use_db(&dbname, sock) {
+                    Some(_) => ReturnType::string(format!("SWITCHED TO DB `{}`.", &dbname)),
+                    None => ReturnType::error(format!("No db named `{}`", dbname)),
+                }
+            }
+            Exists(dbname) => {
+                if self.exists(&dbname) {
+                    ReturnType::ok()
+                } else {
+                    ReturnType::error(format!("No db named `{}`", dbname))
+                }
+            }
+            Get(cnt, fmt, rng, loc) =>
+                self.get(cnt, fmt, *rng, loc, sock)
+                    .unwrap_or(ReturnType::error("Not enough items to return")),
+            Unknown => ReturnType::error("Unknown command."),
+        }
+    }
 
-impl<'thr, 'store> ThreadState<'thr, 'store> {
     /// Get information about the server
     ///
     /// Returns a JSON string.
@@ -276,13 +336,10 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     ///     }
     /// }
     pub fn info(&self) -> String {
-        let rdr = self.global.read().unwrap();
-        let info_vec: Vec<String> = rdr.vec_store
+        let info_vec: Vec<String> = self.books
             .iter()
             .map(|i| {
-                let (key, value) = i;
-                let vecs = &value.0;
-                let size = value.1;
+                let (key, book) = i;
                 format!(
                     r#"{{
     "name": "{}",
@@ -290,13 +347,11 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     "count": {}
   }}"#,
                     key,
-                    !vecs.is_empty(),
-                    size
+                    book.vec.len(),
+                    book.nominal_count,
                 )
             })
             .collect();
-
-
         let metadata = format!(
             r#"{{
     "cxns": {},
@@ -304,20 +359,24 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     "autoflush_enabled": {},
     "autoflush_interval": {},
     "dtf_folder": "{}",
+    "total_in_memory_count": {},
     "total_count": {}
   }}"#,
-
-            rdr.n_cxns,
+            self.connections.len(),
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("Time went backwards")
                 .as_secs(),
-            rdr.settings.autoflush,
-            rdr.settings.flush_interval,
-            rdr.settings.dtf_folder,
-            rdr.vec_store.iter().fold(
+            self.settings.autoflush,
+            self.settings.flush_interval,
+            self.settings.dtf_folder,
+            self.books.iter().fold(
                 0,
-                |acc, (_name, tup)| acc + tup.1,
+                |acc, (_name, tup)| acc + tup.vec.len(),
+            ),
+            self.books.iter().fold(
+                0,
+                |acc, (_name, tup)| acc + tup.nominal_count,
             )
         );
         let mut ret = format!(
@@ -331,11 +390,11 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         ret.push('\n');
         ret
     }
+
     /// Returns a JSON object like
     /// [{"total": [1508968738: 0]}, {"default": [1508968738: 0]}]
     pub fn perf(&self) -> String {
-        let rdr = self.global.read().unwrap();
-        let objs: Vec<String> = (&rdr.history)
+        let objs: Vec<String> = (&self.history)
             .iter()
             .map(|(name, vec)| {
                 let hists: Vec<String> = vec.iter()
@@ -352,9 +411,9 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     }
 
     /// Insert a row into store
-    pub fn insert(&mut self, up: Update, store_name: &str) -> Option<()> {
-        match store!(self, get_mut, store_name) {
-            Some(store) => {
+    pub fn insert(&mut self, up: Update, book_name: &str) -> Option<()> {
+        match self.books.get_mut(book_name) {
+            Some(mut store) => {
                 store.add(up);
                 Some(())
             }
@@ -363,49 +422,28 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     }
 
     /// Check if a table exists
-    pub fn exists(&mut self, store_name: &str) -> bool {
-        store!(self, contains_key, store_name)
+    pub fn exists(&mut self, book_name: &str) -> bool {
+        self.books.contains_key(book_name)
     }
 
-    /// Insert a row into current store.
-    pub fn add(&mut self, up: Update) {
-        current_store!(self, add, up);
-    }
-
-    pub fn set_autoflush(&mut self, is_autoflush: bool) {
-        let mut global = self.global.write().unwrap();
-        global.settings.autoflush = is_autoflush;
+    pub fn set_autoflush(&mut self, autoflush: bool) {
+        self.settings.autoflush = autoflush;
     }
 
     /// Create a new store
-    pub fn create(&mut self, store_name: &str) {
+    pub fn create(&mut self, book_name: &str) {
         // insert a vector into shared hashmap
-        {
-            let mut global = self.global.write().unwrap();
-            global.vec_store.insert(
-                store_name.to_owned(),
-                (Box::new(Vec::new()), 0),
-            );
-        }
-
-        // insert a store into client state hashmap
-        let store_name = String::from(store_name);
-        self.store.write().unwrap().insert(
-            store_name.clone(),
-            Store {
-                name: store_name.clone().into(),
-                fname: store_name.into(),
-                in_memory: false,
-                global: self.global.clone(),
-            },
+        self.books.insert(
+            book_name.to_owned(),
+            Book::new(book_name, self.settings.clone()),
         );
     }
 
     /// load a datastore file into memory
-    pub fn use_db(&mut self, store_name: &str) -> Option<()> {
-        if store!(self, contains_key, store_name) {
-            self.current_store_name = store_name.to_owned().into();
-            current_store!(self, load);
+    pub fn use_db(&mut self, book_name: &str, sock: &SocketAddr) -> Option<()> {
+        if self.books.contains_key(book_name) {
+            self.conn_mut(sock)?.book_name = book_name.to_string();
+            self.book_mut(sock)?.load();
             Some(())
         } else {
             None
@@ -413,30 +451,30 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     }
 
     /// return the count of the current store
-    pub fn count(&mut self) -> u64 {
-        current_store!(self, count)
+    pub fn count(&mut self, sock: &SocketAddr) -> Option<u64> {
+        let ret = self.book(sock)?.nominal_count;
+        Some(ret)
     }
 
     /// return current store count in mem
-    pub fn count_in_mem(&mut self) -> u64 {
-        current_store!(self, count_in_mem)
+    pub fn count_in_mem(&mut self, sock: &SocketAddr) -> Option<u64> {
+        let ret = self.book(sock)?.vec.len() as u64;
+        Some(ret)
     }
 
     /// Returns the total count
     pub fn countall_in_mem(&self) -> u64 {
-        let rdr = self.global.read().unwrap();
-        rdr.vec_store.iter().fold(
+        self.books.values().fold(
             0,
-            |acc, (_name, tup)| acc + tup.0.len(),
+            |acc, book| acc + book.vec.len(),
         ) as u64
     }
 
     /// Returns the total count
     pub fn countall(&self) -> u64 {
-        let rdr = self.global.read().unwrap();
-        rdr.vec_store.iter().fold(
+        self.books.values().fold(
             0,
-            |acc, (_name, tup)| acc + tup.1,
+            |acc, book| acc + book.nominal_count,
         )
     }
 
@@ -476,27 +514,37 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     }
 
     /// remove everything in the current store
-    pub fn clear(&mut self) {
-        current_store!(self, clear);
+    pub fn clear(&mut self, sock: &SocketAddr) -> Option<()> {
+        let book = self.book_mut(sock)?;
+        book.vec.clear();
+        // vecs.1 = 0;
+        book.in_memory = false;
+        book.load_size_from_file();
+        Some(())
     }
 
     /// remove everything in every store
     pub fn clearall(&mut self) {
-        for store in store!(self, values_mut) {
-            store.clear();
+        for book in self.books.values_mut() {
+            book.vec.clear();
+            // vecs.1 = 0;
+            book.in_memory = false;
+            book.load_size_from_file();
         }
     }
 
-    /// save current store to file
-    pub fn flush(&mut self) {
-        current_store!(self, flush);
-        // self.get_current_store().flush();
+    /// write items stored in memory into file
+    /// If file exists, use append which only appends a filtered set of updates whose timestamp is larger than the old timestamp
+    /// If file doesn't exists, simply encode.
+    ///
+    pub fn flush(&mut self, sock: &SocketAddr) -> Option<()> {
+        self.book_mut(&sock)?.flush()
     }
 
     /// save all stores to corresponding files
-    pub fn flushall(&mut self) {
-        for store in store!(self, values_mut) {
-            store.flush();
+    pub fn flushall(&mut self, sock: &SocketAddr) {
+        for book in self.books.values_mut() {
+            book.flush();
         }
     }
 
@@ -508,41 +556,37 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
     /// if count <= len, return
     /// need more, get from fs
     ///
-    pub fn get<'global, 'thread>(&'global mut self, count: ReqCount,
-        format: GetFormat, range: Range, loc: Loc) -> Option<ReturnType<'thread>>
+    pub fn get(&self, count: &ReqCount, format: &GetFormat, range: Range, loc: &ReadLocation, sock: &SocketAddr)
+        -> Option<ReturnType>
     {
         // return if requested 0 item
         if let ReqCount::Count(c) = count {
-            if c == 0 {
+            if *c == 0 {
                 return None
             }
         }
 
-        // check for items in memory
-        let rdr = self.global.read().unwrap();
-        let name: &str = self.current_store_name.borrow();
-        let &(ref vecs, _) = rdr.vec_store.get(name)?;
+        let book = self.book(sock)?;
 
         // if range, filter mem
         let acc = catch! {
             let (min_ts, max_ts) = range?;
-            if !within_range(min_ts, max_ts, vecs.first()?.ts, vecs.last()?.ts) { return None; }
-            Box::new(vecs.iter()
+            if !within_range(min_ts, max_ts, book.vec.first()?.ts, book.vec.last()?.ts) { return None; }
+            book.vec.iter()
                 .filter(|up| up.ts < max_ts && up.ts > min_ts)
                 .map(|up| up.to_owned())
                 .collect::<Vec<_>>()
-            )
-        }.unwrap_or(vecs.to_owned());
+        }.unwrap_or(book.vec.to_owned());
 
         // if only requested items in memory
-        if let Loc::Mem = loc {
-            return self.into_format(&acc, format);
+        if let ReadLocation::Mem = loc {
+            return into_format(&acc, format);
         }
 
         // if count <= len, return
-        if let ReqCount::Count(c) = count {
+        if let &ReqCount::Count(c) = count {
             if (c as usize) <= acc.len() {
-                return self.into_format(&acc[..c as usize], format);
+                return into_format(&acc[..c as usize], format);
             }
         }
 
@@ -552,10 +596,9 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         let mut ups_from_fs = acc;
         if let Some((min_ts, max_ts)) = range {
             let folder = {
-                let rdr = self.global.read().unwrap();
-                rdr.settings.dtf_folder.clone()
+                self.settings.dtf_folder.clone()
             };
-            let ups = scan_files_for_range(&folder, &self.current_store_name, min_ts, max_ts);
+            let ups = scan_files_for_range(&folder, &self.conn(sock)?.book_name, min_ts, max_ts);
             match ups {
                 Ok(ups) => {
                     ups_from_fs.extend(ups);
@@ -569,117 +612,53 @@ impl<'thr, 'store> ThreadState<'thr, 'store> {
         let result = ups_from_fs;
 
         match count {
-            ReqCount::Count(c) => {
+            &ReqCount::Count(c) => {
                 if result.len() >= c as usize {
-                    return self.into_format(&result[..(c as usize - 1)], format);
+                    return into_format(&result[..(c as usize - 1)], &format);
                 } else {
                     return Some(ReturnType::Error(
                         format!("Requested {} but only have {}.", c, result.len()).into(),
                     ));
                 }
             }
-            ReqCount::All => self.into_format(&result, format),
+            ReqCount::All => into_format(&result, &format),
         }
     }
 
-    fn into_format<'thread, 'global>(&'global self, result: &[Update], format: GetFormat) -> Option<ReturnType<'thread>> {
-        let ret = match format {
-            GetFormat::Dtf => {
-                let mut bytes: Vec<u8> = Vec::new();
-                let _ = dtf::file_format::write_batches(&mut bytes, &result);
-                ReturnType::Bytes(bytes)
+    pub fn new_connection(&mut self, client_sender: Sender<ReturnType>, sock: SocketAddr) -> bool {
+        match self.connections.entry(sock.clone()) {
+            Entry::Occupied(..) => false,
+            Entry::Vacant(entry) => {
+                entry.insert(Connection::new(client_sender));
+                true
             }
-            GetFormat::Json => {
-                ReturnType::String(
-                    Cow::Owned(format!("[{}]\n", result.as_json()))
-                )
-            }
-            GetFormat::Csv => {
-                ReturnType::String(
-                    Cow::Owned(format!("{}\n", result.as_csv())),
-                )
-            }
-        };
-
-        Some(ret)
+        }
     }
 
-    /// create a new threadstate
-    pub fn new<'a, 'b>(
-        global: Global,
-        store: HashMapStore<'b>,
-        subscription_tx: SubscriptionTX,
-    ) -> ThreadState<'a, 'b> {
-        let dtf_folder: &str = &global.read().unwrap().settings.dtf_folder;
-        let state = ThreadState {
-            current_store_name: "default".into(),
-            is_subscribed: false,
-            subscribed_db: None,
-            sub_id: None,
-            rx: None,
-            subscription_tx,
-            store,
-            global: global.clone(),
-        };
-
-        // insert default first, if there is a copy in memory this will be replaced
-        let default_file = format!("{}/default.dtf", dtf_folder);
-        let default_in_memory = !Path::new(&default_file).exists();
-        state.store.write().unwrap().insert(
-            "default".to_owned(),
-            Store {
-                name: "default".into(),
-                fname: "default".into(),
-                in_memory: default_in_memory,
-                global: global.clone(),
-            },
-        );
-
-        let rdr = global.read().unwrap();
-        for (store_name, _vec) in &rdr.vec_store {
-            let fname = format!("{}/{}.dtf", dtf_folder, store_name);
-            let in_memory = !Path::new(&fname).exists();
-            state.store.write().unwrap().insert(
-                store_name.to_owned(),
-                Store {
-                    name: store_name.to_owned().into(),
-                    fname: store_name.clone().into(),
-                    in_memory: in_memory,
-                    global: global.clone(),
-                },
-            );
+    pub async fn command(&mut self, cmd: &Command, sock: &SocketAddr) -> Result<()> {
+        if !self.connections.contains_key(sock) {
+            return Ok(())
         }
-        state
+        let ret = self.process_command(cmd, sock).await;
+        self.connections.get_mut(sock).unwrap().outbound.send(ret).await.unwrap();
+        Ok(())
     }
-}
 
-/// (updates, count)
-pub type VecStore = (Box<Vec<Update>>, u64);
+    pub fn conn(&self, sock: &SocketAddr) -> Option<&Connection> {
+        self.connections.get(sock)
+    }
 
-/// key: { btc_neo => [(t0, c0), (t1, c1), ...]
-///        ...
-///      { total => [...]}
-pub type CountHistory = HashMap<String, CircularQueue<(SystemTime, u64)>>;
+    pub fn conn_mut(&mut self, sock: &SocketAddr) -> Option<&mut Connection> {
+        self.connections.get_mut(sock)
+    }
 
-pub struct SharedState {
-    pub n_cxns: u16,
-    pub settings: Settings,
-    pub vec_store: HashMap<String, VecStore>,
-    pub history: CountHistory,
-    pub subs: Arc<Mutex<Subscriptions>>,
-}
+    pub fn book_mut(&mut self, sock: &SocketAddr) -> Option<&mut Book> {
+        let book_name = self.conn(sock)?.book_name.clone();
+        self.books.get_mut(&book_name)
+    }
 
-impl SharedState {
-    pub fn new(settings: Settings) -> SharedState {
-        let mut hashmap = HashMap::new();
-        hashmap.insert("default".to_owned(), (Box::new(Vec::new()), 0));
-        let subs = Arc::new(Mutex::new(Subscriptions::new()));
-        SharedState {
-            n_cxns: 0,
-            settings,
-            vec_store: hashmap,
-            history: HashMap::new(),
-            subs,
-        }
+    pub fn book(&self, sock: &SocketAddr) -> Option<&Book> {
+        let book_name = self.conn(sock)?.book_name.clone();
+        self.books.get(&book_name)
     }
 }

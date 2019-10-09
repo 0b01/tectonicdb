@@ -1,4 +1,5 @@
 #![allow(unused)]
+#![recursion_limit="256"]
 extern crate libtectonic;
 extern crate clap;
 extern crate byteorder;
@@ -23,11 +24,10 @@ extern crate futures;
 #[macro_use]
 extern crate async_std;
 
-mod plugins;
-
+// mod plugins;
+pub mod utils;
 pub mod server;
 pub mod state;
-pub mod utils;
 pub mod parser;
 pub mod handler;
 pub mod settings;
@@ -103,7 +103,7 @@ fn main() {
          _/_/    _/_/_/    _/_/_/      _/_/    _/_/    _/    _/  _/    _/_/_/
     "##);
 
-    let fut =  server::run_server(&host, &port, &settings);
+    let fut =  server::run_server(&host, &port, settings);
     task::block_on(fut);
 }
 

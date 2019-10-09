@@ -156,7 +156,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
     let (_shutdown_sender, shutdown_receiver) = mpsc::unbounded::<Void>();
     broker
         .send(Event::NewPeer {
-            name: stream.peer_addr()?.clone(),
+            sock: stream.peer_addr()?.clone(),
             stream: Arc::clone(&stream),
             shutdown: shutdown_receiver,
         })
@@ -178,10 +178,10 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
 }
 
 
-async fn broker_loop(mut events: Receiver<Event>) {
-    let (disconnect_sender, mut disconnect_receiver) =
-        mpsc::unbounded::<(SocketAddr, Receiver<String>)>();
-    let mut connections: HashMap<SocketAddr, Sender<String>> = HashMap::new();
+async fn broker_loop(mut events: Receiver<Event>, settings: Settings) {
+    let (disconnect_sender, mut disconnect_receiver) = mpsc::unbounded::<(SocketAddr, Receiver<ReturnType>)>();
+
+    let mut state = GlobalState::new(settings);
 
     loop {
         let event = select! {
@@ -191,46 +191,48 @@ async fn broker_loop(mut events: Receiver<Event>) {
             },
             disconnect = disconnect_receiver.next().fuse() => {
                 let (name, _pending_messages) = disconnect.unwrap();
-                assert!(connections.remove(&name).is_some());
+                assert!(state.connections.remove(&name).is_some());
                 continue;
             },
         };
         match event {
+            Event::Command { from, command } => {
+                state.command(&command, &from);
+            },
             Event::TestMessage { from } => {
-                if let Some(peer) = connections.get_mut(&from) {
+                if let Some(conn) = state.connections.get_mut(&from) {
                     let msg = "hi".to_owned();
-                    peer.send(msg).await.unwrap();
+                    conn.outbound.send(ReturnType::string(msg)).await.unwrap();
                 }
             }
             Event::NewPeer {
-                name,
+                sock,
                 stream,
                 shutdown,
-            } => match connections.entry(name.clone()) {
-                Entry::Occupied(..) => (),
-                Entry::Vacant(entry) => {
-                    let (client_sender, mut client_receiver) = mpsc::unbounded();
-                    entry.insert(client_sender);
+            } => {
+                let (client_sender, mut client_receiver) = mpsc::unbounded();
+                if state.new_connection(client_sender, sock) {
                     let mut disconnect_sender = disconnect_sender.clone();
                     spawn_and_log_error(async move {
                         let res = connection_writer_loop(&mut client_receiver, stream, shutdown).await;
                         disconnect_sender
-                            .send((name, client_receiver))
+                            .send((sock, client_receiver))
                             .await
                             .unwrap();
                         res
                     });
+
                 }
+
             },
-            _ => {},
         }
     }
-    drop(connections);
+    drop(state);
     drop(disconnect_sender);
     while let Some((_name, _pending_messages)) = disconnect_receiver.next().await {}
 }
 
-pub async fn run_server(host: &str, port: &str, settings: &Settings) -> Result<()> {
+pub async fn run_server(host: &str, port: &str, settings: Settings) -> Result<()> {
     let addr = format!("{}:{}", host, port);
     let addr: SocketAddr = addr.parse().expect("Invalid host or port provided!");
 
@@ -248,7 +250,7 @@ pub async fn run_server(host: &str, port: &str, settings: &Settings) -> Result<(
     let listener = TcpListener::bind(addr).await?;
 
     let (broker_sender, broker_receiver) = mpsc::unbounded::<Event>();
-    let broker = task::spawn(broker_loop(broker_receiver));
+    let broker = task::spawn(broker_loop(broker_receiver, settings));
     let mut incoming = listener.incoming();
     while let Some(stream) = incoming.next().await {
         let stream = stream?;
@@ -262,7 +264,7 @@ pub async fn run_server(host: &str, port: &str, settings: &Settings) -> Result<(
 
 
 async fn connection_writer_loop(
-    messages: &mut Receiver<String>,
+    messages: &mut Receiver<ReturnType>,
     stream: Arc<TcpStream>,
     mut shutdown: Receiver<Void>,
 ) -> Result<()> {
@@ -270,12 +272,27 @@ async fn connection_writer_loop(
     loop {
         select! {
             msg = messages.next().fuse() => match msg {
-                Some(msg) => {
+                Some(ReturnType::Bytes(bytes)) => {
                     stream.write(&[0x1]).await?;
-                    stream.write(&msg.len().to_be_bytes()).await?;
-                    stream.write(&msg.as_bytes()).await?;
+                    stream.write(&bytes.len().to_be_bytes()).await?;
+                    stream.write(&bytes).await?;
                     stream.flush().await?;
-                }
+                },
+                Some(ReturnType::String(str_resp)) => {
+                    stream.write(&[0x1]).await?;
+                    stream.write(&str_resp.len().to_be_bytes()).await?;
+                    stream.write(&str_resp.as_bytes()).await?;
+                    stream.flush().await?;
+                },
+                Some(ReturnType::Error(errmsg)) => {
+                    // error!("Req: `{}`", line);
+                    // error!("Err: `{}`", errmsg.clone());
+                    stream.write(&[0x0]).await?;
+                    let ret = format!("ERR: {}\n", errmsg);
+                    stream.write(&ret.len().to_be_bytes()).await?;
+                    stream.write(ret.as_bytes()).await?;
+                    stream.flush().await?;
+                },
                 None => break,
             },
             void = shutdown.next().fuse() => match void {

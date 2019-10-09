@@ -12,7 +12,6 @@ use std::time::Duration;
 extern crate tempdir;
 use self::tempdir::TempDir;
 
-use crate::state::{SharedState, ThreadState};
 use crate::plugins::gstorage::GStorageConfig;
 use crate::plugins::gstorage::upload::{self, GStorageFile};
 
