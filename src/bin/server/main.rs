@@ -1,4 +1,3 @@
-#![allow(unused)]
 #![recursion_limit="256"]
 extern crate libtectonic;
 extern crate clap;
@@ -6,10 +5,7 @@ extern crate byteorder;
 extern crate chrono;
 extern crate serde;
 extern crate time;
-#[macro_use]
-extern crate serde_derive;
 extern crate openssl_probe;
-#[macro_use]
 extern crate lazy_static;
 
 #[macro_use]
@@ -21,7 +17,6 @@ extern crate circular_queue;
 
 #[macro_use]
 extern crate futures;
-#[macro_use]
 extern crate async_std;
 
 pub mod plugins;
@@ -103,7 +98,7 @@ fn main() {
     "##);
 
     let fut =  server::run_server(&host, &port, settings);
-    task::block_on(fut);
+    task::block_on(fut).unwrap();
 }
 
 fn prepare_logger(verbosity: u8, log_file: &str) {

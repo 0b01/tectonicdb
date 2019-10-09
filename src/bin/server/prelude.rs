@@ -1,7 +1,7 @@
 pub use clap::{Arg, App, ArgMatches};
 pub use crate::settings::{Settings, key_or_default, key_or_none};
 pub use libtectonic::dtf::update::{Update, UpdateVecConvert};
-pub use crate::state::{GlobalState, Book};
+pub use crate::state::{TectonicServer, Book};
 pub use crate::handler::{ReturnType, Command};
 pub use crate::handler::{Event, Void};
 pub use crate::utils;

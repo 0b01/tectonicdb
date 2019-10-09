@@ -6,8 +6,6 @@ use crate::prelude::*;
 
 pub mod history;
 
-use std::sync::{Arc, RwLock};
-
 /// Run each plugin in a separate thread
 pub async fn run_plugins(broker: Sender<Event>, settings: Settings) {
     info!("initializing plugins");

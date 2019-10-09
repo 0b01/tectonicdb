@@ -1,15 +1,8 @@
 use crate::prelude::*;
 
-use byteorder::{WriteBytesExt, NetworkEndian};
-
-use std::borrow::{Borrow, Cow};
-use std::cell::RefCell;
-use std::collections::HashMap;
 use std::net::SocketAddr;
-use std::rc::Rc;
 use std::str;
-use std::sync::{Arc, RwLock};
-use std::process::exit;
+use std::sync::Arc;
 
 // #[cfg(unix)]
 // fn enable_platform_hook(
@@ -93,7 +86,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
 async fn broker_loop(mut events: Receiver<Event>, settings: Settings) {
     let (disconnect_sender, mut disconnect_receiver) = mpsc::unbounded::<(SocketAddr, Receiver<ReturnType>)>();
 
-    let mut state = GlobalState::new(settings);
+    let mut state = TectonicServer::new(settings);
 
     loop {
         let event = select! {
@@ -109,7 +102,7 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Settings) {
         };
         match event {
             Event::Command { from, command } => {
-                state.command(&command, &from).await;
+                state.command(&command, &from).await.unwrap();
             },
             Event::History{} => {
                 state.record_history();

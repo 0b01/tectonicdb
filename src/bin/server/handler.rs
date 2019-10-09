@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 use crate::parser;
-use libtectonic::dtf::update::{UpdateVecConvert, Update};
+use libtectonic::dtf::update::Update;
 use std::borrow::{Cow, Borrow};
 
 // BUG: subscribe, add, deadlock!!!
@@ -185,18 +185,15 @@ pub fn parse_to_command(line: &str) -> Command {
 mod tests {
     use super::*;
     use crate::settings::Settings;
-    use std::sync::{Arc, RwLock};
-    use std::collections::HashMap;
-    use futures;
     use std::net;
 
-    fn gen_state() -> (GlobalState, SocketAddr) {
+    fn gen_state() -> (TectonicServer, SocketAddr) {
         let settings: Settings = Default::default();
-        let mut global = GlobalState::new(settings);
+        let mut global = TectonicServer::new(settings);
         let sock = SocketAddr::new(
             net::IpAddr::V4(net::Ipv4Addr::new(127, 0, 0, 1)),
             1);
-        let (client_sender, client_receiver) = mpsc::unbounded();
+        let (client_sender, _client_receiver) = mpsc::unbounded();
         global.new_connection(client_sender, sock);
         (global, sock)
     }

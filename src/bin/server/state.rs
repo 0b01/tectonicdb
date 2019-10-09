@@ -20,19 +20,17 @@ macro_rules! catch {
 }
 
 use circular_queue::CircularQueue;
-use futures;
 use libtectonic::dtf::{self, update::{Update, UpdateVecConvert}};
 use libtectonic::storage::utils::scan_files_for_range;
 use libtectonic::utils::within_range;
 
-use std::borrow::{Borrow, Cow};
+use std::borrow::{Cow};
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::{Arc, RwLock, Mutex, mpsc};
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use crate::settings::Settings;
 use crate::handler::{GetFormat, ReturnType, ReqCount, ReadLocation, Range};
-use crate::subscription::Subscriptions;
 
 
 pub fn into_format(result: &[Update], format: &GetFormat) -> Option<ReturnType> {
@@ -99,7 +97,6 @@ impl Book {
             } else {
                 let mut ups = ups.unwrap();
                 // let size = ups.len() as u64;
-                let name: &str = self.name.borrow();
                 self.vec.append(&mut ups);
                 // wtr.vec_store.insert(self.name.to_owned(), (ups, size));
                 self.in_memory = true;
@@ -124,8 +121,6 @@ impl Book {
     }
 
     fn add(&mut self, up: Update) {
-        let name: &str = self.name.borrow();
-
         self.vec.push(up);
         // self.nominal_count += 1; // don't increment
 
@@ -142,9 +137,6 @@ impl Book {
     }
 
     fn flush(&mut self) -> Option<()> {
-
-        let name: &str = self.name.borrow();
-
         let fullfname = format!("{}/{}.dtf", &self.settings.dtf_folder, self.name);
         utils::create_dir_if_not_exist(&self.settings.dtf_folder);
 
@@ -191,7 +183,7 @@ impl Connection {
     }
 }
 
-pub struct GlobalState {
+pub struct TectonicServer {
     pub connections: HashMap<SocketAddr, Connection>,
     pub settings: Settings,
     pub books: HashMap<String, Book>,
@@ -199,9 +191,9 @@ pub struct GlobalState {
     // pub subs: Arc<Mutex<Subscriptions>>,
 }
 
-impl GlobalState {
+impl TectonicServer {
     pub fn new(settings: Settings) -> Self {
-        let mut connections = HashMap::new();
+        let connections = HashMap::new();
         let mut books = HashMap::new();
         books.insert(
             "default".to_owned(),
@@ -251,7 +243,7 @@ impl GlobalState {
                 ReturnType::ok()
             }
             Flush(ReqCount::All) => {
-                self.flushall(sock);
+                self.flushall();
                 ReturnType::ok()
             }
             AutoFlush(is_autoflush) =>  {
@@ -439,8 +431,8 @@ impl GlobalState {
     /// Insert a row into store
     pub fn insert(&mut self, up: Update, book_name: &str) -> Option<()> {
         match self.books.get_mut(book_name) {
-            Some(mut store) => {
-                store.add(up);
+            Some(book) => {
+                book.add(up);
                 Some(())
             }
             None => None,
@@ -568,7 +560,7 @@ impl GlobalState {
     }
 
     /// save all stores to corresponding files
-    pub fn flushall(&mut self, sock: &SocketAddr) {
+    pub fn flushall(&mut self) {
         for book in self.books.values_mut() {
             book.flush();
         }
@@ -655,7 +647,6 @@ impl GlobalState {
         match self.connections.entry(sock.clone()) {
             Entry::Occupied(..) => false,
             Entry::Vacant(entry) => {
-                let default_entry = self.books.entry("default".to_owned());
                 entry.insert(Connection::new(client_sender));
                 true
             }
