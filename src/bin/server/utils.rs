@@ -2,6 +2,7 @@ use crate::prelude::*;
 use std::path::Path;
 use std::fs;
 use libtectonic::dtf;
+use std::borrow::Cow;
 
 pub fn create_dir_if_not_exist(dtf_folder: &str) {
     if !Path::new(dtf_folder).exists() {
@@ -11,7 +12,7 @@ pub fn create_dir_if_not_exist(dtf_folder: &str) {
 
 /// Iterate through the dtf files in the folder and load some metadata into memory.
 /// Create corresponding Store objects in State.
-pub async fn init_dbs(state: &mut GlobalState) {
+pub async fn init_dbs<'a>(state: &mut GlobalState) {
     let dtf_folder = state.settings.dtf_folder.clone();
     for dtf_file in fs::read_dir(&dtf_folder).unwrap() {
         let fname_os = dtf_file.unwrap().file_name();

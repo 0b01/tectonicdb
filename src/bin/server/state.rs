@@ -181,14 +181,14 @@ pub struct Connection {
     // pub subscription_tx: SubscriptionTX,
 
     /// the current Store client is using
-    pub book_name: String,
+    pub book_entry: Arc<String>,
 }
 
 impl Connection {
     pub fn new(outbound: Sender<ReturnType>) -> Self {
         Self {
             outbound,
-            book_name: "default".into(),
+            book_entry: Arc::new("default".to_owned()),
         }
     }
 }
@@ -268,10 +268,10 @@ impl GlobalState {
                 }
             }
             Insert(Some(up), None) => {
-                let book_name = self.conn(sock).unwrap().book_name.clone();
-                match self.insert(*up, book_name.as_str()) {
+                let book_entry = Arc::clone(&self.conn(sock).unwrap().book_entry);
+                match self.insert(*up, book_entry.as_str()) {
                     Some(()) => ReturnType::string(""),
-                    None => ReturnType::Error(Cow::Owned(format!("DB {} not found.", &book_name))),
+                    None => ReturnType::Error(Cow::Owned(format!("DB {} not found.", &book_entry.as_str()))),
                 }
             }
             Insert(None, _) => ReturnType::error("Unable to parse line"),
@@ -442,7 +442,7 @@ impl GlobalState {
     /// load a datastore file into memory
     pub fn use_db(&mut self, book_name: &str, sock: &SocketAddr) -> Option<()> {
         if self.books.contains_key(book_name) {
-            self.conn_mut(sock)?.book_name = book_name.to_string();
+            self.conn_mut(sock)?.book_entry = Arc::new(book_name.to_owned());
             self.book_mut(sock)?.load();
             Some(())
         } else {
@@ -598,7 +598,7 @@ impl GlobalState {
             let folder = {
                 self.settings.dtf_folder.clone()
             };
-            let ups = scan_files_for_range(&folder, &self.conn(sock)?.book_name, min_ts, max_ts);
+            let ups = scan_files_for_range(&folder, self.conn(sock)?.book_entry.as_str(), min_ts, max_ts);
             match ups {
                 Ok(ups) => {
                     ups_from_fs.extend(ups);
@@ -629,6 +629,7 @@ impl GlobalState {
         match self.connections.entry(sock.clone()) {
             Entry::Occupied(..) => false,
             Entry::Vacant(entry) => {
+                let default_entry = self.books.entry("default".to_owned());
                 entry.insert(Connection::new(client_sender));
                 true
             }
@@ -653,12 +654,12 @@ impl GlobalState {
     }
 
     pub fn book_mut(&mut self, sock: &SocketAddr) -> Option<&mut Book> {
-        let book_name = self.conn(sock)?.book_name.clone();
-        self.books.get_mut(&book_name)
+        let book_name = Arc::clone(&self.conn(sock)?.book_entry);
+        self.books.get_mut(book_name.as_str())
     }
 
     pub fn book(&self, sock: &SocketAddr) -> Option<&Book> {
-        let book_name = self.conn(sock)?.book_name.clone();
-        self.books.get(&book_name)
+        let book_name = Arc::clone(&self.conn(sock)?.book_entry);
+        self.books.get(book_name.as_str())
     }
 }
