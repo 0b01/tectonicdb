@@ -414,7 +414,7 @@ mod tests {
 
     use super::*;
     use crate::dtf;
-    static FNAME: &str = "test/test-data/bt_btcnav.dtf";
+    static FNAME: &str = "../../test/test-data/bt_btcnav.dtf";
     use std::collections::HashMap;
 
     #[test]

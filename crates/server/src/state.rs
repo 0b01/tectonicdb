@@ -159,12 +159,6 @@ impl Book {
 }
 
 
-/// key: { btc_neo => [(t0, c0), (t1, c1), ...]
-///        ...
-///      { total => [...]}
-pub type CountHistory = HashMap<String, CircularQueue<(SystemTime, u64)>>;
-
-/// Each client gets its own ThreadState
 #[derive(Debug)]
 pub struct Connection {
     pub outbound: Sender<ReturnType>,
@@ -183,12 +177,16 @@ impl Connection {
     }
 }
 
+/// key: { btc_neo => [(t0, c0), (t1, c1), ...]
+///        ...
+///      { total => [...]}
+pub type CountHistory = HashMap<String, CircularQueue<(SystemTime, u64)>>;
 pub struct TectonicServer {
     pub connections: HashMap<SocketAddr, Connection>,
     pub settings: Settings,
     pub books: HashMap<String, Book>,
     pub history: CountHistory,
-    // pub subs: Arc<Mutex<Subscriptions>>,
+    pub subscriptions: HashMap<String, Vec<Sender<ReturnType>>>,
 }
 
 impl TectonicServer {
@@ -199,18 +197,18 @@ impl TectonicServer {
             "default".to_owned(),
             Book::new("default", settings.clone())
         );
-        // let subs = Arc::new(Mutex::new(Subscriptions::new()));
+        let subscriptions = HashMap::new();
         let history = HashMap::new();
         Self {
             settings,
             books,
             history,
-            // subs,
+            subscriptions,
             connections,
         }
     }
 
-    pub fn process_command(&mut self, command: &Command, sock: &SocketAddr) -> ReturnType {
+    pub async fn process_command(&mut self, command: &Command, sock: &SocketAddr) -> ReturnType {
         use Command::*;
         match &command {
             Noop => ReturnType::string(""),
@@ -252,14 +250,14 @@ impl TectonicServer {
             }
             // update, dbname
             Insert(Some(up), Some(dbname)) => {
-                match self.insert(*up, dbname.as_str()) {
+                match self.insert(*up, dbname.as_str()).await {
                     Some(()) => ReturnType::string(""),
                     None => ReturnType::Error(Cow::Owned(format!("DB {} not found.", &dbname))),
                 }
             }
             Insert(Some(up), None) => {
                 let book_entry = Arc::clone(&self.conn(sock).unwrap().book_entry);
-                match self.insert(*up, book_entry.as_str()) {
+                match self.insert(*up, book_entry.as_str()).await {
                     Some(()) => ReturnType::string(""),
                     None => ReturnType::Error(Cow::Owned(format!("DB {} not found.", &book_entry.as_str()))),
                 }
@@ -270,7 +268,7 @@ impl TectonicServer {
                 ReturnType::string(format!("Created DB `{}`.", &dbname))
             }
             Subscribe(dbname) => {
-                self.sub(&dbname);
+                self.sub(&dbname, sock);
                 ReturnType::string(format!("Subscribed to {}", dbname))
             }
             // Subscription => {
@@ -429,14 +427,15 @@ impl TectonicServer {
     }
 
     /// Insert a row into store
-    pub fn insert(&mut self, up: Update, book_name: &str) -> Option<()> {
-        match self.books.get_mut(book_name) {
-            Some(book) => {
-                book.add(up);
-                Some(())
+    pub async fn insert(&mut self, up: Update, book_name: &str) -> Option<()> {
+        let book = self.books.get_mut(book_name)?;
+        book.add(up);
+        if let Some(book_sub) = self.subscriptions.get_mut(book_name) {
+            for sub in book_sub.iter_mut() {
+                sub.send(into_format(&[up], &GetFormat::Json)?).await.ok()?;
             }
-            None => None,
         }
+        Some(())
     }
 
     /// Check if a table exists
@@ -496,7 +495,13 @@ impl TectonicServer {
         )
     }
 
-    pub fn sub(&mut self, dbname: &str) {
+    pub fn sub(&mut self, book_name: &str, sock: &SocketAddr) -> Option<()> {
+        let outbound = self.conn_mut(sock)?.outbound.clone();
+        let book_sub = self.subscriptions.entry(book_name.to_owned())
+            .or_insert(Vec::new());
+        book_sub.push(outbound);
+
+        Some(())
         // self.is_subscribed = true;
         // self.subscribed_db = Some(dbname.to_owned());
         // let glb = self.global.read().unwrap();
@@ -505,30 +510,6 @@ impl TectonicServer {
         // self.rx = Some(rx);
         // self.sub_id = Some(id);
         // info!("Subscribing to channel {}. id: {}", dbname, id);
-    }
-
-    pub fn unsub_all(&mut self) {
-        // let glb = self.global.read().unwrap();
-        // let _ = glb.subs.lock().unwrap().unsub_all();
-    }
-
-    /// unsubscribe
-    pub fn unsub(&mut self) {
-        // if !self.is_subscribed {
-        //     return;
-        // }
-        // let old_dbname = self.subscribed_db.clone().unwrap();
-        // let sub_id = self.sub_id.unwrap();
-
-        // let glb = self.global.read().unwrap();
-        // let _ = glb.subs.lock().unwrap().unsub(sub_id, &old_dbname);
-
-        // info!("Unsubscribing from channel {}. id: {}", old_dbname, sub_id);
-
-        // self.is_subscribed = false;
-        // self.subscribed_db = None;
-        // self.rx = None;
-        // self.sub_id = None;
     }
 
     /// remove everything in the current store
@@ -657,7 +638,7 @@ impl TectonicServer {
         if !self.connections.contains_key(sock) {
             return Ok(())
         }
-        let ret = self.process_command(cmd, sock);
+        let ret = self.process_command(cmd, sock).await;
         self.connections.get_mut(sock).unwrap().outbound.send(ret).await.unwrap();
         Ok(())
     }

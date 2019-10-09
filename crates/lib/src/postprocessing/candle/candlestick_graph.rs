@@ -132,7 +132,7 @@ mod tests {
         static HOUR : u64 = 60 * 60 * 1000 - 1000;
         static MINUTE : u64 = 60 * 1000;
 
-        let fname: &str = "test/test-data/bt_btceth.dtf";
+        let fname: &str = "../../test/test-data/bt_btceth.dtf";
         let meta = dtf::file_format::read_meta(fname).unwrap();
 
         let min_ts = meta.min_ts + HOUR;

@@ -410,7 +410,7 @@ mod tests {
 
     // #[test]
     // fn assert_same_data() {
-    //     static FNAME : &str = "test/test-data/bt_btcnav.dtf";
+    //     static FNAME : &str = "../../test/test-data/bt_btcnav.dtf";
     //     let ups = &super::super::decode(FNAME)[1..100000];
 
     //     // test two ways
@@ -429,7 +429,7 @@ mod tests {
 
     // #[test]
     // fn assert_two_ways_produce_the_same_continuation_candles() {
-    //     static FNAME : &str = "test/test-data/bt_btcnav.dtf";
+    //     static FNAME : &str = "../../test/test-data/bt_btcnav.dtf";
     //     let ups = &super::super::decode(FNAME)[1..100000];
 
     //     // test two ways

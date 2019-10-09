@@ -224,9 +224,9 @@ fn dtf_merging() {
     let updates2 = map_into_updates(update_timestamps_2, 1006);
 
     // Write into DTF files
-    let filename1 = "test/test-data/dtfconcat1.dtf";
-    let filename2 = "test/test-data/dtfconcat2.dtf";
-    let output_filename = "test/test-data/dtfconcat_out.dtf";
+    let filename1 = "../../test/test-data/dtfconcat1.dtf";
+    let filename2 = "../../test/test-data/dtfconcat2.dtf";
+    let output_filename = "../../test/test-data/dtfconcat_out.dtf";
 
     dtf::file_format::encode(filename1, "test", &updates1).unwrap();
     dtf::file_format::encode(filename2, "test", &updates2).unwrap();

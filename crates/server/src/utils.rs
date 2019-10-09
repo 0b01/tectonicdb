@@ -17,7 +17,7 @@ pub async fn init_dbs<'a>(state: &mut TectonicServer) {
         let fname_os = dtf_file.unwrap().file_name();
         let stem = fname_os.to_str().unwrap(); // sldjf-lks-djflk-sfsd--something.dtf
         if stem.ends_with(".dtf") {
-            let basename = Path::new(&fname_os).file_stem().unwrap().to_str().unwrap(); // sldjf-lks-djflk-sfsd--something
+            let _basename = Path::new(&fname_os).file_stem().unwrap().to_str().unwrap(); // sldjf-lks-djflk-sfsd--something
             let full_path = &format!("{}/{}", dtf_folder, stem);
             let header_size = match dtf::file_format::get_size(full_path) {
                 Ok(size) => size,

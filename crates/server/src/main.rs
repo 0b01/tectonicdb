@@ -4,7 +4,6 @@ extern crate clap;
 extern crate byteorder;
 extern crate chrono;
 extern crate serde;
-extern crate time;
 extern crate openssl_probe;
 extern crate lazy_static;
 
@@ -29,7 +28,6 @@ pub mod settings;
 pub mod subscription;
 pub mod prelude;
 
-#[macro_use]
 use crate::prelude::*;
 
 fn main() {

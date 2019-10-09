@@ -206,7 +206,7 @@ impl fmt::Debug for RebinnedOrderbook {
 mod tests {
     use super::*;
     use crate::dtf;
-    static FNAME: &str = "test/test-data/bt_btcnav.dtf";
+    static FNAME: &str = "../../test/test-data/bt_btcnav.dtf";
 
     #[test]
     fn test_level_orderbook() {

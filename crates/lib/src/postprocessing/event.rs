@@ -97,8 +97,8 @@ mod test {
 
     use super::*;
     use crate::dtf;
-    static FNAME: &str = "test/test-data/bt_btcnav.dtf";
-    static POLO: &str = "test/test-data/pl_btc_nav.dtf";
+    static FNAME: &str = "../../test/test-data/bt_btcnav.dtf";
+    static POLO: &str = "../../test/test-data/pl_btc_nav.dtf";
 
     #[test]
     fn test_into_events() {

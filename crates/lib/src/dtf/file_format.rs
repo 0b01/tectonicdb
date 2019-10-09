@@ -818,7 +818,7 @@ mod tests {
 
     #[test]
     fn should_return_correct_range_real() {
-        let fname: &str = "test/test-data/bt_btcnav.dtf";
+        let fname: &str = "../../test/test-data/bt_btcnav.dtf";
         let mut rdr = file_reader(fname).unwrap();
 
         let start = 1_510_168_156 * 1000;

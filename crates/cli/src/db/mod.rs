@@ -70,7 +70,7 @@ pub fn get_cxn_pool() -> CxnPool {
 //         let mut cxn = CxnPool::new(10, "localhost", "9001", 100).unwrap();
 //         cxn.cmd("COUNT ALL\n").unwrap();
 //
-//         let res = cxn.insert(&InsertCommand::Add("default".to_owned(), dtf::Update {
+//         let res = cxn.insert(&InsertCommand::Add("default".to_owned(), Update {
 //             ts: 0,
 //             seq: 0,
 //             is_bid: false,
