@@ -263,10 +263,10 @@ impl TectonicServer {
                 }
             }
             Insert(None, _) => ReturnType::error("Unable to parse line"),
-            Create(dbname) => {
-                self.create(&dbname);
-                ReturnType::string(format!("Created DB `{}`.", &dbname))
-            }
+            Create(dbname) => match self.create(&dbname) {
+                    Some(()) => ReturnType::string(format!("Created DB `{}`.", &dbname)),
+                    None => ReturnType::error(format!("Unable to create DB `{}`.", &dbname)),
+                },
             Subscribe(dbname) => {
                 self.sub(&dbname, sock);
                 ReturnType::string(format!("Subscribed to {}", dbname))
@@ -448,12 +448,16 @@ impl TectonicServer {
     }
 
     /// Create a new store
-    pub fn create(&mut self, book_name: &str) {
-        // insert a vector into shared hashmap
-        self.books.insert(
-            book_name.to_owned(),
-            Book::new(book_name, self.settings.clone()),
-        );
+    pub fn create(&mut self, book_name: &str) -> Option<()> {
+        if self.books.contains_key(book_name) {
+            None
+        } else {
+            self.books.insert(
+                book_name.to_owned(),
+                Book::new(book_name, self.settings.clone()),
+            );
+            Some(())
+        }
     }
 
     /// load a datastore file into memory

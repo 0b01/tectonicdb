@@ -1,6 +1,6 @@
 # tectonicdb
 
-[![Build Status](https://travis-ci.org/rickyhan/tectonicdb.svg?branch=master)](https://travis-ci.org/rickyhan/tectonicdb)
+[![Build Status](https://travis-ci.org/0b01/tectonicdb.svg?branch=master)](https://travis-ci.org/0b01/tectonicdb)
 [![Crates.io](https://img.shields.io/crates/v/tectonicdb.svg)](https://crates.io/crates/tectonicdb)
 
 tectonicdb is a fast, highly compressed standalone datastore and streaming protocol for order book ticks.
