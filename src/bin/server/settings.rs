@@ -34,6 +34,8 @@ pub struct Settings {
     pub autoflush: bool,
     pub dtf_folder: String,
     pub flush_interval: u32,
-    pub hist_granularity: u64,
-    pub hist_q_capacity: usize,
+    /// record count history every 3 seconds
+    pub granularity: u64,
+    /// history circular queue capacity
+    pub q_capacity: usize,
 }

@@ -5,6 +5,7 @@ pub use crate::state::{GlobalState, Book};
 pub use crate::handler::{ReturnType, Command};
 pub use crate::handler::{Event, Void};
 pub use crate::utils;
+pub use crate::plugins::run_plugins;
 
 pub use std::{
     collections::hash_map::{Entry, HashMap},

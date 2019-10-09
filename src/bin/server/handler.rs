@@ -93,6 +93,9 @@ pub enum Event {
         from: SocketAddr,
         command: Command
     },
+    History {
+
+    }
 }
 
 /// sometimes returns string, sometimes bytes, error string
@@ -108,6 +111,7 @@ pub fn parse_to_command(line: &str) -> Command {
         "INFO" => Info,
         "PERF" => Perf,
         "COUNT" => Count(ReqCount::Count(1), ReadLocation::Fs),
+        "COUNT IN MEM" => Count(ReqCount::Count(1), ReadLocation::Mem),
         "COUNT ALL" => Count(ReqCount::All, ReadLocation::Fs),
         "COUNT ALL IN MEM" => Count(ReqCount::All, ReadLocation::Mem),
         "CLEAR" => Clear(ReqCount::Count(1)),

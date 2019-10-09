@@ -61,92 +61,6 @@ where
     })
 }
 
-    // let listener = TcpListener::bind(&addr).await?;
-
-    // let dtf_folder = &settings.dtf_folder;
-    // utils::create_dir_if_not_exist(&dtf_folder);
-
-    // info!("Listening on addr: {}", addr);
-    // info!("----------------- initialized -----------------");
-
-    // let (update_tx, update_rx) = mpsc::unbounded::<Update>();
-    // let global = Arc::new(RwLock::new(SharedState::new(update_rx, settings.clone())));
-    // let store = Arc::new(RwLock::new(HashMap::new()));
-
-    // enable_platform_hook(&handle, Arc::clone(&global), Arc::clone(&store));
-
-    // run_plugins(global.clone());
-
-    // let mut incoming = listener.incoming();
-
-    // // main loop
-    // while let Some(stream) = incoming.next().await {
-    //     // channel for pushing subscriptions directly from subscriptions thread
-    //     // to client socket
-    //     let (subscriptions_tx, subscriptions_rx) = mpsc::unbounded::<Update>();
-
-    //     let global_copy = global.clone();
-    //     let state = Rc::new(RefCell::new(
-    //         ThreadState::new(Arc::clone(&global), Arc::clone(&store), subscriptions_tx.clone())
-    //     ));
-    //     let state_clone = state.clone();
-
-    //     utils::init_dbs(&mut state.borrow_mut());
-    //     on_connect(&global_copy);
-
-    //     // map incoming subscription updates to the same format as regular
-    //     // responses so they can be processed in the same manner.
-    //     let subscriptions = subscriptions_rx.map(|message| (
-    //         Cow::from(""), ReturnType::string(vec![message].as_json())
-    //     ));
-
-    //     let lines = lines(BufReader::new(&stream));
-    //     let responses = lines.map(move |line| {
-    //         let line: Cow<str> = line.into();
-    //         let resp = handler::gen_response(line.borrow(), &mut state.borrow_mut());
-    //         (line, resp)
-    //     });
-
-    //     // merge responses and messages pushed directly by subscriptions updates
-    //     // into a single stream
-    //     let merged = subscriptions.select(responses.map_err(|_| ()));
-
-    //     let writes = merged.fold(wtr, |wtr, (line, resp)| {
-    //         let mut buf: Vec<u8> = vec![];
-    //         use self::ReturnType::*;
-    //         match resp {
-    //             Bytes(bytes) => {
-    //                 buf.write_u8(0x1);
-    //                 buf.write_u64::<NetworkEndian>(bytes.len() as u64);
-    //                 buf.write(&bytes);
-    //             }
-    //             String(str_resp) => {
-    //                 buf.write_u8(0x1);
-    //                 buf.write_u64::<NetworkEndian>(str_resp.len() as u64);
-    //                 buf.write(str_resp.as_bytes());
-    //             }
-    //             Error(errmsg) => {
-    //                 error!("Req: `{}`", line);
-    //                 error!("Err: `{}`", errmsg.clone());
-    //                 buf.write_u8(0x0);
-    //                 let ret = format!("ERR: {}\n", errmsg);
-    //                 buf.write_u64::<NetworkEndian>(ret.len() as u64).unwrap();
-    //                 buf.write(ret.as_bytes());
-    //             }
-    //         };
-    //         wtr.write_all(buf).map(|(w, _)| w).map_err(|_| ())
-    //     });
-
-    //     let msg = writes.then(move |_| {
-    //         state_clone.borrow_mut().unsub();
-    //         on_disconnect(&global_copy);
-    //         Ok(())
-    //     });
-    //     handle.spawn(msg);
-    // }
-    // Ok(())
-
-
 
 async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result<()> {
     let stream = Arc::new(stream);
@@ -197,6 +111,9 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Settings) {
             Event::Command { from, command } => {
                 state.command(&command, &from).await;
             },
+            Event::History{} => {
+                state.record_history();
+            }
             Event::NewPeer {
                 sock,
                 stream,
@@ -237,12 +154,14 @@ pub async fn run_server(host: &str, port: &str, settings: Settings) -> Result<()
         settings.autoflush,
         settings.flush_interval
     );
-    info!("History granularity: {}.", settings.hist_granularity);
+    info!("History granularity: {}.", settings.granularity);
 
     let listener = TcpListener::bind(addr).await?;
 
     let (broker_sender, broker_receiver) = mpsc::unbounded::<Event>();
-    let broker = task::spawn(broker_loop(broker_receiver, settings));
+    let broker = task::spawn(broker_loop(broker_receiver, settings.clone()));
+    task::spawn(run_plugins(broker_sender.clone(), settings.clone())).await;
+
     let mut incoming = listener.incoming();
     while let Some(stream) = incoming.next().await {
         let stream = stream?;
@@ -260,32 +179,37 @@ async fn connection_writer_loop(
     stream: Arc<TcpStream>,
     mut shutdown: Receiver<Void>,
 ) -> Result<()> {
+    let mut buf = Vec::with_capacity(1000);
     let mut stream = &*stream;
     loop {
         select! {
-            msg = messages.next().fuse() => match msg {
-                Some(ReturnType::Bytes(bytes)) => {
-                    stream.write(&[0x1]).await?;
-                    stream.write(&bytes.len().to_be_bytes()).await?;
-                    stream.write(&bytes).await?;
-                    stream.flush().await?;
-                },
-                Some(ReturnType::String(str_resp)) => {
-                    stream.write(&[0x1]).await?;
-                    stream.write(&str_resp.len().to_be_bytes()).await?;
-                    stream.write(&str_resp.as_bytes()).await?;
-                    stream.flush().await?;
-                },
-                Some(ReturnType::Error(errmsg)) => {
-                    // error!("Req: `{}`", line);
-                    // error!("Err: `{}`", errmsg.clone());
-                    stream.write(&[0x0]).await?;
-                    let ret = format!("ERR: {}\n", errmsg);
-                    stream.write(&ret.len().to_be_bytes()).await?;
-                    stream.write(ret.as_bytes()).await?;
-                    stream.flush().await?;
-                },
-                None => break,
+            msg = messages.next().fuse() => {
+                match msg {
+                    Some(ReturnType::Bytes(bytes)) => {
+                        buf.write(&[0x1]).await?;
+                        buf.write(&bytes.len().to_be_bytes()).await?;
+                        buf.write(&bytes).await?;
+                        // buf.flush().await?;
+                    },
+                    Some(ReturnType::String(str_resp)) => {
+                        buf.write(&[0x1]).await?;
+                        buf.write(&str_resp.len().to_be_bytes()).await?;
+                        buf.write(&str_resp.as_bytes()).await?;
+                        // buf.flush().await?;
+                    },
+                    Some(ReturnType::Error(errmsg)) => {
+                        // error!("Req: `{}`", line);
+                        // error!("Err: `{}`", errmsg.clone());
+                        buf.write(&[0x0]).await?;
+                        let ret = format!("ERR: {}\n", errmsg);
+                        buf.write(&ret.len().to_be_bytes()).await?;
+                        buf.write(ret.as_bytes()).await?;
+                        // buf.flush().await?;
+                    },
+                    None => break,
+                };
+                stream.write_all(&buf).await?;
+                buf.clear()
             },
             void = shutdown.next().fuse() => match void {
                 Some(void) => match void {},

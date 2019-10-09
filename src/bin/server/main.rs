@@ -24,7 +24,7 @@ extern crate futures;
 #[macro_use]
 extern crate async_std;
 
-// mod plugins;
+pub mod plugins;
 pub mod utils;
 pub mod server;
 pub mod state;
@@ -36,7 +36,6 @@ pub mod prelude;
 
 #[macro_use]
 use crate::prelude::*;
-
 
 fn main() {
     // Help detect OpenSSL certificates on Alpine Linux
@@ -72,14 +71,14 @@ fn main() {
         .value_of("flush_interval")
         .map(String::from)
         .unwrap_or(key_or_default("TECTONICDB_FLUSH_INTERVAL", "1000"));
-    let hist_granularity = matches
-        .value_of("hist_granularity")
+    let granularity = matches
+        .value_of("granularity")
         .map(String::from)
-        .unwrap_or(key_or_default("TECTONICDB_HIST_GRANULARITY", "30"));
-    let hist_q_capacity = matches
-        .value_of("hist_q_capacity")
+        .unwrap_or(key_or_default("TECTONICDB_GRANULARITY", "30"));
+    let q_capacity = matches
+        .value_of("q_capacity")
         .map(String::from)
-        .unwrap_or(key_or_default("TECTONICDB_HIST_Q_CAPACITY", "300"));
+        .unwrap_or(key_or_default("TECTONICDB_Q_CAPACITY", "300"));
 
     let log_file = matches
         .value_of("log_file")
@@ -90,8 +89,8 @@ fn main() {
         autoflush: autoflush,
         dtf_folder: dtf_folder.to_owned(),
         flush_interval: flush_interval.parse().unwrap(),
-        hist_granularity: hist_granularity.parse().unwrap(),
-        hist_q_capacity: hist_q_capacity.parse().unwrap(),
+        granularity: granularity.parse().unwrap(),
+        q_capacity: q_capacity.parse().unwrap(),
     };
 
     prepare_logger(verbosity, &log_file);
@@ -179,10 +178,10 @@ fn get_matches<'a>() -> ArgMatches<'a> {
                 .help("Sets autoflush interval (default every 1000 inserts)"),
         )
         .arg(
-            Arg::with_name("hist_granularity")
+            Arg::with_name("granularity")
                 .short("g")
-                .long("hist_granularity")
-                .value_name("HIST_GRANULARITY")
+                .long("granularity")
+                .value_name("GRANULARITY")
                 .help(
                     "Sets the history record granularity interval. (default 60s)",
                 ),

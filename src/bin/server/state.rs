@@ -56,9 +56,6 @@ pub fn into_format(result: &[Update], format: &GetFormat) -> Option<ReturnType> 
     Some(ret)
 }
 
-
-
-/// (updates, nominal count)
 pub struct Book {
     pub vec: Vec<Update>,
     pub nominal_count: u64,
@@ -159,7 +156,7 @@ impl Book {
         };
         match result {
             Ok(_) => info!("Successfully flushed."),
-            Err(_) => error!("Error flushing file."),
+            Err(e) => error!("Error flushing file. {}", e),
         };
 
         self.vec.clear();
@@ -319,6 +316,34 @@ impl GlobalState {
             Unknown => ReturnType::error("Unknown command."),
         }
     }
+
+
+    pub fn record_history(&mut self) {
+        let mut total = 0;
+        let mut sizes: Vec<(String, u64)> = Vec::new();
+        for (name, book) in self.books.iter() {
+            let size = book.vec.len() as u64;
+            total += size;
+            sizes.push((name.clone(), size));
+        }
+        sizes.push(("total".to_owned(), total));
+
+        let current_t = std::time::SystemTime::now();
+        for (name, size) in &sizes {
+            if !self.history.contains_key(name) {
+                self.history.insert(
+                    name.clone(),
+                    CircularQueue::with_capacity(self.settings.q_capacity)
+                );
+            }
+            self.history.get_mut(name).unwrap().push((current_t, *size));
+        }
+
+        drop(self);
+
+        info!("Current total count: {}", total);
+    }
+
 
     /// Get information about the server
     ///

@@ -104,7 +104,7 @@ fn benchmark(cxn: &mut db::Cxn, times: usize) {
         let _res = cxn.cmd(
             "ADD 1513922718770, 0, t, f, 0.001939, 22.85; INTO bnc_gas_btc\n",
         );
-        acc.push(t.elapsed().unwrap().subsec_nanos());
+        acc.push(t.elapsed().unwrap().subsec_nanos() as usize);
         // println!("res: {:?}, latency: {:?}", res, t.elapsed());
         t = time::SystemTime::now();
     }
