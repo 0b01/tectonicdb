@@ -176,6 +176,7 @@ impl Book {
 pub type CountHistory = HashMap<String, CircularQueue<(SystemTime, u64)>>;
 
 /// Each client gets its own ThreadState
+#[derive(Debug)]
 pub struct Connection {
     pub outbound: Sender<ReturnType>,
     // pub subscription_tx: SubscriptionTX,
@@ -220,7 +221,7 @@ impl GlobalState {
         }
     }
 
-    pub async fn process_command(&mut self, command: &Command, sock: &SocketAddr) -> ReturnType {
+    pub fn process_command(&mut self, command: &Command, sock: &SocketAddr) -> ReturnType {
         use Command::*;
         match &command {
             Noop => ReturnType::string(""),
@@ -640,7 +641,7 @@ impl GlobalState {
         if !self.connections.contains_key(sock) {
             return Ok(())
         }
-        let ret = self.process_command(cmd, sock).await;
+        let ret = self.process_command(cmd, sock);
         self.connections.get_mut(sock).unwrap().outbound.send(ret).await.unwrap();
         Ok(())
     }

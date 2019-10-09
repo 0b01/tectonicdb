@@ -9,6 +9,7 @@ async def measure_latency():
 
     t = time.time()
     for i in range(10000):
+        print(i)
         await db.insert(0,0,True, True, 0., 0., 'default')
         t_ = time.time()
         dt = t_ - t

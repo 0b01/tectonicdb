@@ -164,12 +164,10 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
         .unwrap();
 
     while let Some(line) = lines.next().await {
-        println!("received line {:?}", line);
-        let event = crate::handler::parse_to_event(&line?);
-        dbg!(event);
-
+        let command = crate::handler::parse_to_command(&line?);
+        let from = stream.peer_addr()?.clone();
         broker
-            .send(Event::TestMessage{from: stream.peer_addr()?.clone()})
+            .send(Event::Command{from, command})
             .await
             .unwrap();
     }
@@ -197,14 +195,8 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Settings) {
         };
         match event {
             Event::Command { from, command } => {
-                state.command(&command, &from);
+                state.command(&command, &from).await;
             },
-            Event::TestMessage { from } => {
-                if let Some(conn) = state.connections.get_mut(&from) {
-                    let msg = "hi".to_owned();
-                    conn.outbound.send(ReturnType::string(msg)).await.unwrap();
-                }
-            }
             Event::NewPeer {
                 sock,
                 stream,

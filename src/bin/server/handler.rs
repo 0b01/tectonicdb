@@ -89,9 +89,6 @@ pub enum Event {
         stream: Arc<TcpStream>,
         shutdown: Receiver<Void>,
     },
-    TestMessage {
-        from: SocketAddr,
-    },
     Command {
         from: SocketAddr,
         command: Command
@@ -101,7 +98,7 @@ pub enum Event {
 /// sometimes returns string, sometimes bytes, error string
 // pub type Response = (Option<String>, Option<Vec<u8>>, Option<String>);
 
-pub fn parse_to_event(line: &str) -> Command {
+pub fn parse_to_command(line: &str) -> Command {
     use self::Command::*;
 
     match line.borrow() {
@@ -187,28 +184,32 @@ mod tests {
     use std::sync::{Arc, RwLock};
     use std::collections::HashMap;
     use futures;
+    use std::net;
 
-    fn gen_state<'thr, 'store>() -> ThreadState<'thr, 'store> {
+    fn gen_state() -> (GlobalState, SocketAddr) {
         let settings: Settings = Default::default();
-        let global = Arc::new(RwLock::new(SharedState::new(settings)));
-        let store = Arc::new(RwLock::new(HashMap::new()));
-        let (tx, _) = mpsc::unbounded::<Update>();
-        ThreadState::new(global, store, tx)
+        let mut global = GlobalState::new(settings);
+        let sock = SocketAddr::new(
+            net::IpAddr::V4(net::Ipv4Addr::new(127, 0, 0, 1)),
+            1);
+        let (client_sender, client_receiver) = mpsc::unbounded();
+        global.new_connection(client_sender, sock);
+        (global, sock)
     }
 
     #[test]
     fn should_return_pong() {
-        let mut state = gen_state();
-        let resp = gen_response("PING", &mut state);
+        let (mut state, sock) = gen_state();
+        let resp = state.process_command(&Command::Ping, &sock);
         assert_eq!(ReturnType::String("PONG".into()), resp);
     }
 
     #[test]
     fn should_not_insert_into_empty() {
-        let mut state = gen_state();
-        let resp = gen_response(
-            "ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth",
-            &mut state,
+        let (mut state, sock) = gen_state();
+        let resp = state.process_command(
+            &parse_to_command("ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
+            &sock
         );
         assert_eq!(
             ReturnType::Error("DB bnc_btc_eth not found.".into()),
@@ -218,15 +219,15 @@ mod tests {
 
     #[test]
     fn should_insert_ok() {
-        let mut state = gen_state();
-        let resp = gen_response("CREATE bnc_btc_eth", &mut state);
+        let (mut state, sock) = gen_state();
+        let resp = state.process_command(&parse_to_command("CREATE bnc_btc_eth"), &sock);
         assert_eq!(
             ReturnType::String("Created DB `bnc_btc_eth`.".into()),
             resp
         );
-        let resp = gen_response(
-            "ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth",
-            &mut state,
+        let resp = state.process_command(
+            &parse_to_command( "ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
+            &sock
         );
         assert_eq!(ReturnType::String("".into()), resp);
     }
