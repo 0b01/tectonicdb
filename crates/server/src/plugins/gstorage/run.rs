@@ -3,10 +3,10 @@
 /// The thread sleeps until next midnight,
 /// then upload all the dtf files to google storage via REST endpoint
 /// and once confirmed, delete local files.
+use crate::prelude::*;
 
 use std::{thread, fs};
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 extern crate tempdir;
@@ -79,13 +79,11 @@ lazy_static! {
         .expect("Unable to create temporary directory!");
 }
 
-pub fn run(global: Arc<RwLock<SharedState>>) {
-    let global_copy = global.clone();
+pub fn run(_broker: Sender<Event>, settings: Arc<Settings>) {
     thread::spawn(move || {
         let conf = GStorageConfig::new().unwrap();
         let min_file_size_bytes = conf.min_file_size;
         info!("Initializing GStorage plugin with config: {:?}", conf);
-        let dtf_directory = global_copy.read().unwrap().settings.dtf_folder.clone();
         let tmp_dir_path = TMP_DIR.path();
 
         loop {
@@ -93,7 +91,7 @@ pub fn run(global: Arc<RwLock<SharedState>>) {
             info!("Gstorage checking to see if any files need upload...");
 
             // Move all DTF files in the db directory to the temporary directory for uploading
-            for path_res in fs::read_dir(&dtf_directory).unwrap() {
+            for path_res in fs::read_dir(&settings.dtf_folder).unwrap() {
                 match path_res {
                     Ok(entry) => {
                         let src_path = entry.path();
@@ -133,7 +131,6 @@ pub fn run(global: Arc<RwLock<SharedState>>) {
 }
 
 /// Called when the database is being shut down.  Upload all files, regardless of size.
-pub fn run_exit_hook(state: &ThreadState<'static, 'static>) {
-    let dtf_dir_path = &state.global.read().unwrap().settings.dtf_folder;
-    upload_all_files(&Path::new(dtf_dir_path))
+pub fn run_exit_hook(settings: Arc<Settings>) {
+    upload_all_files(&Path::new(&settings.dtf_folder))
 }

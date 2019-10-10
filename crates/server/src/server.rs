@@ -1,46 +1,20 @@
 use crate::prelude::*;
 
-use std::net::SocketAddr;
-use std::str;
-use std::sync::Arc;
+// TODO: add onexit once async-std support is stablized
+#[cfg(unix)]
+#[allow(unused)]
+async fn onexit(mut broker: Sender<Event>, settings: Arc<Settings>) {
+    info!("`TERM` signal recieved; flushing all stores...");
+    broker.send(Event::Command {from: None, command: Command::Flush(ReqCount::All)}).await.unwrap();
+    info!("All stores flushed; calling plugin exit hooks...");
+    crate::plugins::run_plugin_exit_hooks(broker, settings);
+    info!("Plugin exit hooks called; exiting...");
+    std::process::exit(0);
+}
 
-// #[cfg(unix)]
-// fn enable_platform_hook(
-//     handle: &Handle,
-//     global: Global,
-//     store: HashMapStore<'static>) {
-//     let (subscriptions_tx, _) = mpsc::unbounded::<Update>();
-//     let mut state = ThreadState::new(global, store, subscriptions_tx);
-
-//     // Creates a listener for Unix signals that takes care of flushing all stores to file before
-//     // shutting down the server.
-//     // Catches `TERM` signals, which are sent by Kubernetes during graceful shutdown.
-//     let signal_handler = tokio_signal::unix::Signal::new(15)
-//         .flatten_stream()
-//         .for_each(move |signal| {
-//             println!("Signal: {}", signal);
-//             info!("`TERM` signal recieved; flushing all stores...");
-//             info!("All stores flushed; calling plugin exit hooks...");
-//             run_plugin_exit_hooks(&state);
-//             info!("Plugin exit hooks called; exiting...");
-//             state.flushall();
-//             exit(0);
-
-//             #[allow(unreachable_code)]
-//             Ok(())
-//         })
-//         .map_err(|err| error!("Error in signal handler future: {:?}", err));
-
-//     handle.spawn(signal_handler);
-// }
-
-// #[cfg(windows)]
-// fn enable_platform_hook<'a>(
-//     handle: &Handle,
-//     global: Global,
-//     store: HashMapStore<'a>
-// ) {
-// }
+#[cfg(windows)]
+#[allow(unused)]
+fn onexit() { }
 
 
 fn spawn_and_log_error<F>(fut: F) -> task::JoinHandle<()>
@@ -53,6 +27,45 @@ where
         }
     })
 }
+
+pub async fn run_server(host: &str, port: &str, settings: Arc<Settings>) -> Result<()> {
+    let addr = format!("{}:{}", host, port);
+    let addr: SocketAddr = addr.parse().expect("Invalid host or port provided!");
+
+    info!("Trying to bind to addr: {}", addr);
+    if !settings.autoflush {
+        warn!("Autoflush is off!");
+    }
+    info!(
+        "Autoflush is {}: every {} inserts.",
+        settings.autoflush,
+        settings.flush_interval
+    );
+    info!("History granularity: {}.", settings.granularity);
+
+    let listener = TcpListener::bind(addr).await?;
+
+    let (broker_sender, broker_receiver) = mpsc::unbounded::<Event>();
+
+    // ctrlc::set_handler(move || {
+    //     task::block_on(onexit(broker, settings));
+    // });
+
+    let broker = task::spawn(broker_loop(broker_receiver, settings.clone()));
+    let plugins = task::spawn(crate::plugins::run_plugins(broker_sender.clone(), settings.clone()));
+    plugins.await;
+
+    let mut incoming = listener.incoming();
+    while let Some(stream) = incoming.next().await {
+        let stream = stream?;
+        info!("Accepting from: {}", stream.peer_addr()?);
+        spawn_and_log_error(connection_loop(broker_sender.clone(), stream));
+    }
+    drop(broker_sender);
+    broker.await;
+    Ok(())
+}
+
 
 
 async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result<()> {
@@ -72,7 +85,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
 
     while let Some(line) = lines.next().await {
         let command = crate::handler::parse_to_command(&line?);
-        let from = stream.peer_addr()?;
+        let from = Some(stream.peer_addr()?);
         broker
             .send(Event::Command{from, command})
             .await
@@ -83,7 +96,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
 }
 
 
-async fn broker_loop(mut events: Receiver<Event>, settings: Settings) {
+async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
     let (disconnect_sender, mut disconnect_receiver) = mpsc::unbounded::<(SocketAddr, Receiver<ReturnType>)>();
 
     let mut state = TectonicServer::new(settings);
@@ -102,7 +115,7 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Settings) {
         };
         match event {
             Event::Command { from, command } => {
-                state.command(&command, &from).await.unwrap();
+                state.command(&command, from).await.unwrap();
             },
             Event::History{} => {
                 state.record_history();
@@ -133,39 +146,6 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Settings) {
     drop(disconnect_sender);
     while let Some((_name, _pending_messages)) = disconnect_receiver.next().await {}
 }
-
-pub async fn run_server(host: &str, port: &str, settings: Settings) -> Result<()> {
-    let addr = format!("{}:{}", host, port);
-    let addr: SocketAddr = addr.parse().expect("Invalid host or port provided!");
-
-    info!("Trying to bind to addr: {}", addr);
-    if !settings.autoflush {
-        warn!("Autoflush is off!");
-    }
-    info!(
-        "Autoflush is {}: every {} inserts.",
-        settings.autoflush,
-        settings.flush_interval
-    );
-    info!("History granularity: {}.", settings.granularity);
-
-    let listener = TcpListener::bind(addr).await?;
-
-    let (broker_sender, broker_receiver) = mpsc::unbounded::<Event>();
-    let broker = task::spawn(broker_loop(broker_receiver, settings.clone()));
-    task::spawn(run_plugins(broker_sender.clone(), settings.clone())).await;
-
-    let mut incoming = listener.incoming();
-    while let Some(stream) = incoming.next().await {
-        let stream = stream?;
-        info!("Accepting from: {}", stream.peer_addr()?);
-        spawn_and_log_error(connection_loop(broker_sender.clone(), stream));
-    }
-    drop(broker_sender);
-    broker.await;
-    Ok(())
-}
-
 
 async fn connection_writer_loop(
     messages: &mut Receiver<ReturnType>,

@@ -1,10 +1,14 @@
 #![recursion_limit="256"]
 extern crate libtectonic;
 extern crate clap;
-extern crate byteorder;
 extern crate chrono;
+#[cfg(feature = "gcs")]
 extern crate serde;
+#[cfg(feature = "gcs")]
+#[macro_use]
+extern crate serde_derive;
 extern crate openssl_probe;
+#[macro_use]
 extern crate lazy_static;
 
 #[macro_use]
@@ -17,6 +21,7 @@ extern crate circular_queue;
 #[macro_use]
 extern crate futures;
 extern crate async_std;
+extern crate ctrlc;
 
 pub mod plugins;
 pub mod utils;
@@ -28,6 +33,8 @@ pub mod settings;
 pub mod prelude;
 
 use crate::prelude::*;
+
+use clap::{Arg, App, ArgMatches};
 
 fn main() {
     // Help detect OpenSSL certificates on Alpine Linux
@@ -77,13 +84,13 @@ fn main() {
         .map(String::from)
         .unwrap_or_else(|| key_or_default("TECTONICDB_LOG_FILE_NAME", "tectonic.log"));
 
-    let settings = settings::Settings {
+    let settings = Arc::new(settings::Settings {
         autoflush,
         dtf_folder,
         flush_interval: flush_interval.parse().unwrap(),
         granularity: granularity.parse().unwrap(),
         q_capacity: q_capacity.parse().unwrap(),
-    };
+    });
 
     prepare_logger(verbosity, &log_file);
     info!(r##"

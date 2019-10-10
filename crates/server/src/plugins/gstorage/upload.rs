@@ -8,7 +8,6 @@ use std::fs::File;
 
 use uuid::Uuid;
 use serde::Serialize;
-use time;
 
 use libtectonic::storage::file_metadata::{self, FileMetadata};
 use crate::plugins::gstorage::{
@@ -32,12 +31,12 @@ impl GStorageFile {
     pub fn new(conf: &GStorageConfig, fname: &str) -> Result<GStorageFile, io::Error> {
         let name = Path::new(fname)
             .file_name()
-            .ok_or(io::Error::new(
+            .ok_or_else(|| io::Error::new(
                 io::ErrorKind::NotFound,
                 "don't know filename",
             ))?
             .to_str()
-            .ok_or(io::Error::new(
+            .ok_or_else(|| io::Error::new(
                 io::ErrorKind::NotFound,
                 "not a valid filename",
             ))?;

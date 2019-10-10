@@ -13,25 +13,16 @@
 
 use crate::prelude::*;
 
+use circular_queue::CircularQueue;
+use libtectonic::storage::utils::scan_files_for_range;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+
 macro_rules! catch {
     ($($code:tt)*) => {
         (|| { Some({ $($code)* }) })()
     }
 }
-
-use circular_queue::CircularQueue;
-use libtectonic::dtf::{self, update::{Update, UpdateVecConvert}};
-use libtectonic::storage::utils::scan_files_for_range;
-use libtectonic::utils::within_range;
-
-use std::borrow::{Cow};
-use std::collections::HashMap;
-use std::path::Path;
-use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
-use crate::settings::Settings;
-use crate::handler::{GetFormat, ReturnType, ReqCount, ReadLocation, Range};
-
 
 pub fn into_format(result: &[Update], format: &GetFormat) -> Option<ReturnType> {
     let ret = match format {
@@ -59,12 +50,12 @@ pub struct Book {
     pub nominal_count: u64,
     pub name: String,
     pub in_memory: bool,
-    pub settings: Settings,
+    pub settings: Arc<Settings>,
 }
 
 impl Book {
 
-    pub fn new(name: &str, settings: Settings) -> Self {
+    pub fn new(name: &str, settings: Arc<Settings>) -> Self {
         let vec = vec![];
         let nominal_count = 0;
         let name = name.to_owned();
@@ -185,14 +176,14 @@ impl Connection {
 pub type CountHistory = HashMap<String, CircularQueue<(SystemTime, u64)>>;
 pub struct TectonicServer {
     pub connections: HashMap<SocketAddr, Connection>,
-    pub settings: Settings,
+    pub settings: Arc<Settings>,
     pub books: HashMap<String, Book>,
     pub history: CountHistory,
     pub subscriptions: HashMap<String, Vec<Sender<ReturnType>>>,
 }
 
 impl TectonicServer {
-    pub fn new(settings: Settings) -> Self {
+    pub fn new(settings: Arc<Settings>) -> Self {
         let connections = HashMap::new();
         let mut books = HashMap::new();
         books.insert(
@@ -210,7 +201,7 @@ impl TectonicServer {
         }
     }
 
-    pub async fn process_command(&mut self, command: &Command, sock: &SocketAddr) -> ReturnType {
+    pub async fn process_command(&mut self, command: &Command, sock: Option<SocketAddr>) -> ReturnType {
         use Command::*;
         match &command {
             Noop => ReturnType::string(""),
@@ -244,10 +235,6 @@ impl TectonicServer {
             }
             Flush(ReqCount::All) => {
                 self.flushall();
-                ReturnType::ok()
-            }
-            AutoFlush(is_autoflush) =>  {
-                self.set_autoflush(*is_autoflush);
                 ReturnType::ok()
             }
             // update, dbname
@@ -443,10 +430,6 @@ impl TectonicServer {
         self.books.contains_key(book_name)
     }
 
-    pub fn set_autoflush(&mut self, autoflush: bool) {
-        self.settings.autoflush = autoflush;
-    }
-
     /// Create a new store
     pub fn create(&mut self, book_name: &str) -> Option<()> {
         if self.books.contains_key(book_name) {
@@ -461,7 +444,7 @@ impl TectonicServer {
     }
 
     /// load a datastore file into memory
-    pub fn use_db(&mut self, book_name: &str, sock: &SocketAddr) -> Option<()> {
+    pub fn use_db(&mut self, book_name: &str, sock: Option<SocketAddr>) -> Option<()> {
         if self.books.contains_key(book_name) {
             self.conn_mut(sock)?.book_entry = Arc::new(book_name.to_owned());
             self.book_mut(sock)?.load();
@@ -472,13 +455,13 @@ impl TectonicServer {
     }
 
     /// return the count of the current store
-    pub fn count(&mut self, sock: &SocketAddr) -> Option<u64> {
+    pub fn count(&mut self, sock: Option<SocketAddr>) -> Option<u64> {
         let ret = self.book(sock)?.nominal_count;
         Some(ret)
     }
 
     /// return current store count in mem
-    pub fn count_in_mem(&mut self, sock: &SocketAddr) -> Option<u64> {
+    pub fn count_in_mem(&mut self, sock: Option<SocketAddr>) -> Option<u64> {
         let ret = self.book(sock)?.vec.len() as u64;
         Some(ret)
     }
@@ -499,7 +482,7 @@ impl TectonicServer {
         )
     }
 
-    pub fn sub(&mut self, book_name: &str, sock: &SocketAddr) -> Option<()> {
+    pub fn sub(&mut self, book_name: &str, sock: Option<SocketAddr>) -> Option<()> {
         let outbound = self.conn_mut(sock)?.outbound.clone();
         let book_sub = self.subscriptions.entry(book_name.to_owned())
             .or_insert_with(Vec::new);
@@ -517,7 +500,7 @@ impl TectonicServer {
     }
 
     /// remove everything in the current store
-    pub fn clear(&mut self, sock: &SocketAddr) -> Option<()> {
+    pub fn clear(&mut self, sock: Option<SocketAddr>) -> Option<()> {
         let book = self.book_mut(sock)?;
         book.vec.clear();
         // vecs.1 = 0;
@@ -540,8 +523,8 @@ impl TectonicServer {
     /// If file exists, use append which only appends a filtered set of updates whose timestamp is larger than the old timestamp
     /// If file doesn't exists, simply encode.
     ///
-    pub fn flush(&mut self, sock: &SocketAddr) -> Option<()> {
-        self.book_mut(&sock)?.flush()
+    pub fn flush(&mut self, sock: Option<SocketAddr>) -> Option<()> {
+        self.book_mut(sock)?.flush()
     }
 
     /// save all stores to corresponding files
@@ -559,7 +542,7 @@ impl TectonicServer {
     /// if count <= len, return
     /// need more, get from fs
     ///
-    pub fn get(&self, count: &ReqCount, format: &GetFormat, range: Range, loc: &ReadLocation, sock: &SocketAddr)
+    pub fn get(&self, count: &ReqCount, format: &GetFormat, range: Option<(u64, u64)>, loc: &ReadLocation, sock: Option<SocketAddr>)
         -> Option<ReturnType>
     {
         // return if requested 0 item
@@ -629,7 +612,7 @@ impl TectonicServer {
     }
 
     pub fn new_connection(&mut self, client_sender: Sender<ReturnType>, sock: SocketAddr) -> bool {
-        match self.connections.entry(sock.clone()) {
+        match self.connections.entry(sock) {
             Entry::Occupied(..) => false,
             Entry::Vacant(entry) => {
                 entry.insert(Connection::new(client_sender));
@@ -638,29 +621,33 @@ impl TectonicServer {
         }
     }
 
-    pub async fn command(&mut self, cmd: &Command, sock: &SocketAddr) -> Result<()> {
-        if !self.connections.contains_key(sock) {
-            return Ok(())
-        }
+    pub async fn command(&mut self, cmd: &Command, sock: Option<SocketAddr>) -> Result<()> {
         let ret = self.process_command(cmd, sock).await;
-        self.connections.get_mut(sock).unwrap().outbound.send(ret).await.unwrap();
-        Ok(())
+        match sock {
+            Some(sock) => {
+                if self.connections.contains_key(&sock) {
+                    self.connections.get_mut(&sock).unwrap().outbound.send(ret).await.unwrap();
+                }
+                Ok(())
+            }
+            None => Ok(())
+        }
     }
 
-    pub fn conn(&self, sock: &SocketAddr) -> Option<&Connection> {
-        self.connections.get(sock)
+    pub fn conn(&self, sock: Option<SocketAddr>) -> Option<&Connection> {
+        self.connections.get(&sock?)
     }
 
-    pub fn conn_mut(&mut self, sock: &SocketAddr) -> Option<&mut Connection> {
-        self.connections.get_mut(sock)
+    pub fn conn_mut(&mut self, sock: Option<SocketAddr>) -> Option<&mut Connection> {
+        self.connections.get_mut(&sock?)
     }
 
-    pub fn book_mut(&mut self, sock: &SocketAddr) -> Option<&mut Book> {
+    pub fn book_mut(&mut self, sock: Option<SocketAddr>) -> Option<&mut Book> {
         let book_name = Arc::clone(&self.conn(sock)?.book_entry);
         self.books.get_mut(book_name.as_str())
     }
 
-    pub fn book(&self, sock: &SocketAddr) -> Option<&Book> {
+    pub fn book(&self, sock: Option<SocketAddr>) -> Option<&Book> {
         let book_name = Arc::clone(&self.conn(sock)?.book_entry);
         self.books.get(book_name.as_str())
     }

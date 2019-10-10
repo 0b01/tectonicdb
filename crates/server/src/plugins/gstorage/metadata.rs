@@ -15,7 +15,7 @@ enum GStorageOp {
 impl fmt::Display for GStorageOp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &GStorageOp::AddDtf => write!(f, "add.dtf"),
+            GStorageOp::AddDtf => write!(f, "add.dtf"),
         }
     }
 }

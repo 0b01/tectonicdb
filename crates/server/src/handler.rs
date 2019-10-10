@@ -1,11 +1,5 @@
 use crate::prelude::*;
 
-use crate::parser;
-use libtectonic::dtf::update::Update;
-use std::borrow::{Cow, Borrow};
-
-// BUG: subscribe, add, deadlock!!!
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum ReturnType {
     String(Cow<'static, str>),
@@ -57,8 +51,6 @@ pub enum ReadLocation {
     Fs,
 }
 
-pub type Range = Option<(u64, u64)>;
-
 #[derive(Debug)]
 pub enum Void {}
 
@@ -69,11 +61,10 @@ pub enum Command {
     Help,
     Info,
     Perf,
-    Get(ReqCount, GetFormat, Range, ReadLocation),
+    Get(ReqCount, GetFormat, Option<(u64, u64)>, ReadLocation),
     Count(ReqCount, ReadLocation),
     Clear(ReqCount),
     Flush(ReqCount),
-    AutoFlush(bool),
     Insert(Option<Update>, Option<String>),
     Create(String),
     Subscribe(String),
@@ -90,7 +81,7 @@ pub enum Event {
         shutdown: Receiver<Void>,
     },
     Command {
-        from: SocketAddr,
+        from: Option<SocketAddr>,
         command: Command
     },
     History {
@@ -121,8 +112,6 @@ pub fn parse_to_command(line: &str) -> Command {
         "GET ALL" => Get(ReqCount::All, GetFormat::Dtf, None, ReadLocation::Mem),
         "FLUSH" => Flush(ReqCount::Count(1)),
         "FLUSH ALL" => Flush(ReqCount::All),
-        "AUTOFLUSH ON" => AutoFlush(true),
-        "AUTOFLUSH Off" => AutoFlush(false),
         _ => {
             if line.starts_with("SUBSCRIBE ") {
                 let dbname: &str = &line[10..];
@@ -138,11 +127,11 @@ pub fn parse_to_command(line: &str) -> Command {
                 Exists(dbname.into())
             } else if line.starts_with("ADD ") || line.starts_with("INSERT ") {
                 let (up, dbname) = if line.contains(" INTO ") {
-                    let (up, dbname) = parser::parse_add_into(&line);
+                    let (up, dbname) = crate::parser::parse_add_into(&line);
                     (up, dbname)
                 } else {
                     let data_string: &str = &line[3..];
-                    match parser::parse_line(&data_string) {
+                    match crate::parser::parse_line(&data_string) {
                         Some(up) => (Some(up), None),
                         None => (None, None),
                     }
@@ -159,7 +148,7 @@ pub fn parse_to_command(line: &str) -> Command {
                     ReqCount::Count(count)
                 };
 
-                let range = parser::parse_get_range(&line);
+                let range = crate::parser::parse_get_range(&line);
 
                 // test if is Json
                 let format = if line.contains(" AS JSON") {
@@ -186,21 +175,21 @@ mod tests {
     use crate::settings::Settings;
     use std::net;
 
-    fn gen_state() -> (TectonicServer, SocketAddr) {
+    fn gen_state() -> (TectonicServer, Option<SocketAddr>) {
         let settings: Settings = Default::default();
-        let mut global = TectonicServer::new(settings);
+        let mut global = TectonicServer::new(Arc::new(settings));
         let sock = SocketAddr::new(
             net::IpAddr::V4(net::Ipv4Addr::new(127, 0, 0, 1)),
             1);
         let (client_sender, _client_receiver) = mpsc::unbounded();
         global.new_connection(client_sender, sock);
-        (global, sock)
+        (global, Some(sock))
     }
 
     #[test]
     fn should_return_pong() {
         let (mut state, sock) = gen_state();
-        let resp = task::block_on(state.process_command(&Command::Ping, &sock));
+        let resp = task::block_on(state.process_command(&Command::Ping, sock));
         assert_eq!(ReturnType::String("PONG".into()), resp);
     }
 
@@ -209,7 +198,7 @@ mod tests {
         let (mut state, sock) = gen_state();
         let resp = task::block_on(state.process_command(
             &parse_to_command("ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
-            &sock
+            sock
         ));
         assert_eq!(
             ReturnType::Error("DB bnc_btc_eth not found.".into()),
@@ -220,11 +209,11 @@ mod tests {
     #[test]
     fn should_insert_ok() {
         let (mut state, sock) = gen_state();
-        let resp = task::block_on(state.process_command(&parse_to_command("CREATE bnc_btc_eth"), &sock));
+        let resp = task::block_on(state.process_command(&parse_to_command("CREATE bnc_btc_eth"), sock));
         assert_eq!(ReturnType::String("Created DB `bnc_btc_eth`.".into()), resp);
         let resp = task::block_on(state.process_command(
             &parse_to_command( "ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
-            &sock
+            sock
         ));
         assert_eq!(ReturnType::String("".into()), resp);
     }

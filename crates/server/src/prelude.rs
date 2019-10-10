@@ -1,22 +1,21 @@
-pub use clap::{Arg, App, ArgMatches};
 pub use crate::settings::{Settings, key_or_default, key_or_none};
-pub use libtectonic::dtf::update::{Update, UpdateVecConvert};
 pub use crate::state::{TectonicServer, Book};
-pub use crate::handler::{ReturnType, Command};
-pub use crate::handler::{Event, Void};
+pub use crate::handler::{ReturnType, Command, Event, Void, ReqCount, GetFormat, ReadLocation};
 pub use crate::utils;
-pub use crate::plugins::run_plugins;
-
-pub use std::{
-    collections::hash_map::{Entry, HashMap},
-    sync::Arc,
-    rc::Rc,
+pub use libtectonic::dtf::{
+    self,
+    update::{Update, UpdateVecConvert},
 };
 
-// pub use crate::plugins::{run_plugins, run_plugin_exit_hooks};
-pub use futures::{channel::mpsc, FutureExt, SinkExt};
-pub use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
+pub use libtectonic::utils::within_range;
 
+pub use std::path::Path;
+pub use std::borrow::{Cow, Borrow};
+pub use std::collections::hash_map::{Entry, HashMap};
+pub use std::sync::Arc;
+
+pub use futures::{FutureExt, SinkExt};
+pub use futures::channel::mpsc::{self, UnboundedReceiver, UnboundedSender};
 pub use async_std::{
     io::{BufReader, BufWriter},
     net::{TcpListener, TcpStream, ToSocketAddrs},

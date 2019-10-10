@@ -1,19 +1,17 @@
-// google cloud storage plugin
-// #[cfg(feature = "gcs")]
-// pub mod gstorage;
-
 use crate::prelude::*;
 
+#[cfg(feature = "gcs")]
+pub mod gstorage;
 pub mod history;
 
 /// Run each plugin in a separate thread
-pub async fn run_plugins(broker: Sender<Event>, settings: Settings) {
+pub async fn run_plugins(broker: Sender<Event>, settings: Arc<Settings>) {
     info!("initializing plugins");
-    history::run(broker, settings).await;
+    history::run(broker.clone(), settings.clone()).await;
 
-    // #[cfg(feature = "gcs")] gstorage::run(global.clone());
+    #[cfg(feature = "gcs")] gstorage::run(broker, settings);
 }
 
-// pub fn run_plugin_exit_hooks(state: &ThreadState<'static, 'static>) {
-//     // #[cfg(feature = "gcs")] gstorage::run_exit_hook(state);
-// }
+pub fn run_plugin_exit_hooks(_broker: Sender<Event>, settings: Arc<Settings>) {
+    #[cfg(feature = "gcs")] gstorage::run_exit_hook(settings);
+}
