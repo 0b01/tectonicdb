@@ -21,6 +21,7 @@ impl Record {
         }
     }
 
+    #[allow(unused)]
     pub fn merge_from(&mut self, other: Record) {
         // dimensions need to be equal
         assert_eq!(self.time_step, other.time_step);

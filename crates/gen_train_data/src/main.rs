@@ -30,6 +30,7 @@ static LOW_IDX: usize = 51; // candle
 static VOL_IDX: usize = 52; // candle
 
 static DIM: usize = 53; // last dimension, sum of channels
+#[allow(unused)]
 static ONE_HOUR : u64 = 60 *  60 * 1000 - 1000; // one hour in ms
 static TWO_HOURS: u64 = 60 * 120 * 1000 - 1000; // two hours in ms
 
@@ -63,7 +64,7 @@ fn main() {
     let ups = dtf::file_format::get_range_in_file(fname, min_ts, max_ts).unwrap();
 
     match gen_one_batch(&ups) {
-        Ok((record, movement)) => { // movement is the target label
+        Ok(record) => { // movement is the target label
             write_npy::write(&mut wtr, &record);
         },
         Err(e) => {
@@ -78,7 +79,7 @@ fn write_ob_levels(rec: &mut Record, ups: &[Update], step_bins: usize, tick_bins
 
     // find max size
     let mut max_size = 0.;
-    for ref d_book in ob.book.values() {
+    for d_book in ob.book.values() {
         for &size in d_book.bids.values() {
             if size > max_size {
                 max_size = size;
@@ -129,7 +130,7 @@ fn write_candles(rec: &mut Record, candles: &TickBars) {
 
 /// dataset is a list of rebinned orderbook levels
 /// then normalized to [-1,1]
-fn gen_one_batch(ups: &[Update]) -> Result<(Record, Movement), Error> {
+fn gen_one_batch(ups: &[Update]) -> Result<Record, Error> {
     let batch_size = 1;
 
     let candles = TickBars::from(ups);
@@ -152,14 +153,7 @@ fn gen_one_batch(ups: &[Update]) -> Result<(Record, Movement), Error> {
 
         write_ob_levels(&mut record, &ups, steps, TICK_BINS);
         write_candles(&mut record, &candles);
-        Ok((record, Movement::Upwards))
+        Ok(record)
     }
 
-}
-
-
-enum Movement {
-    Upwards,
-    Downwards,
-    Sideways
 }

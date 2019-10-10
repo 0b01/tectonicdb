@@ -13,7 +13,7 @@ fn get_header(record: &Record) -> String {
     )
 }
 
-pub fn write(wtr: &mut Write, record: &Record) {
+pub fn write(wtr: &mut dyn Write, record: &Record) {
     let _ = wtr.write(MAGIC_VALUE);
     let _ = wtr.write_u8(0x01); // major version
     let _ = wtr.write_u8(0x00); // minor version
