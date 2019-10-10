@@ -1,7 +1,12 @@
 # tectonicdb
 
 [![Build Status](https://travis-ci.org/0b01/tectonicdb.svg?branch=master)](https://travis-ci.org/0b01/tectonicdb)
-[![Crates.io](https://img.shields.io/crates/v/tectonicdb.svg)](https://crates.io/crates/tectonicdb)
+
+| Crate                | Link                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------ |
+|  libtectonic         |      [![Crates.io](https://img.shields.io/crates/v/libtectonic.svg)](https://crates.io/crates/libtectonic)         |
+|  tdb                 |      [![Crates.io](https://img.shields.io/crates/v/tdb.svg)](https://crates.io/crates/tdb)                         |
+|  tdb-server          |      [![Crates.io](https://img.shields.io/crates/v/tdb-server.svg)](https://crates.io/crates/tdb-server)           |
 
 tectonicdb is a fast, highly compressed standalone database and streaming protocol for order book ticks.
 
