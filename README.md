@@ -1,6 +1,6 @@
 # tectonicdb
 
-[![Build Status](https://travis-ci.org/rickyhan/tectonicdb.svg?branch=master)](https://travis-ci.org/rickyhan/tectonicdb)
+[![Build Status](https://travis-ci.org/0b01/tectonicdb.svg?branch=master)](https://travis-ci.org/0b01/tectonicdb)
 [![Crates.io](https://img.shields.io/crates/v/tectonicdb.svg)](https://crates.io/crates/tectonicdb)
 
 tectonicdb is a fast, highly compressed standalone datastore and streaming protocol for order book ticks.
@@ -83,9 +83,9 @@ To config the Google Cloud Storage and Data Collection Backend integration, the 
 | `TECTONICDB_DTF_FOLDER`       | db           | Name of the directory in which DTF files will be stored                                                                                       |
 | `TECTONICDB_AUTOFLUSH`        | false        | If `true`, recorded orderbook data will automatically be flushed to DTF files every `interval` inserts.                                       |
 | `TECTONICDB_FLUSH_INTERVAL`   | 1000         | Every `interval` inserts, if `autoflush` is enabled, DTF files will be written from memory to disk.                                           |
-| `TECTONICDB_HIST_GRANULARITY` | 30           | Record history granularity level                                                                                                              |
+| `TECTONICDB_GRANULARITY`      | 30           | Record history granularity level                                                                                                              |
 | `TECTONICDB_LOG_FILE_NAME`    | tectonic.log | Filename of the log file for the database                                                                                                     |
-| `TECTONICDB_HIST_Q_CAPACITY`  | 300          |
+| `TECTONICDB_Q_CAPACITY`       | 300          | Capacity of the circular queue for recording history                                                                                          |
 
 ## Monitoring
 

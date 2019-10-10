@@ -16,6 +16,8 @@ conf/gstorage/conf.toml
 old/
 test.dtf
 *.pyc
+
+# default dtf_folder
 db/*
 
 test/zrx/
@@ -24,3 +26,4 @@ src/bin/gen_train_data
 test.npy
 plot.py
 bnc_neo_btc.dtf
+
