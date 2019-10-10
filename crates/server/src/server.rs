@@ -115,7 +115,7 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
         };
         match event {
             Event::Command { from, command } => {
-                state.command(&command, from).await.unwrap();
+                state.command(&command, from).await;
             },
             Event::History{} => {
                 state.record_history();

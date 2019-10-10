@@ -140,14 +140,17 @@ impl Book {
             dtf::file_format::encode(&fullfname, &self.name, &self.vec)
         };
         match result {
-            Ok(_) => info!("Successfully flushed."),
-            Err(e) => error!("Error flushing file. {}", e),
-        };
-
-        self.vec.clear();
-        self.in_memory = false;
-
-        Some(())
+            Ok(_) => {
+                info!("Successfully flushed.");
+                self.vec.clear();
+                self.in_memory = false;
+                Some(())
+            }
+            Err(e) => {
+                error!("Error flushing file. {}", e);
+                None
+            }
+        }
     }
 }
 
@@ -621,16 +624,12 @@ impl TectonicServer {
         }
     }
 
-    pub async fn command(&mut self, cmd: &Command, sock: Option<SocketAddr>) -> Result<()> {
+    pub async fn command(&mut self, cmd: &Command, sock: Option<SocketAddr>) {
         let ret = self.process_command(cmd, sock).await;
-        match sock {
-            Some(sock) => {
-                if self.connections.contains_key(&sock) {
-                    self.connections.get_mut(&sock).unwrap().outbound.send(ret).await.unwrap();
-                }
-                Ok(())
+        if let Some(sock) = sock {
+            if self.connections.contains_key(&sock) {
+                self.connections.get_mut(&sock).unwrap().outbound.send(ret).await.unwrap();
             }
-            None => Ok(())
         }
     }
 
