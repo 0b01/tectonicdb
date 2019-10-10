@@ -28,13 +28,20 @@ There are several ways to install tectonicdb.
 
 Binaries are available for [download](https://github.com/0b01/tectonicdb/releases). Make sure to put the path to the binary into your PATH. Currently only build is for Linux x86_64.
 
-1.  **GitHub**
+2.  **Crates**
+
+    cargo install tdb tdb-server
+
+This command will download `tdb` and `tdb-server` from crates.io and build locally.
+
+3.  **GitHub**
 
 To contribute you will need the copy of the source code on your local machine.
 
     git clone https://github.com/0b01/tectonicdb
     cd tectonicdb
     cargo build --release
+    cargo run --release tdb-server
 
 The binaries can be found under `target/` folder.
 
