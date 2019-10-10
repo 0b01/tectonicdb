@@ -23,5 +23,3 @@ pub mod storage;
 pub mod utils;
 /// DTF(Dense Tick Format) implmentation
 pub mod dtf;
-/// Rust tectonicdb client
-pub mod client;

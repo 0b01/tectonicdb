@@ -1,13 +1,9 @@
 mod error;
-#[allow(dead_code)]
-mod circular_queue;
 pub mod insert_command;
 mod cxn;
-mod pool;
 
 pub use self::error::TectonicError;
 pub use self::cxn::Cxn;
-pub use self::pool::CxnPool;
 pub use self::insert_command::InsertCommand;
 
 use std::env;
@@ -41,43 +37,3 @@ pub fn get_cxn() -> Cxn {
         _ => unreachable!(),
     }
 }
-
-pub fn get_cxn_pool() -> CxnPool {
-    let (tectonic_hostname, tectonic_port, capacity) = get_tectonic_conf_from_env();
-
-    match CxnPool::new(1, &tectonic_hostname, &tectonic_port, capacity) {
-        Ok(pool) => pool,
-        Err(TectonicError::ConnectionError) => {
-            panic!("Connection Pool cannot be established!");
-        },
-        _ => unreachable!(),
-    }
-}
-
-// #[cfg(test)]
-// mod tests {
-//     use dtf;
-//     use super::*;
-//     #[test]
-//     fn should_err() {
-//         let mut cxn = Cxn::new("localhost", "9001").unwrap();
-//         let res = cxn.cmd("USE test\n");
-//         assert!(res.is_err());
-//     }
-//
-//     #[test]
-//     fn should_cxnpool_work() {
-//         let mut cxn = CxnPool::new(10, "localhost", "9001", 100).unwrap();
-//         cxn.cmd("COUNT ALL\n").unwrap();
-//
-//         let res = cxn.insert(&InsertCommand::Add("default".to_owned(), Update {
-//             ts: 0,
-//             seq: 0,
-//             is_bid: false,
-//             is_trade: false,
-//             price: 0.,
-//             size: 0.,
-//         }));
-//         println!("{:?}", res);
-//     }
-// }
