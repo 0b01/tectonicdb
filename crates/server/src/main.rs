@@ -25,7 +25,6 @@ pub mod state;
 pub mod parser;
 pub mod handler;
 pub mod settings;
-pub mod subscription;
 pub mod prelude;
 
 use crate::prelude::*;
@@ -38,15 +37,15 @@ fn main() {
     let host = matches
         .value_of("host")
         .map(String::from)
-        .unwrap_or(key_or_default("TECTONICDB_HOST", "0.0.0.0"));
+        .unwrap_or_else(|| key_or_default("TECTONICDB_HOST", "0.0.0.0"));
     let port = matches
         .value_of("port")
         .map(String::from)
-        .unwrap_or(key_or_default("TECTONICDB_PORT", "9001"));
+        .unwrap_or_else(|| key_or_default("TECTONICDB_PORT", "9001"));
     let dtf_folder = matches
         .value_of("dtf_folder")
         .map(String::from)
-        .unwrap_or(key_or_default("TECTONICDB_DTF_FOLDER", "db"));
+        .unwrap_or_else(|| key_or_default("TECTONICDB_DTF_FOLDER", "db"));
     let verbosity = matches.occurrences_of("v") as u8;
     let autoflush = {
         let cli_setting: bool = matches.is_present("autoflush");
@@ -63,24 +62,24 @@ fn main() {
     let flush_interval = matches
         .value_of("flush_interval")
         .map(String::from)
-        .unwrap_or(key_or_default("TECTONICDB_FLUSH_INTERVAL", "1000"));
+        .unwrap_or_else(|| key_or_default("TECTONICDB_FLUSH_INTERVAL", "1000"));
     let granularity = matches
         .value_of("granularity")
         .map(String::from)
-        .unwrap_or(key_or_default("TECTONICDB_GRANULARITY", "30"));
+        .unwrap_or_else(|| key_or_default("TECTONICDB_GRANULARITY", "30"));
     let q_capacity = matches
         .value_of("q_capacity")
         .map(String::from)
-        .unwrap_or(key_or_default("TECTONICDB_Q_CAPACITY", "300"));
+        .unwrap_or_else(|| key_or_default("TECTONICDB_Q_CAPACITY", "300"));
 
     let log_file = matches
         .value_of("log_file")
         .map(String::from)
-        .unwrap_or(key_or_default("TECTONICDB_LOG_FILE_NAME", "tectonic.log"));
+        .unwrap_or_else(|| key_or_default("TECTONICDB_LOG_FILE_NAME", "tectonic.log"));
 
     let settings = settings::Settings {
-        autoflush: autoflush,
-        dtf_folder: dtf_folder.to_owned(),
+        autoflush,
+        dtf_folder,
         flush_interval: flush_interval.parse().unwrap(),
         granularity: granularity.parse().unwrap(),
         q_capacity: q_capacity.parse().unwrap(),

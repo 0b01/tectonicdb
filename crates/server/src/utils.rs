@@ -34,13 +34,14 @@ pub async fn init_dbs<'a>(state: &mut TectonicServer) {
                 }
             };
 
+            let settings = state.settings.clone();
             // if symbol is in vec_store, append to store
             // TODO: this is not accurate at all!
             // XXX: need to keep track of file names :(
             state.books
                 .entry(symbol.clone())
                 .and_modify(|e| if e.nominal_count < header_size {e.nominal_count += header_size})
-                .or_insert(Book::new(&symbol, state.settings.clone()));
+                .or_insert_with(|| Book::new(&symbol, settings));
         }
     }
 }

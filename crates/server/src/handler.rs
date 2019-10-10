@@ -139,7 +139,7 @@ pub fn parse_to_command(line: &str) -> Command {
             } else if line.starts_with("ADD ") || line.starts_with("INSERT ") {
                 let (up, dbname) = if line.contains(" INTO ") {
                     let (up, dbname) = parser::parse_add_into(&line);
-                    (up, dbname.map(|a| a.into()))
+                    (up, dbname)
                 } else {
                     let data_string: &str = &line[3..];
                     match parser::parse_line(&data_string) {
@@ -148,15 +148,13 @@ pub fn parse_to_command(line: &str) -> Command {
                     }
                 };
                 Insert(up, dbname)
-            } else
-            // get
-            if line.starts_with("GET ") {
+            } else if line.starts_with("GET ") {
                 // how many records we want...
                 let count = if line.starts_with("GET ALL ") {
                     ReqCount::All
                 } else {
-                    let count: &str = &line.clone()[4..];
-                    let count: Vec<&str> = count.split(" ").collect();
+                    let count: &str = &line[4..];
+                    let count: Vec<&str> = count.split(' ').collect();
                     let count = count[0].parse::<u32>().unwrap_or(1);
                     ReqCount::Count(count)
                 };
@@ -166,9 +164,10 @@ pub fn parse_to_command(line: &str) -> Command {
                 // test if is Json
                 let format = if line.contains(" AS JSON") {
                     GetFormat::Json
+                } else if line.contains(" AS CSV") {
+                    GetFormat::Csv
                 } else {
-                    if line.contains(" AS CSV") { GetFormat::Csv }
-                    else { GetFormat::Dtf }
+                    GetFormat::Dtf
                 };
                 let loc = if line.contains(" IN MEM") { ReadLocation::Mem } else { ReadLocation::Fs };
 

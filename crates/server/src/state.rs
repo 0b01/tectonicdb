@@ -91,15 +91,17 @@ impl Book {
             //     return;
             // }
             let ups = dtf::file_format::decode(&fname, None);
-            if ups.is_err() {
-                error!("Unable to decode file during load!");
-                return;
-            } else {
-                let mut ups = ups.unwrap();
-                // let size = ups.len() as u64;
-                self.vec.append(&mut ups);
-                // wtr.vec_store.insert(self.name.to_owned(), (ups, size));
-                self.in_memory = true;
+            match ups {
+                Ok(mut ups) => {
+                    // let size = ups.len() as u64;
+                    self.vec.append(&mut ups);
+                    // wtr.vec_store.insert(self.name.to_owned(), (ups, size));
+                    self.in_memory = true;
+                }
+                Err(_) => {
+                    error!("Unable to decode file during load!");
+                    return;
+                }
             }
         }
     }
@@ -302,7 +304,7 @@ impl TectonicServer {
             }
             Get(cnt, fmt, rng, loc) =>
                 self.get(cnt, fmt, *rng, loc, sock)
-                    .unwrap_or(ReturnType::error("Not enough items to return")),
+                    .unwrap_or_else(|| ReturnType::error("Not enough items to return")),
             Unknown => ReturnType::error("Unknown command."),
         }
     }
@@ -328,8 +330,6 @@ impl TectonicServer {
             }
             self.history.get_mut(name).unwrap().push((current_t, *size));
         }
-
-        drop(self);
 
         info!("Current total count: {}", total);
     }
@@ -502,7 +502,7 @@ impl TectonicServer {
     pub fn sub(&mut self, book_name: &str, sock: &SocketAddr) -> Option<()> {
         let outbound = self.conn_mut(sock)?.outbound.clone();
         let book_sub = self.subscriptions.entry(book_name.to_owned())
-            .or_insert(Vec::new());
+            .or_insert_with(Vec::new);
         book_sub.push(outbound);
 
         Some(())
@@ -579,7 +579,7 @@ impl TectonicServer {
                 .filter(|up| up.ts < max_ts && up.ts > min_ts)
                 .map(|up| up.to_owned())
                 .collect::<Vec<_>>()
-        }.unwrap_or(book.vec.to_owned());
+        }.unwrap_or_else(|| book.vec.to_owned());
 
         // if only requested items in memory
         if let ReadLocation::Mem = loc {
@@ -587,7 +587,7 @@ impl TectonicServer {
         }
 
         // if count <= len, return
-        if let &ReqCount::Count(c) = count {
+        if let ReqCount::Count(c) = *count {
             if (c as usize) <= acc.len() {
                 return into_format(&acc[..c as usize], format);
             }
@@ -617,11 +617,11 @@ impl TectonicServer {
         match count {
             &ReqCount::Count(c) => {
                 if result.len() >= c as usize {
-                    return into_format(&result[..(c as usize - 1)], &format);
+                    into_format(&result[..(c as usize - 1)], &format)
                 } else {
-                    return Some(ReturnType::Error(
+                    Some(ReturnType::Error(
                         format!("Requested {} but only have {}.", c, result.len()).into(),
-                    ));
+                    ))
                 }
             }
             ReqCount::All => into_format(&result, &format),

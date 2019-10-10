@@ -24,9 +24,7 @@ pub fn parse_line(string: &str) -> Option<Update> {
     for ch in string.chars() {
         if ch == '.' && count == 0 {
             continue;
-        } else if ch == '.' && count != 0 {
-            buf.push(ch);
-        } else if ch.is_digit(10) {
+        } else if (ch == '.' && count != 0) || ch.is_digit(10) {
             buf.push(ch);
         } else if ch == 't' || ch == 'f' {
             most_current_bool = ch == 't';
@@ -105,14 +103,14 @@ pub fn parse_add_into(string: &str) -> (Option<Update>, Option<String>) {
 pub fn parse_get_range(string: &str) -> Option<(u64, u64)> {
     if string.contains(" FROM ") {
         // range to query
-        let from_epoch = string.clone()[(string.find(" FROM ").unwrap() + 6)..]
-            .split(" ")
+        let from_epoch = &string[(string.find(" FROM ").unwrap() + 6)..]
+            .split(' ')
             .collect::<Vec<&str>>()
             [0]
             .parse::<u64>()
             .unwrap() * 1000;
-        let to_epoch = string.clone()[(string.find(" TO ").unwrap() + 4)..]
-            .split(" ")
+        let to_epoch = &string[(string.find(" TO ").unwrap() + 4)..]
+            .split(' ')
             .collect::<Vec<&str>>()
             [0]
             .parse::<u64>()

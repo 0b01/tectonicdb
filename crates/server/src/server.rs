@@ -63,7 +63,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
     let (_shutdown_sender, shutdown_receiver) = mpsc::unbounded::<Void>();
     broker
         .send(Event::NewPeer {
-            sock: stream.peer_addr()?.clone(),
+            sock: stream.peer_addr()?,
             stream: Arc::clone(&stream),
             shutdown: shutdown_receiver,
         })
@@ -72,7 +72,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
 
     while let Some(line) = lines.next().await {
         let command = crate::handler::parse_to_command(&line?);
-        let from = stream.peer_addr()?.clone();
+        let from = stream.peer_addr()?;
         broker
             .send(Event::Command{from, command})
             .await
