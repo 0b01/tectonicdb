@@ -1,7 +1,12 @@
 [package]
 name = "tdb-server"
-version = "0.3.0"
+authors = ["Ricky Han <tectonic@rickyhan.com>"]
+description = "tectonicdb server"
+keywords = ["finance", "datastore", "database", "financial", "orderbook"]
+repository = "https://github.com/0b01/tectonicdb"
+license = "MIT"
 edition = "2018"
+version = "0.3.0"
 
 [dependencies]
 libtectonic = { path = "../libtectonic", version = "0.3.0" }

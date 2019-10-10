@@ -2,7 +2,7 @@
 
 Tectonic communicates over TCP with a simple scheme.
 
-This is an example of API implementation [in Python](https://github.com/rickyhan/tectonicdb/blob/master/cli/python/tectonic.py):
+This is an example of API implementation [in Python](https://github.com/0b01/tectonicdb/blob/master/cli/python/tectonic.py):
 
 ```python
 def __init__(self, host="localhost", port=9001):
