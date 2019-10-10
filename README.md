@@ -3,19 +3,17 @@
 [![Build Status](https://travis-ci.org/0b01/tectonicdb.svg?branch=master)](https://travis-ci.org/0b01/tectonicdb)
 [![Crates.io](https://img.shields.io/crates/v/tectonicdb.svg)](https://crates.io/crates/tectonicdb)
 
-tectonicdb is a fast, highly compressed standalone datastore and streaming protocol for order book ticks.
+tectonicdb is a fast, highly compressed standalone database and streaming protocol for order book ticks.
 
 ## Why
 
-This software is motivated by reducing expenditure. 1TB stored on Google Cloud PostgreSQL was too expensive and too slow. Since financial data is usually read and stored in bulk, it is possible to convert into a more efficient format.
-
-* Uses a simple binary file format: Dense Tick Format(DTF)
+* Uses a simple and efficient binary file format: Dense Tick Format(DTF)
 
 * Stores order book tick data tuple of shape: `(timestamp, seq, is_trade, is_bid, price, size)`.
 
 * Sorted by timestamp + seq
 
-* 12 bytes per row
+* 12 bytes per orderbook event
 
 ## Installation
 
@@ -23,46 +21,34 @@ There are several ways to install tectonicdb.
 
 1.  **Binaries**
 
-Binaries are available for [download](https://github.com/rickyhan/tectonic/releases). Make sure to put the path to the binary into your PATH. Currently only build is for Linux x86_64.
+Binaries are available for [download](https://github.com/0b01/tectonicdb/releases). Make sure to put the path to the binary into your PATH. Currently only build is for Linux x86_64.
 
-2.  **Crates.io**
-
-Requires Rust. Once you have Rust installed, simply run:
-
-    cargo install tectonicdb
-
-This will download and compile `tectonic-server` and `tectonic-cli`.
-
-3.  **GitHub**
+1.  **GitHub**
 
 To contribute you will need the copy of the source code on your local machine.
 
-    git clone https://github.com/rickyhan/tectonic
-    cd tectonic
-    cargo build --lib
-    cargo build --bin tectonic-server
-    cargo build --bin tectonic-cli
+    git clone https://github.com/0b01/tectonicdb
+    cd tectonicdb
+    cargo build --release
 
-The binaries can be found under `target/release/debug` folder.
+The binaries can be found under `target/` folder.
 
 ## How to use
 
 It's very easy to setup.
 
 ```
-chmod +x tectonic-server
-./tectonic-server --help
+chmod +x tdb-server
+./tdb-server --help
 ```
 
 For example:
 
 ```bash
-./tectonic-server -vv -a -i 10000
+./tdb-server -vv -a -i 10000
 # run the server on INFO verbosity
-# turn on autoflush and flush every 10000
+# turn on autoflush for every 10000 inserts per orderbook
 ```
-
-This sets log verbosity to max and maximum connection to 1000.
 
 ### Configuration
 
@@ -84,28 +70,69 @@ To config the Google Cloud Storage and Data Collection Backend integration, the 
 | `TECTONICDB_AUTOFLUSH`        | false        | If `true`, recorded orderbook data will automatically be flushed to DTF files every `interval` inserts.                                       |
 | `TECTONICDB_FLUSH_INTERVAL`   | 1000         | Every `interval` inserts, if `autoflush` is enabled, DTF files will be written from memory to disk.                                           |
 | `TECTONICDB_GRANULARITY`      | 30           | Record history granularity level                                                                                                              |
-| `TECTONICDB_LOG_FILE_NAME`    | tectonic.log | Filename of the log file for the database                                                                                                     |
+| `TECTONICDB_LOG_FILE_NAME`    | tdb.log      | Filename of the log file for the database                                                                                                     |
 | `TECTONICDB_Q_CAPACITY`       | 300          | Capacity of the circular queue for recording history                                                                                          |
+
+## Client API
+
+| Command | Description |
+| :--- | :--- |
+| HELP | Prints help |
+| PING | Responds PONG |
+| INFO | Returns info about table schemas |
+| PERF | Returns the answercount of items over time |
+| USE \[orderbook\] | Switch the current orderbook |
+| CREATE \[orderbook\] | Create orderbook |
+| GET \[n\] FROM \[orderbook\] | Returns items |
+| GET \[n\] | Returns n items from current orderbook |
+| COUNT | Count of items in current orderbook |
+| COUNT ALL | Returns total count from all orderbooks |
+| CLEAR | Deletes everything in current orderbook |
+| CLEAR ALL | Drops everything in memory |
+| FLUSH | Flush current orderbook to "Howdisk can|
+| FLUSHALL | Flush everything from memory to disk |
+| SUBSCRIBE \[orderbook\] | Subscribe to updates from orderbook |
+| EXISTS \[orderbook\] | Checks if orderbook exists |
+| SUBSCRIBE \[orderbook\] | Subscribe to orderbook |
+
+### Data commands
+
+```
+USE [dbname]
+ADD [ts], [seq], [is_trade], [is_bid], [price], [size];
+INSERT 1505177459.685, 139010, t, f, 0.0703620, 7.65064240; INTO dbname
+```
 
 ## Monitoring
 
-There is a history granularity option that sets the interval (in second) to periodically record item count for each data store. Then a client can call `PERF` command and retreive historical item counts in JSON.
+There is a history granularity option that sets the interval (in second) to periodically record item count for each orderbook, which then can be retrieved by issuing a `PERF` command.
 
 ## Logging
 
-Log file defaults to `tectonic.log`.
+Log file defaults to `tdb.log`.
 
 ## Testing
 
 ```bash
 export RUST_TEST_THREADS=1
+cargo test
 ```
 
-Tests must be run sequentially because of file dependencies issues: some tests generate dtf file for others.
+Tests must be run sequentially because some tests depend on dtf files that other tests generate.
+
+## Benchmark
+
+tdb client comes with a benchmark mode. This command inserts 1M records into the tdb.
+
+```bash
+tdb -b 1000000
+```
+
+Should be around 20000 inserts per second.
 
 ## Using dtf files
 
-Tectonic comes with a commandline tool `dtfcat` to inspect the file metadata and all the stored rows into either JSON or CSV.
+Tectonic comes with a commandline tool `dtfcat` to inspect the file metadata and all the stored events into either JSON or CSV.
 
 Options:
 
@@ -155,6 +182,6 @@ Language bindings:
 
 * [x] Query by timestamp
 
-# Note
+# Changelog
 
-This software is release under GNU General Public License which means you are **required** to contribute back and disclose source.
+* 0.3.0: Refactor to async

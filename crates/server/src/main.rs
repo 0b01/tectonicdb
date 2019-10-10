@@ -82,7 +82,7 @@ fn main() {
     let log_file = matches
         .value_of("log_file")
         .map(String::from)
-        .unwrap_or_else(|| key_or_default("TECTONICDB_LOG_FILE_NAME", "tectonic.log"));
+        .unwrap_or_else(|| key_or_default("TECTONICDB_LOG_FILE_NAME", "tdb.log"));
 
     let settings = Arc::new(settings::Settings {
         autoflush,
