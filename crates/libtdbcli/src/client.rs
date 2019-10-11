@@ -137,7 +137,7 @@ impl TectonicClient {
     }
 
     pub fn insert(&mut self, book_name: Option<String>, update: &Update) -> Result<bool, TectonicError> {
-        let buf = libtectonic::utils::encode_insert_into(book_name, update)?;
+        let buf = libtectonic::utils::encode_insert_into(&book_name, update)?;
         self.stream.write().unwrap().cmd_bytes(&buf)
     }
 }

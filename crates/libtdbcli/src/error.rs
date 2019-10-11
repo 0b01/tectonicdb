@@ -15,8 +15,8 @@ impl error::Error for TectonicError {
         match *self {
             ServerError(ref msg) => &msg,
             DBNotFoundError(ref dbname) => &dbname,
-            ConnectionError => "disconnection from tectonicdb",
-            SerialError => "Unable to serialize/deserialize",
+            ConnectionError => "Error connecting to tectonicdb",
+            SerialError => "Error serializing/deserializing",
         }
     }
 }

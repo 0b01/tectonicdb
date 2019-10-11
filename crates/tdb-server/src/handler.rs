@@ -98,8 +98,11 @@ pub fn parse_to_command(line: &[u8]) -> Command {
             .map(|(up, book_name)| Command::Insert(up, book_name))
             .unwrap_or(Command::BadFormat);
     }
-    let line = std::str::from_utf8(&line).unwrap();
-    let line = &line[..(line.len()-1)];
+
+    let mut line = std::str::from_utf8(&line).unwrap();
+    if line.ends_with('\n') {
+        line = &line[..(line.len()-1)];
+    }
 
     match line.borrow() {
         "" => Noop,
@@ -224,4 +227,18 @@ mod tests {
         assert_eq!(ReturnType::String("".into()), resp);
     }
 
+    #[test]
+    fn should_raw_insert_ok() {
+        let (mut state, addr) = gen_state();
+        let resp = task::block_on(state.process_command(&parse_to_command(b"CREATE bnc_btc_eth"), addr));
+        assert_eq!(ReturnType::String("Created DB `bnc_btc_eth`.".into()), resp);
+
+        // "ADD [update] INTO bnc_btc_eth"
+        let book_name = Some("bnc_btc_eth".to_owned());
+        let update = Update { ts: 1513922718770, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 };
+        let cmd = libtectonic::utils::encode_insert_into(&book_name, &update).unwrap();
+
+        let resp = task::block_on(state.process_command(&parse_to_command(&cmd), addr));
+        assert_eq!(ReturnType::String("".into()), resp);
+    }
 }

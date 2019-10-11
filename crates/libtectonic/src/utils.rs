@@ -2,7 +2,7 @@ extern crate chrono;
 use crate::dtf::update::Update;
 use self::chrono::{ NaiveDateTime, DateTime, Utc };
 use byteorder::{BigEndian, ReadBytesExt};
-use std::io::{Error, Read, Write, Cursor};
+use std::io::{Error, Read, Seek, SeekFrom, Write, Cursor};
 
 /// fill digits 123 => 12300 etc..
 /// 151044287500 => 1510442875000
@@ -45,8 +45,9 @@ pub fn epoch_to_human(ts: u64) -> String {
 /// client inserts an update into server
 /// binary form of
 ///     INSERT [update] INTO [book]
-pub fn encode_insert_into(book_name: Option<String>, update: &Update) -> Result<Vec<u8>, Error> {
+pub fn encode_insert_into(book_name: &Option<String>, update: &Update) -> Result<Vec<u8>, Error> {
     let mut buf = Vec::new();
+    buf.write(b"raw")?;
     let len = match &book_name {
         None => 0u64,
         Some(book_name) => book_name.len() as u64
@@ -62,18 +63,19 @@ pub fn encode_insert_into(book_name: Option<String>, update: &Update) -> Result<
 ///  the inverse of encode_insert_into
 pub fn decode_insert_into(buf: &[u8]) -> Option<(Option<Update>, Option<String>)> {
     let mut rdr = Cursor::new(buf);
-
+    rdr.seek(SeekFrom::Current(3)).ok()?;
     let len = rdr.read_u64::<BigEndian>().ok()?;
-    let mut book_name_buf = Vec::new();
-
     let book_name = if len > 0 {
-        rdr.by_ref().take(len).read(&mut book_name_buf).ok()?;
+        let mut book_name_buf = vec![0; len as usize];
+        rdr.read_exact(&mut book_name_buf).ok()?;
         Some(std::str::from_utf8(&book_name_buf).unwrap().to_owned())
     } else {
         None
     };
-    let update = Update::from_raw(&rdr.into_inner()).ok();
 
+    let pos = rdr.position() as usize;
+    let buf = rdr.into_inner();
+    let update = Update::from_raw(&buf[pos..]).ok();
     Some((update, book_name))
 }
 
@@ -91,5 +93,15 @@ mod tests {
     fn test_stringify_epoch() {
         let epoch = 1518488928;
         assert_eq!("2018-02-13 02:28:48 UTC", epoch_to_human(epoch));
+    }
+
+    #[test]
+    fn test_encode_decode_insert_into() {
+        let book_name = Some("bnc_btc_eth".to_owned());
+        let update = Update { ts: 1513922718770, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 };
+        let encoded = encode_insert_into(&book_name, &update).unwrap();
+        let (decoded_update, decoded_book_name) = decode_insert_into(&encoded).unwrap();
+        assert_eq!(&decoded_book_name, &book_name);
+        assert_eq!(&decoded_update, &Some(update));
     }
 }

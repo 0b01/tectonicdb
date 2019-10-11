@@ -8,6 +8,7 @@ use std::io::{stdin, stdout, Write};
 use libtdbcli::client::TectonicClient;
 use clap::{App, Arg};
 use std::error::Error;
+use libtectonic::dtf::update::Update;
 
 fn init_logger() {
     fern::Dispatch::new()
@@ -94,10 +95,11 @@ fn benchmark(cxn: &mut TectonicClient, times: usize) {
     let mut t = std::time::SystemTime::now();
 
     let mut acc = vec![];
-    let _create = cxn.cmd("CREATE bnc_gas_btc\n");
+    cxn.cmd("CREATE bnc_gas_btc\n").unwrap();
     for _ in 1..times {
-        let res = cxn.cmd(
-            "ADD 1513922718770, 0, t, f, 0.001939, 22.85; INTO bnc_gas_btc\n",
+        let res = cxn.insert(
+            Some("bnc_gas_btc".to_owned()),
+            &Update { ts: 1513922718770, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 }
         );
         assert!(res.is_ok());
         acc.push(t.elapsed().unwrap().subsec_nanos() as usize);
