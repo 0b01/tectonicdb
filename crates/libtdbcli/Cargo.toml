@@ -12,3 +12,4 @@ version = "0.3.0"
 libtectonic = { path = "../libtectonic", version = "0.3.0" }
 byteorder = "1.3.2"
 log = "0.4.8"
+bufstream = "0.1.4"

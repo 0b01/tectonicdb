@@ -32,7 +32,7 @@ fn get_tectonic_conf_from_env() -> (String, String) {
 pub fn client_from_env() -> TectonicClient {
     let (tectonic_hostname, tectonic_port) = get_tectonic_conf_from_env();
     match TectonicClient::new(&tectonic_hostname, &tectonic_port) {
-        Ok(cxn) => cxn,
+        Ok(cli) => cli,
         Err(TectonicError::ConnectionError) => {
             panic!("DB cannot be connected!");
         },

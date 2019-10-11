@@ -333,7 +333,7 @@ impl TectonicServer {
     /// {
     ///     "meta":
     ///     {
-    ///         "cxns": 10 // current number of connected clients
+    ///         "clis": 10 // current number of connected clients
     ///     },
     ///     "stores":
     ///     {
@@ -361,7 +361,8 @@ impl TectonicServer {
             .collect();
         let metadata = format!(
             r#"{{
-    "cxns": {},
+    "clis": {},
+    "subs": {:?},
     "ts": {},
     "autoflush_enabled": {},
     "autoflush_interval": {},
@@ -370,6 +371,7 @@ impl TectonicServer {
     "total_count": {}
   }}"#,
             self.connections.len(),
+            self.subscriptions.len(),
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("Time went backwards")

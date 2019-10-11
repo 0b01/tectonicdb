@@ -72,7 +72,7 @@ fn main() {
     let host = matches.value_of("host").unwrap_or("0.0.0.0");
     let port = matches.value_of("port").unwrap_or("9001");
 
-    let mut cxn = TectonicClient::new(host, port).unwrap();
+    let mut cli = TectonicClient::new(host, port).unwrap();
 
     if matches.is_present("b") {
         let times = matches
@@ -80,25 +80,25 @@ fn main() {
             .unwrap_or("10")
             .parse::<usize>()
             .unwrap_or(10) + 1;
-        benchmark(&mut cxn, times);
+        benchmark(cli, times);
     } else if matches.is_present("s") {
         let dbname = matches.value_of("s").unwrap_or("");
-        subscribe(&mut cxn, dbname);
+        subscribe(&mut cli, dbname);
     } else {
-        handle_query(&mut cxn);
+        handle_query(&mut cli);
     }
 }
 
 
-fn benchmark(cxn: &mut TectonicClient, times: usize) {
+fn benchmark(mut cli: TectonicClient, times: usize) {
 
     let mut t = std::time::SystemTime::now();
 
     let mut acc = vec![];
-    let create = cxn.cmd("CREATE benchmark\n");
+    let create = cli.cmd("CREATE benchmark\n");
     println!("{:?}", create);
     for _ in 1..times {
-        let res = cxn.insert(
+        let res = cli.insert(
             Some("benchmark".to_owned()),
             &Update { ts: 1513922718770, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 }
         );
@@ -109,7 +109,7 @@ fn benchmark(cxn: &mut TectonicClient, times: usize) {
     }
 
     ::std::thread::sleep(std::time::Duration::new(1, 0));
-    cxn.shutdown();
+    cli.shutdown();
 
     let avg_ns = acc.iter().fold(0, |s, i| s + i) as f32 / acc.len() as f32;
     println!("AVG ns/insert: {}", avg_ns);
@@ -117,14 +117,14 @@ fn benchmark(cxn: &mut TectonicClient, times: usize) {
 }
 
 
-fn handle_query(cxn: &mut TectonicClient) {
+fn handle_query(cli: &mut TectonicClient) {
     loop {
         print!("--> ");
         stdout().flush().ok().expect("Could not flush stdout"); // manually flush stdout
 
         let mut cmd = String::new();
         stdin().read_line(&mut cmd).unwrap();
-        match cxn.cmd(&cmd) {
+        match cli.cmd(&cmd) {
             Err(e) => {
                 println!("{}", e.description());
             }
@@ -135,12 +135,7 @@ fn handle_query(cxn: &mut TectonicClient) {
     }
 }
 
-fn subscribe(cxn: &mut TectonicClient, dbname: &str) {
-    let _ = cxn.subscribe(dbname);
-    let rx = cxn.subscription.clone();
-    let rx = rx.unwrap();
-
-    for msg in rx.lock().unwrap().recv() {
-        println!("{:?}", msg);
-    }
+fn subscribe(cli: &mut TectonicClient, dbname: &str) {
+    println!("Subscribing to {}", dbname);
+    cli.subscribe(dbname).unwrap()
 }
