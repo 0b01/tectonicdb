@@ -75,8 +75,8 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
 
     let (_shutdown_sender, shutdown_receiver) = mpsc::unbounded::<Void>();
     broker
-        .send(Event::NewPeer {
-            sock: stream.peer_addr()?,
+        .send(Event::NewConnection {
+            addr: stream.peer_addr()?,
             stream: Arc::clone(&stream),
             shutdown: shutdown_receiver,
         })
@@ -120,18 +120,18 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
             Event::History{} => {
                 state.record_history();
             }
-            Event::NewPeer {
-                sock,
+            Event::NewConnection {
+                addr,
                 stream,
                 shutdown,
             } => {
                 let (client_sender, mut client_receiver) = mpsc::unbounded();
-                if state.new_connection(client_sender, sock) {
+                if state.new_connection(client_sender, addr) {
                     let mut disconnect_sender = disconnect_sender.clone();
                     spawn_and_log_error(async move {
                         let res = connection_writer_loop(&mut client_receiver, stream, shutdown).await;
                         disconnect_sender
-                            .send((sock, client_receiver))
+                            .send((addr, client_receiver))
                             .await
                             .unwrap();
                         res

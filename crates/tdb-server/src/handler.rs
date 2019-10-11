@@ -75,8 +75,8 @@ pub enum Command {
 
 #[derive(Debug)]
 pub enum Event {
-    NewPeer {
-        sock: SocketAddr,
+    NewConnection {
+        addr: SocketAddr,
         stream: Arc<TcpStream>,
         shutdown: Receiver<Void>,
     },
@@ -178,27 +178,27 @@ mod tests {
     fn gen_state() -> (TectonicServer, Option<SocketAddr>) {
         let settings: Settings = Default::default();
         let mut global = TectonicServer::new(Arc::new(settings));
-        let sock = SocketAddr::new(
+        let addr = SocketAddr::new(
             net::IpAddr::V4(net::Ipv4Addr::new(127, 0, 0, 1)),
             1);
         let (client_sender, _client_receiver) = mpsc::unbounded();
-        global.new_connection(client_sender, sock);
-        (global, Some(sock))
+        global.new_connection(client_sender, addr);
+        (global, Some(addr))
     }
 
     #[test]
     fn should_return_pong() {
-        let (mut state, sock) = gen_state();
-        let resp = task::block_on(state.process_command(&Command::Ping, sock));
+        let (mut state, addr) = gen_state();
+        let resp = task::block_on(state.process_command(&Command::Ping, addr));
         assert_eq!(ReturnType::String("PONG".into()), resp);
     }
 
     #[test]
     fn should_not_insert_into_empty() {
-        let (mut state, sock) = gen_state();
+        let (mut state, addr) = gen_state();
         let resp = task::block_on(state.process_command(
             &parse_to_command("ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
-            sock
+            addr
         ));
         assert_eq!(
             ReturnType::Error("DB bnc_btc_eth not found.".into()),
@@ -208,12 +208,12 @@ mod tests {
 
     #[test]
     fn should_insert_ok() {
-        let (mut state, sock) = gen_state();
-        let resp = task::block_on(state.process_command(&parse_to_command("CREATE bnc_btc_eth"), sock));
+        let (mut state, addr) = gen_state();
+        let resp = task::block_on(state.process_command(&parse_to_command("CREATE bnc_btc_eth"), addr));
         assert_eq!(ReturnType::String("Created DB `bnc_btc_eth`.".into()), resp);
         let resp = task::block_on(state.process_command(
             &parse_to_command( "ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
-            sock
+            addr
         ));
         assert_eq!(ReturnType::String("".into()), resp);
     }

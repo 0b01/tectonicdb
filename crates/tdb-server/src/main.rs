@@ -101,8 +101,7 @@ fn main() {
          _/_/    _/_/_/    _/_/_/      _/_/    _/_/    _/    _/  _/    _/_/_/
     "##);
 
-    let fut =  server::run_server(&host, &port, settings);
-    task::block_on(fut).unwrap();
+    task::block_on(server::run_server(&host, &port, settings)).unwrap();
 }
 
 fn prepare_logger(verbosity: u8, log_file: &str) {
