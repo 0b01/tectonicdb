@@ -127,22 +127,17 @@ impl TectonicClient {
         Ok(())
     }
 
-    pub fn insert(&mut self, book_name: Option<String>, update: &Update) -> Result<bool, TectonicError> {
-        // let is_trade = if update.is_trade {"t"} else {"f"};
-        // let is_bid = if update.is_bid {"t"} else {"f"};
-        // let cmdstr = format!("ADD {}, {}, {}, {}, {}, {}; INTO {}\n",
-        //                 update.ts, update.seq, is_trade, is_bid, update.price, update.size, book_name);
-        let mut buf = Vec::new();
-        let len = match &book_name {
-            None => 0u64,
-            Some(book_name) => book_name.len() as u64
-        };
-        buf.write(&len.to_be_bytes())?;
-        if let Some(book_name) = book_name {
-            buf.write(book_name.as_bytes())?;
-        }
-        buf.write(&update.serialize_raw())?;
-        self.stream.write().unwrap().cmd_bytes(&buf)
+    #[deprecated]
+    pub fn insert_text(&mut self, book_name: String, update: &Update) -> Result<String, TectonicError> {
+        let is_trade = if update.is_trade {"t"} else {"f"};
+        let is_bid = if update.is_bid {"t"} else {"f"};
+        let cmdstr = format!("ADD {}, {}, {}, {}, {}, {}; INTO {}\n",
+                        update.ts, update.seq, is_trade, is_bid, update.price, update.size, book_name);
+        self.cmd(&cmdstr)
     }
 
+    pub fn insert(&mut self, book_name: Option<String>, update: &Update) -> Result<bool, TectonicError> {
+        let buf = libtectonic::utils::encode_insert_into(book_name, update)?;
+        self.stream.write().unwrap().cmd_bytes(&buf)
+    }
 }

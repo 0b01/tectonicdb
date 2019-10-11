@@ -1,24 +1,6 @@
 use libtectonic::utils;
 use libtectonic::dtf::update::Update;
-use byteorder::{ReadBytesExt, BigEndian};
-use std::io::{Read, Cursor};
 
-pub fn parse_raw_line(buf: &[u8]) -> Option<(Option<Update>, Option<String>)> {
-    let mut rdr = Cursor::new(buf);
-
-    let len = rdr.read_u64::<BigEndian>().ok()?;
-    let mut book_name_buf = Vec::new();
-
-    let book_name = if len > 0 {
-        rdr.by_ref().take(len).read(&mut book_name_buf).ok()?;
-        Some(std::str::from_utf8(&book_name_buf).unwrap().to_owned())
-    } else {
-        None
-    };
-    let update = Update::from_raw(&rdr.into_inner()).ok();
-
-    Some((update, book_name))
-}
 
 /// Parses a line that looks like
 ///

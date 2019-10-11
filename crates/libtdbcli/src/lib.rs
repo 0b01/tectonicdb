@@ -16,13 +16,11 @@ fn key_or_default(key: &str, default: &str) -> String {
     }
 }
 
-fn get_tectonic_conf_from_env() -> (String, String, usize) {
+fn get_tectonic_conf_from_env() -> (String, String) {
     let tectonic_hostname: String = key_or_default("TECTONICDB_HOSTNAME", "localhost");
     let tectonic_port: String     = key_or_default("TECTONICDB_PORT", "9001");
-    let q_capacity: usize         = key_or_default("QUEUE_CAPACITY", "70000000")
-                                    .parse().unwrap(); // 70mm
 
-    (tectonic_hostname, tectonic_port, q_capacity)
+    (tectonic_hostname, tectonic_port)
 }
 
 /// Creates a new connection to TectonicDB, using configuration values from environment
@@ -30,10 +28,9 @@ fn get_tectonic_conf_from_env() -> (String, String, usize) {
 ///
 /// "TECTONICDB_HOSTNAME", "localhost");
 /// "TECTONICDB_PORT", "9001");
-/// "QUEUE_CAPACITY", "70000000")
 ///
 pub fn client_from_env() -> TectonicClient {
-    let (tectonic_hostname, tectonic_port, _capacity) = get_tectonic_conf_from_env();
+    let (tectonic_hostname, tectonic_port) = get_tectonic_conf_from_env();
     match TectonicClient::new(&tectonic_hostname, &tectonic_port) {
         Ok(cxn) => cxn,
         Err(TectonicError::ConnectionError) => {

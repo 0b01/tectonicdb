@@ -90,17 +90,13 @@ pub enum Event {
     }
 }
 
-fn parse_raw(line: &[u8]) -> Option<Command> {
-    let (up, book_name) = crate::parser::parse_raw_line(line)?;
-
-    Some(Command::Insert(up, book_name))
-}
-
 /// sometimes returns string, sometimes bytes, error string
 pub fn parse_to_command(line: &[u8]) -> Command {
     use self::Command::*;
     if line.len() > 3 && &line[0..3] == b"raw" {
-        return parse_raw(line).unwrap_or(Command::BadFormat);
+        return libtectonic::utils::decode_insert_into(line)
+            .map(|(up, book_name)| Command::Insert(up, book_name))
+            .unwrap_or(Command::BadFormat);
     }
     let line = std::str::from_utf8(&line).unwrap();
     let line = &line[..(line.len()-1)];
@@ -207,7 +203,7 @@ mod tests {
     fn should_not_insert_into_empty() {
         let (mut state, addr) = gen_state();
         let resp = task::block_on(state.process_command(
-            &parse_to_command("ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
+            &parse_to_command(b"ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
             addr
         ));
         assert_eq!(
@@ -219,10 +215,10 @@ mod tests {
     #[test]
     fn should_insert_ok() {
         let (mut state, addr) = gen_state();
-        let resp = task::block_on(state.process_command(&parse_to_command("CREATE bnc_btc_eth"), addr));
+        let resp = task::block_on(state.process_command(&parse_to_command(b"CREATE bnc_btc_eth"), addr));
         assert_eq!(ReturnType::String("Created DB `bnc_btc_eth`.".into()), resp);
         let resp = task::block_on(state.process_command(
-            &parse_to_command( "ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
+            &parse_to_command(b"ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
             addr
         ));
         assert_eq!(ReturnType::String("".into()), resp);
