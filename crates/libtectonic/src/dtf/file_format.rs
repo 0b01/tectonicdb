@@ -377,8 +377,7 @@ pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result
                 "SKIPPING n ROWS",
             );
         } else {
-            println!("{}, {}, {}, {}", min_ts, max_ts, current_ref_ts, next_ref_ts);
-            panic!("Should have covered all the cases.");
+            panic!("{}, {}, {}, {}..... Should have covered all the cases.", min_ts, max_ts, current_ref_ts, next_ref_ts);
         }
     }
 }

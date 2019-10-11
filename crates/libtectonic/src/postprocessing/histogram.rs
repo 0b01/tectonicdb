@@ -93,7 +93,7 @@ impl Histogram {
 fn reject_outliers(prices: &[Price], m: f64) -> Vec<Price> {
     let median = (*prices).median();
 
-    // println!("len before: {}", prices.len());
+    // info!("len before: {}", prices.len());
     // let m = 2.;
     let d = prices
         .iter()
@@ -113,7 +113,7 @@ fn reject_outliers(prices: &[Price], m: f64) -> Vec<Price> {
         .map(|(_i, &p)| p)
         .collect::<Vec<f64>>();
 
-    // println!("len after: {}", filtered.len());
+    // info!("len after: {}", filtered.len());
 
     filtered
 }
@@ -424,7 +424,7 @@ mod tests {
 
         let _hist = Histogram::new(&prices, 100, 2.);
 
-        // println!("{:?}", hist.bins);
+        // info!("{:?}", hist.bins);
 
 
         // use std::time::Instant;
@@ -438,7 +438,7 @@ mod tests {
         //     }
         //     let elapsed = now.elapsed();
         //     let sec = (elapsed.as_secs() as f64) + (elapsed.subsec_nanos() as f64 / 1000_000_000.0);
-        //     println!("Seconds: {}", sec);
+        //     info!("Seconds: {}", sec);
         // }
     }
 

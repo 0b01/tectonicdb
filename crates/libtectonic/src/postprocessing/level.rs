@@ -22,7 +22,7 @@ impl Levels {
     /// see how price levels evolve over time...
     pub fn from(ups: &[Update], step_bins: BinCount, tick_bins: BinCount, m: f64) -> Levels {
         let (price_hist, step_hist) = Histogram::from(&ups, step_bins, tick_bins, m);
-        println!("{:?}", step_hist);
+        // println!("{:?}", step_hist);
 
         // build map for levels
         let mut map = HashMap::new();

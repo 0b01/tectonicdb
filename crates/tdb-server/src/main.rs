@@ -126,6 +126,7 @@ fn prepare_logger(verbosity: u8, log_file: &str) {
         })
         .level(level)
         .level_for("hyper", log::LevelFilter::Info)
+        .level_for("async_std", log::LevelFilter::Off)
         .chain(std::io::stdout())
         .chain(fern::log_file(log_file).unwrap())
         .apply()

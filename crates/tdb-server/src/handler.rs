@@ -91,18 +91,17 @@ pub enum Event {
 }
 
 /// sometimes returns string, sometimes bytes, error string
-pub fn parse_to_command(line: &[u8]) -> Command {
+pub fn parse_to_command(mut line: &[u8]) -> Command {
     use self::Command::*;
+
+    if line.last() == Some(&b'\n') { line = &line[..(line.len()-1)]; }
     if line.len() > 3 && &line[0..3] == b"raw" {
         return libtectonic::utils::decode_insert_into(line)
             .map(|(up, book_name)| Command::Insert(up, book_name))
             .unwrap_or(Command::BadFormat);
     }
 
-    let mut line = std::str::from_utf8(&line).unwrap();
-    if line.ends_with('\n') {
-        line = &line[..(line.len()-1)];
-    }
+    let line = std::str::from_utf8(&line).unwrap();
 
     match line.borrow() {
         "" => Noop,
@@ -219,7 +218,7 @@ mod tests {
     fn should_insert_ok() {
         let (mut state, addr) = gen_state();
         let resp = task::block_on(state.process_command(&parse_to_command(b"CREATE bnc_btc_eth"), addr));
-        assert_eq!(ReturnType::String("Created DB `bnc_btc_eth`.".into()), resp);
+        assert_eq!(ReturnType::String("Created orderbook `bnc_btc_eth`.".into()), resp);
         let resp = task::block_on(state.process_command(
             &parse_to_command(b"ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
             addr
@@ -231,7 +230,7 @@ mod tests {
     fn should_raw_insert_ok() {
         let (mut state, addr) = gen_state();
         let resp = task::block_on(state.process_command(&parse_to_command(b"CREATE bnc_btc_eth"), addr));
-        assert_eq!(ReturnType::String("Created DB `bnc_btc_eth`.".into()), resp);
+        assert_eq!(ReturnType::String("Created orderbook `bnc_btc_eth`.".into()), resp);
 
         // "ADD [update] INTO bnc_btc_eth"
         let book_name = Some("bnc_btc_eth".to_owned());

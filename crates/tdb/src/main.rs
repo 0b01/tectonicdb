@@ -95,17 +95,21 @@ fn benchmark(cxn: &mut TectonicClient, times: usize) {
     let mut t = std::time::SystemTime::now();
 
     let mut acc = vec![];
-    cxn.cmd("CREATE bnc_gas_btc\n").unwrap();
+    let create = cxn.cmd("CREATE benchmark\n");
+    println!("{:?}", create);
     for _ in 1..times {
         let res = cxn.insert(
-            Some("bnc_gas_btc".to_owned()),
+            Some("benchmark".to_owned()),
             &Update { ts: 1513922718770, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 }
         );
-        assert!(res.is_ok());
+        res.unwrap();
         acc.push(t.elapsed().unwrap().subsec_nanos() as usize);
-        // println!("res: {:?}, latency: {:?}", res, t.elapsed());
+        // info!("res: {:?}, latency: {:?}", res, t.elapsed());
         t = std::time::SystemTime::now();
     }
+
+    ::std::thread::sleep(std::time::Duration::new(1, 0));
+    cxn.shutdown();
 
     let avg_ns = acc.iter().fold(0, |s, i| s + i) as f32 / acc.len() as f32;
     println!("AVG ns/insert: {}", avg_ns);

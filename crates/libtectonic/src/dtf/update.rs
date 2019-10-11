@@ -101,10 +101,7 @@ impl Update {
     /// Serialize to bytearray
     pub fn serialize(&self, ref_ts: u64, ref_seq: u32) -> Vec<u8> {
         if self.seq < ref_seq {
-            println!("{:?}", ref_seq);
-            println!("{:?}", self);
-            panic!("TODO: ???");
-            /* TODO */
+            panic!("reference seqno is bigger than the current seqno you are trying to encode");
         }
         let mut buf: Vec<u8> = Vec::new();
         let _ = buf.write_u16::<BigEndian>((self.ts - ref_ts) as u16);

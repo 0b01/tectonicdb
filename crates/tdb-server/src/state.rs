@@ -256,8 +256,8 @@ impl TectonicServer {
             }
             Insert(None, _) => ReturnType::error("Unable to parse line"),
             Create(dbname) => match self.create(&dbname) {
-                    Some(()) => ReturnType::string(format!("Created DB `{}`.", &dbname)),
-                    None => ReturnType::error(format!("Unable to create DB `{}`.", &dbname)),
+                    Some(()) => ReturnType::string(format!("Created orderbook `{}`.", &dbname)),
+                    None => ReturnType::error(format!("Unable to create orderbook `{}`.", &dbname)),
                 },
             Subscribe(dbname) => {
                 self.sub(&dbname, addr);
@@ -281,7 +281,7 @@ impl TectonicServer {
             // }
             Use(dbname) => {
                 match self.use_db(&dbname, addr) {
-                    Some(_) => ReturnType::string(format!("SWITCHED TO DB `{}`.", &dbname)),
+                    Some(_) => ReturnType::string(format!("SWITCHED TO orderbook `{}`.", &dbname)),
                     None => ReturnType::error(format!("No db named `{}`", dbname)),
                 }
             }

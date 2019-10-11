@@ -12,7 +12,7 @@ pub fn fill_digits(input: u64) -> u64 {
         0
     } else {
         while ret < 1_000_000_000_000 {
-            // println!("{}", ret);
+            // info!("{}", ret);
             ret *= 10;
         }
         ret
@@ -57,6 +57,7 @@ pub fn encode_insert_into(book_name: &Option<String>, update: &Update) -> Result
         buf.write(book_name.as_bytes())?;
     }
     buf.write(&update.serialize_raw())?;
+    buf.push(b'\n');
     Ok(buf)
 }
 

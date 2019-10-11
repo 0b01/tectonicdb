@@ -20,6 +20,8 @@ tectonicdb is a fast, highly compressed standalone database and streaming protoc
 
 * 12 bytes per orderbook event
 
+* 600,000 inserts per thread second
+
 ## Installation
 
 There are several ways to install tectonicdb.
@@ -140,7 +142,7 @@ tdb client comes with a benchmark mode. This command inserts 1M records into the
 tdb -b 1000000
 ```
 
-Should be around 20000 inserts per second.
+Should be around 400000 inserts per second.
 
 ## Using dtf files
 

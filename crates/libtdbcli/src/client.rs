@@ -10,7 +10,7 @@ use crate::error::TectonicError;
 use libtectonic::dtf::{update::UpdateVecConvert, file_format::decode_buffer};
 
 struct TectonicClientStream {
-    stream: TcpStream,
+    pub stream: TcpStream,
 }
 
 impl TectonicClientStream {
@@ -19,19 +19,15 @@ impl TectonicClientStream {
         TectonicClientStream { stream }
     }
 
-    fn cmd_bytes(&mut self, command: &[u8]) -> Result<bool, TectonicError> {
-        let _ = self.stream.write(command);
-
-        let success = match self.stream.read_u8() {
-            Ok(re) => re == 0x1,
-            Err(_) => return Err(TectonicError::ConnectionError),
-        };
-
-        Ok(success)
+    unsafe fn cmd_bytes_no_check(&mut self, command: &[u8]) -> Result<bool, TectonicError> {
+        self.stream.write(command)?;
+        self.stream.read_u8()
+            .map(|i| i == 0x1)
+            .map_err(|_| TectonicError::ConnectionError)
     }
 
     fn cmd(&mut self, command: &str) -> Result<String, TectonicError> {
-        let _ = self.stream.write(command.as_bytes());
+        self.stream.write(command.as_bytes())?;
 
         let success = match self.stream.read_u8() {
             Ok(re) => re == 0x1,
@@ -43,17 +39,17 @@ impl TectonicClientStream {
             && !command.contains("AS JSON")
             && success
         {
-            let size = self.stream.read_u64::<BigEndian>().unwrap();
+            let size = self.stream.read_u64::<BigEndian>()?;
             let mut buf = vec![0_u8; size as usize];
-            let _ = self.stream.read_exact(&mut buf);
+            self.stream.read_exact(&mut buf)?;
 
             let mut buf = buf.as_slice();
             let v = decode_buffer(&mut buf);
             Ok(format!("[{}]\n", v.as_json()))
         } else {
-            let size = self.stream.read_u64::<BigEndian>().unwrap();
+            let size = self.stream.read_u64::<BigEndian>()?;
             let mut buf = vec![0; size as usize];
-            let _ = self.stream.read_exact(&mut buf);
+            self.stream.read_exact(&mut buf)?;
             let res = str::from_utf8(&buf).unwrap().to_owned();
             if success {
                 Ok(res)
@@ -104,7 +100,7 @@ impl TectonicClient {
     }
 
     pub fn subscribe(&mut self, dbname: &str) -> Result<(), TectonicError> {
-        let _ = self.cmd(&format!("SUBSCRIBE {}", dbname))?;
+        self.cmd(&format!("SUBSCRIBE {}", dbname))?;
 
         let streamcopy = self.stream.clone();
         let (tx, rx) = channel();
@@ -114,11 +110,11 @@ impl TectonicClient {
 
         thread::spawn(move || loop {
             let res = streamcopy.write().unwrap().cmd("\n").unwrap();
-            println!("{}", res);
+            info!("{}", res);
             if res == "NONE\n" {
                 thread::sleep(time::Duration::from_millis(1));
             } else {
-                let _ = tx.lock().unwrap().send(res);
+                tx.lock().unwrap().send(res).unwrap();
             }
         });
 
@@ -138,6 +134,12 @@ impl TectonicClient {
 
     pub fn insert(&mut self, book_name: Option<String>, update: &Update) -> Result<bool, TectonicError> {
         let buf = libtectonic::utils::encode_insert_into(&book_name, update)?;
-        self.stream.write().unwrap().cmd_bytes(&buf)
+        unsafe {
+            self.stream.write().unwrap().cmd_bytes_no_check(&buf)
+        }
+    }
+
+    pub fn shutdown(&mut self) {
+        self.stream.write().unwrap().stream.shutdown(std::net::Shutdown::Both).unwrap()
     }
 }

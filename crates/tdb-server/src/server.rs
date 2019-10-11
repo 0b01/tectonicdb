@@ -23,7 +23,7 @@ where
 {
     task::spawn(async move {
         if let Err(e) = fut.await {
-            eprintln!("{}", e)
+            error!("{}", e)
         }
     })
 }
@@ -73,11 +73,12 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
     let mut reader = BufReader::new(&*stream);
     let mut buf = Vec::with_capacity(1024);
     // let mut lines = reader.lines();
+    let addr = stream.peer_addr()?;
 
     let (_shutdown_sender, shutdown_receiver) = mpsc::unbounded::<Void>();
     broker
         .send(Event::NewConnection {
-            addr: stream.peer_addr()?,
+            addr: addr,
             stream: Arc::clone(&stream),
             shutdown: shutdown_receiver,
         })
@@ -85,15 +86,17 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
         .unwrap();
 
     while let Ok(read_bytes) = reader.read_until(b'\n', &mut buf).await {
-        if read_bytes == 0 { continue; }
+        if read_bytes == 0 { break; }
         let command = crate::handler::parse_to_command(&buf);
-        let from = Some(stream.peer_addr()?);
+        let from = Some(addr);
         broker
             .send(Event::Command{from, command})
             .await
             .unwrap();
-        buf.clear()
+        buf.clear();
     }
+
+    info!("Client dropped: {:?}", addr);
 
     Ok(())
 }
@@ -147,7 +150,7 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
     }
     drop(state);
     drop(disconnect_sender);
-    while let Some((_name, _pending_messages)) = disconnect_receiver.next().await {}
+    while let Some((_name, _pending_messages)) = disconnect_receiver.next().await { }
 }
 
 async fn connection_writer_loop(
