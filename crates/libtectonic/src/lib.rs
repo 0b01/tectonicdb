@@ -12,7 +12,6 @@ extern crate uuid;
 extern crate byteorder;
 #[macro_use]
 extern crate bitflags;
-#[macro_use]
 extern crate log;
 
 /// functions for histogram, event analytics

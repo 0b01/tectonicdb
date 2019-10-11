@@ -1,18 +1,13 @@
+extern crate libtdbcli;
 extern crate clap;
-extern crate byteorder;
-extern crate libtectonic;
-#[macro_use] extern crate log;
 extern crate fern;
 extern crate chrono;
+extern crate log;
 
-use clap::{Arg, App};
-use std::{time, str};
-use std::io::{self, Write};
-
-pub use libtectonic::dtf;
-
-#[allow(dead_code)]
-mod db;
+use std::io::{stdin, stdout, Write};
+use libtdbcli::client::TectonicClient;
+use clap::{App, Arg};
+use std::error::Error;
 
 fn init_logger() {
     fern::Dispatch::new()
@@ -76,7 +71,7 @@ fn main() {
     let host = matches.value_of("host").unwrap_or("0.0.0.0");
     let port = matches.value_of("port").unwrap_or("9001");
 
-    let mut cxn = db::Cxn::new(host, port).unwrap();
+    let mut cxn = TectonicClient::new(host, port).unwrap();
 
     if matches.is_present("b") {
         let times = matches
@@ -94,9 +89,9 @@ fn main() {
 }
 
 
-fn benchmark(cxn: &mut db::Cxn, times: usize) {
+fn benchmark(cxn: &mut TectonicClient, times: usize) {
 
-    let mut t = time::SystemTime::now();
+    let mut t = std::time::SystemTime::now();
 
     let mut acc = vec![];
     let _create = cxn.cmd("CREATE bnc_gas_btc\n");
@@ -107,7 +102,7 @@ fn benchmark(cxn: &mut db::Cxn, times: usize) {
         assert!(res.is_ok());
         acc.push(t.elapsed().unwrap().subsec_nanos() as usize);
         // println!("res: {:?}, latency: {:?}", res, t.elapsed());
-        t = time::SystemTime::now();
+        t = std::time::SystemTime::now();
     }
 
     let avg_ns = acc.iter().fold(0, |s, i| s + i) as f32 / acc.len() as f32;
@@ -116,31 +111,25 @@ fn benchmark(cxn: &mut db::Cxn, times: usize) {
 }
 
 
-fn handle_query(cxn: &mut db::Cxn) {
+fn handle_query(cxn: &mut TectonicClient) {
     loop {
         print!("--> ");
-        io::stdout().flush().ok().expect("Could not flush stdout"); // manually flush stdout
+        stdout().flush().ok().expect("Could not flush stdout"); // manually flush stdout
 
         let mut cmd = String::new();
-        io::stdin().read_line(&mut cmd).unwrap();
+        stdin().read_line(&mut cmd).unwrap();
         match cxn.cmd(&cmd) {
-            Err(db::TectonicError::ConnectionError) => {
-                panic!("Connection Error");
-            }
-            Err(db::TectonicError::ServerError(msg)) => {
-                print!("{}", msg);
-            }
-            Err(db::TectonicError::DBNotFoundError(dbname)) => {
-                print!("DB not found: {}", dbname);
+            Err(e) => {
+                println!("{}", e.description());
             }
             Ok(msg) => {
-                print!("{}", msg);
+                println!("{}", msg);
             }
         };
     }
 }
 
-fn subscribe(cxn: &mut db::Cxn, dbname: &str) {
+fn subscribe(cxn: &mut TectonicClient, dbname: &str) {
     let _ = cxn.subscribe(dbname);
     let rx = cxn.subscription.clone();
     let rx = rx.unwrap();

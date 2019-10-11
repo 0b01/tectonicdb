@@ -71,6 +71,7 @@ pub enum Command {
     Use(String),
     Exists(String),
     Unknown,
+    BadFormat,
 }
 
 #[derive(Debug)]
@@ -89,11 +90,20 @@ pub enum Event {
     }
 }
 
-/// sometimes returns string, sometimes bytes, error string
-// pub type Response = (Option<String>, Option<Vec<u8>>, Option<String>);
+fn parse_raw(line: &[u8]) -> Option<Command> {
+    let (up, book_name) = crate::parser::parse_raw_line(line)?;
 
-pub fn parse_to_command(line: &str) -> Command {
+    Some(Command::Insert(up, book_name))
+}
+
+/// sometimes returns string, sometimes bytes, error string
+pub fn parse_to_command(line: &[u8]) -> Command {
     use self::Command::*;
+    if line.len() > 3 && &line[0..3] == b"raw" {
+        return parse_raw(line).unwrap_or(Command::BadFormat);
+    }
+    let line = std::str::from_utf8(&line).unwrap();
+    let line = &line[..(line.len()-1)];
 
     match line.borrow() {
         "" => Noop,

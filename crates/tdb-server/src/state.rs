@@ -296,6 +296,7 @@ impl TectonicServer {
                 self.get(cnt, fmt, *rng, loc, addr)
                     .unwrap_or_else(|| ReturnType::error("Not enough items to return")),
             Unknown => ReturnType::error("Unknown command."),
+            BadFormat => ReturnType::error("Bad format."),
         }
     }
 

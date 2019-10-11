@@ -70,8 +70,9 @@ pub async fn run_server(host: &str, port: &str, settings: Arc<Settings>) -> Resu
 
 async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result<()> {
     let stream = Arc::new(stream);
-    let reader = BufReader::new(&*stream);
-    let mut lines = reader.lines();
+    let mut reader = BufReader::new(&*stream);
+    let mut buf = Vec::with_capacity(1024);
+    // let mut lines = reader.lines();
 
     let (_shutdown_sender, shutdown_receiver) = mpsc::unbounded::<Void>();
     broker
@@ -83,13 +84,15 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
         .await
         .unwrap();
 
-    while let Some(line) = lines.next().await {
-        let command = crate::handler::parse_to_command(&line?);
+    while let Ok(read_bytes) = reader.read_until(b'\n', &mut buf).await {
+        if read_bytes == 0 { continue; }
+        let command = crate::handler::parse_to_command(&buf);
         let from = Some(stream.peer_addr()?);
         broker
             .send(Event::Command{from, command})
             .await
             .unwrap();
+        buf.clear()
     }
 
     Ok(())

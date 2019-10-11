@@ -1,22 +1,35 @@
 use std::net::TcpStream;
 use std::io::{Read, Write};
-use byteorder::{BigEndian, /*WriteBytesExt, */ ReadBytesExt};
+use byteorder::{BigEndian, ReadBytesExt};
 use std::sync::mpsc::{Receiver, channel};
 use std::sync::{Arc, RwLock, Mutex};
-use std::thread;
-use std::time;
-use std::str;
+use std::{thread, time, str};
 
-use crate::db::TectonicError;
-use crate::db::insert_command::InsertCommand;
-use crate::dtf::{update::UpdateVecConvert, file_format::decode_buffer};
+use libtectonic::dtf::update::Update;
+use crate::error::TectonicError;
+use libtectonic::dtf::{update::UpdateVecConvert, file_format::decode_buffer};
 
-
-struct CxnStream {
+struct TectonicClientStream {
     stream: TcpStream,
 }
 
-impl CxnStream {
+impl TectonicClientStream {
+
+    fn new(stream: TcpStream) -> Self {
+        TectonicClientStream { stream }
+    }
+
+    fn cmd_bytes(&mut self, command: &[u8]) -> Result<bool, TectonicError> {
+        let _ = self.stream.write(command);
+
+        let success = match self.stream.read_u8() {
+            Ok(re) => re == 0x1,
+            Err(_) => return Err(TectonicError::ConnectionError),
+        };
+
+        Ok(success)
+    }
+
     fn cmd(&mut self, command: &str) -> Result<String, TectonicError> {
         let _ = self.stream.write(command.as_bytes());
 
@@ -37,7 +50,6 @@ impl CxnStream {
             let mut buf = buf.as_slice();
             let v = decode_buffer(&mut buf);
             Ok(format!("[{}]\n", v.as_json()))
-
         } else {
             let size = self.stream.read_u64::<BigEndian>().unwrap();
             let mut buf = vec![0; size as usize];
@@ -53,20 +65,16 @@ impl CxnStream {
             }
         }
     }
-
-    fn new(stream : TcpStream) -> Self {
-        CxnStream { stream }
-    }
 }
 
 
-pub struct Cxn {
-    stream: Arc<RwLock<CxnStream>>,
+pub struct TectonicClient {
+    stream: Arc<RwLock<TectonicClientStream>>,
     pub subscription: Option<Arc<Mutex<Receiver<String>>>>,
 }
 
-impl Cxn {
-    pub fn new(host: &str, port: &str) -> Result<Cxn, TectonicError> {
+impl TectonicClient {
+    pub fn new(host: &str, port: &str) -> Result<TectonicClient, TectonicError> {
         let addr = format!("{}:{}", host, port);
 
         info!("Connecting to {}", addr);
@@ -76,8 +84,8 @@ impl Cxn {
             Err(_) => return Err(TectonicError::ConnectionError)
         };
 
-        Ok(Cxn {
-            stream: Arc::new(RwLock::new(CxnStream::new(stream))),
+        Ok(TectonicClient {
+            stream: Arc::new(RwLock::new(TectonicClientStream::new(stream))),
             subscription: None,
         })
     }
@@ -91,7 +99,7 @@ impl Cxn {
         self.cmd(&format!("USE {}\n", dbname))
     }
 
-    pub fn cmd(&mut self, command : &str) -> Result<String, TectonicError> {
+    pub fn cmd(&mut self, command: &str) -> Result<String, TectonicError> {
         self.stream.write().unwrap().cmd(command)
     }
 
@@ -119,12 +127,22 @@ impl Cxn {
         Ok(())
     }
 
-    #[allow(dead_code)]
-    pub fn insert(&mut self, cmd: InsertCommand) -> Result<(), TectonicError> {
-        for cmd in &cmd.into_string() {
-            let _res = self.cmd(cmd)?;
+    pub fn insert(&mut self, book_name: Option<String>, update: &Update) -> Result<bool, TectonicError> {
+        // let is_trade = if update.is_trade {"t"} else {"f"};
+        // let is_bid = if update.is_bid {"t"} else {"f"};
+        // let cmdstr = format!("ADD {}, {}, {}, {}, {}, {}; INTO {}\n",
+        //                 update.ts, update.seq, is_trade, is_bid, update.price, update.size, book_name);
+        let mut buf = Vec::new();
+        let len = match &book_name {
+            None => 0u64,
+            Some(book_name) => book_name.len() as u64
+        };
+        buf.write(&len.to_be_bytes())?;
+        if let Some(book_name) = book_name {
+            buf.write(book_name.as_bytes())?;
         }
-        Ok(())
+        buf.write(&update.serialize_raw())?;
+        self.stream.write().unwrap().cmd_bytes(&buf)
     }
-}
 
+}

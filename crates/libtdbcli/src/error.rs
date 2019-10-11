@@ -6,6 +6,7 @@ pub enum TectonicError {
     ServerError(String),
     DBNotFoundError(String),
     ConnectionError,
+    SerialError,
 }
 use self::TectonicError::*;
 
@@ -15,6 +16,7 @@ impl error::Error for TectonicError {
             ServerError(ref msg) => &msg,
             DBNotFoundError(ref dbname) => &dbname,
             ConnectionError => "disconnection from tectonicdb",
+            SerialError => "Unable to serialize/deserialize",
         }
     }
 }
@@ -25,7 +27,13 @@ impl fmt::Display for TectonicError {
             ServerError(ref msg) => write!(f, "TectonicError: {}", msg),
             DBNotFoundError(ref dbname) => write!(f, "DBNotFoundError: {}", dbname),
             ConnectionError => write!(f, "ConnectionError"),
+            SerialError => write!(f, "SerialError"),
         }
     }
 }
 
+impl From<std::io::Error> for TectonicError {
+    fn from(_: std::io::Error) -> Self {
+        TectonicError::SerialError
+    }
+}

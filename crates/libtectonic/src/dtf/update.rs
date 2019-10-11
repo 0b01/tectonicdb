@@ -1,5 +1,7 @@
 use std::cmp::Ordering;
-use byteorder::{BigEndian, WriteBytesExt};
+use std::io::ErrorKind::InvalidData;
+use std::io::Cursor;
+use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
 
 /// convertion methods for slice of `Update`s
 pub trait UpdateVecConvert {
@@ -58,6 +60,44 @@ pub struct Update {
 }
 
 impl Update {
+
+    /// Serialize to raw
+    pub fn serialize_raw(&self) -> Vec<u8> {
+        let mut buf: Vec<u8> = Vec::new();
+        let _ = buf.write_u64::<BigEndian>(self.ts);
+        let _ = buf.write_u32::<BigEndian>(self.seq);
+
+        let mut flags = Flags::FLAG_EMPTY;
+        if self.is_bid {
+            flags |= Flags::FLAG_IS_BID;
+        }
+        if self.is_trade {
+            flags |= Flags::FLAG_IS_TRADE;
+        }
+        let _ = buf.write_u8(flags.bits());
+
+        let _ = buf.write_f32::<BigEndian>(self.price);
+        let _ = buf.write_f32::<BigEndian>(self.size);
+        buf
+    }
+
+    /// Deserialize from raw
+    pub fn from_raw(buf: &[u8]) -> Result<Self, std::io::Error> {
+        let mut rdr = Cursor::new(buf);
+
+        let ts = rdr.read_u64::<BigEndian>()?;
+        let seq = rdr.read_u32::<BigEndian>()?;
+        let flags = rdr.read_u8()?;
+        let is_trade = (Flags::from_bits(flags).ok_or(InvalidData)? & Flags::FLAG_IS_TRADE).to_bool();
+        let is_bid = (Flags::from_bits(flags).ok_or(InvalidData)? & Flags::FLAG_IS_BID).to_bool();
+        let price = rdr.read_f32::<BigEndian>()?;
+        let size = rdr.read_f32::<BigEndian>()?;
+
+        Ok(Update {
+            ts, seq, is_trade, is_bid, price, size,
+        })
+    }
+
     /// Serialize to bytearray
     pub fn serialize(&self, ref_ts: u64, ref_seq: u32) -> Vec<u8> {
         if self.seq < ref_seq {

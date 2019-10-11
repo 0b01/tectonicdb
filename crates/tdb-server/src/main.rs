@@ -15,6 +15,7 @@ extern crate lazy_static;
 extern crate log;
 extern crate fern;
 
+extern crate byteorder;
 extern crate uuid;
 extern crate circular_queue;
 
