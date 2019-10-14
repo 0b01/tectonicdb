@@ -5,6 +5,7 @@ extern crate chrono;
 extern crate log;
 
 use std::io::{stdin, stdout, Write};
+use std::time::SystemTime;
 use libtdbcli::client::TectonicClient;
 use clap::{App, Arg};
 use std::error::Error;
@@ -79,11 +80,11 @@ fn main() {
             .value_of("b")
             .unwrap_or("10")
             .parse::<usize>()
-            .unwrap_or(10) + 1;
+            .unwrap_or(10);
         benchmark(cli, times);
     } else if matches.is_present("s") {
         let dbname = matches.value_of("s").unwrap_or("");
-        subscribe(&mut cli, dbname);
+        subscribe(cli, dbname);
     } else {
         handle_query(&mut cli);
     }
@@ -92,20 +93,23 @@ fn main() {
 
 fn benchmark(mut cli: TectonicClient, times: usize) {
 
-    let mut t = std::time::SystemTime::now();
+    let mut t = SystemTime::now();
 
     let mut acc = vec![];
     let create = cli.cmd("CREATE benchmark\n");
     println!("{:?}", create);
-    for _ in 1..times {
+    for i in 0..times {
+        // let ts = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos() as u64 / 1000;
+        let ts = 0;
+
         let res = cli.insert(
-            Some("benchmark".to_owned()),
-            &Update { ts: 1513922718770, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 }
+            Some("benchmark"),
+            &Update { ts, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 }
         );
         res.unwrap();
         acc.push(t.elapsed().unwrap().subsec_nanos() as usize);
         // info!("res: {:?}, latency: {:?}", res, t.elapsed());
-        t = std::time::SystemTime::now();
+        t = SystemTime::now();
     }
 
     ::std::thread::sleep(std::time::Duration::new(1, 0));
@@ -135,7 +139,9 @@ fn handle_query(cli: &mut TectonicClient) {
     }
 }
 
-fn subscribe(cli: &mut TectonicClient, dbname: &str) {
+fn subscribe(cli: TectonicClient, dbname: &str) {
     println!("Subscribing to {}", dbname);
-    cli.subscribe(dbname).unwrap()
+    for up in cli.subscribe(dbname).unwrap() {
+        println!("{:?}", up);
+    }
 }

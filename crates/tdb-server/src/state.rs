@@ -295,8 +295,14 @@ impl TectonicServer {
             Get(cnt, fmt, rng, loc) =>
                 self.get(cnt, fmt, *rng, loc, addr)
                     .unwrap_or_else(|| ReturnType::error("Not enough items to return")),
-            Unknown => ReturnType::error("Unknown command."),
-            BadFormat => ReturnType::error("Bad format."),
+            Unknown => {
+                error!("unknown error");
+                ReturnType::error("Unknown command.")
+            }
+            BadFormat => {
+                error!("bad format error");
+                ReturnType::error("Bad format.")
+            }
         }
     }
 
@@ -423,9 +429,14 @@ impl TectonicServer {
     pub async fn insert(&mut self, up: Update, book_name: &str) -> Option<()> {
         let book = self.books.get_mut(book_name)?;
         book.add(up);
+        self.send_subs(up, book_name).await
+    }
+
+    async fn send_subs(&mut self, up: Update, book_name: &str) -> Option<()> {
         if let Some(book_sub) = self.subscriptions.get_mut(book_name) {
             for sub in book_sub.iter_mut() {
-                sub.send(into_format(&[up], &GetFormat::Json)?).await.ok()?;
+                let bytes = libtectonic::utils::encode_insert_into(Some(book_name), &up).ok()?;
+                sub.send(ReturnType::Bytes(bytes)).await.ok()?;
             }
         }
         Some(())

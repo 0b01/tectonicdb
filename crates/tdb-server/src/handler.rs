@@ -101,7 +101,12 @@ pub fn parse_to_command(mut line: &[u8]) -> Command {
             .unwrap_or(Command::BadFormat);
     }
 
-    let line = std::str::from_utf8(&line).unwrap();
+    let line = std::str::from_utf8(&line);
+    let line = if line.is_ok() {
+        line.unwrap()
+    } else {
+        return Command::BadFormat;
+    };
 
     match line.borrow() {
         "" => Noop,

@@ -1,5 +1,6 @@
 use std::net::TcpStream;
-use std::io::{Read, Write, BufRead};
+use std::io::{Read, Write};
+use std::sync::mpsc::{Receiver, channel};
 use byteorder::{BigEndian, ReadBytesExt};
 
 use bufstream::BufStream;
@@ -42,10 +43,9 @@ impl TectonicClient {
         self.stream.write(command.as_bytes())?;
         self.stream.flush()?;
 
-        let success = match self.stream.read_u8() {
-            Ok(re) => re == 0x1,
-            Err(_) => return Err(TectonicError::ConnectionError),
-        };
+        let success = self.stream.read_u8()
+            .map(|i| i == 0x1)
+            .map_err(|_| TectonicError::ConnectionError)?;
 
         if command.starts_with("GET")
             && !command.contains("AS CSV")
@@ -88,20 +88,34 @@ impl TectonicClient {
         self.stream_send_cmd(command)
     }
 
-    pub fn subscribe(&mut self, dbname: &str) -> Result<(), TectonicError> {
-        let ret = self.cmd(&format!("SUBSCRIBE {}\n", dbname))?;
-        loop {
-            let success = match self.stream.read_u8() {
-                Ok(re) => re == 0x1,
-                Err(_) => return Err(TectonicError::ConnectionError),
-            };
+    pub fn subscribe(mut self, dbname: &str) -> Result<Receiver<Update>, TectonicError> {
+        self.cmd(&format!("SUBSCRIBE {}\n", dbname))?;
 
-            let size = self.stream.read_u64::<BigEndian>()?;
-            let mut buf = vec![0; size as usize];
-            self.stream.read_exact(&mut buf)?;
-            let res = std::str::from_utf8(&buf).unwrap().to_owned();
-            println!("{}", res);
-        }
+        let (tx, rx) = channel();
+
+        std::thread::spawn(move || {
+            loop {
+                let success = self.stream.read_u8()
+                    .map(|i| i == 0x1)
+                    .map_err(|_| TectonicError::ConnectionError).unwrap();
+
+                if !success { break }
+
+                let size = self.stream.read_u64::<BigEndian>().unwrap();
+                let mut buf = vec![0; size as usize];
+                self.stream.read_exact(&mut buf).unwrap();
+                let decoded = libtectonic::utils::decode_insert_into(&buf);
+                match decoded {
+                    Some((Some(up), Some(_book_name))) => tx.send(up).unwrap(),
+                    e => {
+                        println!("{:#?}", e);
+                        ()
+                    }
+                }
+            }
+        });
+
+        Ok(rx)
     }
 
     #[deprecated]
@@ -113,8 +127,8 @@ impl TectonicClient {
         self.cmd(&cmdstr)
     }
 
-    pub fn insert(&mut self, book_name: Option<String>, update: &Update) -> Result<bool, TectonicError> {
-        let buf = libtectonic::utils::encode_insert_into(&book_name, update)?;
+    pub fn insert(&mut self, book_name: Option<&str>, update: &Update) -> Result<bool, TectonicError> {
+        let buf = libtectonic::utils::encode_insert_into(book_name, update)?;
         unsafe {
             self.cmd_bytes_no_check(&buf)
         }

@@ -45,7 +45,7 @@ pub fn epoch_to_human(ts: u64) -> String {
 /// client inserts an update into server
 /// binary form of
 ///     INSERT [update] INTO [book]
-pub fn encode_insert_into(book_name: &Option<String>, update: &Update) -> Result<Vec<u8>, Error> {
+pub fn encode_insert_into(book_name: Option<&str>, update: &Update) -> Result<Vec<u8>, Error> {
     let mut buf = Vec::new();
     buf.write(b"raw")?;
     let len = match &book_name {
