@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use byteorder::{BigEndian, ReadBytesExt};
 
 // TODO: add onexit once async-std support is stablized
 #[cfg(unix)]
@@ -71,7 +72,6 @@ pub async fn run_server(host: &str, port: &str, settings: Arc<Settings>) -> Resu
 async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result<()> {
     let stream = Arc::new(stream);
     let mut reader = BufReader::new(&*stream);
-    let mut buf = Vec::with_capacity(1024);
     // let mut lines = reader.lines();
     let addr = stream.peer_addr()?;
 
@@ -85,8 +85,15 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
         .await
         .unwrap();
 
-    while let Ok(read_bytes) = reader.read_until(b'\n', &mut buf).await {
-        if read_bytes == 0 { break; }
+    let mut bytes = vec![0; 4];
+    while let Ok(()) = reader.read_exact(&mut bytes).await {
+        let mut rdr = std::io::Cursor::new(bytes);
+        let sz = rdr.read_u32::<BigEndian>().unwrap();
+        bytes = rdr.into_inner();
+
+        let mut buf = vec![0; sz as usize];
+        reader.read_exact(&mut buf).await;
+
         let command = crate::handler::parse_to_command(&buf);
         let from = Some(addr);
         broker

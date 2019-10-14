@@ -31,15 +31,8 @@ impl TectonicClient {
         })
     }
 
-    unsafe fn cmd_bytes_no_check(&mut self, command: &[u8]) -> Result<bool, TectonicError> {
-        self.stream.write(command)?;
-        self.stream.flush()?;
-        self.stream.read_u8()
-            .map(|i| i == 0x1)
-            .map_err(|_| TectonicError::ConnectionError)
-    }
-
-    fn stream_send_cmd(&mut self, command: &str) -> Result<String, TectonicError> {
+    pub fn cmd(&mut self, command: &str) -> Result<String, TectonicError> {
+        self.stream.write(&(command.len() as u32).to_be_bytes())?;
         self.stream.write(command.as_bytes())?;
         self.stream.flush()?;
 
@@ -75,6 +68,27 @@ impl TectonicClient {
         }
     }
 
+    unsafe fn cmd_bytes_no_check(&mut self, command: &[u8]) -> Result<bool, TectonicError> {
+        self.stream.write(&(command.len() as u32).to_be_bytes())?;
+        self.stream.write(command)?;
+        self.stream.flush()?;
+        self.stream.read_u8()
+            .map(|i| i == 0x1)
+            .map_err(|_| TectonicError::ConnectionError)
+        // let size = self.stream.read_u64::<BigEndian>()?;
+        // let mut buf = vec![0; size as usize];
+        // self.stream.read_exact(&mut buf)?;
+        // let res = std::str::from_utf8(&buf).unwrap().to_owned();
+        // if success {
+        //     Ok(true)
+        // } else if res.contains("ERR: DB") {
+        //     let dbname = res.split(" ").nth(2).unwrap();
+        //     Err(TectonicError::DBNotFoundError(dbname.to_owned()))
+        // } else {
+        //     Err(TectonicError::ServerError(res))
+        // }
+    }
+
     pub fn create_db(&mut self, dbname: &str) -> Result<String, TectonicError> {
         info!("Creating db {}", dbname);
         self.cmd(&format!("CREATE {}\n", dbname))
@@ -82,10 +96,6 @@ impl TectonicClient {
 
     pub fn use_db(&mut self, dbname: &str) -> Result<String, TectonicError> {
         self.cmd(&format!("USE {}\n", dbname))
-    }
-
-    pub fn cmd(&mut self, command: &str) -> Result<String, TectonicError> {
-        self.stream_send_cmd(command)
     }
 
     pub fn subscribe(mut self, dbname: &str) -> Result<Receiver<Update>, TectonicError> {

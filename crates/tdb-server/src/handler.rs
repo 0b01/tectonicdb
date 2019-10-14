@@ -238,9 +238,9 @@ mod tests {
         assert_eq!(ReturnType::String("Created orderbook `bnc_btc_eth`.".into()), resp);
 
         // "ADD [update] INTO bnc_btc_eth"
-        let book_name = Some("bnc_btc_eth".to_owned());
+        let book_name = Some("bnc_btc_eth");
         let update = Update { ts: 1513922718770, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 };
-        let cmd = libtectonic::utils::encode_insert_into(&book_name, &update).unwrap();
+        let cmd = libtectonic::utils::encode_insert_into(book_name, &update).unwrap();
 
         let resp = task::block_on(state.process_command(&parse_to_command(&cmd), addr));
         assert_eq!(ReturnType::String("".into()), resp);
