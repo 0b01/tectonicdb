@@ -98,9 +98,9 @@ mod tests {
 
     #[test]
     fn test_encode_decode_insert_into() {
-        let book_name = Some("bnc_btc_eth".to_owned());
+        let book_name = Some("bnc_btc_eth");
         let update = Update { ts: 1513922718770, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 };
-        let encoded = encode_insert_into(&book_name, &update).unwrap();
+        let encoded = encode_insert_into(book_name, &update).unwrap();
         let (decoded_update, decoded_book_name) = decode_insert_into(&encoded).unwrap();
         assert_eq!(&decoded_book_name, &book_name);
         assert_eq!(&decoded_update, &Some(update));
