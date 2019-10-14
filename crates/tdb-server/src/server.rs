@@ -92,7 +92,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
         bytes = rdr.into_inner();
 
         let mut buf = vec![0; sz as usize];
-        reader.read_exact(&mut buf).await;
+        reader.read_exact(&mut buf).await?;
 
         let command = crate::handler::parse_to_command(&buf);
         let from = Some(addr);
@@ -121,8 +121,10 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
                 Some(event) => event,
             },
             disconnect = disconnect_receiver.next().fuse() => {
-                let (name, _pending_messages) = disconnect.unwrap();
-                assert!(state.connections.remove(&name).is_some());
+                let (addr, _pending_messages) = disconnect.unwrap();
+                assert!(state.connections.remove(&addr).is_some());
+                assert!(state.unsub(&addr).is_some());
+
                 continue;
             },
         };
@@ -133,11 +135,7 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
             Event::History{} => {
                 state.record_history();
             }
-            Event::NewConnection {
-                addr,
-                stream,
-                shutdown,
-            } => {
+            Event::NewConnection { addr, stream, shutdown } => {
                 let (client_sender, mut client_receiver) = mpsc::unbounded();
                 if state.new_connection(client_sender, addr) {
                     let mut disconnect_sender = disconnect_sender.clone();

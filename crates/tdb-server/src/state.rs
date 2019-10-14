@@ -158,7 +158,6 @@ impl Book {
 #[derive(Debug)]
 pub struct Connection {
     pub outbound: Sender<ReturnType>,
-    // pub subscription_tx: SubscriptionTX,
 
     /// the current Store client is using
     pub book_entry: Arc<String>,
@@ -182,7 +181,7 @@ pub struct TectonicServer {
     pub settings: Arc<Settings>,
     pub books: HashMap<String, Book>,
     pub history: CountHistory,
-    pub subscriptions: HashMap<String, Vec<Sender<ReturnType>>>,
+    pub subscriptions: HashMap<String, HashMap<SocketAddr, Sender<ReturnType>>>,
 }
 
 impl TectonicServer {
@@ -368,7 +367,7 @@ impl TectonicServer {
         let metadata = format!(
             r#"{{
     "clis": {},
-    "subs": {:?},
+    "subs": {},
     "ts": {},
     "autoflush_enabled": {},
     "autoflush_interval": {},
@@ -377,7 +376,7 @@ impl TectonicServer {
     "total_count": {}
   }}"#,
             self.connections.len(),
-            self.subscriptions.len(),
+            self.subscriptions.iter().map(|i| i.1.len()).sum::<usize>(),
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .expect("Time went backwards")
@@ -436,7 +435,7 @@ impl TectonicServer {
         if let Some(book_sub) = self.subscriptions.get_mut(book_name) {
             for sub in book_sub.iter_mut() {
                 let bytes = libtectonic::utils::encode_insert_into(Some(book_name), &up).ok()?;
-                sub.send(ReturnType::Bytes(bytes)).await.ok()?;
+                sub.1.send(ReturnType::Bytes(bytes)).await.ok()?;
             }
         }
         Some(())
@@ -502,19 +501,18 @@ impl TectonicServer {
     pub fn sub(&mut self, book_name: &str, addr: Option<SocketAddr>) -> Option<()> {
         let outbound = self.conn_mut(addr)?.outbound.clone();
         let book_sub = self.subscriptions.entry(book_name.to_owned())
-            .or_insert_with(Vec::new);
-        book_sub.push(outbound);
-
+            .or_insert_with(HashMap::new);
+        book_sub.insert(addr.unwrap(), outbound);
         Some(())
-        // self.is_subscribed = true;
-        // self.subscribed_db = Some(dbname.to_owned());
-        // let glb = self.global.read().unwrap();
-        // let (id, rx) = glb.subs.lock().unwrap()
-        //     .sub(dbname.to_owned(), self.subscription_tx.clone());
-        // self.rx = Some(rx);
-        // self.sub_id = Some(id);
-        // info!("Subscribing to channel {}. id: {}", dbname, id);
     }
+
+    pub fn unsub(&mut self, addr: &SocketAddr) -> Option<()> {
+        for (_book_name, addrs) in &mut self.subscriptions {
+            addrs.remove(&addr)?;
+        }
+        Some(())
+    }
+
 
     /// remove everything in the current store
     pub fn clear(&mut self, addr: Option<SocketAddr>) -> Option<()> {
