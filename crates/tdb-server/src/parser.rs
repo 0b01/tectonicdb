@@ -169,7 +169,7 @@ mod tests {
     #[test]
     fn should_parse_add_into_ok() {
         let cmd = "INSERT 1505177459.65, 139010, t, f, 0.0703620, 7.65064240; INTO dbname";
-        println!("{:?}", parse_add_into(cmd));
+        info!("{:?}", parse_add_into(cmd));
         let target = Update {
             ts: 1505177459650,
             seq: 139010,
@@ -187,7 +187,7 @@ mod tests {
     #[test]
     fn should_parse_default_ok() {
         let cmd = "ADD 0,0,f,f,0,0; INTO default";
-        println!("{:?}", parse_add_into(cmd));
+        info!("{:?}", parse_add_into(cmd));
         let target = Update {
             ts: 0,
             seq: 0,

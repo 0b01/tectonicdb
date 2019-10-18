@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use byteorder::{BigEndian, ReadBytesExt};
 
 // TODO: add onexit once async-std support is stablized
 #[cfg(unix)]
@@ -23,7 +24,7 @@ where
 {
     task::spawn(async move {
         if let Err(e) = fut.await {
-            eprintln!("{}", e)
+            error!("{}", e)
         }
     })
 }
@@ -70,27 +71,39 @@ pub async fn run_server(host: &str, port: &str, settings: Arc<Settings>) -> Resu
 
 async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result<()> {
     let stream = Arc::new(stream);
-    let reader = BufReader::new(&*stream);
-    let mut lines = reader.lines();
+    let mut reader = BufReader::new(&*stream);
+    // let mut lines = reader.lines();
+    let addr = stream.peer_addr()?;
 
     let (_shutdown_sender, shutdown_receiver) = mpsc::unbounded::<Void>();
     broker
         .send(Event::NewConnection {
-            addr: stream.peer_addr()?,
+            addr: addr,
             stream: Arc::clone(&stream),
             shutdown: shutdown_receiver,
         })
         .await
         .unwrap();
 
-    while let Some(line) = lines.next().await {
-        let command = crate::handler::parse_to_command(&line?);
-        let from = Some(stream.peer_addr()?);
+    let mut bytes = vec![0; 4];
+    while let Ok(()) = reader.read_exact(&mut bytes).await {
+        let mut rdr = std::io::Cursor::new(bytes);
+        let sz = rdr.read_u32::<BigEndian>().unwrap();
+        bytes = rdr.into_inner();
+
+        let mut buf = vec![0; sz as usize];
+        reader.read_exact(&mut buf).await?;
+
+        let command = crate::handler::parse_to_command(&buf);
+        let from = Some(addr);
         broker
             .send(Event::Command{from, command})
             .await
             .unwrap();
+        buf.clear();
     }
+
+    info!("Client dropped: {:?}", addr);
 
     Ok(())
 }
@@ -108,8 +121,10 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
                 Some(event) => event,
             },
             disconnect = disconnect_receiver.next().fuse() => {
-                let (name, _pending_messages) = disconnect.unwrap();
-                assert!(state.connections.remove(&name).is_some());
+                let (addr, _pending_messages) = disconnect.unwrap();
+                assert!(state.connections.remove(&addr).is_some());
+                assert!(state.unsub(&addr).is_some());
+
                 continue;
             },
         };
@@ -120,11 +135,7 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
             Event::History{} => {
                 state.record_history();
             }
-            Event::NewConnection {
-                addr,
-                stream,
-                shutdown,
-            } => {
+            Event::NewConnection { addr, stream, shutdown } => {
                 let (client_sender, mut client_receiver) = mpsc::unbounded();
                 if state.new_connection(client_sender, addr) {
                     let mut disconnect_sender = disconnect_sender.clone();
@@ -144,7 +155,7 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
     }
     drop(state);
     drop(disconnect_sender);
-    while let Some((_name, _pending_messages)) = disconnect_receiver.next().await {}
+    while let Some((_name, _pending_messages)) = disconnect_receiver.next().await { }
 }
 
 async fn connection_writer_loop(

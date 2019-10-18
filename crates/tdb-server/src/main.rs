@@ -15,6 +15,7 @@ extern crate lazy_static;
 extern crate log;
 extern crate fern;
 
+extern crate byteorder;
 extern crate uuid;
 extern crate circular_queue;
 
@@ -125,6 +126,7 @@ fn prepare_logger(verbosity: u8, log_file: &str) {
         })
         .level(level)
         .level_for("hyper", log::LevelFilter::Info)
+        .level_for("async_std", log::LevelFilter::Off)
         .chain(std::io::stdout())
         .chain(fern::log_file(log_file).unwrap())
         .apply()

@@ -117,7 +117,7 @@ fn write_magic_value(wtr: &mut dyn Write) -> Result<usize, io::Error> {
 
 fn write_symbol(wtr: &mut dyn Write, symbol: &str) -> Result<usize, io::Error> {
     if symbol.len() > SYMBOL_LEN {
-        return Err(io::Error::new(io::ErrorKind::InvalidData,
+        return Err(io::Error::new(InvalidData,
             format!("Symbol length is longer than {}", SYMBOL_LEN)));
     }
     let padded_symbol = format!("{:width$}", symbol, width = SYMBOL_LEN); // right pad w/ space
@@ -125,17 +125,17 @@ fn write_symbol(wtr: &mut dyn Write, symbol: &str) -> Result<usize, io::Error> {
     wtr.write(padded_symbol.as_bytes())
 }
 
-fn write_len<T: Write + Seek>(wtr: &mut BufWriter<T>, len: u64) -> Result<(), io::Error> {
+fn write_len<T: Write + Seek>(wtr: &mut T, len: u64) -> Result<(), io::Error> {
     let _ = wtr.seek(SeekFrom::Start(LEN_OFFSET));
     wtr.write_u64::<BigEndian>(len)
 }
 
-fn write_max_ts<T: Write + Seek>(wtr: &mut BufWriter<T>, max_ts: u64) -> Result<(), io::Error> {
+fn write_max_ts<T: Write + Seek>(wtr: &mut T, max_ts: u64) -> Result<(), io::Error> {
     let _ = wtr.seek(SeekFrom::Start(MAX_TS_OFFSET));
     wtr.write_u64::<BigEndian>(max_ts)
 }
 
-fn write_metadata<T: Write + Seek>(wtr: &mut BufWriter<T>, ups: &[Update]) -> Result<(), io::Error> {
+fn write_metadata<T: Write + Seek>(wtr: &mut T, ups: &[Update]) -> Result<(), io::Error> {
     write_len(wtr, ups.len() as u64)?;
     write_max_ts(wtr, get_max_ts_sorted(ups))
 }
@@ -185,7 +185,7 @@ pub fn write_batches(mut wtr: &mut dyn Write, ups: &[Update]) -> Result<(), io::
     wtr.write_all(buf.as_slice())
 }
 
-fn write_main<T: Write + Seek>(wtr: &mut BufWriter<T>, ups: &[Update]) -> Result<(), io::Error> {
+fn write_main<T: Write + Seek>(wtr: &mut T, ups: &[Update]) -> Result<(), io::Error> {
     wtr.seek(SeekFrom::Start(MAIN_OFFSET))?;
     if !ups.is_empty() {
         write_batches(wtr, ups)?;
@@ -196,14 +196,20 @@ fn write_main<T: Write + Seek>(wtr: &mut BufWriter<T>, ups: &[Update]) -> Result
 /// write a list of updates to file
 pub fn encode(fname: &str, symbol: &str, ups: &[Update]) -> Result<(), io::Error> {
     let mut wtr = file_writer(fname, true)?;
-
-    write_magic_value(&mut wtr)?;
-    write_symbol(&mut wtr, symbol)?;
-    write_metadata(&mut wtr, ups)?;
-    write_main(&mut wtr, ups)?;
-
+    encode_buffer(&mut wtr, symbol, ups)?;
     wtr.flush()
 }
+
+/// encode file format into a buffer
+/// complete w ith magic value, symbol, metadata
+pub fn encode_buffer<T: Write + Seek>(wtr: &mut T, symbol: &str, ups: &[Update]) -> Result<(), io::Error> {
+    write_magic_value(wtr)?;
+    write_symbol(wtr, symbol)?;
+    write_metadata(wtr, ups)?;
+    write_main(wtr, ups)?;
+    Ok(())
+}
+
 
 /// check magic value
 pub fn is_dtf(fname: &str) -> Result<bool, io::Error> {
@@ -371,8 +377,7 @@ pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result
                 "SKIPPING n ROWS",
             );
         } else {
-            println!("{}, {}, {}, {}", min_ts, max_ts, current_ref_ts, next_ref_ts);
-            panic!("Should have covered all the cases.");
+            panic!("{}, {}, {}, {}..... Should have covered all the cases.", min_ts, max_ts, current_ref_ts, next_ref_ts);
         }
     }
 }
@@ -870,28 +875,6 @@ mod tests {
         let max_ts = read_max_ts(&mut rdr).unwrap();
         assert_eq!(max_ts, get_max_ts_sorted(&vs));
     }
-
-    // #[cfg(test)]
-    // fn init_real_data() -> Vec<Update> {
-    //     use conf;
-    //     use db;
-    //     let conf = conf::get_config();
-    //     let cxn_str : &String = conf.get("connection_string").unwrap();
-    //     let updates : Vec<db::OrderBookUpdate> = db::run(&cxn_str);
-    //     let mut mapped : Vec<Update> = updates.iter().map(|d| d.to_update()).collect();
-    //     mapped.sort();
-    //     mapped
-    // }
-
-    // #[test]
-    // fn should_work_with_real_data() {
-    //     let mut vs = init_real_data();
-    //     let fname = "real.dtf";
-    //     let symbol = "NEO_BTC";
-    //     encode(fname, symbol, &mut vs);
-    //     let decoded_updates = decode(fname, None);
-    //     assert_eq!(decoded_updates, vs);
-    // }
 
     #[test]
     fn should_append_filtered_data() {

@@ -1,18 +1,15 @@
+extern crate libtdbcli;
 extern crate clap;
-extern crate byteorder;
-extern crate libtectonic;
-#[macro_use] extern crate log;
 extern crate fern;
 extern crate chrono;
+extern crate log;
 
-use clap::{Arg, App};
-use std::{time, str};
-use std::io::{self, Write};
-
-pub use libtectonic::dtf;
-
-#[allow(dead_code)]
-mod db;
+use std::io::{stdin, stdout, Write};
+use std::time::SystemTime;
+use libtdbcli::client::TectonicClient;
+use clap::{App, Arg};
+use std::error::Error;
+use libtectonic::dtf::update::Update;
 
 fn init_logger() {
     fern::Dispatch::new()
@@ -76,39 +73,46 @@ fn main() {
     let host = matches.value_of("host").unwrap_or("0.0.0.0");
     let port = matches.value_of("port").unwrap_or("9001");
 
-    let mut cxn = db::Cxn::new(host, port).unwrap();
+    let mut cli = TectonicClient::new(host, port).unwrap();
 
     if matches.is_present("b") {
         let times = matches
             .value_of("b")
             .unwrap_or("10")
             .parse::<usize>()
-            .unwrap_or(10) + 1;
-        benchmark(&mut cxn, times);
+            .unwrap_or(10);
+        benchmark(cli, times);
     } else if matches.is_present("s") {
         let dbname = matches.value_of("s").unwrap_or("");
-        subscribe(&mut cxn, dbname);
+        subscribe(cli, dbname);
     } else {
-        handle_query(&mut cxn);
+        handle_query(&mut cli);
     }
 }
 
 
-fn benchmark(cxn: &mut db::Cxn, times: usize) {
+fn benchmark(mut cli: TectonicClient, times: usize) {
 
-    let mut t = time::SystemTime::now();
+    let mut t = SystemTime::now();
 
     let mut acc = vec![];
-    let _create = cxn.cmd("CREATE bnc_gas_btc\n");
-    for _ in 1..times {
-        let res = cxn.cmd(
-            "ADD 1513922718770, 0, t, f, 0.001939, 22.85; INTO bnc_gas_btc\n",
+    let create = cli.cmd("CREATE benchmark\n");
+    println!("{:?}", create);
+    for _ in 0..times {
+        let ts = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos() as u64 / 1000;
+
+        let res = cli.insert(
+            Some("benchmark"),
+            &Update { ts, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 }
         );
-        assert!(res.is_ok());
+        res.unwrap();
         acc.push(t.elapsed().unwrap().subsec_nanos() as usize);
-        // println!("res: {:?}, latency: {:?}", res, t.elapsed());
-        t = time::SystemTime::now();
+        // info!("res: {:?}, latency: {:?}", res, t.elapsed());
+        t = SystemTime::now();
     }
+
+    ::std::thread::sleep(std::time::Duration::new(1, 0));
+    cli.shutdown();
 
     let avg_ns = acc.iter().fold(0, |s, i| s + i) as f32 / acc.len() as f32;
     println!("AVG ns/insert: {}", avg_ns);
@@ -116,36 +120,27 @@ fn benchmark(cxn: &mut db::Cxn, times: usize) {
 }
 
 
-fn handle_query(cxn: &mut db::Cxn) {
+fn handle_query(cli: &mut TectonicClient) {
     loop {
         print!("--> ");
-        io::stdout().flush().ok().expect("Could not flush stdout"); // manually flush stdout
+        stdout().flush().ok().expect("Could not flush stdout"); // manually flush stdout
 
         let mut cmd = String::new();
-        io::stdin().read_line(&mut cmd).unwrap();
-        match cxn.cmd(&cmd) {
-            Err(db::TectonicError::ConnectionError) => {
-                panic!("Connection Error");
-            }
-            Err(db::TectonicError::ServerError(msg)) => {
-                print!("{}", msg);
-            }
-            Err(db::TectonicError::DBNotFoundError(dbname)) => {
-                print!("DB not found: {}", dbname);
+        stdin().read_line(&mut cmd).unwrap();
+        match cli.cmd(&cmd) {
+            Err(e) => {
+                println!("{}", e.description());
             }
             Ok(msg) => {
-                print!("{}", msg);
+                println!("{}", msg);
             }
         };
     }
 }
 
-fn subscribe(cxn: &mut db::Cxn, dbname: &str) {
-    let _ = cxn.subscribe(dbname);
-    let rx = cxn.subscription.clone();
-    let rx = rx.unwrap();
-
-    for msg in rx.lock().unwrap().recv() {
-        println!("{:?}", msg);
+fn subscribe(cli: TectonicClient, dbname: &str) {
+    println!("Subscribing to {}", dbname);
+    for up in cli.subscribe(dbname).unwrap() {
+        println!("{:?}", up);
     }
 }

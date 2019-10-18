@@ -417,7 +417,7 @@ mod tests {
     //     let first = TickBars::from_updates(false, &ups);
     //     let second = TickBars::from_updates(true, &ups);
 
-    //     println!("{}", *second.v.iter().next_back().unwrap().0);
+    //     info!("{}", *second.v.iter().next_back().unwrap().0);
 
     //     for (&ts, row) in first.v.iter() {
     //         if second.v.contains_key(&ts) {
