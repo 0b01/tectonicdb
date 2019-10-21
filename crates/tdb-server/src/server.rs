@@ -123,14 +123,14 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
             disconnect = disconnect_receiver.next().fuse() => {
                 let (addr, _pending_messages) = disconnect.unwrap();
                 assert!(state.connections.remove(&addr).is_some());
-                assert!(state.unsub(&addr).is_some());
+                let _ = state.unsub(&addr);
 
                 continue;
             },
         };
         match event {
             Event::Command { from, command } => {
-                state.command(&command, from).await;
+                state.command(command, from).await;
             },
             Event::History{} => {
                 state.record_history();

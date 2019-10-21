@@ -3,29 +3,53 @@
 use indexmap::IndexMap;
 use crate::postprocessing::histogram::{Histogram, BinCount};
 use crate::dtf::update::Update;
+use std::collections::BTreeMap;
 use std::fmt;
 use std::f64;
 
-type PriceBits = u64;
+type Price = u64;
 type Size = f32;
 type Time = u64;
-type OrderbookSide = IndexMap<PriceBits, Size>;
 
 /// data structure for orderbook
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Orderbook {
-    /// bids side
-    pub bids: OrderbookSide,
-    /// asks side
-    pub asks: OrderbookSide,
+    /// bids side of the orderbook
+    pub bids: BTreeMap<Price, Size>,
+    /// asks side of the orderbook
+    pub asks: BTreeMap<Price, Size>,
 }
 
 impl Orderbook {
+    /// convert price from f64 to u64 by multiplying
+    pub const OB_PRICE_MULT: f64 = 1_000_000_000_000.;
+
+    /// convert price from f64 to u64
+    pub fn discretize(p: f32) -> Price {
+        (f64::from(p) * Orderbook::OB_PRICE_MULT) as Price
+    }
+
+    /// convert price from u64 to f64
+    pub fn undiscretize(p: u64) -> f64 {
+        p as f64 / Orderbook::OB_PRICE_MULT
+    }
+
     /// Create empty orderbook
     pub fn new() -> Orderbook {
         Orderbook {
-            bids: IndexMap::new(),
-            asks: IndexMap::new(),
+            bids: BTreeMap::new(),
+            asks: BTreeMap::new(),
+        }
+    }
+
+    /// process depth update and clear empty price levels
+    pub fn process_depth_update(&mut self, up: &Update) {
+        if up.is_trade { return; }
+        let price = Orderbook::discretize(up.price);
+        let book = if up.is_bid {&mut self.bids} else {&mut self.asks};
+        book.insert(price, up.size);
+        if book[&price] == 0. {
+            book.remove(&price);
         }
     }
 
@@ -34,11 +58,20 @@ impl Orderbook {
         self.bids = self.bids.iter()
                 .map(|(&a,&b)| (a,b))
                 .filter(|&(_p,s)|s != 0.)
-                .collect::<IndexMap<PriceBits, Size>>();
+                .collect::<BTreeMap<Price, Size>>();
         self.asks = self.asks.iter()
                 .map(|(&a,&b)| (a,b))
                 .filter(|&(_p,s)|s != 0.)
-                .collect::<IndexMap<PriceBits, Size>>();
+                .collect::<BTreeMap<Price, Size>>();
+    }
+
+    /// get top of the book, max bid, min ask
+    pub fn top(&self) -> Option<((f64, f32), (f64, f32))> {
+        let bid_max = self.bids.iter().next_back()?;
+        let ask_min = self.asks.iter().next()?;
+        let b = (Orderbook::undiscretize(*bid_max.0), *bid_max.1);
+        let a = (Orderbook::undiscretize(*ask_min.0), *ask_min.1);
+        Some((b, a))
     }
 }
 
@@ -49,7 +82,7 @@ impl fmt::Debug for Orderbook {
             let _ = write!(
                 f,
                 "- price: {} \t - size: {}\n",
-                f64::from_bits(price),
+                Orderbook::undiscretize(price),
                 size
             );
         }
@@ -60,7 +93,7 @@ impl fmt::Debug for Orderbook {
             let _ = write!(
                 f,
                 "- price: {} \t - size: {}\n",
-                f64::from_bits(price),
+                Orderbook::undiscretize(price),
                 size
             );
         }
@@ -114,7 +147,7 @@ impl RebinnedOrderbook {
                 continue;
             }
             let coarse_time = ts.unwrap().to_bits();
-            let coarse_price = price.unwrap().to_bits();
+            let coarse_price = Orderbook::discretize(price.unwrap() as f32);
 
             // get coarse_size and update local book
             let coarse_size = {
@@ -127,7 +160,7 @@ impl RebinnedOrderbook {
                 } else {
                     &mut fine_level.asks
                 };
-                let fine_size = fine_book.entry((up.price as f64).to_bits()).or_insert(
+                let fine_size = fine_book.entry(Orderbook::discretize(up.price)).or_insert(
                     up.size,
                 );
 
@@ -207,6 +240,7 @@ mod tests {
     use super::*;
     use crate::dtf;
     static FNAME: &str = "../../test/test-data/bt_btcnav.dtf";
+    static ZRX: &str = "../../test/test-data/bnc_zrx_btc.dtf";
 
     #[test]
     fn test_level_orderbook() {
@@ -222,25 +256,16 @@ mod tests {
             assert!(v.asks.values().len() < tick_bins);
         }
 
-        assert_eq!(
-            format!("{:?}", ob.book.values().next_back().unwrap()),
-            "".to_owned()+
-"bids:
-- price: 0.00010943656738475906 	 - size: 266.0109
-- price: 0.00011011131470576117 	 - size: 600
-- price: 0.00010923414318845842 	 - size: 157.5617
-- price: 0.00010936909265265885 	 - size: 269.10645
-- price: 0.00010754727488595314 	 - size: 587.0855
-- price: 0.00010997636524156074 	 - size: 69.96973
-- price: 0.00011132585988356497 	 - size: 247.91327
-- price: 0.00011004383997366096 	 - size: 149.29991
+    }
 
-asks:
-- price: 0.00011173070827616624 	 - size: 1768.4296
-- price: 0.00011098848622306392 	 - size: 0.00012207031
-
-"
-,
-        );
+    #[test]
+    fn test_orderbook_real() {
+        let ups = dtf::file_format::decode(ZRX, Some(1000)).unwrap();
+        let mut ob = Orderbook::new();
+        for i in &ups {
+            ob.process_depth_update(i);
+        }
+        let ((b, _b_sz), (a, _a_sz)) = ob.top().unwrap();
+        assert!(b < a);
     }
 }

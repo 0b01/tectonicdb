@@ -2,12 +2,11 @@ use std::net::TcpStream;
 use std::io::{Read, Write};
 use std::sync::mpsc::{Receiver, channel};
 use byteorder::{BigEndian, ReadBytesExt};
-
 use bufstream::BufStream;
-
 use libtectonic::dtf::update::Update;
 use crate::error::TectonicError;
 use libtectonic::dtf::{update::UpdateVecConvert, file_format::decode_buffer};
+use libtectonic::postprocessing::orderbook::Orderbook;
 
 pub struct TectonicClient {
     pub stream: BufStream<TcpStream>,
@@ -60,8 +59,8 @@ impl TectonicClient {
             if success {
                 Ok(res)
             } else if res.contains("ERR: DB") {
-                let dbname = res.split(" ").nth(2).unwrap();
-                Err(TectonicError::DBNotFoundError(dbname.to_owned()))
+                let book_name = res.split(" ").nth(2).unwrap();
+                Err(TectonicError::DBNotFoundError(book_name.to_owned()))
             } else  {
                 Err(TectonicError::ServerError(res))
             }
@@ -82,24 +81,30 @@ impl TectonicClient {
         // if success {
         //     Ok(true)
         // } else if res.contains("ERR: DB") {
-        //     let dbname = res.split(" ").nth(2).unwrap();
-        //     Err(TectonicError::DBNotFoundError(dbname.to_owned()))
+        //     let book_name = res.split(" ").nth(2).unwrap();
+        //     Err(TectonicError::DBNotFoundError(book_name.to_owned()))
         // } else {
         //     Err(TectonicError::ServerError(res))
         // }
     }
 
-    pub fn create_db(&mut self, dbname: &str) -> Result<String, TectonicError> {
-        info!("Creating db {}", dbname);
-        self.cmd(&format!("CREATE {}\n", dbname))
+    pub fn create_db(&mut self, book_name: &str) -> Result<String, TectonicError> {
+        info!("Creating db {}", book_name);
+        self.cmd(&format!("CREATE {}\n", book_name))
     }
 
-    pub fn use_db(&mut self, dbname: &str) -> Result<String, TectonicError> {
-        self.cmd(&format!("USE {}\n", dbname))
+    pub fn use_db(&mut self, book_name: &str) -> Result<String, TectonicError> {
+        self.cmd(&format!("USE {}\n", book_name))
     }
 
-    pub fn subscribe(mut self, dbname: &str) -> Result<Receiver<Update>, TectonicError> {
-        self.cmd(&format!("SUBSCRIBE {}\n", dbname))?;
+    pub fn orderbook_snapshot(&mut self, book_name: &str) -> Result<Orderbook, TectonicError> {
+        let ob_json_str = self.cmd(&format!("OB {}\n", book_name))?;
+        let ob = serde_json::from_str::<Orderbook>(&ob_json_str).map_err(|_e| TectonicError::JsonError)?;
+        Ok(ob)
+    }
+
+    pub fn subscribe(mut self, book_name: &str) -> Result<Receiver<Update>, TectonicError> {
+        self.cmd(&format!("SUBSCRIBE {}\n", book_name))?;
 
         let (tx, rx) = channel();
 
