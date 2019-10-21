@@ -61,6 +61,7 @@ pub enum Command {
     Help,
     Info,
     Perf,
+    Orderbook(Option<String>),
     Get(ReqCount, GetFormat, Option<(u64, u64)>, ReadLocation),
     Count(ReqCount, ReadLocation),
     Clear(ReqCount),
@@ -114,6 +115,7 @@ pub fn parse_to_command(mut line: &[u8]) -> Command {
         "HELP" => Help,
         "INFO" => Info,
         "PERF" => Perf,
+        "OB" => Orderbook(None),
         "COUNT" => Count(ReqCount::Count(1), ReadLocation::Fs),
         "COUNT IN MEM" => Count(ReqCount::Count(1), ReadLocation::Mem),
         "COUNT ALL" => Count(ReqCount::All, ReadLocation::Fs),
@@ -132,6 +134,9 @@ pub fn parse_to_command(mut line: &[u8]) -> Command {
             } else if line.starts_with("CREATE ") {
                 let dbname: &str = &line[7..];
                 Create(dbname.into())
+            } else if line.starts_with("OB ") {
+                let dbname: &str = &line[3..];
+                Orderbook(Some(dbname.into()))
             } else if line.starts_with("USE ") {
                 let dbname: &str = &line[4..];
                 Use(dbname.into())
@@ -202,7 +207,7 @@ mod tests {
     #[test]
     fn should_return_pong() {
         let (mut state, addr) = gen_state();
-        let resp = task::block_on(state.process_command(&Command::Ping, addr));
+        let resp = task::block_on(state.process_command(Command::Ping, addr));
         assert_eq!(ReturnType::String("PONG".into()), resp);
     }
 
@@ -210,7 +215,7 @@ mod tests {
     fn should_not_insert_into_empty() {
         let (mut state, addr) = gen_state();
         let resp = task::block_on(state.process_command(
-            &parse_to_command(b"ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
+            parse_to_command(b"ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
             addr
         ));
         assert_eq!(
@@ -222,10 +227,10 @@ mod tests {
     #[test]
     fn should_insert_ok() {
         let (mut state, addr) = gen_state();
-        let resp = task::block_on(state.process_command(&parse_to_command(b"CREATE bnc_btc_eth"), addr));
+        let resp = task::block_on(state.process_command(parse_to_command(b"CREATE bnc_btc_eth"), addr));
         assert_eq!(ReturnType::String("Created orderbook `bnc_btc_eth`.".into()), resp);
         let resp = task::block_on(state.process_command(
-            &parse_to_command(b"ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
+            parse_to_command(b"ADD 1513749530.585,0,t,t,0.04683200,0.18900000; INTO bnc_btc_eth"),
             addr
         ));
         assert_eq!(ReturnType::String("".into()), resp);
@@ -234,7 +239,7 @@ mod tests {
     #[test]
     fn should_raw_insert_ok() {
         let (mut state, addr) = gen_state();
-        let resp = task::block_on(state.process_command(&parse_to_command(b"CREATE bnc_btc_eth"), addr));
+        let resp = task::block_on(state.process_command(parse_to_command(b"CREATE bnc_btc_eth"), addr));
         assert_eq!(ReturnType::String("Created orderbook `bnc_btc_eth`.".into()), resp);
 
         // "ADD [update] INTO bnc_btc_eth"
@@ -242,7 +247,7 @@ mod tests {
         let update = Update { ts: 1513922718770, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 };
         let cmd = libtectonic::utils::encode_insert_into(book_name, &update).unwrap();
 
-        let resp = task::block_on(state.process_command(&parse_to_command(&cmd), addr));
+        let resp = task::block_on(state.process_command(parse_to_command(&cmd), addr));
         assert_eq!(ReturnType::String("".into()), resp);
     }
 }
