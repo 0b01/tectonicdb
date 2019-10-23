@@ -7,6 +7,7 @@ pub enum TectonicError {
     DBNotFoundError(String),
     ConnectionError,
     SerialError,
+    JsonError,
 }
 use self::TectonicError::*;
 
@@ -17,6 +18,7 @@ impl error::Error for TectonicError {
             DBNotFoundError(ref dbname) => &dbname,
             ConnectionError => "Error connecting to tectonicdb",
             SerialError => "Error serializing/deserializing",
+            JsonError => "Error serializing/deserializing json",
         }
     }
 }
@@ -28,6 +30,7 @@ impl fmt::Display for TectonicError {
             DBNotFoundError(ref dbname) => write!(f, "DBNotFoundError: {}", dbname),
             ConnectionError => write!(f, "ConnectionError"),
             SerialError => write!(f, "SerialError"),
+            JsonError => write!(f, "JsonError"),
         }
     }
 }

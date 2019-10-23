@@ -15,6 +15,7 @@ use crate::prelude::*;
 
 use circular_queue::CircularQueue;
 use libtectonic::storage::utils::scan_files_for_range;
+use libtectonic::postprocessing::orderbook::Orderbook;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 
@@ -24,7 +25,7 @@ macro_rules! catch {
     }
 }
 
-pub fn into_format(result: &[Update], format: &GetFormat) -> Option<ReturnType> {
+pub fn into_format(result: &[Update], format: GetFormat) -> Option<ReturnType> {
     let ret = match format {
         GetFormat::Dtf => {
             let mut bytes: Vec<u8> = Vec::new();
@@ -47,9 +48,11 @@ pub fn into_format(result: &[Update], format: &GetFormat) -> Option<ReturnType> 
 
 pub struct Book {
     pub vec: Vec<Update>,
+    /// nominal count of updates from disk
     pub nominal_count: u64,
     pub name: String,
     pub in_memory: bool,
+    pub orderbook: Orderbook,
     pub settings: Arc<Settings>,
 }
 
@@ -58,11 +61,13 @@ impl Book {
     pub fn new(name: &str, settings: Arc<Settings>) -> Self {
         let vec = vec![];
         let nominal_count = 0;
+        let orderbook = Orderbook::new();
         let name = name.to_owned();
         let in_memory = false;
         let mut ret = Self {
             vec,
             nominal_count,
+            orderbook,
             name,
             in_memory,
             settings,
@@ -115,8 +120,7 @@ impl Book {
 
     fn add(&mut self, up: Update) {
         self.vec.push(up);
-        // self.nominal_count += 1; // don't increment
-
+        self.orderbook.process_depth_update(&up);
         // Saves current store into disk after n items is inserted.
         let len = self.vec.len() as u32;
         if self.settings.autoflush && len != 0 && len % self.settings.flush_interval == 0 {
@@ -203,14 +207,22 @@ impl TectonicServer {
         }
     }
 
-    pub async fn process_command(&mut self, command: &Command, addr: Option<SocketAddr>) -> ReturnType {
+    pub async fn process_command(&mut self, command: Command, addr: Option<SocketAddr>) -> ReturnType {
         use Command::*;
-        match &command {
+        match command {
             Noop => ReturnType::string(""),
             Ping => ReturnType::string("PONG"),
             Help => ReturnType::string(ReturnType::HELP_STR),
             Info => ReturnType::string(self.info()),
             Perf => ReturnType::string(self.perf()),
+            Orderbook(book_name) => {
+                let book_name = book_name
+                    .map(|i| Arc::new(i))
+                    .unwrap_or_else(|| Arc::clone(&self.conn(addr).unwrap().book_entry));
+                self.orderbook_as_json_str(&book_name)
+                    .map(|c| ReturnType::string(c))
+                    .unwrap_or_else(|| ReturnType::error("Unable to get orderbook"))
+            },
             Count(ReqCount::Count(_), ReadLocation::Fs) => {
                 self.count(addr)
                     .map(|c| ReturnType::string(format!("{}", c)))
@@ -240,17 +252,13 @@ impl TectonicServer {
                 ReturnType::ok()
             }
             // update, dbname
-            Insert(Some(up), Some(dbname)) => {
-                match self.insert(*up, dbname.as_str()).await {
+            Insert(Some(up), book_name) => {
+                let book_name = book_name
+                    .map(|i| Arc::new(i))
+                    .unwrap_or_else(|| Arc::clone(&self.conn(addr).unwrap().book_entry));
+                match self.insert(up, &book_name).await {
                     Some(()) => ReturnType::string(""),
-                    None => ReturnType::Error(Cow::Owned(format!("DB {} not found.", &dbname))),
-                }
-            }
-            Insert(Some(up), None) => {
-                let book_entry = Arc::clone(&self.conn(addr).unwrap().book_entry);
-                match self.insert(*up, book_entry.as_str()).await {
-                    Some(()) => ReturnType::string(""),
-                    None => ReturnType::Error(Cow::Owned(format!("DB {} not found.", &book_entry.as_str()))),
+                    None => ReturnType::Error(Cow::Owned(format!("DB {} not found.", &book_name))),
                 }
             }
             Insert(None, _) => ReturnType::error("Unable to parse line"),
@@ -292,7 +300,7 @@ impl TectonicServer {
                 }
             }
             Get(cnt, fmt, rng, loc) =>
-                self.get(cnt, fmt, *rng, loc, addr)
+                self.get(cnt, fmt, rng, loc, addr)
                     .unwrap_or_else(|| ReturnType::error("Not enough items to return")),
             Unknown => {
                 error!("Unknown command");
@@ -403,6 +411,12 @@ impl TectonicServer {
         );
         ret.push('\n');
         ret
+    }
+
+    pub fn orderbook_as_json_str(&self, book_name: &str) -> Option<String> {
+        let book = self.books.get(book_name)?;
+        let ob_json_str = serde_json::to_string(&book.orderbook).ok()?;
+        Some(ob_json_str)
     }
 
     /// Returns a JSON object like
@@ -557,12 +571,12 @@ impl TectonicServer {
     /// if count <= len, return
     /// need more, get from fs
     ///
-    pub fn get(&self, count: &ReqCount, format: &GetFormat, range: Option<(u64, u64)>, loc: &ReadLocation, addr: Option<SocketAddr>)
+    pub fn get(&self, count: ReqCount, format: GetFormat, range: Option<(u64, u64)>, loc: ReadLocation, addr: Option<SocketAddr>)
         -> Option<ReturnType>
     {
         // return if requested 0 item
         if let ReqCount::Count(c) = count {
-            if *c == 0 {
+            if c == 0 {
                 return None
             }
         }
@@ -585,7 +599,7 @@ impl TectonicServer {
         }
 
         // if count <= len, return
-        if let ReqCount::Count(c) = *count {
+        if let ReqCount::Count(c) = count {
             if (c as usize) <= acc.len() {
                 return into_format(&acc[..c as usize], format);
             }
@@ -613,16 +627,16 @@ impl TectonicServer {
         let result = ups_from_fs;
 
         match count {
-            &ReqCount::Count(c) => {
+            ReqCount::Count(c) => {
                 if result.len() >= c as usize {
-                    into_format(&result[..(c as usize - 1)], &format)
+                    into_format(&result[..(c as usize - 1)], format)
                 } else {
                     Some(ReturnType::Error(
                         format!("Requested {} but only have {}.", c, result.len()).into(),
                     ))
                 }
             }
-            ReqCount::All => into_format(&result, &format),
+            ReqCount::All => into_format(&result, format),
         }
     }
 
@@ -636,7 +650,7 @@ impl TectonicServer {
         }
     }
 
-    pub async fn command(&mut self, cmd: &Command, addr: Option<SocketAddr>) {
+    pub async fn command(&mut self, cmd: Command, addr: Option<SocketAddr>) {
         let ret = self.process_command(cmd, addr).await;
         if let Some(addr) = addr {
             if self.connections.contains_key(&addr) {
