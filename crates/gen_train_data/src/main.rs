@@ -34,6 +34,8 @@ static DIM: usize = 53; // last dimension, sum of channels
 static ONE_HOUR : u64 = 60 *  60 * 1000 - 1000; // one hour in ms
 static TWO_HOURS: u64 = 60 * 120 * 1000 - 1000; // two hours in ms
 
+static PRICE_DECIMALS: u8 = 8;
+
 fn preprare_logger() {
     fern::Dispatch::new()
         .format(|out, message, record| {
@@ -75,7 +77,7 @@ fn main() {
 
 fn write_ob_levels(rec: &mut Record, ups: &[Update], step_bins: usize, tick_bins: usize) {
 
-    let ob = RebinnedOrderbook::from(ups, step_bins, tick_bins, 1.);
+    let ob = RebinnedOrderbook::from(PRICE_DECIMALS, ups, step_bins, tick_bins, 1.);
 
     // find max size
     let mut max_size = 0.;

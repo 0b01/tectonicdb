@@ -18,6 +18,7 @@ use libtectonic::storage::utils::scan_files_for_range;
 use libtectonic::postprocessing::orderbook::Orderbook;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+static PRICE_DECIMALS: u8 = 10; // TODO: don't hardcode this
 
 macro_rules! catch {
     ($($code:tt)*) => {
@@ -58,10 +59,10 @@ pub struct Book {
 
 impl Book {
 
-    pub fn new(name: &str, settings: Arc<Settings>) -> Self {
+    pub fn new(name: &str, settings: Arc<Settings>, price_decimals: u8) -> Self {
         let vec = vec![];
         let nominal_count = 0;
-        let orderbook = Orderbook::new();
+        let orderbook = Orderbook::with_precision(price_decimals);
         let name = name.to_owned();
         let in_memory = false;
         let mut ret = Self {
@@ -194,7 +195,7 @@ impl TectonicServer {
         let mut books = HashMap::new();
         books.insert(
             "default".to_owned(),
-            Book::new("default", settings.clone())
+            Book::new("default", settings.clone(), PRICE_DECIMALS)
         );
         let subscriptions = HashMap::new();
         let history = HashMap::new();
@@ -467,7 +468,7 @@ impl TectonicServer {
         } else {
             self.books.insert(
                 book_name.to_owned(),
-                Book::new(book_name, self.settings.clone()),
+                Book::new(book_name, self.settings.clone(), PRICE_DECIMALS),
             );
             Some(())
         }

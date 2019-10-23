@@ -14,6 +14,7 @@ type Time = u64;
 /// data structure for orderbook
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Orderbook {
+    price_decimals: u8,
     /// bids side of the orderbook
     pub bids: BTreeMap<Price, Size>,
     /// asks side of the orderbook
@@ -21,22 +22,20 @@ pub struct Orderbook {
 }
 
 impl Orderbook {
-    /// convert price from f64 to u64 by multiplying
-    pub const OB_PRICE_MULT: f64 = 1_000_000_000_000.;
-
     /// convert price from f64 to u64
-    pub fn discretize(p: f32) -> Price {
-        (f64::from(p) * Orderbook::OB_PRICE_MULT) as Price
+    pub fn discretize(&self, p: f32) -> Price {
+        (f64::from(p) * 10f64.powf(self.price_decimals as f64)) as Price
     }
 
     /// convert price from u64 to f64
-    pub fn undiscretize(p: u64) -> f64 {
-        p as f64 / Orderbook::OB_PRICE_MULT
+    pub fn undiscretize(&self, p: u64) -> f64 {
+        p as f64 / 10f64.powf(self.price_decimals as f64)
     }
 
     /// Create empty orderbook
-    pub fn new() -> Orderbook {
+    pub fn with_precision(price_decimals: u8) -> Orderbook {
         Orderbook {
+            price_decimals,
             bids: BTreeMap::new(),
             asks: BTreeMap::new(),
         }
@@ -45,7 +44,7 @@ impl Orderbook {
     /// process depth update and clear empty price levels
     pub fn process_depth_update(&mut self, up: &Update) {
         if up.is_trade { return; }
-        let price = Orderbook::discretize(up.price);
+        let price = self.discretize(up.price);
         let book = if up.is_bid {&mut self.bids} else {&mut self.asks};
         book.insert(price, up.size);
         if book[&price] == 0. {
@@ -69,8 +68,8 @@ impl Orderbook {
     pub fn top(&self) -> Option<((f64, f32), (f64, f32))> {
         let bid_max = self.bids.iter().next_back()?;
         let ask_min = self.asks.iter().next()?;
-        let (bid_p, bid_s) = (Orderbook::undiscretize(*bid_max.0), *bid_max.1);
-        let (ask_p, ask_s) = (Orderbook::undiscretize(*ask_min.0), *ask_min.1);
+        let (bid_p, bid_s) = (self.undiscretize(*bid_max.0), *bid_max.1);
+        let (ask_p, ask_s) = (self.undiscretize(*ask_min.0), *ask_min.1);
         Some((
             (bid_p, bid_s),
             (ask_p, ask_s)
@@ -92,13 +91,13 @@ impl Orderbook {
     /// get undiscretized best bid price
     pub fn best_bid(&self) -> Option<f64> {
         let (bid_p, _bid_s) = self.bids.iter().next_back()?;
-        Some(Orderbook::undiscretize(*bid_p))
+        Some(self.undiscretize(*bid_p))
     }
 
     /// get undiscretized best ask price
     pub fn best_ask(&self) -> Option<f64> {
         let (ask_p, _ask_s) = self.asks.iter().next()?;
-        Some(Orderbook::undiscretize(*ask_p))
+        Some(self.undiscretize(*ask_p))
     }
 }
 
@@ -109,7 +108,7 @@ impl fmt::Debug for Orderbook {
             let _ = write!(
                 f,
                 "- price: {} \t - size: {}\n",
-                Orderbook::undiscretize(price),
+                self.undiscretize(price),
                 size
             );
         }
@@ -120,7 +119,7 @@ impl fmt::Debug for Orderbook {
             let _ = write!(
                 f,
                 "- price: {} \t - size: {}\n",
-                Orderbook::undiscretize(price),
+                self.undiscretize(price),
                 size
             );
         }
@@ -144,17 +143,17 @@ pub struct RebinnedOrderbook {
 
 impl RebinnedOrderbook {
     /// convert a list of updates to rebinned orderbook with fixed number of time steps bins and ticks bins
-    pub fn from(ups: &[Update], step_bins: BinCount, tick_bins: BinCount, m: f64) -> RebinnedOrderbook {
+    pub fn from(price_decimals: u8, ups: &[Update], step_bins: BinCount, tick_bins: BinCount, m: f64) -> RebinnedOrderbook {
 
         // build histogram so later can put price and time into bins
         let (price_hist, step_hist) = Histogram::from(&ups, step_bins, tick_bins, m);
 
         // raw_price -> size
         // using a fine_level to track individual price level instead of a batched one
-        let mut fine_level = Orderbook::new();
+        let mut fine_level = Orderbook::with_precision(price_decimals);
         // coarse grained books, temp_ob keeps track of current level
         // coarse means rebinned(like snap to grid)
-        let mut temp_ob = Orderbook::new();
+        let mut temp_ob = Orderbook::with_precision(price_decimals);
         // coarse price orderbook across coarse time
         let mut ob_across_time = IndexMap::<Time, Orderbook>::new();
 
@@ -174,7 +173,7 @@ impl RebinnedOrderbook {
                 continue;
             }
             let coarse_time = ts.unwrap().to_bits();
-            let coarse_price = Orderbook::discretize(price.unwrap() as f32);
+            let coarse_price = temp_ob.discretize(price.unwrap() as f32);
 
             // get coarse_size and update local book
             let coarse_size = {
@@ -187,7 +186,7 @@ impl RebinnedOrderbook {
                 } else {
                     &mut fine_level.asks
                 };
-                let fine_size = fine_book.entry(Orderbook::discretize(up.price)).or_insert(
+                let fine_size = fine_book.entry(temp_ob.discretize(up.price)).or_insert(
                     up.size,
                 );
 
