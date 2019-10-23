@@ -38,7 +38,43 @@ impl Orderbook {
         self.asks = self.asks.iter()
                 .map(|(&a,&b)| (a,b))
                 .filter(|&(_p,s)|s != 0.)
-                .collect::<IndexMap<PriceBits, Size>>();
+                .collect::<BTreeMap<Price, Size>>();
+    }
+
+    /// get top of the book, max bid, min ask
+    pub fn top(&self) -> Option<((f64, f32), (f64, f32))> {
+        let bid_max = self.bids.iter().next_back()?;
+        let ask_min = self.asks.iter().next()?;
+        let (bid_p, bid_s) = (Orderbook::undiscretize(*bid_max.0), *bid_max.1);
+        let (ask_p, ask_s) = (Orderbook::undiscretize(*ask_min.0), *ask_min.1);
+        Some((
+            (bid_p, bid_s),
+            (ask_p, ask_s)
+        ))
+    }
+
+    /// get discretized best bid price
+    pub fn best_bid_raw(&self) -> Option<u64> {
+        let (bid_p, _bid_s) = self.bids.iter().next_back()?;
+        Some(*bid_p)
+    }
+
+    /// get discretized best ask price
+    pub fn best_ask_raw(&self) -> Option<u64> {
+        let (ask_p, _ask_s) = self.asks.iter().next()?;
+        Some(*ask_p)
+    }
+
+    /// get undiscretized best bid price
+    pub fn best_bid(&self) -> Option<f64> {
+        let (bid_p, _bid_s) = self.bids.iter().next_back()?;
+        Some(Orderbook::undiscretize(*bid_p))
+    }
+
+    /// get undiscretized best ask price
+    pub fn best_ask(&self) -> Option<f64> {
+        let (ask_p, _ask_s) = self.asks.iter().next()?;
+        Some(Orderbook::undiscretize(*ask_p))
     }
 }
 
