@@ -274,7 +274,7 @@ mod tests {
         let tick_bins = 100;
 
         let ups = dtf::file_format::decode(FNAME, Some(1000)).unwrap();
-        let ob = RebinnedOrderbook::from(ups.as_slice(), step_bins, tick_bins, 2.);
+        let ob = RebinnedOrderbook::from(10, ups.as_slice(), step_bins, tick_bins, 2.);
 
         assert_eq!(ob.book.len(), step_bins - 1);
         for v in ob.book.values() {
@@ -287,7 +287,7 @@ mod tests {
     #[test]
     fn test_orderbook_real() {
         let ups = dtf::file_format::decode(ZRX, Some(1000)).unwrap();
-        let mut ob = Orderbook::new();
+        let mut ob = Orderbook::with_precision(10);
         for i in &ups {
             ob.process_depth_update(i);
         }
