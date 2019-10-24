@@ -12,9 +12,10 @@ type Size = f32;
 type Time = u64;
 
 /// data structure for orderbook
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct Orderbook {
-    price_decimals: u8,
+    /// precision of price
+    pub price_decimals: u8,
     /// bids side of the orderbook
     pub bids: BTreeMap<Price, Size>,
     /// asks side of the orderbook
