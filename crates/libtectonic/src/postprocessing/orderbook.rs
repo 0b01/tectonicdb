@@ -43,13 +43,22 @@ impl Orderbook {
     }
 
     /// process depth update and clear empty price levels
-    pub fn process_depth_update(&mut self, up: &Update) {
-        if up.is_trade { return; }
-        let price = self.discretize(up.price);
-        let book = if up.is_bid {&mut self.bids} else {&mut self.asks};
-        book.insert(price, up.size);
-        if book[&price] == 0. {
-            book.remove(&price);
+    pub fn process_update(&mut self, up: &Update) {
+        if up.is_trade {
+            let p = self.discretize(up.price);
+            let book = if up.is_bid {&mut self.bids} else {&mut self.asks};
+            book.entry(p)
+                .and_modify(|size| {
+                    assert!(*size >= up.size);
+                    *size -= up.size
+                });
+        } else {
+            let price = self.discretize(up.price);
+            let book = if up.is_bid {&mut self.bids} else {&mut self.asks};
+            book.insert(price, up.size);
+            if book[&price] == 0. {
+                book.remove(&price);
+            }
         }
     }
 
@@ -290,7 +299,7 @@ mod tests {
         let ups = dtf::file_format::decode(ZRX, Some(1000)).unwrap();
         let mut ob = Orderbook::with_precision(10);
         for i in &ups {
-            ob.process_depth_update(i);
+            ob.process_update(i);
         }
         let ((b, _b_sz), (a, _a_sz)) = ob.top().unwrap();
         assert!(b < a);

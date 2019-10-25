@@ -121,7 +121,7 @@ impl Book {
 
     fn add(&mut self, up: Update) {
         self.vec.push(up);
-        self.orderbook.process_depth_update(&up);
+        self.orderbook.process_update(&up);
         // Saves current store into disk after n items is inserted.
         let len = self.vec.len() as u32;
         if self.settings.autoflush && len != 0 && len % self.settings.flush_interval == 0 {
