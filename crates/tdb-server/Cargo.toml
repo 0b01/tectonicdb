@@ -39,5 +39,5 @@ features = ["serde", "v4"]
 version = "0.7.4"
 
 [features]
-default = ["gcs"]
+default = []
 gcs = ["tempdir", "reqwest", "serde_json", "serde", "config", "time"]
