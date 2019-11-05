@@ -99,12 +99,12 @@ fn write_ob_levels(rec: &mut Record, ups: &[Update], step_bins: usize, tick_bins
         for (price, &size) in d_book.bids.iter() {
             let price = f64::from_bits(*price);
             let idx = ob.price_hist.index(price);
-            rec.batches[0][step][idx] = size / max_size;
+            rec.batches[0][step][idx] = size as f32 / max_size as f32;
         }
         for (price, &size) in d_book.asks.iter() {
             let price = f64::from_bits(*price);
             let idx = ob.price_hist.index(price);
-            rec.batches[0][step][idx] = size / max_size;
+            rec.batches[0][step][idx] = size as f32 / max_size as f32;
         }
     }
 }
