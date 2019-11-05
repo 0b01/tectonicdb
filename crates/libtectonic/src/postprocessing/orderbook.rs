@@ -8,7 +8,7 @@ use std::fmt;
 use std::f64;
 
 type Price = u64;
-type Size = f32;
+type Size = f64;
 type Time = u64;
 
 /// data structure for orderbook
@@ -49,13 +49,13 @@ impl Orderbook {
             let book = if up.is_bid {&mut self.bids} else {&mut self.asks};
             book.entry(p)
                 .and_modify(|size| {
-                    assert!(*size >= up.size);
-                    *size -= up.size
+                    // assert!(*size >= up.size);
+                    *size -= up.size as Size
                 });
         } else {
             let price = self.discretize(up.price);
             let book = if up.is_bid {&mut self.bids} else {&mut self.asks};
-            book.insert(price, up.size);
+            book.insert(price, up.size as Size);
             if book[&price] == 0. {
                 book.remove(&price);
             }
@@ -75,7 +75,7 @@ impl Orderbook {
     }
 
     /// get top of the book, max bid, min ask
-    pub fn top(&self) -> Option<((f64, f32), (f64, f32))> {
+    pub fn top(&self) -> Option<((f64, Size), (f64, Size))> {
         let bid_max = self.bids.iter().next_back()?;
         let ask_min = self.asks.iter().next()?;
         let (bid_p, bid_s) = (self.undiscretize(*bid_max.0), *bid_max.1);
@@ -175,7 +175,7 @@ impl RebinnedOrderbook {
             }
 
             // rebinned ts, price
-            let ts = step_hist.to_bin((up.ts / 1000) as f64);
+            let ts = step_hist.to_bin((up.ts / 1000) as Size);
             let price = price_hist.to_bin(up.price as f64);
 
             // if is an outlier, don't update orderbook
@@ -197,7 +197,7 @@ impl RebinnedOrderbook {
                     &mut fine_level.asks
                 };
                 let fine_size = fine_book.entry(temp_ob.discretize(up.price)).or_insert(
-                    up.size,
+                    up.size as Size,
                 );
 
                 // coarse_size is the size at coarse_price
@@ -206,22 +206,22 @@ impl RebinnedOrderbook {
                 } else {
                     &mut temp_ob.asks
                 };
-                let coarse_size = (*local_side).entry(coarse_price).or_insert(up.size);
+                let coarse_size = (*local_side).entry(coarse_price).or_insert(up.size as Size);
 
-                if (*fine_size) == up.size {
+                if (*fine_size) == up.size as Size {
                     // if level was 0, fine_size == coarse_size == up.size
                     () // do nothing
-                } else if (*fine_size) > up.size {
+                } else if (*fine_size) > up.size as Size {
                     // if size shrinks
-                    *coarse_size -= (*fine_size) - up.size; // shrink the coarse size
+                    *coarse_size -= (*fine_size) - up.size as Size; // shrink the coarse size
                 } else
                 /* if (*fine_size) < up.size */
                 {
                     // if size grows
-                    *coarse_size += up.size - (*fine_size); // grow the coarse size
+                    *coarse_size += up.size as Size - *fine_size; // grow the coarse size
                 }
 
-                *fine_size = up.size;
+                *fine_size = up.size as Size;
 
                 // XXX: important
                 // there might be orders before the first cancellation
