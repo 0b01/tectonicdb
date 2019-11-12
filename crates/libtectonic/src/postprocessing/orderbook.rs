@@ -109,6 +109,13 @@ impl Orderbook {
         let (ask_p, _ask_s) = self.asks.iter().next()?;
         Some(self.undiscretize(*ask_p))
     }
+
+    /// get midprice which is (bb + ba)/2
+    pub fn midprice(&self) -> Option<f64> {
+        let bb = self.best_bid()?;
+        let ba = self.best_ask()?;
+        Some((bb + ba) / 2.)
+    }
 }
 
 impl fmt::Debug for Orderbook {

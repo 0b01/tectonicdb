@@ -2,7 +2,3 @@
 members = [
     "crates/*",
 ]
-
-
-[profile.release]
-debug = true
