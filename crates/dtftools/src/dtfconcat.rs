@@ -1,54 +1,15 @@
 //! Given two DTF files, combines the data within them and outputs a single DTF file that contains
 //! the data from both of them after discarding any duplicate updates.
 
-extern crate clap;
-extern crate libtectonic;
-extern crate serde_json;
-
 use std::collections::HashSet;
 use std::process::exit;
-
-use clap::{App, Arg};
 use libtectonic::dtf::{self, update::Update};
 use libtectonic::dtf::file_format::Metadata;
 
 const USAGE: &'static str = "Usage: `dtfconcat input1 input2 output`";
 const DTF_ERROR: &'static str = "Unable to parse input DTF file!";
 
-fn main() {
-    let matches = App::new("dtfsplit")
-        .version("1.0.0")
-        .author("Casey Primozic <ameo@fatwhale.com>")
-        .about("Concatenates two DTF files into a single output file.
-Examples:
-    dtfconcat file1.dtf file2.dtf output.dtf
-")
-        .arg(
-            Arg::with_name("input1")
-                .value_name("INPUT1")
-                .help("First file to read")
-                .required(true)
-                .takes_value(true)
-                .index(1)
-        )
-        .arg(
-            Arg::with_name("input2")
-                .value_name("INPUT2")
-                .help("Second file to read")
-                .required(true)
-                .takes_value(true)
-                .index(2)
-        )
-        .arg(
-            Arg::with_name("output")
-                .value_name("OUTPUT")
-                .help("Output file")
-                .required(true)
-                .takes_value(true)
-                .index(3)
-        )
-        .get_matches();
-
+pub fn run(matches: &clap::ArgMatches) {
     let input1_filename = matches
         .value_of("input1")
         .expect(USAGE);
@@ -58,11 +19,9 @@ Examples:
     let output_filename = matches
         .value_of("output")
         .expect(USAGE);
-
     // Get metadata for both of the input files to determine which one starts first
     let input1_metadata = dtf::file_format::read_meta(input1_filename).expect(DTF_ERROR);
     let input2_metadata = dtf::file_format::read_meta(input2_filename).expect(DTF_ERROR);
-
     // Sanity checks to make sure they're the same symbol and continuous
     if input1_metadata.symbol != input2_metadata.symbol {
         println!(
@@ -72,13 +31,11 @@ Examples:
         );
         exit(1);
     }
-
     let (start_filename, start_metadata, end_filename, end_metadata) = if input1_metadata.min_ts > input2_metadata.min_ts {
         (input1_filename, input1_metadata, input2_filename, input2_metadata)
     } else {
         (input2_filename, input2_metadata, input1_filename, input1_metadata)
     };
-
     match combine_files(start_filename, start_metadata, end_filename, end_metadata, output_filename) {
         Ok(()) => println!("Successfully merged files and output to {}", output_filename),
         Err(err) => {
@@ -88,7 +45,7 @@ Examples:
     }
 }
 
-fn combine_files(
+pub fn combine_files(
     start_filename: &str,
     start_metadata: Metadata,
     end_filename: &str,
