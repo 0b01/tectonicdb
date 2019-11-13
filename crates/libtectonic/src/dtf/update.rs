@@ -140,8 +140,8 @@ impl Update {
             r#"{},{},{},{},{},{}"#,
             (self.ts as f64) / 1000_f64,
             self.seq,
-            self.is_trade,
-            self.is_bid,
+            if self.is_trade {"t"} else {"f"},
+            if self.is_bid {"t"} else {"f"},
             self.price,
             self.size
         )
