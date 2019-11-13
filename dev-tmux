@@ -1,7 +1,7 @@
 #!/bin/sh
-tmux new-session -d 'cargo run --bin tdb-server -- -vv'
-tmux split-window -v 'cargo run --bin tdb'
-tmux split-window -h 'cd ../bookkeeper; BINANCE_ENABLED=1 cargo run --bin ingestor'
+tmux new-session -d 'cargo run --release --bin tdb-server -- -vv'
+tmux split-window -v 'cargo run --release --bin tdb'
+tmux split-window -h 'cd ../bookkeeper; BINANCE_ENABLED=1 cargo run --release --bin ingestor'
 tmux new-window 'mutt'
 tmux -2 attach-session -d
 

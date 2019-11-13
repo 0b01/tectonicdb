@@ -10,6 +10,8 @@ use libtectonic::postprocessing::orderbook::Orderbook;
 
 pub struct TectonicClient {
     pub stream: BufStream<TcpStream>,
+    pub host: String,
+    pub port: String,
 }
 
 impl TectonicClient {
@@ -27,7 +29,19 @@ impl TectonicClient {
 
         Ok(TectonicClient {
             stream,
+            host: host.to_owned(),
+            port: port.to_owned(),
         })
+    }
+
+    pub fn reconnect(&mut self) -> Result<(), TectonicError> {
+        let addr = format!("{}:{}", self.host, self.port);
+        info!("Reconnecting to {}", addr);
+        self.stream = match TcpStream::connect(&addr) {
+            Ok(stm) => BufStream::new(stm),
+            Err(_) => return Err(TectonicError::ConnectionError)
+        };
+        Ok(())
     }
 
     pub fn cmd(&mut self, command: &str) -> Result<String, TectonicError> {

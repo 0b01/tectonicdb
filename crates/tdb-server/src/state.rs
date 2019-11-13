@@ -135,18 +135,23 @@ impl Book {
     }
 
     fn flush(&mut self) -> Option<()> {
-        let fullfname = format!("{}/{}.dtf", &self.settings.dtf_folder, self.name);
+        if self.vec.is_empty() {
+            info!("No updates in memeory. Skipping {}.", self.name);
+            return Some(());
+        }
+
+        let fname = format!("{}/{}.dtf", &self.settings.dtf_folder, self.name);
         utils::create_dir_if_not_exist(&self.settings.dtf_folder);
 
-        let fpath = Path::new(&fullfname);
+        let fpath = Path::new(&fname);
         let result = if fpath.exists() {
-            dtf::file_format::append(&fullfname, &self.vec)
+            dtf::file_format::append(&fname, &self.vec)
         } else {
-            dtf::file_format::encode(&fullfname, &self.name, &self.vec)
+            dtf::file_format::encode(&fname, &self.name, &self.vec)
         };
         match result {
             Ok(_) => {
-                info!("Successfully flushed.");
+                info!("Successfully flushed into {}.", fname);
                 self.vec.clear();
                 self.in_memory = false;
                 Some(())

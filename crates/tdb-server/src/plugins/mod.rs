@@ -12,6 +12,7 @@ pub async fn run_plugins(broker: Sender<Event>, settings: Arc<Settings>) {
     #[cfg(feature = "gcs")] gstorage::run(broker, settings);
 }
 
+#[allow(unused)]
 pub fn run_plugin_exit_hooks(_broker: Sender<Event>, settings: Arc<Settings>) {
     #[cfg(feature = "gcs")] gstorage::run_exit_hook(settings);
 }

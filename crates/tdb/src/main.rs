@@ -24,7 +24,7 @@ fn init_logger() {
         })
         .level(log::LevelFilter::Debug)
         .chain(std::io::stdout())
-        .chain(fern::log_file("bookkeeper.log").unwrap())
+        .chain(fern::log_file("tdb-cli.log").unwrap())
         .apply()
         .unwrap();
 }

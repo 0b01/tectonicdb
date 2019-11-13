@@ -203,10 +203,12 @@ pub fn encode(fname: &str, symbol: &str, ups: &[Update]) -> Result<(), io::Error
 /// encode file format into a buffer
 /// complete w ith magic value, symbol, metadata
 pub fn encode_buffer<T: Write + Seek>(wtr: &mut T, symbol: &str, ups: &[Update]) -> Result<(), io::Error> {
-    write_magic_value(wtr)?;
-    write_symbol(wtr, symbol)?;
-    write_metadata(wtr, ups)?;
-    write_main(wtr, ups)?;
+    if !ups.is_empty() {
+        write_magic_value(wtr)?;
+        write_symbol(wtr, symbol)?;
+        write_metadata(wtr, ups)?;
+        write_main(wtr, ups)?;
+    }
     Ok(())
 }
 
