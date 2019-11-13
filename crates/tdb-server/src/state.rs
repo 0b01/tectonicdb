@@ -73,7 +73,7 @@ impl Book {
             in_memory,
             settings,
         };
-        ret.load();
+        ret.load_size_from_file();
         ret
     }
 
@@ -152,7 +152,7 @@ impl Book {
         match result {
             Ok(_) => {
                 info!("Successfully flushed into {}.", fname);
-                self.vec.clear();
+                self.vec = vec![]; //  free
                 self.in_memory = false;
                 Some(())
             }
