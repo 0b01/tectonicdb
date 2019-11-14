@@ -14,7 +14,7 @@ conf/conf.toml
 conf/gstorage/conf.toml
 *.log
 old/
-test.dtf
+crates/**/*.dtf
 *.pyc
 
 # default dtf_folder

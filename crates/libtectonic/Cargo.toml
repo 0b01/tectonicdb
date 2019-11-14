@@ -17,13 +17,18 @@ indexmap = "1.2.0"
 chrono = "0.4.9"
 fern = "0.5.8"
 log = "0.4.8"
-alloc_counter = "0.0.3"
 
 serde = "1.0.101"
 serde_derive = "1.0.101"
 serde_json = "1.0.41"
 libc = "0.2.62"
 
+alloc_counter = { optional = true, version = "0.0.3"}
+
 [dependencies.uuid]
 features = ["serde", "v4"]
 version = "0.7.4"
+
+[features]
+default = []
+count_alloc = ["alloc_counter"]

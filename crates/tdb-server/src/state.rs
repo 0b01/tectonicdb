@@ -11,7 +11,8 @@
 /// finally, call FLUSH to commit to disk the current store or FLUSH ALL to commit all available stores.
 /// the client can free the updates from memory using CLEAR or CLEARALL
 
-use alloc_counter::{count_alloc, AllocCounterSystem};
+#[cfg(feature = "count_alloc")]
+use alloc_counter::count_alloc;
 use crate::prelude::*;
 
 use circular_queue::CircularQueue;
@@ -120,6 +121,7 @@ impl Book {
         }
     }
 
+    #[cfg_attr(feature = "count_alloc", count_alloc)]
     fn add(&mut self, up: Update) {
         self.vec.push(up);
         self.orderbook.process_update(&up);
@@ -135,7 +137,7 @@ impl Book {
         }
     }
 
-    #[count_alloc]
+    #[cfg_attr(feature = "count_alloc", count_alloc)]
     fn flush(&mut self) -> Option<()> {
         if self.vec.is_empty() {
             info!("No updates in memeory. Skipping {}.", self.name);

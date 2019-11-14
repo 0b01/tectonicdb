@@ -23,9 +23,10 @@ extern crate futures;
 extern crate async_std;
 extern crate ctrlc;
 
-use alloc_counter::{count_alloc, AllocCounterSystem};
-
-#[global_allocator]
+#[cfg(feature = "count_alloc")]
+use alloc_counter::AllocCounterSystem;
+#[cfg(feature = "count_alloc")]
+#[cfg_attr(feature = "count_alloc", global_allocator)]
 static A: AllocCounterSystem = AllocCounterSystem;
 
 pub mod plugins;

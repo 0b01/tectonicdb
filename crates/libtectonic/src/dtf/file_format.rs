@@ -23,7 +23,8 @@
 //!        price: (f32)
 //!        size: (f32)
 
-use alloc_counter::count_alloc;
+#[cfg(feature = "count_alloc")]
+use alloc_counter::{count_alloc, no_alloc};
 
 use std::str;
 use std::fs;
@@ -150,10 +151,14 @@ fn write_reference(wtr: &mut dyn Write, ref_ts: u64, ref_seq: u32, len: u16) -> 
 }
 
 use std::iter::Peekable;
+use std::io::Cursor;
 
 /// write a list of updates as batches
+#[cfg_attr(feature="count_alloc", count_alloc, no_alloc)]
 pub fn write_batches<'a, I: Iterator<Item=&'a Update>>(mut wtr: &mut dyn Write, mut ups: Peekable<I>) -> Result<(), io::Error> {
-    let mut buf: Vec<u8> = Vec::with_capacity(1024);
+    static mut BUF: [u8; 65536 * 16] = [0; 65536 * 16];
+    let mut buf = unsafe { Cursor::new(&mut BUF[..]) };
+    // let mut buf = Vec::new();
     let head = ups.peek().unwrap();
     let mut ref_ts = head.ts;
     let mut ref_seq = head.seq;
@@ -169,22 +174,24 @@ pub fn write_batches<'a, I: Iterator<Item=&'a Update>>(mut wtr: &mut dyn Write, 
          )
         {
             write_reference(&mut wtr, ref_ts, ref_seq, count)?;
-            let _ = wtr.write(buf.as_slice());
-            buf.clear();
+            let _ = wtr.write(&buf.get_ref()[0..(buf.position() as usize)]);
+            buf.set_position(0);
+            // let _ = wtr.write(buf.as_slice());
+            // buf.clear();
 
             ref_ts = elem.ts;
             ref_seq = elem.seq;
             count = 0;
         }
 
-        let serialized = elem.serialize(&mut buf, ref_ts, ref_seq);
-        // let _ = buf.write(serialized.as_slice());
+        elem.serialize_to_buffer(&mut buf, ref_ts, ref_seq);
 
         count += 1;
     }
 
     write_reference(&mut wtr, ref_ts, ref_seq, count)?;
-    wtr.write_all(buf.as_slice())
+    wtr.write_all(&buf.get_ref()[0..(buf.position() as usize)])
+    // wtr.write_all(buf.as_slice())
 }
 
 fn write_main<'a, T: Write + Seek, I: IntoIterator<Item=&'a Update>>(wtr: &mut T, ups: I) -> Result<(), io::Error> {
@@ -562,7 +569,7 @@ pub fn decode_buffer(mut buf: &mut dyn Read) -> Vec<Update> {
 
 /// append a list of Updates to file
 /// Panic when range is wrong (new_min_ts <= old_max_ts)
-#[count_alloc]
+#[cfg_attr(feature = "count_alloc", count_alloc)]
 pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
     let mut rdr = file_reader(fname)?;
     let _symbol = read_symbol(&mut rdr)?;
@@ -604,6 +611,13 @@ pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(test)]
+    fn real_sample_data() -> Vec<Update> {
+        let fname = "../../test/test-data/bnc_zrx_btc.dtf";
+        let decoded_updates = decode(fname, None).unwrap();
+        decoded_updates
+    }
 
     #[cfg(test)]
     fn sample_data() -> Vec<Update> {
@@ -730,6 +744,16 @@ mod tests {
         let ts = sample_data_one_item();
         let fname = "test.dtf";
         let symbol = "NEO_BTC";
+        encode(fname, symbol, &ts).unwrap();
+        let decoded_updates = decode(fname, None).unwrap();
+        assert_eq!(decoded_updates, ts);
+    }
+
+    #[test]
+    fn should_encode_decode_real() {
+        let ts = real_sample_data();
+        let fname = "realtest.dtf";
+        let symbol = "bnc_zrx_btc";
         encode(fname, symbol, &ts).unwrap();
         let decoded_updates = decode(fname, None).unwrap();
         assert_eq!(decoded_updates, ts);

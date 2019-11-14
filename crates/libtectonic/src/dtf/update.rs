@@ -100,7 +100,7 @@ impl Update {
     }
 
     /// Serialize to bytearray
-    pub fn serialize(&self, mut buf: &mut dyn Write, ref_ts: u64, ref_seq: u32) {
+    pub fn serialize_to_buffer(&self, buf: &mut dyn Write, ref_ts: u64, ref_seq: u32) {
         if self.seq < ref_seq {
             panic!("reference seqno is bigger than the current seqno you are trying to encode");
         }
