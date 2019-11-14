@@ -62,7 +62,7 @@ pub struct Book {
 impl Book {
 
     pub fn new(name: &str, settings: Arc<Settings>, price_decimals: u8) -> Self {
-        let vec = Vec::with_capacity(usize::min(settings.flush_interval as usize * 3, 10000));
+        let vec = Vec::with_capacity(usize::min(settings.flush_interval as usize * 3, 1024*64));
         let nominal_count = 0;
         let orderbook = Orderbook::with_precision(price_decimals);
         let name = name.to_owned();
