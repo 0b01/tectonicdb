@@ -10,7 +10,7 @@ pub fn scan_files_for_range(
     min_ts: u64,
     max_ts: u64,
 ) -> Result<Vec<Update>, io::Error> {
-    let mut ret = Vec::new();
+    let mut ret = Vec::with_capacity(1024);
     match fs::read_dir(folder) {
         Err(e) => {
             return Err(io::Error::new(

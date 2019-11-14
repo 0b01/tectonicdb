@@ -34,6 +34,8 @@ serde = { optional = true, version = "1.0.101" }
 config = { optional = true, version = "0.9.3" }
 time = { optional = true, version = "0.1.42" }
 
+alloc_counter = "0.0.3"
+
 [dependencies.uuid]
 features = ["serde", "v4"]
 version = "0.7.4"

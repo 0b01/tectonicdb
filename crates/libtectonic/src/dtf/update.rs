@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::io::ErrorKind::InvalidData;
+use std::io::Write;
 use std::io::Cursor;
 use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
 
@@ -63,7 +64,7 @@ impl Update {
 
     /// Serialize to raw
     pub fn serialize_raw(&self) -> Vec<u8> {
-        let mut buf: Vec<u8> = Vec::new();
+        let mut buf: Vec<u8> = Vec::with_capacity(64 * 6);
         let _ = buf.write_u64::<BigEndian>(self.ts);
         let _ = buf.write_u32::<BigEndian>(self.seq);
 
@@ -99,11 +100,10 @@ impl Update {
     }
 
     /// Serialize to bytearray
-    pub fn serialize(&self, ref_ts: u64, ref_seq: u32) -> Vec<u8> {
+    pub fn serialize(&self, mut buf: &mut dyn Write, ref_ts: u64, ref_seq: u32) {
         if self.seq < ref_seq {
             panic!("reference seqno is bigger than the current seqno you are trying to encode");
         }
-        let mut buf: Vec<u8> = Vec::new();
         let _ = buf.write_u16::<BigEndian>((self.ts - ref_ts) as u16);
         let _ = buf.write_u8((self.seq - ref_seq) as u8);
 
@@ -118,7 +118,6 @@ impl Update {
 
         let _ = buf.write_f32::<BigEndian>(self.price);
         let _ = buf.write_f32::<BigEndian>(self.size);
-        buf
     }
 
     /// Convert to json string

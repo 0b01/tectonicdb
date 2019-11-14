@@ -23,6 +23,11 @@ extern crate futures;
 extern crate async_std;
 extern crate ctrlc;
 
+use alloc_counter::{count_alloc, AllocCounterSystem};
+
+#[global_allocator]
+static A: AllocCounterSystem = AllocCounterSystem;
+
 pub mod plugins;
 pub mod utils;
 pub mod server;

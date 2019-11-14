@@ -46,7 +46,7 @@ pub fn epoch_to_human(ts: u64) -> String {
 /// binary form of
 ///     INSERT [update] INTO [book]
 pub fn encode_insert_into(book_name: Option<&str>, update: &Update) -> Result<Vec<u8>, Error> {
-    let mut buf = Vec::new();
+    let mut buf = Vec::with_capacity(64*30);
     buf.write(b"raw")?;
     let len = match &book_name {
         None => 0u64,

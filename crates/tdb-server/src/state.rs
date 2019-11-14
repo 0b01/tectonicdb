@@ -11,6 +11,7 @@
 /// finally, call FLUSH to commit to disk the current store or FLUSH ALL to commit all available stores.
 /// the client can free the updates from memory using CLEAR or CLEARALL
 
+use alloc_counter::{count_alloc, AllocCounterSystem};
 use crate::prelude::*;
 
 use circular_queue::CircularQueue;
@@ -29,8 +30,8 @@ macro_rules! catch {
 pub fn into_format(result: &[Update], format: GetFormat) -> Option<ReturnType> {
     let ret = match format {
         GetFormat::Dtf => {
-            let mut bytes: Vec<u8> = Vec::new();
-            let _ = dtf::file_format::write_batches(&mut bytes, &result);
+            let mut bytes: Vec<u8> = Vec::with_capacity(result.len() * 10);
+            let _ = dtf::file_format::write_batches(&mut bytes, result.into_iter().peekable());
             ReturnType::Bytes(bytes)
         }
         GetFormat::Json => {
@@ -60,7 +61,7 @@ pub struct Book {
 impl Book {
 
     pub fn new(name: &str, settings: Arc<Settings>, price_decimals: u8) -> Self {
-        let vec = vec![];
+        let vec = Vec::with_capacity(usize::min(settings.flush_interval as usize * 3, 10000));
         let nominal_count = 0;
         let orderbook = Orderbook::with_precision(price_decimals);
         let name = name.to_owned();
@@ -134,6 +135,7 @@ impl Book {
         }
     }
 
+    #[count_alloc]
     fn flush(&mut self) -> Option<()> {
         if self.vec.is_empty() {
             info!("No updates in memeory. Skipping {}.", self.name);
@@ -145,6 +147,7 @@ impl Book {
 
         let fpath = Path::new(&fname);
         let result = if fpath.exists() {
+            info!("File exists. Appending...");
             dtf::file_format::append(&fname, &self.vec)
         } else {
             dtf::file_format::encode(&fname, &self.name, &self.vec)
@@ -152,7 +155,7 @@ impl Book {
         match result {
             Ok(_) => {
                 info!("Successfully flushed into {}.", fname);
-                self.vec = vec![]; //  free
+                self.vec.clear();
                 self.in_memory = false;
                 Some(())
             }
@@ -322,7 +325,7 @@ impl TectonicServer {
 
     pub fn record_history(&mut self) {
         let mut total = 0;
-        let mut sizes: Vec<(String, u64)> = Vec::new();
+        let mut sizes: Vec<(String, u64)> = Vec::with_capacity(self.books.len() + 1);
         for (name, book) in self.books.iter() {
             let size = book.vec.len() as u64;
             total += size;
