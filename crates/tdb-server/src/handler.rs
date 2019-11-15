@@ -84,7 +84,7 @@ pub enum Event {
     },
     Command {
         from: Option<SocketAddr>,
-        command: Command
+        command: Command,
     },
     History {
 

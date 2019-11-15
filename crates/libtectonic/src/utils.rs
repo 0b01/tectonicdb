@@ -62,14 +62,17 @@ pub fn encode_insert_into(book_name: Option<&str>, update: &Update) -> Result<Ve
 }
 
 ///  the inverse of encode_insert_into
-pub fn decode_insert_into(buf: &[u8]) -> Option<(Option<Update>, Option<String>)> {
+pub fn decode_insert_into<'a>(buf: &'a [u8]) -> Option<(Option<Update>, Option<String>)> {
     let mut rdr = Cursor::new(buf);
     rdr.seek(SeekFrom::Current(3)).ok()?;
-    let len = rdr.read_u64::<BigEndian>().ok()?;
+    let len = rdr.read_u64::<BigEndian>().ok()? as usize;
     let book_name = if len > 0 {
-        let mut book_name_buf = vec![0; len as usize];
-        rdr.read_exact(&mut book_name_buf).ok()?;
-        Some(std::str::from_utf8(&book_name_buf).unwrap().to_owned())
+        // let mut book_name_buf = vec![0; len as usize];
+        // rdr.read_exact(&mut book_name_buf).ok()?;
+        let pos = rdr.position() as usize;
+        let name = unsafe { std::str::from_utf8_unchecked(&rdr.get_ref()[pos..(pos+len)]).to_owned() };
+        rdr.set_position((pos + len) as u64);
+        Some(name)
     } else {
         None
     };

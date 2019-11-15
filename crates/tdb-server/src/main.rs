@@ -79,7 +79,7 @@ fn main() {
     let granularity = matches
         .value_of("granularity")
         .map(String::from)
-        .unwrap_or_else(|| key_or_default("TECTONICDB_GRANULARITY", "30"));
+        .unwrap_or_else(|| key_or_default("TECTONICDB_GRANULARITY", "0"));
     let q_capacity = matches
         .value_of("q_capacity")
         .map(String::from)

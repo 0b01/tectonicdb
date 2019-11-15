@@ -85,22 +85,21 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
         .await
         .unwrap();
 
-    let mut bytes = vec![0; 4];
+    let mut bytes = [0; 4];
+    let mut buf = Box::new([0; 65536*16]);
     while let Ok(()) = reader.read_exact(&mut bytes).await {
         let mut rdr = std::io::Cursor::new(bytes);
-        let sz = rdr.read_u32::<BigEndian>().unwrap();
+        let sz = rdr.read_u32::<BigEndian>().unwrap() as usize;
         bytes = rdr.into_inner();
 
-        let mut buf = vec![0; sz as usize];
-        reader.read_exact(&mut buf).await?;
+        reader.read_exact(&mut buf[..sz]).await?;
 
-        let command = crate::handler::parse_to_command(&buf);
+        let command = crate::handler::parse_to_command(&buf[..sz]);
         let from = Some(addr);
         broker
             .send(Event::Command{from, command})
             .await
             .unwrap();
-        buf.clear();
     }
 
     info!("Client dropped: {:?}", addr);

@@ -12,7 +12,7 @@
 /// the client can free the updates from memory using CLEAR or CLEARALL
 
 #[cfg(feature = "count_alloc")]
-use alloc_counter::count_alloc;
+use alloc_counter::{count_alloc, count_alloc_future};
 use crate::prelude::*;
 
 use circular_queue::CircularQueue;
@@ -107,16 +107,15 @@ impl Book {
 
     /// load size from file
     pub fn load_size_from_file(&mut self) {
-        let header_size = {
-            let fname = format!("{}/{}.dtf", &self.settings.dtf_folder, self.name);
-            dtf::file_format::get_size(&fname)
-        };
+        let fname = format!("{}/{}.dtf", &self.settings.dtf_folder, self.name);
+        let header_size = dtf::file_format::get_size(&fname);
         match header_size {
             Ok(header_size) => {
                 self.nominal_count = header_size;
+                debug!("Read header size from file {}: {}", fname, header_size);
             }
             Err(_) => {
-                error!("Unable to read header size from file");
+                error!("Unable to read header size from file {}", fname);
             }
         }
     }
@@ -325,6 +324,7 @@ impl TectonicServer {
     }
 
 
+    #[cfg_attr(feature = "count_alloc", count_alloc)]
     pub fn record_history(&mut self) {
         let mut total = 0;
         let mut sizes: Vec<(String, u64)> = Vec::with_capacity(self.books.len() + 1);
@@ -661,6 +661,7 @@ impl TectonicServer {
         }
     }
 
+    #[cfg_attr(feature = "count_alloc", count_alloc)]
     pub async fn command(&mut self, cmd: Command, addr: Option<SocketAddr>) {
         let ret = self.process_command(cmd, addr).await;
         if let Some(addr) = addr {

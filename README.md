@@ -83,7 +83,7 @@ To config the Google Cloud Storage and Data Collection Backend integration, the 
 | `TECTONICDB_DTF_FOLDER`       | db           | Name of the directory in which DTF files will be stored                                                                                       |
 | `TECTONICDB_AUTOFLUSH`        | false        | If `true`, recorded orderbook data will automatically be flushed to DTF files every `interval` inserts.                                       |
 | `TECTONICDB_FLUSH_INTERVAL`   | 1000         | Every `interval` inserts, if `autoflush` is enabled, DTF files will be written from memory to disk.                                           |
-| `TECTONICDB_GRANULARITY`      | 30           | Record history granularity level                                                                                                              |
+| `TECTONICDB_GRANULARITY`      | 0            | Record history granularity level                                                                                                              |
 | `TECTONICDB_LOG_FILE_NAME`    | tdb.log      | Filename of the log file for the database                                                                                                     |
 | `TECTONICDB_Q_CAPACITY`       | 300          | Capacity of the circular queue for recording history                                                                                          |
 

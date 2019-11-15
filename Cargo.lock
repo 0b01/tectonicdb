@@ -15,17 +15,15 @@ dependencies = [
 
 [[package]]
 name = "alloc_counter"
-version = "0.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+version = "0.0.4"
 dependencies = [
- "alloc_counter_macro 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "alloc_counter_macro 0.0.2",
  "pin-utils 0.1.0-alpha.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "alloc_counter_macro"
 version = "0.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -807,7 +805,7 @@ dependencies = [
 name = "libtectonic"
 version = "0.3.0"
 dependencies = [
- "alloc_counter 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "alloc_counter 0.0.4",
  "bitflags 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1594,7 +1592,7 @@ dependencies = [
 name = "tdb-server"
 version = "0.3.0"
 dependencies = [
- "alloc_counter 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "alloc_counter 0.0.4",
  "async-std 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1979,8 +1977,6 @@ dependencies = [
 [metadata]
 "checksum adler32 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)" = "5d2e7343e7fc9de883d1b0341e0b13970f764c14101234857d2ddafa1cb1cac2"
 "checksum aho-corasick 0.7.6 (registry+https://github.com/rust-lang/crates.io-index)" = "58fb5e95d83b38284460a5fda7d6470aa0b8844d283a0b614b8535e880800d2d"
-"checksum alloc_counter 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "2e57aca14ad87f8975f6194c6e6cb417ab3631bfe6ab923b5da235703bdeecb9"
-"checksum alloc_counter_macro 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "1a52f81f9add01deacdc1fcb05ba09523a8faefdec6c3f69cb752b9fa9c22e5a"
 "checksum ansi_term 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
 "checksum arrayvec 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)" = "cd9fd44efafa8690358b7408d253adf110036b88f55672a933f01d616ad9b1b9"
 "checksum async-macros 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e421d59b24c1feea2496e409b3e0a8de23e5fc130a2ddc0b012e551f3b272bba"
