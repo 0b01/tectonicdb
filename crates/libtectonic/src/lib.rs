@@ -13,6 +13,8 @@ extern crate byteorder;
 #[macro_use]
 extern crate bitflags;
 extern crate log;
+#[macro_use]
+extern crate lazy_static;
 
 /// functions for histogram, event analytics
 pub mod postprocessing;

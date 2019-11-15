@@ -25,6 +25,8 @@ libc = "0.2.62"
 
 alloc_counter = { optional = true, version = "0.0.3"}
 
+lazy_static = "1.0.0"
+
 [dependencies.uuid]
 features = ["serde", "v4"]
 version = "0.7.4"

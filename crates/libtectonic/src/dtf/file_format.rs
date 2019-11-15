@@ -35,6 +35,12 @@ use std::io::ErrorKind::InvalidData;
 use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
 use std::io::{self, Write, Read, Seek, BufRead, BufWriter, BufReader, SeekFrom};
 
+use std::iter::Peekable;
+use std::io::Cursor;
+use std::sync::Mutex;
+use std::cell::RefCell;
+use std::ops::DerefMut;
+
 use crate::dtf::update::*;
 use crate::utils::epoch_to_human;
 
@@ -150,14 +156,15 @@ fn write_reference(wtr: &mut dyn Write, ref_ts: u64, ref_seq: u32, len: u16) -> 
     wtr.write_u16::<BigEndian>(len)
 }
 
-use std::iter::Peekable;
-use std::io::Cursor;
-
 /// write a list of updates as batches
-#[cfg_attr(feature="count_alloc", count_alloc, no_alloc)]
+#[cfg_attr(feature="count_alloc", count_alloc)]
 pub fn write_batches<'a, I: Iterator<Item=&'a Update>>(mut wtr: &mut dyn Write, mut ups: Peekable<I>) -> Result<(), io::Error> {
-    static mut BUF: [u8; 65536 * 16] = [0; 65536 * 16];
-    let mut buf = unsafe { Cursor::new(&mut BUF[..]) };
+    lazy_static! {
+        static ref BUF: Mutex<RefCell<Box<[u8; 65536]>>> = Mutex::new(RefCell::new(Box::new([0; 65536])));
+    }
+    let mut b = BUF.lock().unwrap();
+    let mut c = b.deref_mut().borrow_mut();
+    let mut buf = Cursor::new(&mut c[..]);
     // let mut buf = Vec::new();
     let head = ups.peek().unwrap();
     let mut ref_ts = head.ts;
@@ -513,7 +520,8 @@ impl Iterator for DTFBufReader {
 }
 
 fn read_n_batches<T: BufRead + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<Vec<Update>, io::Error> {
-    let mut v: Vec<Update> = vec![];
+    rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
+    let mut v: Vec<Update> = Vec::with_capacity(num_rows as usize);
     let mut count = 0;
     if num_rows == 0 { return Ok(v); }
     while let Ok(is_ref) = rdr.read_u8() {
@@ -533,7 +541,9 @@ fn read_n_batches<T: BufRead + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<V
 }
 
 fn read_all<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error> {
-    let mut v: Vec<Update> = vec![];
+    let len = read_len(&mut rdr)?;
+    rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
+    let mut v: Vec<Update> = Vec::with_capacity(len as usize);
     while let Ok(is_ref) = rdr.read_u8() {
         if is_ref == 0x1 {
             rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
@@ -548,8 +558,6 @@ fn read_all<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error
 pub fn decode(fname: &str, num_rows: Option<u32>) -> Result<Vec<Update>, io::Error> {
 
     let mut rdr = file_reader(fname)?;
-    rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
-
     match num_rows {
         Some(num_rows) => read_n_batches(&mut rdr, num_rows),
         None => read_all(&mut rdr),
@@ -614,7 +622,7 @@ mod tests {
 
     #[cfg(test)]
     fn real_sample_data() -> Vec<Update> {
-        let fname = "../../test/test-data/bnc_zrx_btc.dtf";
+        let fname = "../../test/test-data/bt_btcnav.dtf";
         let decoded_updates = decode(fname, None).unwrap();
         decoded_updates
     }
