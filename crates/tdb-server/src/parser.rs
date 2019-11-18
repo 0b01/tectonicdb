@@ -180,7 +180,7 @@ mod tests {
             size: 7.65064240,
         };
         assert_eq!(
-            (Some(target), Some("dbname".to_owned())),
+            (Some(target), Some(BookName::from("dbname").unwrap())),
             parse_add_into(cmd)
         );
     }
@@ -198,7 +198,7 @@ mod tests {
             size: 0.,
         };
         assert_eq!(
-            (Some(target), Some("default".to_owned())),
+            (Some(target), Some(BookName::from("default").unwrap())),
             parse_add_into(cmd)
         );
     }
