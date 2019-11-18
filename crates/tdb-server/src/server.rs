@@ -46,7 +46,7 @@ pub async fn run_server(host: &str, port: &str, settings: Arc<Settings>) -> Resu
 
     let listener = TcpListener::bind(addr).await?;
 
-    let (broker_sender, broker_receiver) = mpsc::unbounded::<Event>();
+    let (broker_sender, broker_receiver) = mpsc::channel::<Event>(2048);
 
     // ctrlc::set_handler(move || {
     //     task::block_on(onexit(broker, settings));
@@ -75,7 +75,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
     // let mut lines = reader.lines();
     let addr = stream.peer_addr()?;
 
-    let (_shutdown_sender, shutdown_receiver) = mpsc::unbounded::<Void>();
+    let (_shutdown_sender, shutdown_receiver) = mpsc::channel::<Void>(2048);
     broker
         .send(Event::NewConnection {
             addr: addr,
@@ -109,7 +109,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
 
 
 async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
-    let (disconnect_sender, mut disconnect_receiver) = mpsc::unbounded::<(SocketAddr, Receiver<ReturnType>)>();
+    let (disconnect_sender, mut disconnect_receiver) = mpsc::channel::<(SocketAddr, Receiver<ReturnType>)>(65546 * 16);
 
     let mut state = TectonicServer::new(settings);
 
@@ -135,7 +135,7 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
                 state.record_history();
             }
             Event::NewConnection { addr, stream, shutdown } => {
-                let (client_sender, mut client_receiver) = mpsc::unbounded();
+                let (client_sender, mut client_receiver) = mpsc::channel(2048);
                 if state.new_connection(client_sender, addr) {
                     let mut disconnect_sender = disconnect_sender.clone();
                     spawn_and_log_error(async move {

@@ -24,6 +24,7 @@ serde_json = "1.0.41"
 libc = "0.2.62"
 
 alloc_counter = { optional = true, version = "0.0.4", path = "../../../alloc-counter"}
+arrayvec = "0.5.1"
 
 lazy_static = "1.0.0"
 

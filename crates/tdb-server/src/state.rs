@@ -174,14 +174,14 @@ pub struct Connection {
     pub outbound: Sender<ReturnType>,
 
     /// the current Store client is using
-    pub book_entry: Arc<String>,
+    pub book_entry: Arc<BookName>,
 }
 
 impl Connection {
     pub fn new(outbound: Sender<ReturnType>) -> Self {
         Self {
             outbound,
-            book_entry: Arc::new("default".to_owned()),
+            book_entry: Arc::new(BookName::from("default").unwrap()),
         }
     }
 }
@@ -189,13 +189,13 @@ impl Connection {
 /// key: { btc_neo => [(t0, c0), (t1, c1), ...]
 ///        ...
 ///      { total => [...]}
-pub type CountHistory = HashMap<String, CircularQueue<(SystemTime, u64)>>;
+pub type CountHistory = HashMap<BookName, CircularQueue<(SystemTime, u64)>>;
 pub struct TectonicServer {
     pub connections: HashMap<SocketAddr, Connection>,
     pub settings: Arc<Settings>,
-    pub books: HashMap<String, Book>,
+    pub books: HashMap<BookName, Book>,
     pub history: CountHistory,
-    pub subscriptions: HashMap<String, HashMap<SocketAddr, Sender<ReturnType>>>,
+    pub subscriptions: HashMap<BookName, HashMap<SocketAddr, Sender<ReturnType>>>,
 }
 
 impl TectonicServer {
@@ -203,7 +203,7 @@ impl TectonicServer {
         let connections = HashMap::new();
         let mut books = HashMap::new();
         books.insert(
-            "default".to_owned(),
+            BookName::from("default").unwrap(),
             Book::new("default", settings.clone(), PRICE_DECIMALS)
         );
         let subscriptions = HashMap::new();
@@ -327,13 +327,13 @@ impl TectonicServer {
     #[cfg_attr(feature = "count_alloc", count_alloc)]
     pub fn record_history(&mut self) {
         let mut total = 0;
-        let mut sizes: Vec<(String, u64)> = Vec::with_capacity(self.books.len() + 1);
+        let mut sizes: Vec<(BookName, u64)> = Vec::with_capacity(self.books.len() + 1);
         for (name, book) in self.books.iter() {
             let size = book.vec.len() as u64;
             total += size;
             sizes.push((name.clone(), size));
         }
-        sizes.push(("total".to_owned(), total));
+        sizes.push((BookName::from("total").unwrap(), total));
 
         let current_t = std::time::SystemTime::now();
         for (name, size) in &sizes {
@@ -472,7 +472,7 @@ impl TectonicServer {
     }
 
     /// Create a new store
-    pub fn create(&mut self, book_name: &str) -> Option<()> {
+    pub fn create(&mut self, book_name: &BookName) -> Option<()> {
         if self.books.contains_key(book_name) {
             None
         } else {
@@ -485,7 +485,7 @@ impl TectonicServer {
     }
 
     /// load a datastore file into memory
-    pub fn use_db(&mut self, book_name: &str, addr: Option<SocketAddr>) -> Option<()> {
+    pub fn use_db(&mut self, book_name: &BookName, addr: Option<SocketAddr>) -> Option<()> {
         if self.books.contains_key(book_name) {
             self.conn_mut(addr)?.book_entry = Arc::new(book_name.to_owned());
             self.book_mut(addr)?.load();
@@ -523,7 +523,7 @@ impl TectonicServer {
         )
     }
 
-    pub fn sub(&mut self, book_name: &str, addr: Option<SocketAddr>) -> Option<()> {
+    pub fn sub(&mut self, book_name: &BookName, addr: Option<SocketAddr>) -> Option<()> {
         let outbound = self.conn_mut(addr)?.outbound.clone();
         let book_sub = self.subscriptions.entry(book_name.to_owned())
             .or_insert_with(HashMap::new);

@@ -3,6 +3,7 @@ use crate::dtf::update::Update;
 use self::chrono::{ NaiveDateTime, DateTime, Utc };
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::{Error, Read, Seek, SeekFrom, Write, Cursor};
+type BookName = arrayvec::ArrayString<[u8; 64]>;
 
 /// fill digits 123 => 12300 etc..
 /// 151044287500 => 1510442875000
@@ -62,7 +63,7 @@ pub fn encode_insert_into(book_name: Option<&str>, update: &Update) -> Result<Ve
 }
 
 ///  the inverse of encode_insert_into
-pub fn decode_insert_into<'a>(buf: &'a [u8]) -> Option<(Option<Update>, Option<String>)> {
+pub fn decode_insert_into<'a>(buf: &'a [u8]) -> Option<(Option<Update>, Option<BookName>)> {
     let mut rdr = Cursor::new(buf);
     rdr.seek(SeekFrom::Current(3)).ok()?;
     let len = rdr.read_u64::<BigEndian>().ok()? as usize;
@@ -70,7 +71,8 @@ pub fn decode_insert_into<'a>(buf: &'a [u8]) -> Option<(Option<Update>, Option<S
         // let mut book_name_buf = vec![0; len as usize];
         // rdr.read_exact(&mut book_name_buf).ok()?;
         let pos = rdr.position() as usize;
-        let name = unsafe { std::str::from_utf8_unchecked(&rdr.get_ref()[pos..(pos+len)]).to_owned() };
+        let name = unsafe { std::str::from_utf8_unchecked(&rdr.get_ref()[pos..(pos+len)]) };
+        let name = BookName::from(name).ok()?;
         rdr.set_position((pos + len) as u64);
         Some(name)
     } else {

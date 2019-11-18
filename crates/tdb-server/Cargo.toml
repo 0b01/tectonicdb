@@ -35,6 +35,7 @@ config = { optional = true, version = "0.9.3" }
 time = { optional = true, version = "0.1.42" }
 
 alloc_counter = { optional = true, version = "0.0.4", path = "../../../alloc-counter"}
+arrayvec = "0.5.1"
 
 [dependencies.uuid]
 features = ["serde", "v4"]
