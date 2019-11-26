@@ -126,6 +126,7 @@ impl Book {
         self.orderbook.process_update(&up);
         // Saves current store into disk after n items is inserted.
         let len = self.vec.len() as u32;
+        info!("add {}", len);
         if self.settings.autoflush && len != 0 && len % self.settings.flush_interval == 0 {
             info!(
                 "AUTOFLUSHING {}! Size: {}",

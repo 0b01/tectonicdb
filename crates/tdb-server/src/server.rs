@@ -46,7 +46,7 @@ pub async fn run_server(host: &str, port: &str, settings: Arc<Settings>) -> Resu
 
     let listener = TcpListener::bind(addr).await?;
 
-    let (broker_sender, broker_receiver) = mpsc::channel::<Event>(2048);
+    let (broker_sender, broker_receiver) = mpsc::channel::<Event>(CHANNEL_SZ);
 
     // ctrlc::set_handler(move || {
     //     task::block_on(onexit(broker, settings));
@@ -58,11 +58,16 @@ pub async fn run_server(host: &str, port: &str, settings: Arc<Settings>) -> Resu
 
     let mut incoming = listener.incoming();
     while let Some(stream) = incoming.next().await {
+        let broker_sender = broker_sender.clone();
         let stream = stream?;
         info!("Accepting from: {}", stream.peer_addr()?);
-        spawn_and_log_error(connection_loop(broker_sender.clone(), stream));
+        let (tx, rx) = mpsc::channel::<Event>(CHANNEL_SZ);
+        spawn_and_log_error(connection_loop(tx, stream));
+        info!("1");
+        task::spawn(async move {
+            rx.map(Ok).forward(broker_sender).await;
+        }).await;
     }
-    drop(broker_sender);
     broker.await;
     Ok(())
 }
@@ -75,7 +80,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
     // let mut lines = reader.lines();
     let addr = stream.peer_addr()?;
 
-    let (_shutdown_sender, shutdown_receiver) = mpsc::channel::<Void>(2048);
+    let (_shutdown_sender, shutdown_receiver) = mpsc::channel::<Void>(CHANNEL_SZ);
     broker
         .send(Event::NewConnection {
             addr: addr,
@@ -96,10 +101,12 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
 
         let command = crate::handler::parse_to_command(&buf[..sz]);
         let from = Some(addr);
-        broker
+        if let Err(_) = broker
             .send(Event::Command{from, command})
             .await
-            .unwrap();
+        {
+            break;
+        }
     }
 
     info!("Client dropped: {:?}", addr);
@@ -109,7 +116,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
 
 
 async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
-    let (disconnect_sender, mut disconnect_receiver) = mpsc::channel::<(SocketAddr, Receiver<ReturnType>)>(65546 * 16);
+    let (disconnect_sender, mut disconnect_receiver) = mpsc::channel::<(SocketAddr, Receiver<ReturnType>)>(1);
 
     let mut state = TectonicServer::new(settings);
 
@@ -121,6 +128,10 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
             },
             disconnect = disconnect_receiver.next().fuse() => {
                 let (addr, _pending_messages) = disconnect.unwrap();
+                events.close();
+                // TODO: BUG: Need to somehow store rx per client in state so
+                // each connection can panic independent so other tasks can
+                // continue in a non-blocking fashion.
                 assert!(state.connections.remove(&addr).is_some());
                 let _ = state.unsub(&addr);
 
@@ -138,6 +149,7 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
                 let (client_sender, mut client_receiver) = mpsc::channel(2048);
                 if state.new_connection(client_sender, addr) {
                     let mut disconnect_sender = disconnect_sender.clone();
+                    // TODO: lift writer loop out so rx is passed in
                     spawn_and_log_error(async move {
                         let res = connection_writer_loop(&mut client_receiver, stream, shutdown).await;
                         disconnect_sender
@@ -191,7 +203,9 @@ async fn connection_writer_loop(
                     },
                     None => break,
                 };
-                stream.write_all(&buf).await?;
+                if let Err(_) = stream.write_all(&buf).await {
+                    break;
+                };
                 buf.clear()
             },
             void = shutdown.next().fuse() => match void {

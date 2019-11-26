@@ -98,7 +98,10 @@ fn benchmark(mut cli: TectonicClient, times: usize) {
     let mut acc = vec![];
     let create = cli.cmd("CREATE benchmark\n");
     println!("{:?}", create);
-    for _ in 0..times {
+    for i in 0..times {
+        if i % 1_000 == 0 {
+            dbg!(i);
+        }
         let ts = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos() as u64 / 1000;
 
         let res = cli.insert(

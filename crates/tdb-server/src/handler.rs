@@ -199,7 +199,7 @@ mod tests {
         let addr = SocketAddr::new(
             net::IpAddr::V4(net::Ipv4Addr::new(127, 0, 0, 1)),
             1);
-        let (client_sender, _client_receiver) = mpsc::channel(2048);
+        let (client_sender, _client_receiver) = mpsc::channel(CHANNEL_SZ);
         global.new_connection(client_sender, addr);
         (global, Some(addr))
     }
