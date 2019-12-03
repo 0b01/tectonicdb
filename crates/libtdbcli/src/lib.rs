@@ -52,7 +52,7 @@ pub fn benchmark(mut cli: TectonicClient, times: usize) {
     let create = cli.cmd("CREATE benchmark\n");
     println!("{:?}", create);
     for i in 0..times {
-        if i % 1_000 == 0 {
+        if i % 10_000 == 0 {
             dbg!(i);
         }
         let ts = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos() as u64 / 1000;

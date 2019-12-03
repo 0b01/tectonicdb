@@ -22,13 +22,13 @@ fn it_works() {
         let _server = task::spawn(tdb_server_lib::server::run_server(&host, &port, settings));
 
         let cli = libtdbcli::client_from_env();
-        libtdbcli::benchmark(cli, 1_000_000);
+        libtdbcli::benchmark(cli, 100_000);
 
         let mut cli = libtdbcli::client_from_env();
         cli.use_db("benchmark").unwrap();
         task::sleep(Duration::from_secs(4)).await;
         let ret = cli.cmd("COUNT ALL IN MEM\n").unwrap();
-        assert_eq!(ret, "1000000");
+        assert_eq!(ret, "100000");
 
     });
 }
