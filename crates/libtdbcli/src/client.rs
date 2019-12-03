@@ -25,7 +25,9 @@ impl TectonicClient {
             Err(_) => return Err(TectonicError::ConnectionError)
         };
 
-        let stream = BufStream::new(stream);
+        let reader_cap = 1024;
+        let writer_cap = 1024;
+        let stream = BufStream::with_capacities(reader_cap, writer_cap, stream);
 
         Ok(TectonicClient {
             stream,
@@ -85,21 +87,14 @@ impl TectonicClient {
         self.stream.write(&(command.len() as u32).to_be_bytes())?;
         self.stream.write(command)?;
         self.stream.flush()?;
-        self.stream.read_u8()
-            .map(|i| i == 0x1)
-            .map_err(|_| TectonicError::ConnectionError)
+        // let ret = self.stream.read_u8().map(|i| i == 0x1)?;
         // let size = self.stream.read_u64::<BigEndian>()?;
-        // let mut buf = vec![0; size as usize];
-        // self.stream.read_exact(&mut buf)?;
-        // let res = std::str::from_utf8(&buf).unwrap().to_owned();
-        // if success {
-        //     Ok(true)
-        // } else if res.contains("ERR: DB") {
-        //     let book_name = res.split(" ").nth(2).unwrap();
-        //     Err(TectonicError::DBNotFoundError(book_name.to_owned()))
-        // } else {
-        //     Err(TectonicError::ServerError(res))
-        // }
+        // // ignore bytes
+        // std::io::copy(
+        //     &mut self.stream.get_ref().take(size as u64),
+        //     &mut std::io::sink()
+        // )?;
+        Ok(true)
     }
 
     pub fn create_db(&mut self, book_name: &str) -> Result<String, TectonicError> {

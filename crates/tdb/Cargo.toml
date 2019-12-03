@@ -12,6 +12,6 @@ version = "0.3.0"
 libtdbcli = { path = "../libtdbcli", version = "0.3.0" }
 libtectonic = { path = "../libtectonic", version = "0.3.0" }
 clap = "2.33.0"
-fern = "0.5.8"
-chrono = "0.4.9"
+fern = "0.5.9"
+chrono = "0.4.10"
 log = "0.4.8"

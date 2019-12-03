@@ -52,22 +52,17 @@ pub async fn run_server(host: &str, port: &str, settings: Arc<Settings>) -> Resu
     //     task::block_on(onexit(broker, settings));
     // });
 
-    let broker = task::spawn(broker_loop(broker_receiver, settings.clone()));
+    let broker = task::spawn(broker_loop(broker_receiver, Arc::clone(&settings)));
     let plugins = task::spawn(crate::plugins::run_plugins(broker_sender.clone(), settings.clone()));
     plugins.await;
 
     let mut incoming = listener.incoming();
     while let Some(stream) = incoming.next().await {
-        let broker_sender = broker_sender.clone();
         let stream = stream?;
         info!("Accepting from: {}", stream.peer_addr()?);
-        let (tx, rx) = mpsc::channel::<Event>(CHANNEL_SZ);
-        spawn_and_log_error(connection_loop(tx, stream));
-        info!("1");
-        task::spawn(async move {
-            rx.map(Ok).forward(broker_sender).await;
-        }).await;
+        spawn_and_log_error(connection_loop(broker_sender.clone(), stream));
     }
+    drop(broker_sender);
     broker.await;
     Ok(())
 }
@@ -77,7 +72,6 @@ pub async fn run_server(host: &str, port: &str, settings: Arc<Settings>) -> Resu
 async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result<()> {
     let stream = Arc::new(stream);
     let mut reader = BufReader::new(&*stream);
-    // let mut lines = reader.lines();
     let addr = stream.peer_addr()?;
 
     let (_shutdown_sender, shutdown_receiver) = mpsc::channel::<Void>(CHANNEL_SZ);
@@ -105,6 +99,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
             .send(Event::Command{from, command})
             .await
         {
+            error!("unable to send event to broker");
             break;
         }
     }
@@ -128,10 +123,6 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
             },
             disconnect = disconnect_receiver.next().fuse() => {
                 let (addr, _pending_messages) = disconnect.unwrap();
-                events.close();
-                // TODO: BUG: Need to somehow store rx per client in state so
-                // each connection can panic independent so other tasks can
-                // continue in a non-blocking fashion.
                 assert!(state.connections.remove(&addr).is_some());
                 let _ = state.unsub(&addr);
 
@@ -164,6 +155,7 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
             },
         }
     }
+    error!("broker exited");
     drop(state);
     drop(disconnect_sender);
     while let Some((_name, _pending_messages)) = disconnect_receiver.next().await { }
@@ -203,9 +195,10 @@ async fn connection_writer_loop(
                     },
                     None => break,
                 };
-                if let Err(_) = stream.write_all(&buf).await {
-                    break;
-                };
+                let i = async_std::future::timeout(
+                    std::time::Duration::from_millis(0),
+                    stream.write_all(&buf)
+                ).await;
                 buf.clear()
             },
             void = shutdown.next().fuse() => match void {

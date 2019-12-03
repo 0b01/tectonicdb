@@ -1,4 +1,4 @@
-#![recursion_limit="256"]
+#![recursion_limit="1024"]
 extern crate libtectonic;
 extern crate clap;
 extern crate chrono;
