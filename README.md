@@ -95,6 +95,7 @@ To config the Google Cloud Storage and Data Collection Backend integration, the 
 | PING | Responds PONG |
 | INFO | Returns info about table schemas |
 | PERF | Returns the answercount of items over time |
+| LOAD \[orderbook\] | Load orderbook from disk to memory |
 | USE \[orderbook\] | Switch the current orderbook |
 | CREATE \[orderbook\] | Create orderbook |
 | GET \[n\] FROM \[orderbook\] | Returns items |
