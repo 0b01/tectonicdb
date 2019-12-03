@@ -49,7 +49,7 @@ pub fn into_format(result: &[Update], format: GetFormat) -> Option<ReturnType> {
                 Cow::Owned(ret)
             })
         }
-    }
+    })
 }
 
 pub struct Book {
