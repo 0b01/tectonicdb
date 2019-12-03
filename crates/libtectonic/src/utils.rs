@@ -3,6 +3,7 @@ use crate::dtf::update::Update;
 use self::chrono::{ NaiveDateTime, DateTime, Utc };
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::{Error, Seek, SeekFrom, Write, Cursor};
+use std::io::BufWriter;
 type BookName = arrayvec::ArrayString<[u8; 64]>;
 
 /// fill digits 123 => 12300 etc..
@@ -47,8 +48,8 @@ pub fn epoch_to_human(ts: u64) -> String {
 /// binary form of
 ///     INSERT [update] INTO [book]
 pub fn encode_insert_into(book_name: Option<&str>, update: &Update) -> Result<Vec<u8>, Error> {
-    let mut buf = Vec::with_capacity(64*30);
-    buf.write(b"raw")?;
+    let mut buf = BufWriter::new(Vec::with_capacity(64*30));
+    buf.write(crate::RAW_INSERT_PREFIX)?;
     let len = match &book_name {
         None => 0u64,
         Some(book_name) => book_name.len() as u64
@@ -57,15 +58,15 @@ pub fn encode_insert_into(book_name: Option<&str>, update: &Update) -> Result<Ve
     if let Some(book_name) = book_name {
         buf.write(book_name.as_bytes())?;
     }
-    buf.write(&update.serialize_raw())?;
-    buf.push(b'\n');
-    Ok(buf)
+    update.serialize_raw_to_buffer(&mut buf)?;
+    buf.write(&[b'\n'])?;
+    Ok(buf.into_inner().unwrap())
 }
 
 ///  the inverse of encode_insert_into
 pub fn decode_insert_into<'a>(buf: &'a [u8]) -> Option<(Option<Update>, Option<BookName>)> {
     let mut rdr = Cursor::new(buf);
-    rdr.seek(SeekFrom::Current(3)).ok()?;
+    rdr.seek(SeekFrom::Current(crate::RAW_INSERT_PREFIX.len() as i64)).ok()?;
     let len = rdr.read_u64::<BigEndian>().ok()? as usize;
     let book_name = if len > 0 {
         // let mut book_name_buf = vec![0; len as usize];

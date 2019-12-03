@@ -97,7 +97,8 @@ pub fn parse_to_command(mut line: &[u8]) -> Command {
     use self::Command::*;
 
     if line.last() == Some(&b'\n') { line = &line[..(line.len()-1)]; }
-    if line.len() > 3 && &line[0..3] == b"raw" {
+    let l = libtectonic::RAW_INSERT_PREFIX.len();
+    if line.len() > l && &line[0..l] == libtectonic::RAW_INSERT_PREFIX {
         return libtectonic::utils::decode_insert_into(line)
             .map(|(up, book_name)| Command::Insert(up, book_name))
             .unwrap_or(Command::BadFormat);

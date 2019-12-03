@@ -24,3 +24,6 @@ pub mod storage;
 pub mod utils;
 /// DTF(Dense Tick Format) implmentation
 pub mod dtf;
+
+/// Constant prefix during encoding/decoding raw insert command
+pub const RAW_INSERT_PREFIX: &'static [u8; 2] = b"ra";

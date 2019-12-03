@@ -142,11 +142,6 @@ tdb client comes with a benchmark mode. This command inserts 1M records into the
 ```bash
 tdb -b 1000000
 ```
-
-Should be around 400k-2mm inserts per second depending on your machine.
-
-To benchmark or debug memory allocation, turn `count_alloc` feature on in  Cargo.toml for `tdb-server` and `libtectonic` and run with `cargo +nightly`.
-
 ## Using dtf files
 
 Tectonic comes with a commandline tool `dtfcat` to inspect the file metadata and all the stored events into either JSON or CSV.

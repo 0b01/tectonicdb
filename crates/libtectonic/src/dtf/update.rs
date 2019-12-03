@@ -63,6 +63,27 @@ pub struct Update {
 impl Update {
 
     /// Serialize to raw
+    pub fn serialize_raw_to_buffer(&self, buf: &mut dyn Write) -> Result<(), std::io::Error> {
+        buf.write_u64::<BigEndian>(self.ts)?;
+        buf.write_u32::<BigEndian>(self.seq)?;
+
+        let mut flags = Flags::FLAG_EMPTY;
+        if self.is_bid {
+            flags |= Flags::FLAG_IS_BID;
+        }
+        if self.is_trade {
+            flags |= Flags::FLAG_IS_TRADE;
+        }
+        buf.write_u8(flags.bits())?;
+
+        buf.write_f32::<BigEndian>(self.price)?;
+        buf.write_f32::<BigEndian>(self.size)?;
+        Ok(())
+    }
+
+
+    /// Serialize to raw
+    #[deprecated]
     pub fn serialize_raw(&self) -> Vec<u8> {
         let mut buf: Vec<u8> = Vec::with_capacity(64 * 6);
         let _ = buf.write_u64::<BigEndian>(self.ts);
@@ -185,5 +206,32 @@ impl Flags {
     /// convert to bool
     pub fn to_bool(&self) -> bool {
         (self.bits == 0b0000_0001) || (self.bits == 0b0000_0010)
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_serialize_raw_to_buffer() {
+        let up = Update {
+            ts: 1,
+            seq: 1,
+            is_trade: false,
+            is_bid: false,
+            price: 10000000000000.,
+            size: 1000000000000.,
+        };
+        let result = up.serialize_raw();
+        assert_eq!(
+            vec![0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 85, 17, 132, 231, 83, 104, 212, 165],
+            result
+        );
+
+        let mut buf: Vec<u8> = Vec::with_capacity(64 * 6);
+        up.serialize_raw_to_buffer(&mut buf).unwrap();
+        assert_eq!(result, buf);
     }
 }
