@@ -56,7 +56,7 @@ pub fn combine_files(
         return Err("ERROR: The provided input files are not continuous!".into());
     }
 
-    println!("START METADATA: {:?}\nEND METADATA: {:?}", start_metadata, end_metadata);
+    // println!("START METADATA: {:?}\nEND METADATA: {:?}", start_metadata, end_metadata);
 
     let symbol = start_metadata.symbol.clone();
 
@@ -73,7 +73,7 @@ pub fn combine_files(
         .cloned()
         .collect();
 
-    println!("FILE1 UPDATES: {:?}", file1_updates);
+    // println!("FILE1 UPDATES: {:?}", file1_updates);
 
     // Read updates from the millisecond of overlap between the two files
     // let mut overlap_updates_1: Vec<Update> = dtf::get_range_in_file(
@@ -115,7 +115,7 @@ pub fn combine_files(
         .collect();
     overlapping_updates.sort();
 
-    println!("OVERLAP UPDATES: {:?}", overlapping_updates);
+    // println!("OVERLAP UPDATES: {:?}", overlapping_updates);
 
     // Read updates from the second file starting where the first file left off
     // let mut file2_updates: Vec<Update> = dtf::get_range_in_file(
@@ -130,7 +130,7 @@ pub fn combine_files(
         .collect();
     drop(full_file2);
 
-    println!("FILE2 UPDATES: {:?}", file2_updates);
+    // println!("FILE2 UPDATES: {:?}", file2_updates);
 
     // Concat the buffers together, deduplicate, and output into a DTF file
     let mut joined_updates = file1_updates;
@@ -181,9 +181,9 @@ fn dtf_merging() {
     let updates2 = map_into_updates(update_timestamps_2, 1006);
 
     // Write into DTF files
-    let filename1 = "../../test/test-data/dtfconcat1.dtf";
-    let filename2 = "../../test/test-data/dtfconcat2.dtf";
-    let output_filename = "../../test/test-data/dtfconcat_out.dtf";
+    let filename1 = "./test/test-data/dtfconcat1.dtf";
+    let filename2 = "./test/test-data/dtfconcat2.dtf";
+    let output_filename = "./test/test-data/dtfconcat_out.dtf";
 
     dtf::file_format::encode(filename1, "test", &updates1).unwrap();
     dtf::file_format::encode(filename2, "test", &updates2).unwrap();

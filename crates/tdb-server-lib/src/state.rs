@@ -11,6 +11,8 @@
 /// finally, call FLUSH to commit to disk the current store or FLUSH ALL to commit all available stores.
 /// the client can free the updates from memory using CLEAR or CLEARALL
 
+#[cfg(feature = "count_alloc")]
+use alloc_counter::{count_alloc, count_alloc_future};
 use crate::prelude::*;
 
 use circular_queue::CircularQueue;
@@ -27,24 +29,27 @@ macro_rules! catch {
 }
 
 pub fn into_format(result: &[Update], format: GetFormat) -> Option<ReturnType> {
-    let ret = match format {
+    Some(match format {
         GetFormat::Dtf => {
-            let mut bytes: Vec<u8> = Vec::new();
-            let _ = dtf::file_format::write_batches(&mut bytes, &result);
-            ReturnType::Bytes(bytes)
+            let mut buf: Vec<u8> = Vec::with_capacity(result.len() * 10);
+            let _ = dtf::file_format::write_batches(&mut buf, result.into_iter().peekable());
+            ReturnType::Bytes(buf)
         }
         GetFormat::Json => {
-            ReturnType::String(
-                Cow::Owned(format!("[{}]\n", result.as_json()))
-            )
+            ReturnType::String({
+                let mut ret = result.as_json();
+                ret.push('\n');
+                Cow::Owned(ret)
+            })
         }
         GetFormat::Csv => {
-            ReturnType::String(
-                Cow::Owned(format!("{}\n", result.as_csv()))
-            )
+            ReturnType::String({
+                let mut ret = result.as_csv();
+                ret.push('\n');
+                Cow::Owned(ret)
+            })
         }
-    };
-    Some(ret)
+    })
 }
 
 pub struct Book {
@@ -60,7 +65,7 @@ pub struct Book {
 impl Book {
 
     pub fn new(name: &str, settings: Arc<Settings>, price_decimals: u8) -> Self {
-        let vec = vec![];
+        let vec = Vec::with_capacity(usize::max(settings.flush_interval as usize * 3, 1024*64));
         let nominal_count = 0;
         let orderbook = Orderbook::with_precision(price_decimals);
         let name = name.to_owned();
@@ -105,20 +110,20 @@ impl Book {
 
     /// load size from file
     pub fn load_size_from_file(&mut self) {
-        let header_size = {
-            let fname = format!("{}/{}.dtf", &self.settings.dtf_folder, self.name);
-            dtf::file_format::get_size(&fname)
-        };
+        let fname = format!("{}/{}.dtf", &self.settings.dtf_folder, self.name);
+        let header_size = dtf::file_format::get_size(&fname);
         match header_size {
             Ok(header_size) => {
                 self.nominal_count = header_size;
+                debug!("Read header size from file {}: {}", fname, header_size);
             }
             Err(_) => {
-                error!("Unable to read header size from file");
+                error!("Unable to read header size from file {}", fname);
             }
         }
     }
 
+    #[cfg_attr(feature = "count_alloc", count_alloc)]
     fn add(&mut self, up: Update) {
         self.vec.push(up);
         self.orderbook.process_update(&up);
@@ -134,6 +139,7 @@ impl Book {
         }
     }
 
+    #[cfg_attr(feature = "count_alloc", count_alloc)]
     fn flush(&mut self) -> Option<()> {
         if self.vec.is_empty() {
             info!("No updates in memeory. Skipping {}.", self.name);
@@ -145,6 +151,7 @@ impl Book {
 
         let fpath = Path::new(&fname);
         let result = if fpath.exists() {
+            info!("File exists. Appending...");
             dtf::file_format::append(&fname, &self.vec)
         } else {
             dtf::file_format::encode(&fname, &self.name, &self.vec)
@@ -152,7 +159,7 @@ impl Book {
         match result {
             Ok(_) => {
                 info!("Successfully flushed into {}.", fname);
-                self.vec = vec![]; //  free
+                self.vec.clear();
                 self.in_memory = false;
                 Some(())
             }
@@ -170,14 +177,14 @@ pub struct Connection {
     pub outbound: Sender<ReturnType>,
 
     /// the current Store client is using
-    pub book_entry: Arc<String>,
+    pub book_entry: Arc<BookName>,
 }
 
 impl Connection {
     pub fn new(outbound: Sender<ReturnType>) -> Self {
         Self {
             outbound,
-            book_entry: Arc::new("default".to_owned()),
+            book_entry: Arc::new(BookName::from("default").unwrap()),
         }
     }
 }
@@ -185,13 +192,13 @@ impl Connection {
 /// key: { btc_neo => [(t0, c0), (t1, c1), ...]
 ///        ...
 ///      { total => [...]}
-pub type CountHistory = HashMap<String, CircularQueue<(SystemTime, u64)>>;
+pub type CountHistory = HashMap<BookName, CircularQueue<(SystemTime, u64)>>;
 pub struct TectonicServer {
     pub connections: HashMap<SocketAddr, Connection>,
     pub settings: Arc<Settings>,
-    pub books: HashMap<String, Book>,
+    pub books: HashMap<BookName, Book>,
     pub history: CountHistory,
-    pub subscriptions: HashMap<String, HashMap<SocketAddr, Sender<ReturnType>>>,
+    pub subscriptions: HashMap<BookName, HashMap<SocketAddr, Sender<ReturnType>>>,
 }
 
 impl TectonicServer {
@@ -199,7 +206,7 @@ impl TectonicServer {
         let connections = HashMap::new();
         let mut books = HashMap::new();
         books.insert(
-            "default".to_owned(),
+            BookName::from("default").unwrap(),
             Book::new("default", settings.clone(), PRICE_DECIMALS)
         );
         let subscriptions = HashMap::new();
@@ -292,6 +299,12 @@ impl TectonicServer {
             //     self.unsub();
             //     ReturnType::string(format!("Unsubscribed from {}", old_dbname))
             // }
+            Load(dbname) => {
+                match self.load_db(&dbname, addr) {
+                    Some(_) => ReturnType::string(format!("Loaded orderbook `{}`.", &dbname)),
+                    None => ReturnType::error(format!("No db named `{}`", dbname)),
+                }
+            }
             Use(dbname) => {
                 match self.use_db(&dbname, addr) {
                     Some(_) => ReturnType::string(format!("SWITCHED TO orderbook `{}`.", &dbname)),
@@ -320,15 +333,16 @@ impl TectonicServer {
     }
 
 
+    #[cfg_attr(feature = "count_alloc", count_alloc)]
     pub fn record_history(&mut self) {
         let mut total = 0;
-        let mut sizes: Vec<(String, u64)> = Vec::new();
+        let mut sizes: Vec<(BookName, u64)> = Vec::with_capacity(self.books.len() + 1);
         for (name, book) in self.books.iter() {
             let size = book.vec.len() as u64;
             total += size;
             sizes.push((name.clone(), size));
         }
-        sizes.push(("total".to_owned(), total));
+        sizes.push((BookName::from("total").unwrap(), total));
 
         let current_t = std::time::SystemTime::now();
         for (name, size) in &sizes {
@@ -467,7 +481,7 @@ impl TectonicServer {
     }
 
     /// Create a new store
-    pub fn create(&mut self, book_name: &str) -> Option<()> {
+    pub fn create(&mut self, book_name: &BookName) -> Option<()> {
         if self.books.contains_key(book_name) {
             None
         } else {
@@ -480,10 +494,19 @@ impl TectonicServer {
     }
 
     /// load a datastore file into memory
-    pub fn use_db(&mut self, book_name: &str, addr: Option<SocketAddr>) -> Option<()> {
+    pub fn load_db(&mut self, book_name: &BookName, addr: Option<SocketAddr>) -> Option<()> {
+        if self.books.contains_key(book_name) {
+            self.book_mut(addr)?.load();
+            Some(())
+        } else {
+            None
+        }
+    }
+
+    /// load a datastore file into memory
+    pub fn use_db(&mut self, book_name: &BookName, addr: Option<SocketAddr>) -> Option<()> {
         if self.books.contains_key(book_name) {
             self.conn_mut(addr)?.book_entry = Arc::new(book_name.to_owned());
-            self.book_mut(addr)?.load();
             Some(())
         } else {
             None
@@ -518,7 +541,7 @@ impl TectonicServer {
         )
     }
 
-    pub fn sub(&mut self, book_name: &str, addr: Option<SocketAddr>) -> Option<()> {
+    pub fn sub(&mut self, book_name: &BookName, addr: Option<SocketAddr>) -> Option<()> {
         let outbound = self.conn_mut(addr)?.outbound.clone();
         let book_sub = self.subscriptions.entry(book_name.to_owned())
             .or_insert_with(HashMap::new);
@@ -656,6 +679,7 @@ impl TectonicServer {
         }
     }
 
+    #[cfg_attr(feature = "count_alloc", count_alloc)]
     pub async fn command(&mut self, cmd: Command, addr: Option<SocketAddr>) {
         let ret = self.process_command(cmd, addr).await;
         if let Some(addr) = addr {

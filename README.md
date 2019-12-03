@@ -83,7 +83,7 @@ To config the Google Cloud Storage and Data Collection Backend integration, the 
 | `TECTONICDB_DTF_FOLDER`       | db           | Name of the directory in which DTF files will be stored                                                                                       |
 | `TECTONICDB_AUTOFLUSH`        | false        | If `true`, recorded orderbook data will automatically be flushed to DTF files every `interval` inserts.                                       |
 | `TECTONICDB_FLUSH_INTERVAL`   | 1000         | Every `interval` inserts, if `autoflush` is enabled, DTF files will be written from memory to disk.                                           |
-| `TECTONICDB_GRANULARITY`      | 30           | Record history granularity level                                                                                                              |
+| `TECTONICDB_GRANULARITY`      | 0            | Record history granularity level                                                                                                              |
 | `TECTONICDB_LOG_FILE_NAME`    | tdb.log      | Filename of the log file for the database                                                                                                     |
 | `TECTONICDB_Q_CAPACITY`       | 300          | Capacity of the circular queue for recording history                                                                                          |
 
@@ -95,6 +95,7 @@ To config the Google Cloud Storage and Data Collection Backend integration, the 
 | PING | Responds PONG |
 | INFO | Returns info about table schemas |
 | PERF | Returns the answercount of items over time |
+| LOAD \[orderbook\] | Load orderbook from disk to memory |
 | USE \[orderbook\] | Switch the current orderbook |
 | CREATE \[orderbook\] | Create orderbook |
 | GET \[n\] FROM \[orderbook\] | Returns items |
@@ -141,9 +142,6 @@ tdb client comes with a benchmark mode. This command inserts 1M records into the
 ```bash
 tdb -b 1000000
 ```
-
-Should be around 400000 inserts per second.
-
 ## Using dtf files
 
 Tectonic comes with a commandline tool `dtfcat` to inspect the file metadata and all the stored events into either JSON or CSV.

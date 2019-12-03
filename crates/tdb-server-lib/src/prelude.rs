@@ -14,8 +14,9 @@ pub use std::borrow::{Cow, Borrow};
 pub use std::collections::hash_map::{Entry, HashMap};
 pub use std::sync::Arc;
 
-pub use futures::{FutureExt, SinkExt};
-pub use futures::channel::mpsc::{self, UnboundedReceiver, UnboundedSender};
+pub use futures::{FutureExt, SinkExt, StreamExt};
+pub use futures::channel::mpsc::{self, Receiver, Sender};
+pub use futures::channel::oneshot;
 pub use async_std::{
     io::{BufReader, BufWriter},
     net::{TcpListener, TcpStream, ToSocketAddrs},
@@ -24,7 +25,10 @@ pub use async_std::{
 };
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
-pub type Sender<T> = mpsc::UnboundedSender<T>;
-pub type Receiver<T> = mpsc::UnboundedReceiver<T>;
+
+pub use arrayvec::ArrayString;
+pub type BookName = ArrayString<[u8; 64]>;
 
 pub use std::net::SocketAddr;
+
+pub const CHANNEL_SZ: usize = 1024;

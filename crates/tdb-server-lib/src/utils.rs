@@ -39,7 +39,7 @@ pub async fn init_dbs<'a>(state: &mut TectonicServer) {
             // TODO: this is not accurate at all!
             // XXX: need to keep track of file names :(
             state.books
-                .entry(symbol.clone())
+                .entry(BookName::from(&symbol).unwrap())
                 .and_modify(|e| if e.nominal_count < header_size {e.nominal_count += header_size})
                 .or_insert_with(|| Book::new(&symbol, settings, 10_u8)); // TODO: don't hardcode price decimals
         }

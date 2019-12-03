@@ -23,6 +23,9 @@
 //!        price: (f32)
 //!        size: (f32)
 
+#[cfg(feature = "count_alloc")]
+use alloc_counter::{count_alloc, no_alloc};
+
 use std::str;
 use std::fs;
 use std::fs::File;
@@ -31,6 +34,12 @@ use std::cmp;
 use std::io::ErrorKind::InvalidData;
 use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
 use std::io::{self, Write, Read, Seek, BufRead, BufWriter, BufReader, SeekFrom};
+
+use std::iter::Peekable;
+use std::io::Cursor;
+use std::sync::Mutex;
+use std::cell::RefCell;
+use std::ops::DerefMut;
 
 use crate::dtf::update::*;
 use crate::utils::epoch_to_human;
@@ -148,16 +157,21 @@ fn write_reference(wtr: &mut dyn Write, ref_ts: u64, ref_seq: u32, len: u16) -> 
 }
 
 /// write a list of updates as batches
-pub fn write_batches(mut wtr: &mut dyn Write, ups: &[Update]) -> Result<(), io::Error> {
-    if ups.len() == 0 {
-        return Ok(());
+#[cfg_attr(feature="count_alloc", count_alloc)]
+pub fn write_batches<'a, I: Iterator<Item=&'a Update>>(mut wtr: &mut dyn Write, mut ups: Peekable<I>) -> Result<(), io::Error> {
+    lazy_static! {
+        static ref BUF: Mutex<RefCell<Box<[u8; 65536]>>> = Mutex::new(RefCell::new(Box::new([0; 65536])));
     }
-    let mut buf: Vec<u8> = vec![];
-    let mut ref_ts = ups[0].ts;
-    let mut ref_seq = ups[0].seq;
+    let mut b = BUF.lock().unwrap();
+    let mut c = b.deref_mut().borrow_mut();
+    let mut buf = Cursor::new(&mut c[..]);
+    // let mut buf = Vec::new();
+    let head = ups.peek().unwrap();
+    let mut ref_ts = head.ts;
+    let mut ref_seq = head.seq;
     let mut count = 0;
 
-    for elem in ups.iter() {
+    for elem in ups {
         if count != 0 // if we got things to write
         && (
              elem.ts >= ref_ts + 0xFFFF // if still addressable (ref_ts is 4 bytes)
@@ -167,29 +181,29 @@ pub fn write_batches(mut wtr: &mut dyn Write, ups: &[Update]) -> Result<(), io::
          )
         {
             write_reference(&mut wtr, ref_ts, ref_seq, count)?;
-            let _ = wtr.write(buf.as_slice());
-            buf.clear();
+            let _ = wtr.write(&buf.get_ref()[0..(buf.position() as usize)]);
+            buf.set_position(0);
+            // let _ = wtr.write(buf.as_slice());
+            // buf.clear();
 
             ref_ts = elem.ts;
             ref_seq = elem.seq;
             count = 0;
         }
 
-        let serialized = elem.serialize(ref_ts, ref_seq);
-        let _ = buf.write(serialized.as_slice());
+        elem.serialize_to_buffer(&mut buf, ref_ts, ref_seq);
 
         count += 1;
     }
 
     write_reference(&mut wtr, ref_ts, ref_seq, count)?;
-    wtr.write_all(buf.as_slice())
+    wtr.write_all(&buf.get_ref()[0..(buf.position() as usize)])
+    // wtr.write_all(buf.as_slice())
 }
 
-fn write_main<T: Write + Seek>(wtr: &mut T, ups: &[Update]) -> Result<(), io::Error> {
+fn write_main<'a, T: Write + Seek, I: IntoIterator<Item=&'a Update>>(wtr: &mut T, ups: I) -> Result<(), io::Error> {
     wtr.seek(SeekFrom::Start(MAIN_OFFSET))?;
-    if !ups.is_empty() {
-        write_batches(wtr, ups)?;
-    }
+    write_batches(wtr, ups.into_iter().peekable())?;
     Ok(())
 }
 
@@ -279,7 +293,7 @@ pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result
     }
     // go to beginning of main section
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
-    let mut v: Vec<Update> = vec![];
+    let mut v: Vec<Update> = Vec::with_capacity(2048);
 
     loop {
         // read marker byte
@@ -506,7 +520,8 @@ impl Iterator for DTFBufReader {
 }
 
 fn read_n_batches<T: BufRead + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<Vec<Update>, io::Error> {
-    let mut v: Vec<Update> = vec![];
+    rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
+    let mut v: Vec<Update> = Vec::with_capacity(num_rows as usize);
     let mut count = 0;
     if num_rows == 0 { return Ok(v); }
     while let Ok(is_ref) = rdr.read_u8() {
@@ -526,7 +541,9 @@ fn read_n_batches<T: BufRead + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<V
 }
 
 fn read_all<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error> {
-    let mut v: Vec<Update> = vec![];
+    let len = read_len(&mut rdr)?;
+    rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
+    let mut v: Vec<Update> = Vec::with_capacity(len as usize);
     while let Ok(is_ref) = rdr.read_u8() {
         if is_ref == 0x1 {
             rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
@@ -541,8 +558,6 @@ fn read_all<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error
 pub fn decode(fname: &str, num_rows: Option<u32>) -> Result<Vec<Update>, io::Error> {
 
     let mut rdr = file_reader(fname)?;
-    rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
-
     match num_rows {
         Some(num_rows) => read_n_batches(&mut rdr, num_rows),
         None => read_all(&mut rdr),
@@ -562,33 +577,29 @@ pub fn decode_buffer(mut buf: &mut dyn Read) -> Vec<Update> {
 
 /// append a list of Updates to file
 /// Panic when range is wrong (new_min_ts <= old_max_ts)
+#[cfg_attr(feature = "count_alloc", count_alloc)]
 pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
-    let (ups, new_max_ts, cur_len) = {
-        let mut rdr = file_reader(fname)?;
-        let _symbol = read_symbol(&mut rdr)?;
+    let mut rdr = file_reader(fname)?;
+    let _symbol = read_symbol(&mut rdr)?;
 
-        let old_max_ts = read_max_ts(&mut rdr)?;
+    let old_max_ts = read_max_ts(&mut rdr)?;
 
-        let ups: Vec<Update> = ups.into_iter()
-            .filter(|up| up.ts > old_max_ts)
-            .cloned()
-            .collect();
-        if ups.is_empty() {
-            return Ok(());
-        }
+    let mut ups = ups.into_iter().filter(|up| up.ts > old_max_ts).peekable();
 
-        let new_min_ts = ups[0].ts;
-        let new_max_ts = ups[ups.len() - 1].ts;
+    if ups.peek().is_none() {
+        return Ok(());
+    }
 
-        if new_min_ts <= old_max_ts {
-            panic!("Cannot append data!(not implemented)");
-        }
+    let new_min_ts = ups.clone().next().unwrap().ts;
+    let new_max_ts = ups.clone().next_back().unwrap().ts;
 
-        let cur_len = read_len(&mut rdr)?;
-        (ups, new_max_ts, cur_len)
-    };
+    if new_min_ts <= old_max_ts {
+        panic!("Cannot append data!(not implemented)");
+    }
 
-    let new_len = cur_len + ups.len() as u64;
+    let cur_len = read_len(&mut rdr)?;
+
+    let new_len = cur_len + ups.clone().count() as u64;
 
     let mut wtr = file_writer(fname, false)?;
     write_len(&mut wtr, new_len)?;
@@ -599,7 +610,7 @@ pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
     } else {
         wtr.seek(SeekFrom::End(0)).unwrap();
     }
-    write_batches(&mut wtr, &ups)?;
+    write_batches(&mut wtr, ups)?;
     wtr.flush().unwrap();
 
     Ok(())
@@ -608,6 +619,13 @@ pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(test)]
+    fn real_sample_data() -> Vec<Update> {
+        let fname = "../../test/test-data/bt_btcnav.dtf";
+        let decoded_updates = decode(fname, None).unwrap();
+        decoded_updates
+    }
 
     #[cfg(test)]
     fn sample_data() -> Vec<Update> {
@@ -734,6 +752,16 @@ mod tests {
         let ts = sample_data_one_item();
         let fname = "test.dtf";
         let symbol = "NEO_BTC";
+        encode(fname, symbol, &ts).unwrap();
+        let decoded_updates = decode(fname, None).unwrap();
+        assert_eq!(decoded_updates, ts);
+    }
+
+    #[test]
+    fn should_encode_decode_real() {
+        let ts = real_sample_data();
+        let fname = "realtest.dtf";
+        let symbol = "bnc_zrx_btc";
         encode(fname, symbol, &ts).unwrap();
         let decoded_updates = decode(fname, None).unwrap();
         assert_eq!(decoded_updates, ts);
@@ -941,7 +969,7 @@ mod tests {
             size: 0.,
         };
         let mut bytes = vec![];
-        write_batches(&mut bytes, &vec![up]).unwrap();
+        write_batches(&mut bytes, [up].into_iter().peekable()).unwrap();
         assert_eq!(
             vec![
                 1,

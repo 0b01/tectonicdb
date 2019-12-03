@@ -61,16 +61,17 @@ pub enum Command {
     Help,
     Info,
     Perf,
-    Orderbook(Option<String>),
+    Orderbook(Option<BookName>),
     Get(ReqCount, GetFormat, Option<(u64, u64)>, ReadLocation),
     Count(ReqCount, ReadLocation),
     Clear(ReqCount),
     Flush(ReqCount),
-    Insert(Option<Update>, Option<String>),
-    Create(String),
-    Subscribe(String),
-    Use(String),
-    Exists(String),
+    Insert(Option<Update>, Option<BookName>),
+    Create(BookName),
+    Subscribe(BookName),
+    Load(BookName),
+    Use(BookName),
+    Exists(BookName),
     Unknown,
     BadFormat,
 }
@@ -84,7 +85,7 @@ pub enum Event {
     },
     Command {
         from: Option<SocketAddr>,
-        command: Command
+        command: Command,
     },
     History {
 
@@ -96,7 +97,8 @@ pub fn parse_to_command(mut line: &[u8]) -> Command {
     use self::Command::*;
 
     if line.last() == Some(&b'\n') { line = &line[..(line.len()-1)]; }
-    if line.len() > 3 && &line[0..3] == b"raw" {
+    let l = libtectonic::RAW_INSERT_PREFIX.len();
+    if line.len() > l && &line[0..l] == libtectonic::RAW_INSERT_PREFIX {
         return libtectonic::utils::decode_insert_into(line)
             .map(|(up, book_name)| Command::Insert(up, book_name))
             .unwrap_or(Command::BadFormat);
@@ -130,19 +132,22 @@ pub fn parse_to_command(mut line: &[u8]) -> Command {
         _ => {
             if line.starts_with("SUBSCRIBE ") {
                 let dbname: &str = &line[10..];
-                Subscribe(dbname.into())
+                Subscribe(BookName::from(dbname).unwrap())
             } else if line.starts_with("CREATE ") {
                 let dbname: &str = &line[7..];
-                Create(dbname.into())
+                Create(BookName::from(dbname).unwrap())
             } else if line.starts_with("OB ") {
                 let dbname: &str = &line[3..];
-                Orderbook(Some(dbname.into()))
+                Orderbook(Some(BookName::from(dbname).unwrap()))
+            } else if line.starts_with("LOAD ") {
+                let dbname: &str = &line[5..];
+                Load(BookName::from(dbname).unwrap())
             } else if line.starts_with("USE ") {
                 let dbname: &str = &line[4..];
-                Use(dbname.into())
+                Use(BookName::from(dbname).unwrap())
             } else if line.starts_with("EXISTS ") {
                 let dbname: &str = &line[7..];
-                Exists(dbname.into())
+                Exists(BookName::from(dbname).unwrap())
             } else if line.starts_with("ADD ") || line.starts_with("INSERT ") {
                 let (up, dbname) = if line.contains(" INTO ") {
                     let (up, dbname) = crate::parser::parse_add_into(&line);
@@ -199,7 +204,7 @@ mod tests {
         let addr = SocketAddr::new(
             net::IpAddr::V4(net::Ipv4Addr::new(127, 0, 0, 1)),
             1);
-        let (client_sender, _client_receiver) = mpsc::unbounded();
+        let (client_sender, _client_receiver) = mpsc::channel(CHANNEL_SZ);
         global.new_connection(client_sender, addr);
         (global, Some(addr))
     }

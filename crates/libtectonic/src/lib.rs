@@ -13,6 +13,8 @@ extern crate byteorder;
 #[macro_use]
 extern crate bitflags;
 extern crate log;
+#[macro_use]
+extern crate lazy_static;
 
 /// functions for histogram, event analytics
 pub mod postprocessing;
@@ -22,3 +24,6 @@ pub mod storage;
 pub mod utils;
 /// DTF(Dense Tick Format) implmentation
 pub mod dtf;
+
+/// Constant prefix during encoding/decoding raw insert command
+pub const RAW_INSERT_PREFIX: &'static [u8; 2] = b"ra";

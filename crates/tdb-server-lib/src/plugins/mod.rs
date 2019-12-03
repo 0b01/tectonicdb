@@ -7,8 +7,9 @@ pub mod history;
 /// Run each plugin in a separate thread
 pub async fn run_plugins(broker: Sender<Event>, settings: Arc<Settings>) {
     info!("initializing plugins");
-    history::run(broker.clone(), settings.clone()).await;
-
+    if settings.granularity > 0 {
+        history::run(broker.clone(), settings.clone()).await;
+    }
     #[cfg(feature = "gcs")] gstorage::run(broker, settings);
 }
 

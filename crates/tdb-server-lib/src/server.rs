@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use byteorder::{BigEndian, ReadBytesExt};
+use async_std::future;
 
 // TODO: add onexit once async-std support is stablized
 #[cfg(unix)]
@@ -46,13 +47,13 @@ pub async fn run_server(host: &str, port: &str, settings: Arc<Settings>) -> Resu
 
     let listener = TcpListener::bind(addr).await?;
 
-    let (broker_sender, broker_receiver) = mpsc::unbounded::<Event>();
+    let (broker_sender, broker_receiver) = mpsc::channel::<Event>(CHANNEL_SZ);
 
     // ctrlc::set_handler(move || {
     //     task::block_on(onexit(broker, settings));
     // });
 
-    let broker = task::spawn(broker_loop(broker_receiver, settings.clone()));
+    let broker = task::spawn(broker_loop(broker_receiver, Arc::clone(&settings)));
     let plugins = task::spawn(crate::plugins::run_plugins(broker_sender.clone(), settings.clone()));
     plugins.await;
 
@@ -72,10 +73,9 @@ pub async fn run_server(host: &str, port: &str, settings: Arc<Settings>) -> Resu
 async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result<()> {
     let stream = Arc::new(stream);
     let mut reader = BufReader::new(&*stream);
-    // let mut lines = reader.lines();
     let addr = stream.peer_addr()?;
 
-    let (_shutdown_sender, shutdown_receiver) = mpsc::unbounded::<Void>();
+    let (_shutdown_sender, shutdown_receiver) = mpsc::channel::<Void>(CHANNEL_SZ);
     broker
         .send(Event::NewConnection {
             addr: addr,
@@ -85,22 +85,24 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
         .await
         .unwrap();
 
-    let mut bytes = vec![0; 4];
+    let mut bytes = [0; 4];
+    let mut buf = Box::new([0; 65536*16]);
     while let Ok(()) = reader.read_exact(&mut bytes).await {
         let mut rdr = std::io::Cursor::new(bytes);
-        let sz = rdr.read_u32::<BigEndian>().unwrap();
+        let sz = rdr.read_u32::<BigEndian>().unwrap() as usize;
         bytes = rdr.into_inner();
 
-        let mut buf = vec![0; sz as usize];
-        reader.read_exact(&mut buf).await?;
+        reader.read_exact(&mut buf[..sz]).await?;
 
-        let command = crate::handler::parse_to_command(&buf);
+        let command = crate::handler::parse_to_command(&buf[..sz]);
         let from = Some(addr);
-        broker
+        if let Err(_) = broker
             .send(Event::Command{from, command})
             .await
-            .unwrap();
-        buf.clear();
+        {
+            error!("unable to send event to broker");
+            break;
+        }
     }
 
     info!("Client dropped: {:?}", addr);
@@ -110,7 +112,7 @@ async fn connection_loop(mut broker: Sender<Event>, stream: TcpStream) -> Result
 
 
 async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
-    let (disconnect_sender, mut disconnect_receiver) = mpsc::unbounded::<(SocketAddr, Receiver<ReturnType>)>();
+    let (disconnect_sender, mut disconnect_receiver) = mpsc::channel::<(SocketAddr, Receiver<ReturnType>)>(1);
 
     let mut state = TectonicServer::new(settings);
 
@@ -136,9 +138,10 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
                 state.record_history();
             }
             Event::NewConnection { addr, stream, shutdown } => {
-                let (client_sender, mut client_receiver) = mpsc::unbounded();
+                let (client_sender, mut client_receiver) = mpsc::channel(2048);
                 if state.new_connection(client_sender, addr) {
                     let mut disconnect_sender = disconnect_sender.clone();
+                    // TODO: lift writer loop out so rx is passed in
                     spawn_and_log_error(async move {
                         let res = connection_writer_loop(&mut client_receiver, stream, shutdown).await;
                         disconnect_sender
@@ -153,6 +156,7 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
             },
         }
     }
+    error!("broker exited");
     drop(state);
     drop(disconnect_sender);
     while let Some((_name, _pending_messages)) = disconnect_receiver.next().await { }
@@ -163,7 +167,7 @@ async fn connection_writer_loop(
     stream: Arc<TcpStream>,
     mut shutdown: Receiver<Void>,
 ) -> Result<()> {
-    let mut buf = Vec::with_capacity(1000);
+    let mut buf = Vec::with_capacity(CHANNEL_SZ);
     let mut stream = &*stream;
     loop {
         select! {
@@ -192,7 +196,13 @@ async fn connection_writer_loop(
                     },
                     None => break,
                 };
-                stream.write_all(&buf).await?;
+                if let Err(future::TimeoutError {..}) = future::timeout(
+                    std::time::Duration::from_millis(0),
+                    stream.write_all(&buf)
+                ).await
+                {
+                    error!("tcpstream write_all timeout.");
+                }
                 buf.clear()
             },
             void = shutdown.next().fuse() => match void {

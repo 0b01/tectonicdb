@@ -10,6 +10,8 @@ pub mod client;
 use std::env;
 use crate::client::TectonicClient;
 use crate::error::TectonicError;
+use std::time::SystemTime;
+use libtectonic::dtf::update::Update;
 
 fn key_or_default(key: &str, default: &str) -> String {
    match env::var(key) {
@@ -40,4 +42,35 @@ pub fn client_from_env() -> TectonicClient {
         },
         _ => unreachable!(),
     }
+}
+
+pub fn benchmark(mut cli: TectonicClient, times: usize) {
+
+    let mut t = SystemTime::now();
+
+    let mut acc = vec![];
+    let create = cli.cmd("CREATE benchmark\n");
+    println!("{:?}", create);
+    for i in 0..times {
+        if i % 10_000 == 0 {
+            dbg!(i);
+        }
+        let ts = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos() as u64 / 1000;
+
+        let res = cli.insert(
+            Some("benchmark"),
+            &Update { ts, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 }
+        );
+        res.unwrap();
+        acc.push(t.elapsed().unwrap().subsec_nanos() as usize);
+        // info!("res: {:?}, latency: {:?}", res, t.elapsed());
+        t = SystemTime::now();
+    }
+
+    ::std::thread::sleep(std::time::Duration::new(1, 0));
+    cli.shutdown();
+
+    let avg_ns = acc.iter().fold(0, |s, i| s + i) as f32 / acc.len() as f32;
+    println!("AVG ns/insert: {}", avg_ns);
+    println!("AVG inserts/s: {}", 1. / (avg_ns / 1_000_000_000.));
 }
