@@ -2,6 +2,8 @@ use crate::prelude::*;
 use byteorder::{BigEndian, ReadBytesExt};
 use async_std::future;
 
+const IGNORE_TCP_WRITE: bool = true;
+
 // TODO: add onexit once async-std support is stablized
 #[cfg(unix)]
 #[allow(unused)]
@@ -141,7 +143,6 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
                 let (client_sender, mut client_receiver) = mpsc::channel(2048);
                 if state.new_connection(client_sender, addr) {
                     let mut disconnect_sender = disconnect_sender.clone();
-                    // TODO: lift writer loop out so rx is passed in
                     spawn_and_log_error(async move {
                         let res = connection_writer_loop(&mut client_receiver, stream, shutdown).await;
                         disconnect_sender
@@ -201,7 +202,11 @@ async fn connection_writer_loop(
                     stream.write_all(&buf)
                 ).await
                 {
-                    error!("tcpstream write_all timeout.");
+                    if IGNORE_TCP_WRITE {
+
+                    } else {
+                        error!("tcpstream write_all timeout.");
+                    }
                 }
                 buf.clear()
             },

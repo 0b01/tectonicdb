@@ -8,6 +8,9 @@ use crate::error::TectonicError;
 use libtectonic::dtf::{update::UpdateVecConvert, file_format::decode_buffer};
 use libtectonic::postprocessing::orderbook::Orderbook;
 
+/// whether to read bytes returned from the server
+const DISCARD_TCP_STREAM: bool = false;
+
 pub struct TectonicClient {
     pub stream: BufStream<TcpStream>,
     pub host: String,
@@ -87,13 +90,15 @@ impl TectonicClient {
         self.stream.write(&(command.len() as u32).to_be_bytes())?;
         self.stream.write(command)?;
         self.stream.flush()?;
-        // let ret = self.stream.read_u8().map(|i| i == 0x1)?;
-        // let size = self.stream.read_u64::<BigEndian>()?;
-        // // ignore bytes
-        // std::io::copy(
-        //     &mut self.stream.get_ref().take(size as u64),
-        //     &mut std::io::sink()
-        // )?;
+        if !DISCARD_TCP_STREAM {
+            let _ret = self.stream.read_u8().map(|i| i == 0x1)?;
+            let size = self.stream.read_u64::<BigEndian>()?;
+            // ignore bytes
+            std::io::copy(
+                &mut self.stream.get_ref().take(size as u64),
+                &mut std::io::sink()
+            )?;
+        }
         Ok(true)
     }
 
