@@ -26,7 +26,7 @@ fn it_works() {
 
         let mut cli = libtdbcli::client_from_env();
         cli.use_db("benchmark").unwrap();
-        task::sleep(Duration::from_secs(4)).await;
+        task::sleep(Duration::from_secs(15)).await;
         let ret = cli.cmd("COUNT ALL IN MEM\n").unwrap();
         assert_eq!(ret, "100000");
 
