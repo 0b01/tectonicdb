@@ -29,24 +29,27 @@ macro_rules! catch {
 }
 
 pub fn into_format(result: &[Update], format: GetFormat) -> Option<ReturnType> {
-    let ret = match format {
+    Some(match format {
         GetFormat::Dtf => {
-            let mut bytes: Vec<u8> = Vec::with_capacity(result.len() * 10);
-            let _ = dtf::file_format::write_batches(&mut bytes, result.into_iter().peekable());
-            ReturnType::Bytes(bytes)
+            let mut buf: Vec<u8> = Vec::with_capacity(result.len() * 10);
+            let _ = dtf::file_format::write_batches(&mut buf, result.into_iter().peekable());
+            ReturnType::Bytes(buf)
         }
         GetFormat::Json => {
-            ReturnType::String(
-                Cow::Owned(format!("[{}]\n", result.as_json()))
-            )
+            ReturnType::String({
+                let mut ret = result.as_json();
+                ret.push('\n');
+                Cow::Owned(ret)
+            })
         }
         GetFormat::Csv => {
-            ReturnType::String(
-                Cow::Owned(format!("{}\n", result.as_csv()))
-            )
+            ReturnType::String({
+                let mut ret = result.as_csv();
+                ret.push('\n');
+                Cow::Owned(ret)
+            })
         }
-    };
-    Some(ret)
+    }
 }
 
 pub struct Book {

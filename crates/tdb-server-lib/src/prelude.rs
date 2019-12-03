@@ -31,4 +31,4 @@ pub type BookName = ArrayString<[u8; 64]>;
 
 pub use std::net::SocketAddr;
 
-pub const CHANNEL_SZ: usize = 2;
+pub const CHANNEL_SZ: usize = 1024;

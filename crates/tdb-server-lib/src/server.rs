@@ -167,7 +167,7 @@ async fn connection_writer_loop(
     stream: Arc<TcpStream>,
     mut shutdown: Receiver<Void>,
 ) -> Result<()> {
-    let mut buf = Vec::with_capacity(1000);
+    let mut buf = Vec::with_capacity(CHANNEL_SZ);
     let mut stream = &*stream;
     loop {
         select! {
