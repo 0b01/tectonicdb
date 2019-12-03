@@ -69,6 +69,7 @@ pub enum Command {
     Insert(Option<Update>, Option<BookName>),
     Create(BookName),
     Subscribe(BookName),
+    Load(BookName),
     Use(BookName),
     Exists(BookName),
     Unknown,
@@ -137,6 +138,9 @@ pub fn parse_to_command(mut line: &[u8]) -> Command {
             } else if line.starts_with("OB ") {
                 let dbname: &str = &line[3..];
                 Orderbook(Some(BookName::from(dbname).unwrap()))
+            } else if line.starts_with("LOAD ") {
+                let dbname: &str = &line[5..];
+                Load(BookName::from(dbname).unwrap())
             } else if line.starts_with("USE ") {
                 let dbname: &str = &line[4..];
                 Use(BookName::from(dbname).unwrap())

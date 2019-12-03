@@ -21,6 +21,7 @@ crates/**/*.dtf
 db/*
 
 test/zrx/
+testdata/
 
 src/bin/gen_train_data
 test.npy

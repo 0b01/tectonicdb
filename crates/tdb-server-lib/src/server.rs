@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use byteorder::{BigEndian, ReadBytesExt};
+use async_std::future;
 
 // TODO: add onexit once async-std support is stablized
 #[cfg(unix)]
@@ -195,10 +196,13 @@ async fn connection_writer_loop(
                     },
                     None => break,
                 };
-                let i = async_std::future::timeout(
+                if let Err(future::TimeoutError {..}) = future::timeout(
                     std::time::Duration::from_millis(0),
                     stream.write_all(&buf)
-                ).await;
+                ).await
+                {
+                    error!("tcpstream write_all timeout.");
+                }
                 buf.clear()
             },
             void = shutdown.next().fuse() => match void {

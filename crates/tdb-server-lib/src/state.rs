@@ -296,6 +296,12 @@ impl TectonicServer {
             //     self.unsub();
             //     ReturnType::string(format!("Unsubscribed from {}", old_dbname))
             // }
+            Load(dbname) => {
+                match self.load_db(&dbname, addr) {
+                    Some(_) => ReturnType::string(format!("Loaded orderbook `{}`.", &dbname)),
+                    None => ReturnType::error(format!("No db named `{}`", dbname)),
+                }
+            }
             Use(dbname) => {
                 match self.use_db(&dbname, addr) {
                     Some(_) => ReturnType::string(format!("SWITCHED TO orderbook `{}`.", &dbname)),
@@ -485,10 +491,19 @@ impl TectonicServer {
     }
 
     /// load a datastore file into memory
+    pub fn load_db(&mut self, book_name: &BookName, addr: Option<SocketAddr>) -> Option<()> {
+        if self.books.contains_key(book_name) {
+            self.book_mut(addr)?.load();
+            Some(())
+        } else {
+            None
+        }
+    }
+
+    /// load a datastore file into memory
     pub fn use_db(&mut self, book_name: &BookName, addr: Option<SocketAddr>) -> Option<()> {
         if self.books.contains_key(book_name) {
             self.conn_mut(addr)?.book_entry = Arc::new(book_name.to_owned());
-            self.book_mut(addr)?.load();
             Some(())
         } else {
             None

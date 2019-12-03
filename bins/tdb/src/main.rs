@@ -5,11 +5,9 @@ extern crate chrono;
 extern crate log;
 
 use std::io::{stdin, stdout, Write};
-use std::time::SystemTime;
 use libtdbcli::client::TectonicClient;
 use clap::{App, Arg};
 use std::error::Error;
-use libtectonic::dtf::update::Update;
 
 fn init_logger() {
     fern::Dispatch::new()
@@ -81,7 +79,7 @@ fn main() {
             .unwrap_or("10")
             .parse::<usize>()
             .unwrap_or(10);
-        benchmark(cli, times);
+        libtdbcli::benchmark(cli, times);
     } else if matches.is_present("s") {
         let dbname = matches.value_of("s").unwrap_or("");
         subscribe(cli, dbname);
@@ -90,37 +88,6 @@ fn main() {
     }
 }
 
-
-fn benchmark(mut cli: TectonicClient, times: usize) {
-
-    let mut t = SystemTime::now();
-
-    let mut acc = vec![];
-    let create = cli.cmd("CREATE benchmark\n");
-    println!("{:?}", create);
-    for i in 0..times {
-        if i % 1_000 == 0 {
-            dbg!(i);
-        }
-        let ts = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos() as u64 / 1000;
-
-        let res = cli.insert(
-            Some("benchmark"),
-            &Update { ts, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 }
-        );
-        res.unwrap();
-        acc.push(t.elapsed().unwrap().subsec_nanos() as usize);
-        // info!("res: {:?}, latency: {:?}", res, t.elapsed());
-        t = SystemTime::now();
-    }
-
-    ::std::thread::sleep(std::time::Duration::new(1, 0));
-    cli.shutdown();
-
-    let avg_ns = acc.iter().fold(0, |s, i| s + i) as f32 / acc.len() as f32;
-    println!("AVG ns/insert: {}", avg_ns);
-    println!("AVG inserts/s: {}", 1. / (avg_ns / 1_000_000_000.));
-}
 
 
 fn handle_query(cli: &mut TectonicClient) {

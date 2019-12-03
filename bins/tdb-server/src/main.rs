@@ -1,45 +1,8 @@
-#![recursion_limit="1024"]
-extern crate libtectonic;
-extern crate clap;
-extern crate chrono;
-#[cfg(feature = "gcs")]
-extern crate serde;
-#[cfg(feature = "gcs")]
-#[macro_use]
-extern crate serde_derive;
-extern crate openssl_probe;
-extern crate lazy_static;
-
 #[macro_use]
 extern crate log;
 extern crate fern;
 
-extern crate byteorder;
-extern crate uuid;
-extern crate circular_queue;
-
-#[macro_use]
-extern crate futures;
-extern crate async_std;
-extern crate ctrlc;
-
-#[cfg(feature = "count_alloc")]
-use alloc_counter::AllocCounterSystem;
-#[cfg(feature = "count_alloc")]
-#[cfg_attr(feature = "count_alloc", global_allocator)]
-static A: AllocCounterSystem = AllocCounterSystem;
-
-pub mod plugins;
-pub mod utils;
-pub mod server;
-pub mod state;
-pub mod parser;
-pub mod handler;
-pub mod settings;
-pub mod prelude;
-
-use crate::prelude::*;
-
+use tdb_server_lib::prelude::*;
 use clap::{Arg, App, ArgMatches};
 
 fn main() {
@@ -90,7 +53,7 @@ fn main() {
         .map(String::from)
         .unwrap_or_else(|| key_or_default("TECTONICDB_LOG_FILE_NAME", "tdb.log"));
 
-    let settings = Arc::new(settings::Settings {
+    let settings = Arc::new(tdb_server_lib::settings::Settings {
         autoflush,
         dtf_folder,
         flush_interval: flush_interval.parse().unwrap(),
@@ -107,7 +70,7 @@ fn main() {
          _/_/    _/_/_/    _/_/_/      _/_/    _/_/    _/    _/  _/    _/_/_/
     "##);
 
-    task::block_on(server::run_server(&host, &port, settings)).unwrap();
+    task::block_on(tdb_server_lib::server::run_server(&host, &port, settings)).unwrap();
 }
 
 fn prepare_logger(verbosity: u8, log_file: &str) {

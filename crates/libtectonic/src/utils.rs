@@ -2,7 +2,7 @@ extern crate chrono;
 use crate::dtf::update::Update;
 use self::chrono::{ NaiveDateTime, DateTime, Utc };
 use byteorder::{BigEndian, ReadBytesExt};
-use std::io::{Error, Read, Seek, SeekFrom, Write, Cursor};
+use std::io::{Error, Seek, SeekFrom, Write, Cursor};
 type BookName = arrayvec::ArrayString<[u8; 64]>;
 
 /// fill digits 123 => 12300 etc..
