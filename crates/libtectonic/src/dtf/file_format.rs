@@ -169,7 +169,7 @@ pub fn write_batches<'a, I: Iterator<Item=&'a Update>>(mut wtr: &mut dyn Write, 
     let head = ups.peek().unwrap();
     let mut ref_ts = head.ts;
     let mut ref_seq = head.seq;
-    let mut count = 0;
+    let mut count: u16 = 0;
 
     for elem in ups {
         if count != 0 // if we got things to write
@@ -178,6 +178,7 @@ pub fn write_batches<'a, I: Iterator<Item=&'a Update>>(mut wtr: &mut dyn Write, 
           || elem.seq >= ref_seq + 0xF // ref_seq is 1 byte
           || elem.seq < ref_seq // sometimes the data is scrambled, just write that line down
           || elem.ts < ref_ts // ^
+          || count == 0xFFFF
          )
         {
             write_reference(&mut wtr, ref_ts, ref_seq, count)?;
@@ -1010,5 +1011,35 @@ mod tests {
             ],
             bytes
         );
+    }
+
+    #[test]
+    fn test_write_batches() {
+        let mut ups = vec![];
+        for i in 0..1000000 {
+            let up = Update {
+                ts: 100,
+                seq: 10,
+                is_trade: true,
+                is_bid: true,
+                price: 9999.999,
+                size: 9999.999,
+            };
+            ups.push(up);
+        }
+        let mut bytes = vec![];
+        write_batches(&mut bytes, ups.iter().peekable()).unwrap();
+        dbg!(bytes.len());
+        let mut cur = Cursor::new(bytes);
+
+        let mut v: Vec<Update> = Vec::new();
+        while let Ok(is_ref) = cur.read_u8() {
+            if is_ref == 0x1 {
+                cur.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
+                v.extend(read_one_batch(&mut cur).unwrap());
+            }
+        }
+
+        assert_eq!(v.len(), 1000000);
     }
 }
