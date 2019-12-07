@@ -31,7 +31,7 @@ path = "bins/gen_train_data/src/main.rs"
 
 
 [dependencies]
-tdb-server-lib = { path = "crates/tdb-server-lib", version = "0.3.0", features = [] }
+libtdbserver = { path = "crates/libtdbserver", version = "0.3.0", features = [] }
 libtectonic = { path = "crates/libtectonic", version = "0.3.0" }
 libtdbcli = { path = "crates/libtdbcli", version = "0.3.0" }
 

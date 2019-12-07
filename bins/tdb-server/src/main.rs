@@ -2,7 +2,7 @@
 extern crate log;
 extern crate fern;
 
-use tdb_server_lib::prelude::*;
+use libtdbserver::prelude::*;
 use clap::{Arg, App, ArgMatches};
 
 fn main() {
@@ -53,7 +53,7 @@ fn main() {
         .map(String::from)
         .unwrap_or_else(|| key_or_default("TECTONICDB_LOG_FILE_NAME", "tdb.log"));
 
-    let settings = Arc::new(tdb_server_lib::settings::Settings {
+    let settings = Arc::new(libtdbserver::settings::Settings {
         autoflush,
         dtf_folder,
         flush_interval: flush_interval.parse().unwrap(),
@@ -70,7 +70,7 @@ fn main() {
          _/_/    _/_/_/    _/_/_/      _/_/    _/_/    _/    _/  _/    _/_/_/
     "##);
 
-    task::block_on(tdb_server_lib::server::run_server(&host, &port, settings)).unwrap();
+    task::block_on(libtdbserver::server::run_server(&host, &port, settings)).unwrap();
 }
 
 fn prepare_logger(verbosity: u8, log_file: &str) {

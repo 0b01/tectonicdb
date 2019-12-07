@@ -87,7 +87,7 @@ fn main() {
         let dbname = matches.value_of("s").unwrap_or("");
         subscribe(cli, dbname);
     } else {
-        interactive::run(&mut cli);
+        interactive::run(&mut cli).unwrap();
     }
 }
 
