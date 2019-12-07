@@ -59,7 +59,8 @@ pub fn benchmark(mut cli: TectonicClient, times: usize) {
 
         let res = cli.insert(
             Some("benchmark"),
-            &Update { ts, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 }
+            &Update { ts, seq: 0, is_bid: true, is_trade: false, price: 0.001939,  size: 22.85 },
+            true,
         );
         res.unwrap();
         acc.push(t.elapsed().unwrap().subsec_nanos() as usize);

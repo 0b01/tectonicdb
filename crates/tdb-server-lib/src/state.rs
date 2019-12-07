@@ -117,8 +117,8 @@ impl Book {
                 self.nominal_count = header_size;
                 debug!("Read header size from file {}: {}", fname, header_size);
             }
-            Err(_) => {
-                error!("Unable to read header size from file {}", fname);
+            Err(e) => {
+                error!("{}: {}", e, fname);
             }
         }
     }

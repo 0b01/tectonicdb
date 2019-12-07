@@ -73,7 +73,7 @@ impl Ord for Metadata {
 }
 
 /// Metadata block for each Batch
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BatchMetadata {
     /// reference timestamp
     pub ref_ts: u64,
@@ -160,7 +160,8 @@ fn write_reference(wtr: &mut dyn Write, ref_ts: u64, ref_seq: u32, len: u16) -> 
 #[cfg_attr(feature="count_alloc", count_alloc)]
 pub fn write_batches<'a, I: Iterator<Item=&'a Update>>(mut wtr: &mut dyn Write, mut ups: Peekable<I>) -> Result<(), io::Error> {
     lazy_static! {
-        static ref BUF: Mutex<RefCell<Box<[u8; 65536]>>> = Mutex::new(RefCell::new(Box::new([0; 65536])));
+        // 32*1000*1000 = 32 MB
+        static ref BUF: Mutex<RefCell<Vec<u8>>> = Mutex::new(RefCell::new(vec![0; 16000000]));
     }
     let mut b = BUF.lock().unwrap();
     let mut c = b.deref_mut().borrow_mut();
@@ -225,7 +226,6 @@ pub fn encode_buffer<T: Write + Seek>(wtr: &mut T, symbol: &str, ups: &[Update])
     }
     Ok(())
 }
-
 
 /// check magic value
 pub fn is_dtf(fname: &str) -> Result<bool, io::Error> {
@@ -399,7 +399,7 @@ pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result
 }
 
 /// Read metadata block and main batch block
-pub fn read_one_batch(rdr: &mut impl Read) -> Result<Vec<Update>, io::Error> {
+pub fn read_one_batch(rdr: &mut (impl Read + Seek)) -> Result<Vec<Update>, io::Error> {
     let is_ref = rdr.read_u8()? == 0x1;
     if !is_ref {
         Ok(vec![])
@@ -422,7 +422,7 @@ pub fn read_one_batch_meta(rdr: &mut impl Read) -> BatchMetadata {
     }
 }
 
-fn read_one_batch_main(rdr: &mut impl Read, meta: BatchMetadata) -> Result<Vec<Update>, io::Error> {
+fn read_one_batch_main(rdr: &mut (impl Read + Seek), meta: BatchMetadata) -> Result<Vec<Update>, io::Error> {
     let mut v: Vec<Update> = vec![];
     for _i in 0..meta.count {
         let up = read_one_update(rdr, &meta)?;
@@ -431,12 +431,21 @@ fn read_one_batch_main(rdr: &mut impl Read, meta: BatchMetadata) -> Result<Vec<U
     Ok(v)
 }
 
-fn read_one_update(rdr: &mut dyn Read, meta: &BatchMetadata) -> Result<Update, io::Error> {
+fn read_one_update(rdr: &mut (impl Read + Seek), meta: &BatchMetadata) -> Result<Update, io::Error> {
+    let pos = rdr.seek(SeekFrom::Current(0)).unwrap();
     let ts = u64::from(rdr.read_u16::<BigEndian>()?) + meta.ref_ts;
     let seq = u32::from(rdr.read_u8()?) + meta.ref_seq;
     let flags = rdr.read_u8()?;
-    let is_trade = (Flags::from_bits(flags).ok_or(InvalidData)? & Flags::FLAG_IS_TRADE).to_bool();
-    let is_bid = (Flags::from_bits(flags).ok_or(InvalidData)? & Flags::FLAG_IS_BID).to_bool();
+    let is_trade = (
+        Flags::from_bits(flags).ok_or_else(||{ rdr.seek(SeekFrom::Start(pos)).unwrap(); InvalidData })?
+        &
+        Flags::FLAG_IS_TRADE
+    ).to_bool();
+    let is_bid = (
+        Flags::from_bits(flags).ok_or_else(||{ rdr.seek(SeekFrom::Start(pos)).unwrap(); InvalidData })?
+        &
+        Flags::FLAG_IS_BID
+    ).to_bool();
     let price = rdr.read_f32::<BigEndian>()?;
     let size = rdr.read_f32::<BigEndian>()?;
     Ok(Update {
@@ -565,7 +574,7 @@ pub fn decode(fname: &str, num_rows: Option<u32>) -> Result<Vec<Update>, io::Err
 }
 
 /// Decode an entire buffer to Updates
-pub fn decode_buffer(mut buf: &mut dyn Read) -> Vec<Update> {
+pub fn decode_buffer(mut buf: &mut (impl Read + Seek)) -> Vec<Update> {
     let mut v = vec![];
     let mut res = read_one_batch(&mut buf);
     while let Ok(ups) = res {

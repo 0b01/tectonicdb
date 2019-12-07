@@ -1,5 +1,5 @@
 use std::net::TcpStream;
-use std::io::{Read, Write};
+use std::io::{Read, Write, Cursor};
 use std::sync::mpsc::{Receiver, channel};
 use byteorder::{BigEndian, ReadBytesExt};
 use bufstream::BufStream;
@@ -7,9 +7,6 @@ use libtectonic::dtf::update::Update;
 use crate::error::TectonicError;
 use libtectonic::dtf::{update::UpdateVecConvert, file_format::decode_buffer};
 use libtectonic::postprocessing::orderbook::Orderbook;
-
-/// whether to read bytes returned from the server
-const DISCARD_TCP_STREAM: bool = false;
 
 pub struct TectonicClient {
     pub stream: BufStream<TcpStream>,
@@ -67,7 +64,7 @@ impl TectonicClient {
             let mut buf = vec![0_u8; size as usize];
             self.stream.read_exact(&mut buf)?;
 
-            let mut buf = buf.as_slice();
+            let mut buf = Cursor::new(buf.as_slice());
             let v = decode_buffer(&mut buf);
             Ok(format!("[{}]\n", v.as_json()))
         } else {
@@ -86,11 +83,11 @@ impl TectonicClient {
         }
     }
 
-    unsafe fn cmd_bytes_no_check(&mut self, command: &[u8]) -> Result<bool, TectonicError> {
+    unsafe fn cmd_bytes_no_check(&mut self, command: &[u8], discard_result: bool) -> Result<bool, TectonicError> {
         self.stream.write(&(command.len() as u32).to_be_bytes())?;
         self.stream.write(command)?;
         self.stream.flush()?;
-        if !DISCARD_TCP_STREAM {
+        if !discard_result {
             let _ret = self.stream.read_u8().map(|i| i == 0x1)?;
             let size = self.stream.read_u64::<BigEndian>()?;
             // ignore bytes
@@ -156,11 +153,11 @@ impl TectonicClient {
         self.cmd(&cmdstr)
     }
 
-    pub fn insert(&mut self, book_name: Option<&str>, update: &Update) -> Result<bool, TectonicError> {
+    /// you can achieve very high throughput by setting discard_result to true
+    /// send an insert command without reading the output from tdb server
+    pub fn insert(&mut self, book_name: Option<&str>, update: &Update, discard_result: bool) -> Result<bool, TectonicError> {
         let buf = libtectonic::utils::encode_insert_into(book_name, update)?;
-        unsafe {
-            self.cmd_bytes_no_check(&buf)
-        }
+        unsafe { self.cmd_bytes_no_check(&buf, discard_result) }
     }
 
     pub fn shutdown(self) {

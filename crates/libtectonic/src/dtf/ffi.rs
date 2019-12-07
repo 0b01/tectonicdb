@@ -3,6 +3,8 @@ extern crate libc;
 use std::{mem, slice, ptr};
 use std::ffi::{CStr, CString};
 
+use std::io::Cursor;
+
 use crate::dtf::{
     update::{
         Update,
@@ -147,8 +149,9 @@ pub extern fn parse_stream(n: *mut c_uchar, len: u32) -> Slice {
         assert!(!n.is_null());
         slice::from_raw_parts(n, len as usize)
     };
+    let mut rdr = Cursor::new(byte_arr);
 
-    let mut v = decode_buffer(&mut byte_arr);
+    let mut v = decode_buffer(&mut rdr);
 
     let p = v.as_mut_ptr();
     let len = v.len();
