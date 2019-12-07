@@ -16,7 +16,7 @@ use alloc_counter::{count_alloc, count_alloc_future};
 use crate::prelude::*;
 
 use circular_queue::CircularQueue;
-use libtectonic::storage::utils::scan_files_for_range;
+use libtectonic::dtf::file_format::scan_files_for_range;
 use libtectonic::postprocessing::orderbook::Orderbook;
 use std::time::{SystemTime, UNIX_EPOCH};
 

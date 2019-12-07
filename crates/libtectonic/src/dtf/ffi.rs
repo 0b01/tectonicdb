@@ -145,7 +145,7 @@ pub unsafe extern "C" fn parse_kaiko_csv_to_dtf(
 /// decode a buffer of size `len` to Slice
 #[no_mangle]
 pub extern fn parse_stream(n: *mut c_uchar, len: u32) -> Slice {
-    let mut byte_arr = unsafe {
+    let byte_arr = unsafe {
         assert!(!n.is_null());
         slice::from_raw_parts(n, len as usize)
     };

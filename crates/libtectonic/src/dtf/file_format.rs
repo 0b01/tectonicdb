@@ -285,26 +285,31 @@ pub fn get_range_in_file(fname: &str, min_ts: u64, max_ts: u64) -> Result<Vec<Up
 /// :param min_ts is time in millisecond
 /// :param max_ts is time in millisecond
 pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result<Vec<Update>, io::Error> {
+    let mut v: Vec<Update> = Vec::with_capacity(2048);
+    range_for_each(rdr, min_ts, max_ts, &mut |up| {v.push(*up)})?;
+    Ok(v)
+}
+
+fn range_for_each<T: BufRead + Seek, F: for<'a> FnMut(&'a Update)>(rdr: &mut T, min_ts: u64, max_ts: u64, f: &mut F) -> Result<(), io::Error> {
     // convert ts to match the dtf file format (in ms)
 
     // can't go back in time
     if min_ts > max_ts {
-        return Ok(vec![]);
+        return Ok(());
     }
     // go to beginning of main section
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
-    let mut v: Vec<Update> = Vec::with_capacity(2048);
 
     loop {
         // read marker byte
         match rdr.read_u8() {
             Ok(byte) => {
                 if byte != 0x1 {
-                    return Ok(v);
+                    return Ok(());
                 }
             }   // 0x1 indicates a batch
             Err(_e) => {
-                return Ok(v);
+                return Ok(());
             }                        // EOF
         };
 
@@ -326,11 +331,11 @@ pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result
         match rdr.read_u8() {
             Ok(byte) => {
                 if byte != 0x1 {
-                    return Ok(v);
+                    return Ok(());
                 }
             }   // is a batch
             Err(_e) => {
-                return Ok(v);
+                return Ok(());
             }                        // EOF
         };
         let next_meta = read_one_batch_meta(rdr);
@@ -347,7 +352,7 @@ pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result
         //     |1-----|1---
         //
         if min_ts <= current_ref_ts && max_ts <= current_ref_ts {
-            return Ok(v);
+            return Ok(());
         } else
         // [    ]
         //   |1*-----|1---
@@ -369,18 +374,15 @@ pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result
             );
             //   |1*------|1--          <- we are here
             // read and filter current batch
-            let filtered = {
-                let batch = read_one_batch_main(rdr, current_meta)?;
-                if min_ts <= current_ref_ts && max_ts >= next_ref_ts {
-                    batch
-                } else {
-                    batch
-                        .into_iter()
-                        .filter(|up| up.ts <= max_ts && up.ts >= min_ts)
-                        .collect::<Vec<Update>>()
-                }
-            };
-            v.extend(filtered);
+            if min_ts <= current_ref_ts && max_ts >= next_ref_ts {
+                read_one_batch_main_for_each(rdr, current_meta, f)?;
+            } else {
+                read_one_batch_main_for_each(rdr, current_meta, &mut |up| {
+                    if up.ts <= max_ts && up.ts >= min_ts {
+                        f(up);
+                    }
+                })?;
+            }
 
         //               [      ]
         // |1----|1---|1----
@@ -399,13 +401,24 @@ pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result
 }
 
 /// Read metadata block and main batch block
-pub fn read_one_batch(rdr: &mut (impl Read + Seek)) -> Result<Vec<Update>, io::Error> {
+pub fn read_one_batch<R: Read + Seek>(rdr: &mut R) -> Result<Vec<Update>, io::Error> {
     let is_ref = rdr.read_u8()? == 0x1;
     if !is_ref {
         Ok(vec![])
     } else {
         let meta = read_one_batch_meta(rdr);
         read_one_batch_main(rdr, meta)
+    }
+}
+
+/// Read metadata block and main batch block
+pub fn read_one_batch_for_each<R: Read + Seek, F: for<'a> FnMut(&'a Update)>(rdr: &mut R, f: &mut F) -> Result<(), io::Error> {
+    let is_ref = rdr.read_u8()? == 0x1;
+    if !is_ref {
+        Ok(())
+    } else {
+        let meta = read_one_batch_meta(rdr);
+        read_one_batch_main_for_each(rdr, meta, f)
     }
 }
 
@@ -422,6 +435,14 @@ pub fn read_one_batch_meta(rdr: &mut impl Read) -> BatchMetadata {
     }
 }
 
+fn read_one_batch_main_for_each<R: Read + Seek, F: for<'a> FnMut(&'a Update)>(rdr: &mut R, meta: BatchMetadata, f: &mut F) -> Result<(), io::Error> {
+    for _i in 0..meta.count {
+        let up = read_one_update(rdr, &meta)?;
+        f(&up);
+    }
+    Ok(())
+}
+
 fn read_one_batch_main(rdr: &mut (impl Read + Seek), meta: BatchMetadata) -> Result<Vec<Update>, io::Error> {
     let mut v: Vec<Update> = vec![];
     for _i in 0..meta.count {
@@ -432,17 +453,16 @@ fn read_one_batch_main(rdr: &mut (impl Read + Seek), meta: BatchMetadata) -> Res
 }
 
 fn read_one_update(rdr: &mut (impl Read + Seek), meta: &BatchMetadata) -> Result<Update, io::Error> {
-    let pos = rdr.seek(SeekFrom::Current(0)).unwrap();
     let ts = u64::from(rdr.read_u16::<BigEndian>()?) + meta.ref_ts;
     let seq = u32::from(rdr.read_u8()?) + meta.ref_seq;
     let flags = rdr.read_u8()?;
     let is_trade = (
-        Flags::from_bits(flags).ok_or_else(||{ rdr.seek(SeekFrom::Start(pos)).unwrap(); InvalidData })?
+        Flags::from_bits(flags).ok_or_else(||{ InvalidData })?
         &
         Flags::FLAG_IS_TRADE
     ).to_bool();
     let is_bid = (
-        Flags::from_bits(flags).ok_or_else(||{ rdr.seek(SeekFrom::Start(pos)).unwrap(); InvalidData })?
+        Flags::from_bits(flags).ok_or_else(||{ InvalidData })?
         &
         Flags::FLAG_IS_BID
     ).to_bool();
@@ -501,31 +521,78 @@ pub fn read_meta(fname: &str) -> Result<Metadata, io::Error> {
 
 /// BufReader for DTF files with batch block of size `block_size`
 pub struct DTFBufReader {
-    /// raw BufReader
-    pub rdr: BufReader<File>,
-    batch_size: u32,
+    rdr: BufReader<File>,
+    current_meta: Option<BatchMetadata>,
+    /// total number of updates
+    pub n_up: u64,
+    i_up: u32,
 }
 
 impl DTFBufReader {
     /// create a new DTFBufReader
-    pub fn new(fname: &str, batch_size: u32) -> Self {
+    pub fn new(fname: &str) -> Self {
         let mut rdr = file_reader(fname).expect("Cannot open file");
+        let meta = read_meta_from_buf(&mut rdr).unwrap();
         rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
         DTFBufReader {
             rdr,
-            batch_size,
+            current_meta: None,
+            n_up: meta.nums,
+            i_up: 0,
         }
+    }
+    fn next_block(&mut self) -> Option<()> {
+        if let Ok(is_ref) = self.rdr.read_u8() {
+            if is_ref == 0x1 {
+                let meta = read_one_batch_meta(&mut self.rdr);
+                self.current_meta = Some(meta);
+                self.i_up = 0;
+                Some(())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    fn read_one(&mut self) -> Update {
+        let up = read_one_update(&mut self.rdr, &self.current_meta.as_ref().unwrap()).unwrap();
+        self.i_up += 1;
+        up
     }
 }
 
 impl Iterator for DTFBufReader {
-    type Item = Vec<Update>;
+    type Item = Update;
     fn next(&mut self) -> Option<Self::Item> {
-        let v = read_n_batches(&mut self.rdr, self.batch_size).ok()?;
-        // let v = read_all(&mut self.rdr).ok()?;
-        if 0 != v.len() { Some(v) }
-        else { None }
+        if self.current_meta.is_none() {
+            self.next_block()?;
+        }
+        if ((self.i_up as u64) >= self.n_up) ||
+           ((self.i_up as u16) >= self.current_meta.as_ref().unwrap().count)
+        {
+            self.next_block()?;
+        }
+        Some(self.read_one())
     }
+}
+
+fn read_n_batches_for_each<T: BufRead + Seek, F: for<'a> FnMut(&'a Update)>(mut rdr: &mut T, num_rows: u32, f: &mut F) -> Result<(), io::Error> {
+    rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
+    let mut count = 0;
+    if num_rows == 0 { return Ok(()); }
+    while let Ok(is_ref) = rdr.read_u8() {
+        if is_ref == 0x1 {
+            rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
+            read_one_batch_for_each(&mut rdr, f)?;
+        }
+        count += 1;
+        if count > num_rows {
+            break;
+        }
+    }
+    Ok(())
 }
 
 fn read_n_batches<T: BufRead + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<Vec<Update>, io::Error> {
@@ -534,14 +601,11 @@ fn read_n_batches<T: BufRead + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<V
     let mut count = 0;
     if num_rows == 0 { return Ok(v); }
     while let Ok(is_ref) = rdr.read_u8() {
-
         if is_ref == 0x1 {
             rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
             v.extend(read_one_batch(&mut rdr)?);
         }
-
         count += 1;
-
         if count > num_rows {
             break;
         }
@@ -549,27 +613,42 @@ fn read_n_batches<T: BufRead + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<V
     Ok(v)
 }
 
-fn read_all<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error> {
-    let len = read_len(&mut rdr)?;
+fn read_all_for_each<T: BufRead + Seek, F: for<'a> FnMut(&'a Update)>(mut rdr: &mut T, f: &mut F) -> Result<(), io::Error> {
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
-    let mut v: Vec<Update> = Vec::with_capacity(len as usize);
     while let Ok(is_ref) = rdr.read_u8() {
         if is_ref == 0x1 {
             rdr.seek(SeekFrom::Current(-1)).expect("ROLLBACK ONE BYTE");
-            v.extend(read_one_batch(&mut rdr)?);
+            read_one_batch_for_each(&mut rdr, f)?;
         }
     }
+    Ok(())
+}
+
+fn read_all<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error> {
+    let len = read_len(&mut rdr)?;
+    let mut v: Vec<Update> = Vec::with_capacity(len as usize);
+    read_all_for_each(rdr, &mut |up| v.push(*up))?;
     Ok(v)
 }
 
 /// Decode the main section in a dtf file.
 /// Optionally read all or some `num_rows` batches.
 pub fn decode(fname: &str, num_rows: Option<u32>) -> Result<Vec<Update>, io::Error> {
-
     let mut rdr = file_reader(fname)?;
     match num_rows {
         Some(num_rows) => read_n_batches(&mut rdr, num_rows),
         None => read_all(&mut rdr),
+    }
+}
+
+/// Decode the main section in a dtf file.
+/// Optionally read all or some `num_rows` batches.
+/// Pass in a closure for each update
+pub fn decode_for_each<F: for<'a> FnMut(&'a Update)>(fname: &str, num_rows: Option<u32>, f: &mut F) -> Result<(), io::Error> {
+    let mut rdr = file_reader(fname)?;
+    match num_rows {
+        Some(num_rows) => read_n_batches_for_each(&mut rdr, num_rows, f),
+        None => read_all_for_each(&mut rdr, f),
     }
 }
 
@@ -622,6 +701,61 @@ pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
     write_batches(&mut wtr, ups)?;
     wtr.flush().unwrap();
 
+    Ok(())
+}
+
+/// search every matching dtf file under folder for timestamp range
+pub fn scan_files_for_range(
+    folder: &str,
+    symbol: &str,
+    min_ts: u64,
+    max_ts: u64,
+) -> Result<Vec<Update>, io::Error> {
+    let mut ret = Vec::with_capacity(1024);
+    scan_files_for_range_for_each(folder, symbol, min_ts, max_ts, &mut|up|{ret.push(*up)})?;
+    Ok(ret)
+}
+
+/// search every matching dtf file under folder for timestamp range
+pub fn scan_files_for_range_for_each<F: for<'a> FnMut(&'a Update)>(
+    folder: &str,
+    symbol: &str,
+    min_ts: u64,
+    max_ts: u64,
+    f: &mut F,
+) -> Result<(), io::Error> {
+    use crate::utils::within_range;
+    match fs::read_dir(folder) {
+        Err(e) => {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!("Unable to read dir entries: {:?}", e),
+            ))
+        }
+        Ok(entries) => {
+            let mut v = entries
+                .map(|entry| {
+                    let entry = entry.unwrap();
+                    let fname = entry.file_name();
+                    let fname = fname.to_str().unwrap().to_owned();
+                    let fname = &format!("{}/{}", folder, fname);
+                    let meta = read_meta(fname).unwrap();
+                    (fname.to_owned(), meta)
+                })
+                .filter(|&(ref _fname, ref meta)| {
+                    meta.symbol == symbol && within_range(min_ts, max_ts, meta.min_ts, meta.max_ts)
+                })
+                .collect::<Vec<_>>();
+
+            // sort by min_ts
+            v.sort_by(|&(ref _f0, ref m0), &(ref _f1, ref m1)| m0.cmp(m1));
+
+            for &(ref fname, ref _meta) in v.iter() {
+                let mut rdr = file_reader(fname)?;
+                range_for_each(&mut rdr, min_ts, max_ts, f)?;
+            }
+        }
+    };
     Ok(())
 }
 

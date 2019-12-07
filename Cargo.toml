@@ -39,6 +39,9 @@ log = "0.4.8"
 fern = "0.5.9"
 chrono = "0.4.10"
 openssl-probe = "0.1.2"
+indicatif = "0.13.0"
+
+itertools = "0.8.2"
 
 clap = "2.33.0"
 serde = "1.0.103"

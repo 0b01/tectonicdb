@@ -1,8 +1,10 @@
+extern crate itertools;
 extern crate clap;
 extern crate byteorder;
 extern crate libtectonic;
-use libtectonic::dtf::{self, update::UpdateVecConvert};
-use libtectonic::storage::utils::{scan_files_for_range, total_folder_updates_len};
+use itertools::Itertools;
+use libtectonic::dtf;
+use libtectonic::storage::utils::total_folder_updates_len;
 use libtectonic::postprocessing::candle::TickBars;
 use indoc::indoc;
 
@@ -181,51 +183,65 @@ fn main() {
             println!("Either supply a single file or construct a range query!");
             return;
         }
-        let txt = if input != "" {
+        if input != "" {
             if print_metadata {
-                format!("{}", dtf::file_format::read_meta(input).unwrap())
+                println!("{}", dtf::file_format::read_meta(input).unwrap())
             } else {
-                let ups = dtf::file_format::decode(input, None).unwrap();
                 if candle {
+                    let ups = dtf::file_format::decode(input, None).unwrap();
                     let mut candles = TickBars::from(ups.as_slice());
                     candles.insert_continuation_candles();
                     let rebinned = candles
                         .rebin(aligned, granularity.parse().unwrap())
                         .unwrap()
                         .as_csv();
-                    format!("{}", rebinned)
+                    println!("{}", rebinned)
                 } else {
-                    if csv {
-                        format!("{}", ups.as_csv())
-                    } else {
-                        format!("[{}]", ups.as_json())
+                    use indicatif::{ProgressBar, ProgressStyle};
+
+                    let rdr = dtf::file_format::DTFBufReader::new(input);
+
+                    let bar = ProgressBar::new(rdr.n_up);
+                    bar.set_style(ProgressStyle::default_bar()
+                        .template("[{elapsed_precise}, remaining: {eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
+                        .progress_chars("##-"));
+
+                    for up in rdr {
+                        bar.inc(1);
+                        if csv {
+                            println!("{}", up.as_csv())
+                        } else {
+                            println!("[{}]", up.as_json())
+                        }
                     }
+                    bar.finish();
                 }
             }
         } else {
             if print_metadata {
-                format!("total updates in folder: {}", total_folder_updates_len(folder).unwrap())
+                println!("total updates in folder: {}", total_folder_updates_len(folder).unwrap())
             } else {
-                let ups = scan_files_for_range(folder, symbol, min.parse().unwrap(), max.parse().unwrap())
-                    .unwrap();
                 if candle {
+                    let ups = libtectonic::dtf::file_format::scan_files_for_range(folder, symbol, min.parse().unwrap(), max.parse().unwrap())
+                        .unwrap();
                     let mut candles = TickBars::from(ups.as_slice());
                     candles.insert_continuation_candles();
                     let rebinned = candles
                         .rebin(aligned, granularity.parse().unwrap())
                         .unwrap()
                         .as_csv();
-                    format!("{}", rebinned)
+                    println!("{}", rebinned)
                 } else {
-                    if csv {
-                        format!("{}", ups.as_csv())
-                    } else {
-                        format!("[{}]", ups.as_json())
-                    }
+                    libtectonic::dtf::file_format::scan_files_for_range_for_each(folder, symbol, min.parse().unwrap(), max.parse().unwrap(), &mut |up|{
+                        if csv {
+                            println!("{}", up.as_csv())
+                        } else {
+                            println!("[{}]", up.as_json())
+                        }
+                    }).unwrap();
                 }
             }
         };
-        println!("{}", txt);
     } else if let Some(matches) = matches.subcommand_matches("split") {
         // single file
         let fname = matches.value_of("input").expect("Must supply input");
@@ -234,11 +250,13 @@ fn main() {
 
         println!("Reading: {}", fname);
         let meta = dtf::file_format::read_meta(fname).unwrap();
-        let rdr = dtf::file_format::DTFBufReader::new(fname, batch_size);
-        for (i, batch) in rdr.enumerate() {
+        let rdr = dtf::file_format::DTFBufReader::new(fname);
+        let mut i = 0;
+        for batch in &rdr.chunks(batch_size) {
             let outname = format!("{}-{}.dtf", file_stem, i);
             println!("Writing to {}", outname);
-            dtf::file_format::encode(&outname, &meta.symbol, &batch).unwrap();
+            dtf::file_format::encode(&outname, &meta.symbol, &batch.collect::<Vec<_>>()).unwrap();
+            i += 1;
         }
     } else if let Some(matches) = matches.subcommand_matches("concat") {
         dtfconcat::run(matches);
