@@ -4,10 +4,13 @@ extern crate fern;
 extern crate chrono;
 extern crate log;
 
-use std::io::{stdin, stdout, Write};
+extern crate linefeed;
+
+
 use libtdbcli::client::TectonicClient;
 use clap::{App, Arg};
-use std::error::Error;
+
+mod interactive;
 
 fn init_logger() {
     fern::Dispatch::new()
@@ -84,29 +87,27 @@ fn main() {
         let dbname = matches.value_of("s").unwrap_or("");
         subscribe(cli, dbname);
     } else {
-        handle_query(&mut cli);
+        interactive::run(&mut cli);
     }
 }
 
+// fn interactive(cli: &mut TectonicClient) {
+//     loop {
+//         print!("--> ");
+//         stdout().flush().ok().expect("Could not flush stdout"); // manually flush stdout
 
-
-fn handle_query(cli: &mut TectonicClient) {
-    loop {
-        print!("--> ");
-        stdout().flush().ok().expect("Could not flush stdout"); // manually flush stdout
-
-        let mut cmd = String::new();
-        stdin().read_line(&mut cmd).unwrap();
-        match cli.cmd(&cmd) {
-            Err(e) => {
-                println!("{}", e.description());
-            }
-            Ok(msg) => {
-                println!("{}", msg);
-            }
-        };
-    }
-}
+//         let mut cmd = String::new();
+//         stdin().read_line(&mut cmd).unwrap();
+//         match cli.cmd(&cmd) {
+//             Err(e) => {
+//                 println!("{}", e.description());
+//             }
+//             Ok(msg) => {
+//                 println!("{}", msg);
+//             }
+//         };
+//     }
+// }
 
 fn subscribe(cli: TectonicClient, dbname: &str) {
     println!("Subscribing to {}", dbname);
