@@ -11,23 +11,23 @@ version = "0.3.0"
 [[bin]]
 name = "tdb-server"
 bench = false
-path = "bins/tdb-server/src/main.rs"
+path = "bins/tdb-server/main.rs"
 
 [[bin]]
 name = "dtftools"
 bench = false
-path = "bins/dtftools/src/main.rs"
+path = "bins/dtftools/main.rs"
 
 [[bin]]
 name = "tdb"
 bench = false
-path = "bins/tdb/src/main.rs"
+path = "bins/tdb/main.rs"
 
 
 [[bin]]
 name = "gen_train_data"
 bench = false
-path = "bins/gen_train_data/src/main.rs"
+path = "bins/gen_train_data/main.rs"
 
 
 [dependencies]
