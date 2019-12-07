@@ -160,8 +160,7 @@ fn write_reference(wtr: &mut dyn Write, ref_ts: u64, ref_seq: u32, len: u16) -> 
 #[cfg_attr(feature="count_alloc", count_alloc)]
 pub fn write_batches<'a, I: Iterator<Item=&'a Update>>(mut wtr: &mut dyn Write, mut ups: Peekable<I>) -> Result<(), io::Error> {
     lazy_static! {
-        // 32*1000*1000 = 32 MB
-        static ref BUF: Mutex<RefCell<Vec<u8>>> = Mutex::new(RefCell::new(vec![0; 16000000]));
+        static ref BUF: Mutex<RefCell<Vec<u8>>> = Mutex::new(RefCell::new(vec![0; 100_000_000]));
     }
     let mut b = BUF.lock().unwrap();
     let mut c = b.deref_mut().borrow_mut();
