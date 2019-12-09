@@ -32,7 +32,7 @@ pub fn bigram<T: Copy>(a: &[T]) -> Vec<(T, T)> {
 
 /// check if two ranges intersect
 pub fn within_range(target_min: u64, target_max: u64, file_min: u64, file_max: u64) -> bool {
-    target_min <= file_max && target_max >= file_min
+    target_min <= file_max || target_max >= file_min
 }
 
 /// converts epoch time to human readable string

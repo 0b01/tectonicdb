@@ -75,7 +75,7 @@ fn main() {
 
         .subcommand(clap::SubCommand::with_name("cat")
             .about(indoc!("
-                Print dense tick format files to plaintext
+                Print dtf files to plaintext
 
                 Examples:
                 # filter by symbol and epoch under given folder and output csv
@@ -113,6 +113,7 @@ fn main() {
                 .long("min")
                 .value_name("MIN")
                 .help("minimum value to filter for")
+                .default_value("0")
                 .required(false)
                 .takes_value(true)
             )
@@ -121,6 +122,7 @@ fn main() {
                 .long("max")
                 .value_name("MAX")
                 .help("maximum value to filter for")
+                .default_value("2147472000000")
                 .required(false)
                 .takes_value(true)
             )
@@ -169,8 +171,8 @@ fn main() {
         let input = matches.value_of("input").unwrap_or("");
         // or range
         let symbol = matches.value_of("symbol").unwrap_or("");
-        let min = matches.value_of("min").unwrap_or("");
-        let max = matches.value_of("max").unwrap_or("");
+        let min = matches.value_of("min").unwrap().parse().unwrap();
+        let max = matches.value_of("max").unwrap().parse().unwrap();
         let folder = matches.value_of("folder").unwrap_or("./");
         // candle
         let candle = matches.is_present("candle");
@@ -179,13 +181,16 @@ fn main() {
         // misc
         let print_metadata = matches.is_present("meta");
         let csv = matches.is_present("csv");
-        if input == "" && (symbol == "" || min == "" || max == "") && (folder == "" && !print_metadata ){
-            println!("Either supply a single file or construct a range query!");
-            return;
+        if input == "" && symbol == "" && (folder == "" && !print_metadata ){
+            println!("Either supply a single file with -i or specify range.");
+            ::std::process::exit(1);
         }
         if input != "" {
             if print_metadata {
-                println!("{}", dtf::file_format::read_meta(input).unwrap())
+                println!("{}", dtf::file_format::read_meta(input).unwrap());
+                for meta in dtf::file_format::iterators::DTFMetadataReader::new(input) {
+                    println!("{:?}", meta);
+                }
             } else {
                 if candle {
                     let ups = dtf::file_format::decode(input, None).unwrap();
@@ -198,9 +203,7 @@ fn main() {
                     println!("{}", rebinned)
                 } else {
                     use indicatif::{ProgressBar, ProgressStyle};
-
-                    let rdr = dtf::file_format::DTFBufReader::new(input);
-
+                    let rdr = dtf::file_format::iterators::DTFBufReader::new(input);
                     let bar = ProgressBar::new(rdr.n_up);
                     bar.set_style(ProgressStyle::default_bar()
                         .template("[{elapsed_precise}, remaining: {eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
@@ -222,8 +225,12 @@ fn main() {
                 println!("total updates in folder: {}", total_folder_updates_len(folder).unwrap())
             } else {
                 if candle {
-                    let ups = libtectonic::dtf::file_format::scan_files_for_range(folder, symbol, min.parse().unwrap(), max.parse().unwrap())
-                        .unwrap();
+                    let ups = libtectonic::dtf::file_format::scan_files_for_range(
+                        folder,
+                        symbol,
+                        min,
+                        max,
+                        ).unwrap();
                     let mut candles = TickBars::from(ups.as_slice());
                     candles.insert_continuation_candles();
                     let rebinned = candles
@@ -232,13 +239,18 @@ fn main() {
                         .as_csv();
                     println!("{}", rebinned)
                 } else {
-                    libtectonic::dtf::file_format::scan_files_for_range_for_each(folder, symbol, min.parse().unwrap(), max.parse().unwrap(), &mut |up|{
-                        if csv {
-                            println!("{}", up.as_csv())
-                        } else {
-                            println!("[{}]", up.as_json())
-                        }
-                    }).unwrap();
+                    libtectonic::dtf::file_format::scan_files_for_range_for_each(
+                        folder,
+                        symbol,
+                        min,
+                        max,
+                        &mut |up|{
+                            if csv {
+                                println!("{}", up.as_csv())
+                            } else {
+                                println!("[{}]", up.as_json())
+                            }
+                        }).unwrap();
                 }
             }
         };
@@ -250,7 +262,7 @@ fn main() {
 
         println!("Reading: {}", fname);
         let meta = dtf::file_format::read_meta(fname).unwrap();
-        let rdr = dtf::file_format::DTFBufReader::new(fname);
+        let rdr = dtf::file_format::iterators::DTFBufReader::new(fname);
         let mut i = 0;
         for batch in &rdr.chunks(batch_size) {
             let outname = format!("{}-{}.dtf", file_stem, i);
