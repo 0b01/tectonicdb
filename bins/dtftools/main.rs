@@ -188,7 +188,8 @@ fn main() {
         if input != "" {
             if print_metadata {
                 println!("{}", dtf::file_format::read_meta(input).unwrap());
-                for meta in dtf::file_format::iterators::DTFMetadataReader::new(input) {
+                let rdr = dtf::file_format::file_reader(input).expect("cannot open file");
+                for meta in dtf::file_format::iterators::DTFMetadataReader::new(rdr) {
                     println!("{:?}", meta);
                 }
             } else {
@@ -203,13 +204,14 @@ fn main() {
                     println!("{}", rebinned)
                 } else {
                     use indicatif::{ProgressBar, ProgressStyle};
-                    let rdr = dtf::file_format::iterators::DTFBufReader::new(input);
-                    let bar = ProgressBar::new(rdr.n_up);
+                    let rdr = dtf::file_format::file_reader(input).expect("cannot open file");
+                    let it = dtf::file_format::iterators::DTFBufReader::new(rdr);
+                    let bar = ProgressBar::new(it.n_up);
                     bar.set_style(ProgressStyle::default_bar()
                         .template("[{elapsed_precise}, remaining: {eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
                         .progress_chars("##-"));
 
-                    for up in rdr {
+                    for up in it {
                         bar.inc(1);
                         if csv {
                             println!("{}", up.as_csv())
@@ -262,9 +264,10 @@ fn main() {
 
         println!("Reading: {}", fname);
         let meta = dtf::file_format::read_meta(fname).unwrap();
-        let rdr = dtf::file_format::iterators::DTFBufReader::new(fname);
+        let rdr = dtf::file_format::file_reader(fname).expect("cannot open file");
+        let it = dtf::file_format::iterators::DTFBufReader::new(rdr);
         let mut i = 0;
-        for batch in &rdr.chunks(batch_size) {
+        for batch in &it.chunks(batch_size) {
             let outname = format!("{}-{}.dtf", file_stem, i);
             println!("Writing to {}", outname);
             dtf::file_format::encode(&outname, &meta.symbol, &batch.collect::<Vec<_>>()).unwrap();

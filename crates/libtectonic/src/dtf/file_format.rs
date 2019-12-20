@@ -35,7 +35,7 @@ use std::fmt;
 use std::cmp;
 use std::io::ErrorKind::InvalidData;
 use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
-use std::io::{self, Write, Read, Seek, BufRead, BufWriter, BufReader, SeekFrom};
+use std::io::{self, Write, Read, Seek, BufWriter, BufReader, SeekFrom};
 
 use std::iter::Peekable;
 use std::io::Cursor;
@@ -237,7 +237,7 @@ pub fn is_dtf(fname: &str) -> Result<bool, io::Error> {
 }
 
 /// reads magic value from buffer and checks it
-pub fn read_magic_value<T: BufRead + Seek>(rdr: &mut T) -> Result<bool, io::Error> {
+pub fn read_magic_value<T: Read + Seek>(rdr: &mut T) -> Result<bool, io::Error> {
     // magic value
     rdr.seek(SeekFrom::Start(0))?;
     let mut buf = vec![0u8; 5];
@@ -245,7 +245,9 @@ pub fn read_magic_value<T: BufRead + Seek>(rdr: &mut T) -> Result<bool, io::Erro
     Ok(buf == MAGIC_VALUE)
 }
 
-fn file_reader(fname: &str) -> Result<BufReader<File>, io::Error> {
+/// BufReader for dtf file
+/// returns Error if not a dtf file
+pub fn file_reader(fname: &str) -> Result<BufReader<File>, io::Error> {
     let file = File::open(fname)?;
     let mut rdr = BufReader::new(file);
 
@@ -256,7 +258,7 @@ fn file_reader(fname: &str) -> Result<BufReader<File>, io::Error> {
     }
 }
 
-fn read_symbol<T: BufRead + Seek>(rdr: &mut T) -> Result<String, io::Error> {
+fn read_symbol<T: Read + Seek>(rdr: &mut T) -> Result<String, io::Error> {
     rdr.seek(SeekFrom::Start(SYMBOL_OFFSET))?;
     let mut buffer = [0; SYMBOL_LEN];
     rdr.read_exact(&mut buffer)?;
@@ -264,16 +266,16 @@ fn read_symbol<T: BufRead + Seek>(rdr: &mut T) -> Result<String, io::Error> {
     Ok(ret)
 }
 
-fn read_len<T: BufRead + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
+fn read_len<T: Read + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
     rdr.seek(SeekFrom::Start(LEN_OFFSET))?;
     rdr.read_u64::<BigEndian>()
 }
 
-fn read_min_ts<T: BufRead + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
+fn read_min_ts<T: Read + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
     Ok(read_first(rdr)?.ts)
 }
 
-fn read_max_ts<T: BufRead + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
+fn read_max_ts<T: Read + Seek>(rdr: &mut T) -> Result<u64, io::Error> {
     rdr.seek(SeekFrom::Start(MAX_TS_OFFSET))?;
     rdr.read_u64::<BigEndian>()
 }
@@ -287,13 +289,13 @@ pub fn get_range_in_file(fname: &str, min_ts: u64, max_ts: u64) -> Result<Vec<Up
 /// reads a vector of Update over some time interval (min_ts, max_ts) from file.
 /// :param min_ts is time in millisecond
 /// :param max_ts is time in millisecond
-pub fn range<T: BufRead + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result<Vec<Update>, io::Error> {
+pub fn range<T: Read + Seek>(rdr: &mut T, min_ts: u64, max_ts: u64) -> Result<Vec<Update>, io::Error> {
     let mut v: Vec<Update> = Vec::with_capacity(2048);
     range_for_each(rdr, min_ts, max_ts, &mut |up| {v.push(*up)})?;
     Ok(v)
 }
 
-fn range_for_each<T: BufRead + Seek, F: for<'a> FnMut(&'a Update)>(rdr: &mut T, min_ts: u64, max_ts: u64, f: &mut F) -> Result<(), io::Error> {
+fn range_for_each<T: Read + Seek, F: for<'a> FnMut(&'a Update)>(rdr: &mut T, min_ts: u64, max_ts: u64, f: &mut F) -> Result<(), io::Error> {
     // convert ts to match the dtf file format (in ms)
 
     // can't go back in time
@@ -480,12 +482,12 @@ fn read_one_update(rdr: &mut (impl Read + Seek), meta: &BatchMetadata) -> Result
     })
 }
 
-fn read_first_batch<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error> {
+fn read_first_batch<T: Read + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error> {
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
     read_one_batch(&mut rdr)
 }
 
-fn read_first<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Update, io::Error> {
+fn read_first<T: Read + Seek>(mut rdr: &mut T) -> Result<Update, io::Error> {
     let batch = read_first_batch(&mut rdr)?;
     Ok(batch[0].clone())
 }
@@ -497,7 +499,7 @@ pub fn get_size(fname: &str) -> Result<u64, io::Error> {
 }
 
 /// Read Metadata block from buffer
-pub fn read_meta_from_buf<T:BufRead + Seek>(mut rdr: &mut T) -> Result<Metadata, io::Error> {
+pub fn read_meta_from_buf<T: Read + Seek>(mut rdr: &mut T) -> Result<Metadata, io::Error> {
     let symbol = read_symbol(&mut rdr)?;
     let nums = read_len(&mut rdr)?;
     let max_ts = read_max_ts(&mut rdr)?;
@@ -527,14 +529,13 @@ pub mod iterators {
     use super::*;
 
     /// read batch metadata from dtf files
-    pub struct DTFMetadataReader {
-        rdr: BufReader<File>,
+    pub struct DTFMetadataReader<T: Read + Seek> {
+        rdr: T
     }
 
-    impl DTFMetadataReader {
+    impl<T: Read + Seek> DTFMetadataReader<T> {
         /// create a new DTFBufReader
-        pub fn new(fname: &str) -> Self {
-            let mut rdr = file_reader(fname).expect("Cannot open file");
+        pub fn new(mut rdr: T) -> Self {
             rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
             DTFMetadataReader {
                 rdr,
@@ -542,7 +543,7 @@ pub mod iterators {
         }
     }
 
-    impl Iterator for DTFMetadataReader {
+    impl<T: Read + Seek> Iterator for DTFMetadataReader<T> {
         type Item = BatchMetadata;
         fn next(&mut self) -> Option<Self::Item> {
             if let Ok(is_ref) = self.rdr.read_u8() {
@@ -556,18 +557,17 @@ pub mod iterators {
     }
 
     /// BufReader for DTF files with batch block of size `block_size`
-    pub struct DTFBufReader {
-        rdr: BufReader<File>,
+    pub struct DTFBufReader<T: Read + Seek> {
+        rdr: T,
         current_meta: Option<BatchMetadata>,
         /// total number of updates
         pub n_up: u64,
         i_up: u32,
     }
 
-    impl DTFBufReader {
+    impl<T: Read + Seek> DTFBufReader<T> {
         /// create a new DTFBufReader
-        pub fn new(fname: &str) -> Self {
-            let mut rdr = file_reader(fname).expect("Cannot open file");
+        pub fn new(mut rdr: T) -> Self {
             let meta = read_meta_from_buf(&mut rdr).unwrap();
             rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
             DTFBufReader {
@@ -598,7 +598,7 @@ pub mod iterators {
         }
     }
 
-    impl Iterator for DTFBufReader {
+    impl<T: Read + Seek> Iterator for DTFBufReader<T> {
         type Item = Update;
         fn next(&mut self) -> Option<Self::Item> {
             if self.current_meta.is_none() {
@@ -615,7 +615,7 @@ pub mod iterators {
 }
 
 
-fn read_n_batches_for_each<T: BufRead + Seek, F: for<'a> FnMut(&'a Update)>(mut rdr: &mut T, num_rows: u32, f: &mut F) -> Result<(), io::Error> {
+fn read_n_batches_for_each<T: Read + Seek, F: for<'a> FnMut(&'a Update)>(mut rdr: &mut T, num_rows: u32, f: &mut F) -> Result<(), io::Error> {
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
     let mut count = 0;
     if num_rows == 0 { return Ok(()); }
@@ -632,7 +632,7 @@ fn read_n_batches_for_each<T: BufRead + Seek, F: for<'a> FnMut(&'a Update)>(mut 
     Ok(())
 }
 
-fn read_n_batches<T: BufRead + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<Vec<Update>, io::Error> {
+fn read_n_batches<T: Read + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<Vec<Update>, io::Error> {
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
     let mut v: Vec<Update> = Vec::with_capacity(num_rows as usize);
     let mut count = 0;
@@ -650,7 +650,7 @@ fn read_n_batches<T: BufRead + Seek>(mut rdr: &mut T, num_rows: u32) -> Result<V
     Ok(v)
 }
 
-fn read_all_for_each<T: BufRead + Seek, F: for<'a> FnMut(&'a Update)>(mut rdr: &mut T, f: &mut F) -> Result<(), io::Error> {
+fn read_all_for_each<T: Read + Seek, F: for<'a> FnMut(&'a Update)>(mut rdr: &mut T, f: &mut F) -> Result<(), io::Error> {
     rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
     while let Ok(is_ref) = rdr.read_u8() {
         if is_ref == 0x1 {
@@ -661,7 +661,7 @@ fn read_all_for_each<T: BufRead + Seek, F: for<'a> FnMut(&'a Update)>(mut rdr: &
     Ok(())
 }
 
-fn read_all<T: BufRead + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error> {
+fn read_all<T: Read + Seek>(mut rdr: &mut T) -> Result<Vec<Update>, io::Error> {
     let len = read_len(&mut rdr)?;
     let mut v: Vec<Update> = Vec::with_capacity(len as usize);
     read_all_for_each(rdr, &mut |up| v.push(*up))?;
