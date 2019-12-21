@@ -460,16 +460,8 @@ fn read_one_update(rdr: &mut (impl Read + Seek), meta: &BatchMetadata) -> Result
     let ts = u64::from(rdr.read_u16::<BigEndian>()?) + meta.ref_ts;
     let seq = u32::from(rdr.read_u8()?) + meta.ref_seq;
     let flags = rdr.read_u8()?;
-    let is_trade = (
-        Flags::from_bits(flags).ok_or_else(||{ InvalidData })?
-        &
-        Flags::FLAG_IS_TRADE
-    ).to_bool();
-    let is_bid = (
-        Flags::from_bits(flags).ok_or_else(||{ InvalidData })?
-        &
-        Flags::FLAG_IS_BID
-    ).to_bool();
+    let is_trade = ( Flags::from_bits(flags).ok_or_else(||{ InvalidData })? & Flags::FLAG_IS_TRADE).to_bool();
+    let is_bid = ( Flags::from_bits(flags).ok_or_else(||{ InvalidData })? & Flags::FLAG_IS_BID).to_bool();
     let price = rdr.read_f32::<BigEndian>()?;
     let size = rdr.read_f32::<BigEndian>()?;
     Ok(Update {
@@ -557,15 +549,54 @@ pub mod iterators {
     }
 
     /// BufReader for DTF files with batch block of size `block_size`
+    #[derive(Clone, Debug)]
     pub struct DTFBufReader<T: Read + Seek> {
         rdr: T,
         current_meta: Option<BatchMetadata>,
         /// total number of updates
         pub n_up: u64,
+        /// index of the last update to read
+        pub last_idx: Option<u32>,
+        i_up_in_file: u32,
         i_up: u32,
     }
 
     impl<T: Read + Seek> DTFBufReader<T> {
+
+        /// start at i-th update in file
+        pub fn with_offset(mut rdr: T, offset: usize) -> Self {
+            let meta = read_meta_from_buf(&mut rdr).unwrap();
+            rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
+
+            let mut dtf = DTFBufReader {
+                rdr,
+                current_meta: None,
+                n_up: meta.nums,
+                last_idx: None,
+                i_up_in_file: 0,
+                i_up: 0,
+            };
+
+            dtf.next_block().unwrap();
+            let mut cur = 0;
+            while cur < offset {
+                let count = dtf.current_meta.as_ref().unwrap().count;
+                if (offset - cur) < count as usize {
+                    let skip_bytes = (offset - cur) as i64 * 12;
+                    dtf.rdr.seek(SeekFrom::Current(skip_bytes)).unwrap();
+                    cur = offset;
+                    dtf.i_up_in_file = offset as u32;
+                } else {
+                    let skip_bytes = count as i64 * 12;
+                    dtf.rdr.seek(SeekFrom::Current(skip_bytes)).unwrap();
+
+                    cur += count as usize;
+                    dtf.next_block().unwrap();
+                }
+            }
+            dtf
+        }
+
         /// create a new DTFBufReader
         pub fn new(mut rdr: T) -> Self {
             let meta = read_meta_from_buf(&mut rdr).unwrap();
@@ -574,9 +605,24 @@ pub mod iterators {
                 rdr,
                 current_meta: None,
                 n_up: meta.nums,
+                last_idx: None,
+                i_up_in_file: 0,
                 i_up: 0,
             }
         }
+
+        /// set last update index to read
+        pub fn to_end(mut self) -> Self {
+            self.last_idx = None;
+            self
+        }
+
+        /// set last update index to read
+        pub fn to(mut self, i: u32) -> Self {
+            self.last_idx = Some(i);
+            self
+        }
+
         fn next_block(&mut self) -> Option<()> {
             if let Ok(is_ref) = self.rdr.read_u8() {
                 if is_ref == 0x1 {
@@ -594,6 +640,7 @@ pub mod iterators {
         fn read_one(&mut self) -> Update {
             let up = read_one_update(&mut self.rdr, &self.current_meta.as_ref().unwrap()).unwrap();
             self.i_up += 1;
+            self.i_up_in_file += 1;
             up
         }
     }
@@ -601,6 +648,11 @@ pub mod iterators {
     impl<T: Read + Seek> Iterator for DTFBufReader<T> {
         type Item = Update;
         fn next(&mut self) -> Option<Self::Item> {
+            if let Some(end) = self.last_idx {
+                if self.i_up_in_file >= end {
+                    return None;
+                }
+            }
             if self.current_meta.is_none() {
                 self.next_block()?;
             }
@@ -1212,5 +1264,48 @@ mod tests {
         }
 
         assert_eq!(v.len(), 1000000);
+    }
+
+    #[test]
+    fn test_iterator() {
+
+        let fname = "../../test/test-data/bt_btcnav.dtf";
+
+        let mut it1 = iterators::DTFBufReader::new(file_reader(fname).unwrap());
+        it1.next();
+        let res1 = it1.next().unwrap();
+
+        let mut it2 = iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), 1);
+        let res2 = it2.next().unwrap();
+        assert_eq!(res1, res2);
+        assert_eq!(it1.next().unwrap(), it2.next().unwrap());
+        assert_eq!(it1.next().unwrap(), it2.next().unwrap());
+        assert_eq!(it1.next().unwrap(), it2.next().unwrap());
+
+    }
+
+    #[test]
+    fn test_iterator_large() {
+        let fname = "../../test/test-data/bt_btcnav.dtf";
+        let mut it1 = iterators::DTFBufReader::new(file_reader(fname).unwrap());
+        (0..10000).for_each(|_| { it1.next().unwrap(); });
+        let res1 = it1.next().unwrap();
+
+        let mut it2 = iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), 10000);
+        let res2 = it2.next().unwrap();
+        assert_eq!(res1, res2);
+        assert_eq!(it1.next().unwrap(), it2.next().unwrap());
+        assert_eq!(it1.next().unwrap(), it2.next().unwrap());
+        assert_eq!(it1.next().unwrap(), it2.next().unwrap());
+
+    }
+
+    #[test]
+    fn test_iterator_with_last_idx() {
+        let fname = "../../test/test-data/bt_btcnav.dtf";
+        let mut it1 = iterators::DTFBufReader::new(file_reader(fname).unwrap()).to(10001);
+        (0..10000).for_each(|_| { it1.next().unwrap(); });
+        it1.next().unwrap();
+        assert!(it1.next().is_none());
     }
 }

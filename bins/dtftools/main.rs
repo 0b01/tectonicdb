@@ -7,6 +7,9 @@ use libtectonic::dtf;
 use libtectonic::storage::utils::total_folder_updates_len;
 use libtectonic::postprocessing::candle::TickBars;
 use indoc::indoc;
+use indicatif::{ProgressBar, ProgressStyle};
+use memmap::MmapOptions;
+use std::fs::File;
 
 mod dtfconcat;
 use clap::{Arg, App};
@@ -203,18 +206,25 @@ fn main() {
                         .as_csv();
                     println!("{}", rebinned)
                 } else {
-                    use indicatif::{ProgressBar, ProgressStyle};
-                    let rdr = dtf::file_format::file_reader(input).expect("cannot open file");
+
+                    let file = File::open(input).unwrap();
+                    let rdr = unsafe { MmapOptions::new().map(&file).unwrap() };
+                    let rdr = std::io::Cursor::new(rdr);
+
+                    // let rdr = dtf::file_format::file_reader(input).expect("cannot open file");
+
                     let it = dtf::file_format::iterators::DTFBufReader::new(rdr);
                     let bar = ProgressBar::new(it.n_up);
                     bar.set_style(ProgressStyle::default_bar()
                         .template("[{elapsed_precise}, remaining: {eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
                         .progress_chars("##-"));
 
-                    for up in it {
-                        bar.inc(1);
+                    for (i, up) in it.enumerate() {
+                        if i != 0 && i % 10000 == 0 {
+                            bar.inc(10000);
+                        }
                         if csv {
-                            println!("{}", up.as_csv())
+                            println!("{}", up.as_csv()) // TODO: slooooow
                         } else {
                             println!("[{}]", up.as_json())
                         }

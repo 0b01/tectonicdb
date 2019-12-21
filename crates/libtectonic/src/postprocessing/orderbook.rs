@@ -62,6 +62,12 @@ impl Orderbook {
         }
     }
 
+    /// reset orderbook
+    pub fn clear(&mut self) {
+        self.bids.clear();
+        self.asks.clear();
+    }
+
     /// Remove zero levels from books
     pub fn clean(&mut self) {
         self.bids = self.bids.iter()
