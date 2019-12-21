@@ -84,7 +84,7 @@ impl DTFFileMetadata {
         };
         let first_epoch = metadata.min_ts;
         let last_epoch = metadata.max_ts;
-        let total_updates = metadata.nums;
+        let total_updates = metadata.count;
 
         Ok(DTFFileMetadata {
             file_type: FileType::RawDtf,

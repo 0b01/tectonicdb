@@ -60,7 +60,7 @@ pub struct Metadata {
     /// Symbol name
     pub symbol: String,
     /// Number of `Update`s in the file
-    pub nums: u64,
+    pub count: u64,
     /// The timestamp of the last item
     pub max_ts: u64,
     /// The smallest timestamp
@@ -91,14 +91,14 @@ impl fmt::Display for Metadata {
             f,
             r#"{{
   "symbol": "{}",
-  "nums": {},
+  "count": {},
   "max_ts": {},
   "max_ts_human": "{}",
   "min_ts": {},
   "min_ts_human": "{}"
 }}"#,
             self.symbol,
-            self.nums,
+            self.count,
             self.max_ts,
             epoch_to_human(self.max_ts / 1000),
             self.min_ts,
@@ -493,9 +493,9 @@ pub fn get_size(fname: &str) -> Result<u64, io::Error> {
 /// Read Metadata block from buffer
 pub fn read_meta_from_buf<T: Read + Seek>(mut rdr: &mut T) -> Result<Metadata, io::Error> {
     let symbol = read_symbol(&mut rdr)?;
-    let nums = read_len(&mut rdr)?;
+    let count = read_len(&mut rdr)?;
     let max_ts = read_max_ts(&mut rdr)?;
-    let min_ts = if nums > 0 {
+    let min_ts = if count > 0 {
         read_min_ts(&mut rdr)?
     } else {
         max_ts
@@ -503,7 +503,7 @@ pub fn read_meta_from_buf<T: Read + Seek>(mut rdr: &mut T) -> Result<Metadata, i
 
     Ok(Metadata {
         symbol,
-        nums,
+        count,
         max_ts,
         min_ts,
     })
@@ -571,7 +571,7 @@ pub mod iterators {
             let mut dtf = DTFBufReader {
                 rdr,
                 current_meta: None,
-                n_up: meta.nums,
+                n_up: meta.count,
                 last_idx: None,
                 i_up_in_file: 0,
                 i_up: 0,
@@ -604,7 +604,7 @@ pub mod iterators {
             DTFBufReader {
                 rdr,
                 current_meta: None,
-                n_up: meta.nums,
+                n_up: meta.count,
                 last_idx: None,
                 i_up_in_file: 0,
                 i_up: 0,
@@ -961,7 +961,7 @@ mod tests {
     fn should_format_metadata_properly() {
         let meta = Metadata {
             symbol: "TEST".to_owned(),
-            nums: 1,
+            count: 1,
             max_ts: 1,
             min_ts: 1,
         };
@@ -970,7 +970,7 @@ mod tests {
             format!("{}", meta),
             r#"{
   "symbol": "TEST",
-  "nums": 1,
+  "count": 1,
   "max_ts": 1,
   "max_ts_human": "1970-01-01 00:00:00 UTC",
   "min_ts": 1,

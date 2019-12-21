@@ -86,7 +86,7 @@ impl Book {
     fn load(&mut self) {
         let fname = format!("{}/{}.dtf", &self.settings.dtf_folder, self.name);
         if Path::new(&fname).exists() && !self.in_memory {
-            // let file_item_count = dtf::read_meta(&fname).nums;
+            // let file_item_count = dtf::read_meta(&fname).count;
             // // when we have more items in memory, don't load
             // if file_item_count < self.count() {
             //     warn!("There are more items in memory than in file. Cannot load from file.");

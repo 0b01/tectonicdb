@@ -16,7 +16,7 @@ pub fn total_folder_updates_len(folder: &str) -> Result<usize, io::Error> {
                     let fname = fname.to_str().unwrap().to_owned();
                     let fname = &format!("{}/{}", folder, fname);
                     let meta = crate::dtf::file_format::read_meta(fname).unwrap();
-                    meta.nums as usize
+                    meta.count as usize
                 })
                 .sum();
 
