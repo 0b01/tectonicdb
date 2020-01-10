@@ -10,7 +10,7 @@ version = "0.3.0"
 
 [dependencies]
 libtectonic = { path = "../libtectonic", version = "0.3.0" }
-circular-queue = "0.2.2"
+circular-queue = "0.2.3"
 
 futures = "0.3.1"
 async-std = "1.4.0"
