@@ -554,9 +554,9 @@ pub mod iterators {
         rdr: T,
         current_meta: Option<BatchMetadata>,
         /// total number of updates
-        pub n_up: u64,
+        n_up: u64,
         /// index of the last update to read
-        pub last_idx: Option<u32>,
+        last_idx: Option<u32>,
         i_up_in_file: u32,
         i_up: u32,
     }
@@ -584,6 +584,7 @@ pub mod iterators {
                 if (offset - cur) < count as usize {
                     let skip_bytes = (offset - cur) as i64 * 12;
                     dtf.rdr.seek(SeekFrom::Current(skip_bytes)).unwrap();
+                    dtf.i_up = (offset - cur) as u32;
                     cur = offset;
                     dtf.i_up_in_file = offset as u32;
                 } else {
@@ -609,6 +610,11 @@ pub mod iterators {
                 i_up_in_file: 0,
                 i_up: 0,
             }
+        }
+
+        /// Get 0-indexed update position of cursor in the file
+        pub fn current_update_index(&self) -> u32 {
+            self.i_up
         }
 
         /// set last update index to read
@@ -656,8 +662,10 @@ pub mod iterators {
             if self.current_meta.is_none() {
                 self.next_block()?;
             }
-            if ((self.i_up as u64) >= self.n_up) ||
-            ((self.i_up as u16) >= self.current_meta.as_ref().unwrap().count)
+            if (self.i_up as u64) >= self.n_up {
+                return None;
+            }
+            if (self.i_up as u16) >= self.current_meta.as_ref().unwrap().count
             {
                 self.next_block()?;
             }
@@ -1239,7 +1247,7 @@ mod tests {
     #[test]
     fn test_write_batches() {
         let mut ups = vec![];
-        for i in 0..1000000 {
+        for _ in 0..1000000 {
             let up = Update {
                 ts: 100,
                 seq: 10,
@@ -1295,9 +1303,20 @@ mod tests {
         let res2 = it2.next().unwrap();
         assert_eq!(res1, res2);
         assert_eq!(it1.next().unwrap(), it2.next().unwrap());
-        assert_eq!(it1.next().unwrap(), it2.next().unwrap());
-        assert_eq!(it1.next().unwrap(), it2.next().unwrap());
+    }
 
+    #[test]
+    fn test_iterator_every() {
+        let fname = "../../test/test-data/bt_btcnav.dtf";
+
+        let count = read_meta(fname).unwrap().count;
+        dbg!(count);
+
+        for i in (0..(count as usize)).step_by(1000) {
+            dbg!(i);
+            let mut it = iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), i);
+            while let Some(_) = it.next() {};
+        }
     }
 
     #[test]

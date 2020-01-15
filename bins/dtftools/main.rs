@@ -214,7 +214,7 @@ fn main() {
                     // let rdr = dtf::file_format::file_reader(input).expect("cannot open file");
 
                     let it = dtf::file_format::iterators::DTFBufReader::new(rdr);
-                    let bar = ProgressBar::new(it.n_up);
+                    let bar = ProgressBar::new(it.current_update_index().into());
                     bar.set_style(ProgressStyle::default_bar()
                         .template("[{elapsed_precise}, remaining: {eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
                         .progress_chars("##-"));
