@@ -6,6 +6,7 @@ extern crate libtectonic;
 extern crate indoc;
 
 
+mod numpy;
 mod dtfcat;
 mod dtfsplit;
 mod dtfconcat;

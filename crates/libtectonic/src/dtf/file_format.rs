@@ -1312,7 +1312,7 @@ mod tests {
         let count = read_meta(fname).unwrap().count;
         dbg!(count);
 
-        for i in (0..(count as usize)).step_by(1000) {
+        for i in (0..(count as usize)).step_by(10000) {
             dbg!(i);
             let mut it = iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), i);
             while let Some(_) = it.next() {};

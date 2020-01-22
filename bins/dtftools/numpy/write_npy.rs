@@ -1,6 +1,6 @@
 use byteorder::{BE, LE, WriteBytesExt};
 use std::io::Write;
-use crate::record::Record;
+use record::Record;
 
 static MAGIC_VALUE: &[u8] = &[0x93, 0x4E, 0x55, 0x4D, 0x50, 0x59];
 
