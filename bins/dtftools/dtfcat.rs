@@ -28,10 +28,11 @@ pub fn run(matches: &clap::ArgMatches) {
     if input != "" {
         if print_metadata {
             println!("{}", dtf::file_format::read_meta(input).unwrap());
-            let rdr = dtf::file_format::file_reader(input).expect("cannot open file");
-            for meta in dtf::file_format::iterators::DTFMetadataReader::new(rdr) {
-                println!("{:?}", meta);
-            }
+
+            // let rdr = dtf::file_format::file_reader(input).expect("cannot open file");
+            // for meta in dtf::file_format::iterators::DTFMetadataReader::new(rdr) {
+            //     println!("{:?}", meta);
+            // }
         } else {
             if candle {
                 let ups = dtf::file_format::decode(input, None).unwrap();
@@ -46,20 +47,16 @@ pub fn run(matches: &clap::ArgMatches) {
 
                 let file = File::open(input).unwrap();
                 let rdr = unsafe { MmapOptions::new().map(&file).unwrap() };
-                let rdr = std::io::Cursor::new(rdr);
-
-                // let rdr = dtf::file_format::file_reader(input).expect("cannot open file");
-
-                let it = dtf::file_format::iterators::DTFBufReader::new(rdr);
-                let bar = ProgressBar::new(it.current_update_index().into());
+                let mut rdr = std::io::Cursor::new(rdr);
+                let meta = dtf::file_format::read_meta_from_buf(&mut rdr).unwrap();
+                let mut it = dtf::file_format::iterators::DTFBufReader::new(rdr);
+                let bar = ProgressBar::new(meta.count);
                 bar.set_style(ProgressStyle::default_bar()
                     .template("[{elapsed_precise}, remaining: {eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
                     .progress_chars("##-"));
 
-                for (i, up) in it.enumerate() {
-                    if i != 0 && i % 10000 == 0 {
-                        bar.inc(10000);
-                    }
+                for (i, up) in &mut it.enumerate() {
+                    if i != 0 && i % 10000 == 0 { bar.inc(10000); }
                     if csv {
                         println!("{}", up.as_csv()) // TODO: slooooow
                     } else {

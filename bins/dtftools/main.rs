@@ -6,7 +6,9 @@ extern crate libtectonic;
 extern crate indoc;
 
 
-mod numpy;
+mod write_npy;
+mod dtfnumpy;
+mod dtfcheck;
 mod dtfcat;
 mod dtfsplit;
 mod dtfconcat;
@@ -16,63 +18,6 @@ fn main() {
     let matches = App::new("dtftools")
         .version("1.0.0")
         .author("Ricky Han <tectonic@rickyhan.com>")
-
-        .subcommand(clap::SubCommand::with_name("concat")
-                .about(indoc!("
-                    Concatenates two DTF files into a single output file.
-
-                    Examples:
-                    dtfconcat file1.dtf file2.dtf output.dtf
-                    "))
-                .arg(
-                    Arg::with_name("input1")
-                        .value_name("INPUT1")
-                        .help("First file to read")
-                        .required(true)
-                        .takes_value(true)
-                        .index(1)
-                )
-                .arg(
-                    Arg::with_name("input2")
-                        .value_name("INPUT2")
-                        .help("Second file to read")
-                        .required(true)
-                        .takes_value(true)
-                        .index(2)
-                )
-                .arg(
-                    Arg::with_name("output")
-                        .value_name("OUTPUT")
-                        .help("Output file")
-                        .required(true)
-                        .takes_value(true)
-                        .index(3)
-                ))
-
-        .subcommand(clap::SubCommand::with_name("split")
-            .about(indoc!("
-                Splits big dtf files into smaller ones
-
-                Examples:
-                dtfsplit -i test.dtf -f test-{}.dtf
-                "))
-            .arg(
-                Arg::with_name("input")
-                    .short("i")
-                    .long("input")
-                    .value_name("INPUT")
-                    .help("file to read")
-                    .required(true)
-                    .takes_value(true))
-            .arg(
-                Arg::with_name("BATCH")
-                    .short("b")
-                    .long("batch_size")
-                    .value_name("BATCH_SIZE")
-                    .help("Specify the number of batches to read")
-                    .required(true)
-                    .takes_value(true),
-            ))
 
         .subcommand(clap::SubCommand::with_name("cat")
             .about(indoc!("
@@ -165,10 +110,120 @@ fn main() {
                 .value_name("MINUTES")
                 .help("granularity in minute. e.g. -m 60 # hour candle")
                 .takes_value(true)))
+
+        .subcommand(clap::SubCommand::with_name("check")
+            .about(indoc!("
+                Check dtf file for defect
+
+                Examples:
+                dtftools check -i 1.dtf -c
+                "))
+            .arg(
+                Arg::with_name("threshold")
+                    .short("t")
+                    .long("threshold")
+                    .help("gap threshold in seconds")
+                    .value_name("THRESHOLD")
+                    .required(false)
+                    .takes_value(true)
+            )
+            .arg(
+                Arg::with_name("input")
+                    .short("i")
+                    .long("input")
+                    .value_name("INPUT")
+                    .help("file to read")
+                    .required(true)
+                    .takes_value(true)
+            ))
+
+        .subcommand(clap::SubCommand::with_name("numpy")
+            .about(indoc!("
+                Convert dtf files to .npz format
+
+                Examples:
+                dtftools numpy -i 1.dtf -c
+                "))
+            .arg(
+                Arg::with_name("compressed")
+                    .short("c")
+                    .long("compressed")
+                    .help("use Deflated compression")
+            )
+            .arg(
+                Arg::with_name("input")
+                    .short("i")
+                    .long("input")
+                    .value_name("INPUT")
+                    .help("file to read")
+                    .required(true)
+                    .takes_value(true),
+            ))
+
+        .subcommand(clap::SubCommand::with_name("concat")
+                .about(indoc!("
+                    Concatenates two DTF files into a single output file.
+
+                    Examples:
+                    dtfconcat file1.dtf file2.dtf output.dtf
+                    "))
+                .arg(
+                    Arg::with_name("input1")
+                        .value_name("INPUT1")
+                        .help("First file to read")
+                        .required(true)
+                        .takes_value(true)
+                        .index(1)
+                )
+                .arg(
+                    Arg::with_name("input2")
+                        .value_name("INPUT2")
+                        .help("Second file to read")
+                        .required(true)
+                        .takes_value(true)
+                        .index(2)
+                )
+                .arg(
+                    Arg::with_name("output")
+                        .value_name("OUTPUT")
+                        .help("Output file")
+                        .required(true)
+                        .takes_value(true)
+                        .index(3)
+                ))
+
+        .subcommand(clap::SubCommand::with_name("split")
+            .about(indoc!("
+                Splits big dtf files into smaller ones
+
+                Examples:
+                dtfsplit -i test.dtf -f test-{}.dtf
+                "))
+            .arg(
+                Arg::with_name("input")
+                    .short("i")
+                    .long("input")
+                    .value_name("INPUT")
+                    .help("file to read")
+                    .required(true)
+                    .takes_value(true))
+            .arg(
+                Arg::with_name("BATCH")
+                    .short("b")
+                    .long("batch_size")
+                    .value_name("BATCH_SIZE")
+                    .help("Specify the number of batches to read")
+                    .required(true)
+                    .takes_value(true),
+            ))
     .get_matches();
 
     if let Some(matches) = matches.subcommand_matches("cat") {
         dtfcat::run(matches);
+    } else if let Some(matches) = matches.subcommand_matches("check") {
+        dtfcheck::run(matches);
+    } else if let Some(matches) = matches.subcommand_matches("numpy") {
+        dtfnumpy::run(matches);
     } else if let Some(matches) = matches.subcommand_matches("split") {
         dtfsplit::run(matches);
     } else if let Some(matches) = matches.subcommand_matches("concat") {

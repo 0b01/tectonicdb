@@ -612,6 +612,15 @@ pub mod iterators {
             }
         }
 
+        /// reset iterator
+        pub fn reset(&mut self) {
+            self.rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
+            self.current_meta = None;
+            self.last_idx = None;
+            self.i_up_in_file = 0;
+            self.i_up = 0;
+        }
+
         /// Get 0-indexed update position of cursor in the file
         pub fn current_update_index(&self) -> u32 {
             self.i_up
@@ -651,7 +660,7 @@ pub mod iterators {
         }
     }
 
-    impl<T: Read + Seek> Iterator for DTFBufReader<T> {
+    impl<'a, T: Read + Seek> Iterator for &'a mut DTFBufReader<T> {
         type Item = Update;
         fn next(&mut self) -> Option<Self::Item> {
             if let Some(end) = self.last_idx {
