@@ -1288,11 +1288,11 @@ mod tests {
 
         let fname = "../../test/test-data/bt_btcnav.dtf";
 
-        let mut it1 = iterators::DTFBufReader::new(file_reader(fname).unwrap());
+        let mut it1 = &mut iterators::DTFBufReader::new(file_reader(fname).unwrap());
         it1.next();
         let res1 = it1.next().unwrap();
 
-        let mut it2 = iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), 1);
+        let mut it2 = &mut iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), 1);
         let res2 = it2.next().unwrap();
         assert_eq!(res1, res2);
         assert_eq!(it1.next().unwrap(), it2.next().unwrap());
@@ -1304,11 +1304,11 @@ mod tests {
     #[test]
     fn test_iterator_large() {
         let fname = "../../test/test-data/bt_btcnav.dtf";
-        let mut it1 = iterators::DTFBufReader::new(file_reader(fname).unwrap());
+        let mut it1 = &mut iterators::DTFBufReader::new(file_reader(fname).unwrap());
         (0..10000).for_each(|_| { it1.next().unwrap(); });
         let res1 = it1.next().unwrap();
 
-        let mut it2 = iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), 10000);
+        let mut it2 = &mut iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), 10000);
         let res2 = it2.next().unwrap();
         assert_eq!(res1, res2);
         assert_eq!(it1.next().unwrap(), it2.next().unwrap());
@@ -1323,7 +1323,7 @@ mod tests {
 
         for i in (0..(count as usize)).step_by(10000) {
             dbg!(i);
-            let mut it = iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), i);
+            let mut it = &mut iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), i);
             while let Some(_) = it.next() {};
         }
     }
@@ -1331,7 +1331,7 @@ mod tests {
     #[test]
     fn test_iterator_with_last_idx() {
         let fname = "../../test/test-data/bt_btcnav.dtf";
-        let mut it1 = iterators::DTFBufReader::new(file_reader(fname).unwrap()).to(10001);
+        let mut it1 = &mut iterators::DTFBufReader::new(file_reader(fname).unwrap()).to(10001);
         (0..10000).for_each(|_| { it1.next().unwrap(); });
         it1.next().unwrap();
         assert!(it1.next().is_none());
