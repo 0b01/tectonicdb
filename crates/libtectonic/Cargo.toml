@@ -20,7 +20,7 @@ log = "0.4.8"
 
 serde = "1.0.104"
 serde_derive = "1.0.104"
-serde_json = "1.0.44"
+serde_json = "1.0.45"
 libc = "0.2.66"
 
 alloc_counter = { version = "0.0.4", optional = true }
