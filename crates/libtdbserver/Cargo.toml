@@ -32,7 +32,7 @@ tempdir = { optional = true, version = "0.3.7" }
 reqwest = { optional = true, version = "0.10.1" }
 serde = { optional = true, version = "1.0.104" }
 config = { optional = true, version = "0.10.1" }
-time = { optional = true, version = "0.2.5" }
+time = { optional = true, version = "0.2.6" }
 
 alloc_counter = { version = "0.0.4", optional = true }
 arrayvec = "0.5.1"
