@@ -612,6 +612,15 @@ pub mod iterators {
             }
         }
 
+        /// reset iterator
+        pub fn reset(&mut self) {
+            self.rdr.seek(SeekFrom::Start(MAIN_OFFSET)).expect("SEEKING");
+            self.current_meta = None;
+            self.last_idx = None;
+            self.i_up_in_file = 0;
+            self.i_up = 0;
+        }
+
         /// Get 0-indexed update position of cursor in the file
         pub fn current_update_index(&self) -> u32 {
             self.i_up
@@ -651,7 +660,7 @@ pub mod iterators {
         }
     }
 
-    impl<T: Read + Seek> Iterator for DTFBufReader<T> {
+    impl<'a, T: Read + Seek> Iterator for &'a mut DTFBufReader<T> {
         type Item = Update;
         fn next(&mut self) -> Option<Self::Item> {
             if let Some(end) = self.last_idx {
@@ -1279,11 +1288,11 @@ mod tests {
 
         let fname = "../../test/test-data/bt_btcnav.dtf";
 
-        let mut it1 = iterators::DTFBufReader::new(file_reader(fname).unwrap());
+        let mut it1 = &mut iterators::DTFBufReader::new(file_reader(fname).unwrap());
         it1.next();
         let res1 = it1.next().unwrap();
 
-        let mut it2 = iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), 1);
+        let mut it2 = &mut iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), 1);
         let res2 = it2.next().unwrap();
         assert_eq!(res1, res2);
         assert_eq!(it1.next().unwrap(), it2.next().unwrap());
@@ -1295,11 +1304,11 @@ mod tests {
     #[test]
     fn test_iterator_large() {
         let fname = "../../test/test-data/bt_btcnav.dtf";
-        let mut it1 = iterators::DTFBufReader::new(file_reader(fname).unwrap());
+        let mut it1 = &mut iterators::DTFBufReader::new(file_reader(fname).unwrap());
         (0..10000).for_each(|_| { it1.next().unwrap(); });
         let res1 = it1.next().unwrap();
 
-        let mut it2 = iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), 10000);
+        let mut it2 = &mut iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), 10000);
         let res2 = it2.next().unwrap();
         assert_eq!(res1, res2);
         assert_eq!(it1.next().unwrap(), it2.next().unwrap());
@@ -1312,9 +1321,9 @@ mod tests {
         let count = read_meta(fname).unwrap().count;
         dbg!(count);
 
-        for i in (0..(count as usize)).step_by(1000) {
+        for i in (0..(count as usize)).step_by(10000) {
             dbg!(i);
-            let mut it = iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), i);
+            let mut it = &mut iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), i);
             while let Some(_) = it.next() {};
         }
     }
@@ -1322,7 +1331,7 @@ mod tests {
     #[test]
     fn test_iterator_with_last_idx() {
         let fname = "../../test/test-data/bt_btcnav.dtf";
-        let mut it1 = iterators::DTFBufReader::new(file_reader(fname).unwrap()).to(10001);
+        let mut it1 = &mut iterators::DTFBufReader::new(file_reader(fname).unwrap()).to(10001);
         (0..10000).for_each(|_| { it1.next().unwrap(); });
         it1.next().unwrap();
         assert!(it1.next().is_none());
