@@ -1,4 +1,4 @@
-use super::{TickBars, Candle};
+use super::{TimeBars, Candle};
 
 const SYMBOL_STICK: &str = "│";
 const SYMBOL_CANDLE: &str = "┃";
@@ -13,14 +13,14 @@ const SYMBOL_NOTHING: &str = " ";
 /// plot candle stick graph in terminal
 pub struct CandleStickGraph {
     height: u32,
-    data: TickBars,
+    data: TimeBars,
     global_min: f32,
     global_max: f32,
 }
 
 impl CandleStickGraph {
     /// create a new graph
-    pub fn new(height: u32, data: TickBars) -> Self {
+    pub fn new(height: u32, data: TimeBars) -> Self {
         let global_min = data.get_candles()
             .map(|candle| candle.low)
             .min_by(|a, b| a.partial_cmp(b).unwrap())
@@ -140,7 +140,7 @@ mod tests {
         let max_ts = min_ts + HOUR + y_ts;
 
         let ups = dtf::file_format::get_range_in_file(fname, min_ts, max_ts).unwrap();
-        let mut candles = TickBars::from(ups.as_slice());
+        let mut candles = TimeBars::from(ups.as_slice());
         candles.insert_continuation_candles();
         let graph = CandleStickGraph::new(21, candles);
         let plot = graph.draw();

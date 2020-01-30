@@ -5,64 +5,60 @@ use crate::dtf::update::Update;
 use crate::utils::fill_digits;
 use indexmap::IndexMap;
 
-#[derive(Clone, Debug, PartialEq)]
-/// utilities for rebinning candlesticks
-pub struct TickBars {
-    v: IndexMap<Time, Candle>,
-    scale: Scale,
+/// Iterator for Bars sampled by time, default is 1 minute bar
+pub struct TimeBarsIter<'a, I:Iterator<Item=&'a Update>> {
+    it: I,
+    current_candle: Option<(Candle, Time)>,
 }
 
-impl<'a> From<&'a [Update]> for TickBars {
-    /// Generate a vector of 1-min candles from Updates
-    fn from(ups: &[Update]) -> TickBars {
-        let fix_missing = false;
+impl<'a, I:Iterator<Item=&'a Update>> TimeBarsIter<'a, I> {
+    /// Create a new iterator for time bars
+    pub fn new(it: I) -> Self {
+        Self {
+            it,
+            current_candle: None,
+        }
+    }
+}
 
-        let mut last_ts = 0; // store the last timestep to test continuity
-        let mut last_close = 0.; //
-
-        let mut candles = IndexMap::new();
-
-        for trade in ups.iter() {
+impl<'a, I:Iterator<Item=&'a Update>> Iterator for TimeBarsIter<'a, I> {
+    type Item = (Time, Candle);
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some(trade) = self.it.next() {
             if !trade.is_trade {
                 continue;
             }
             // floor(ts)
             let ts = (fill_digits(trade.ts) / 1000 / 60 * 60) as Time;
 
-            if fix_missing && (ts != last_ts + 60) && (last_ts != 0) && (last_ts != ts) {
-                //insert continuation candle(s)
-                let mut cur = last_ts + 60;
-                while cur < ts {
-                    candles.insert(
-                        cur,
-                        Candle {
-                            volume: 0.,
-                            high: last_close,
-                            low: last_close,
-                            open: last_close,
-                            close: last_close,
+            self.current_candle = Some((if let Some((c, t)) = &self.current_candle {
+                if *t != ts {
+                    let c = *c;
+                    drop(t);
+                    self.current_candle = Some((Candle {
+                        volume: trade.size,
+                        high: trade.price,
+                        low: trade.price,
+                        close: trade.price,
+                        open: trade.price,
+                    }, ts));
+                    return Some((ts, c));
+                } else {
+                    Candle {
+                        volume: c.volume + trade.size,
+                        high: if trade.price >= c.high {
+                            trade.price
+                        } else {
+                            c.high
                         },
-                    );
-                    cur += 60;
-                }
-            }
-
-            let new_candle = if candles.contains_key(&ts) {
-                let c = candles.get(&ts).unwrap();
-                Candle {
-                    volume: c.volume + trade.size,
-                    high: if trade.price >= c.high {
-                        trade.price
-                    } else {
-                        c.high
-                    },
-                    low: if trade.price <= c.low {
-                        trade.price
-                    } else {
-                        c.low
-                    },
-                    close: trade.price,
-                    open: c.open,
+                        low: if trade.price <= c.low {
+                            trade.price
+                        } else {
+                            c.low
+                        },
+                        close: trade.price,
+                        open: c.open,
+                    }
                 }
             } else {
                 Candle {
@@ -72,18 +68,28 @@ impl<'a> From<&'a [Update]> for TickBars {
                     close: trade.price,
                     open: trade.price,
                 }
-            };
-
-            candles.insert(ts, new_candle);
-            last_ts = ts;
-            last_close = trade.price;
+            }, ts));
         }
-
-        return TickBars::new(candles, 1);
+        None
     }
 }
 
-impl TickBars {
+#[derive(Clone, Debug, PartialEq)]
+/// Candles sampled by time, allows rebinning
+pub struct TimeBars {
+    v: IndexMap<Time, Candle>,
+    scale: Scale,
+}
+
+impl<'a> From<&'a [Update]> for TimeBars {
+    /// Generate a vector of 1-min candles from Updates
+    fn from(ups: &[Update]) -> TimeBars {
+        let candles = TimeBarsIter::new(ups.iter()).collect();
+        return TimeBars::new(candles, 1);
+    }
+}
+
+impl TimeBars {
 
     /// Get total length of candles
     pub fn get_size(&self) -> usize {
@@ -100,7 +106,7 @@ impl TickBars {
         self.scale
     }
 
-    /// convert TickBars vector to csv
+    /// convert TimeBars vector to csv
     /// format is
     ///     T,O,H,L,C,V
     pub fn as_csv(&self) -> String {
@@ -181,9 +187,9 @@ impl TickBars {
     }
 
 
-    /// create new TickBars object
-    fn new(v: IndexMap<Time, Candle>, scale: u16) -> TickBars {
-        let ret = TickBars { v, scale };
+    /// create new TimeBars object
+    fn new(v: IndexMap<Time, Candle>, scale: u16) -> TimeBars {
+        let ret = TimeBars { v, scale };
 
         ret
     }
@@ -206,8 +212,8 @@ impl TickBars {
 
 
 
-    /// rebin 1 minute candles to x-minute candles
-    pub fn rebin(self, align: bool, new_scale: u16) -> Option<TickBars> {
+    /// rebin 1 minute candles to candles sampled by new scale
+    pub fn rebin(self, align: bool, new_scale: u16) -> Option<TimeBars> {
         if new_scale < self.scale {
             return None;
         } else if new_scale == self.scale {
@@ -282,7 +288,7 @@ impl TickBars {
         assert_eq!(res.len(), self.v.len() / (new_scale as usize));
         debug_assert!(self._test_epochs_must_be_sequential());
 
-        Some(TickBars {
+        Some(TimeBars {
             v: res,
             scale: new_scale,
         })
@@ -389,7 +395,7 @@ mod tests {
             );
         }
 
-        let candles = TickBars::new(v, 1);
+        let candles = TimeBars::new(v, 1);
         let mut tree = IndexMap::new();
         tree.insert(
             1800,
@@ -403,7 +409,7 @@ mod tests {
         );
 
         assert_eq!(
-            TickBars { v: tree, scale: 60 },
+            TimeBars { v: tree, scale: 60 },
             candles.rebin(true, 60).unwrap()
         );
     }
@@ -414,8 +420,8 @@ mod tests {
     //     let ups = &super::super::decode(FNAME)[1..100000];
 
     //     // test two ways
-    //     let first = TickBars::from_updates(false, &ups);
-    //     let second = TickBars::from_updates(true, &ups);
+    //     let first = TimeBars::from_updates(false, &ups);
+    //     let second = TimeBars::from_updates(true, &ups);
 
     //     info!("{}", *second.v.iter().next_back().unwrap().0);
 
@@ -433,18 +439,18 @@ mod tests {
     //     let ups = &super::super::decode(FNAME)[1..100000];
 
     //     // test two ways
-    //     let mut first = TickBars::from_updates(false, &ups);
+    //     let mut first = TimeBars::from_updates(false, &ups);
     //     first.insert_continuation_candles();
 
-    //     let second = TickBars::from_updates(true, &ups);
+    //     let second = TimeBars::from_updates(true, &ups);
     //     assert_eq!(first, second);
     // }
 
     #[test]
     fn test_create_new_candles() {
         assert_eq!(
-            TickBars::new(IndexMap::new(), 1),
-            TickBars {
+            TimeBars::new(IndexMap::new(), 1),
+            TimeBars {
                 v: IndexMap::new(),
                 scale: 1,
             }
@@ -471,7 +477,7 @@ mod tests {
                 },
             );
         }
-        let mut candles = TickBars::new(v, 1);
+        let mut candles = TimeBars::new(v, 1);
 
         assert_eq!(
             vec![
@@ -526,7 +532,7 @@ mod tests {
             );
         }
 
-        let c = TickBars {
+        let c = TimeBars {
             v: candles.clone(),
             scale: 1,
         };
@@ -542,7 +548,7 @@ mod tests {
                 volume: 0.,
             },
         );
-        let g = TickBars {
+        let g = TimeBars {
             v: candles,
             scale: 1,
         };
@@ -568,7 +574,7 @@ mod tests {
             );
         }
 
-        let c = TickBars {
+        let c = TimeBars {
             v: candles.clone(),
             scale: 1,
         };
@@ -600,7 +606,7 @@ mod tests {
             );
         }
 
-        let c = TickBars {
+        let c = TimeBars {
             v: candles.clone(),
             scale: 1,
         };

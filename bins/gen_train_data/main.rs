@@ -13,7 +13,7 @@ use std::io::BufWriter;
 use std::fs::File;
 use libtectonic::dtf;
 use libtectonic::postprocessing::orderbook::RebinnedOrderbook;
-use libtectonic::postprocessing::candle::TickBars;
+use libtectonic::postprocessing::candle::TimeBars;
 use libtectonic::dtf::update::Update;
 use crate::record::Record;
 
@@ -107,7 +107,7 @@ fn write_ob_levels(rec: &mut Record, ups: &[Update], step_bins: usize, tick_bins
     }
 }
 
-fn write_candles(rec: &mut Record, candles: &TickBars) {
+fn write_candles(rec: &mut Record, candles: &TimeBars) {
     let mut highest_high = 0.;
     let mut highest_vol  = 0.;
 
@@ -133,7 +133,7 @@ fn write_candles(rec: &mut Record, candles: &TickBars) {
 fn gen_one_batch(ups: &[Update]) -> Result<Record, Error> {
     let batch_size = 1;
 
-    let candles = TickBars::from(ups);
+    let candles = TimeBars::from(ups);
     // missing candles in minutes
     let missing_range_sum = candles.missing_ranges()
                                    .iter()

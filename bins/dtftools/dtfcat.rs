@@ -1,6 +1,6 @@
 use memmap::MmapOptions;
 use libtectonic::dtf;
-use libtectonic::postprocessing::candle::TickBars;
+use libtectonic::postprocessing::candle::TimeBars;
 use libtectonic::storage::utils::total_folder_updates_len;
 use std::fs::File;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -35,7 +35,7 @@ pub fn run(matches: &clap::ArgMatches) {
         } else {
             if candle {
                 let ups = dtf::file_format::decode(input, None).unwrap();
-                let mut candles = TickBars::from(ups.as_slice());
+                let mut candles = TimeBars::from(ups.as_slice());
                 candles.insert_continuation_candles();
                 let rebinned = candles
                     .rebin(aligned, granularity.parse().unwrap())
@@ -80,7 +80,7 @@ pub fn run(matches: &clap::ArgMatches) {
                     min,
                     max,
                     ).unwrap();
-                let mut candles = TickBars::from(ups.as_slice());
+                let mut candles = TimeBars::from(ups.as_slice());
                 candles.insert_continuation_candles();
                 let rebinned = candles
                     .rebin(aligned, granularity.parse().unwrap())

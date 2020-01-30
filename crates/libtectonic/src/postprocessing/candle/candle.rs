@@ -1,6 +1,6 @@
 use super::{Price, Volume};
 
-#[derive(PartialOrd, PartialEq, Clone, Debug)]
+#[derive(PartialOrd, PartialEq, Clone, Copy, Debug)]
 /// a candlestick
 pub struct Candle {
     /// open price
