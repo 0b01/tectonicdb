@@ -5,7 +5,6 @@ use libtectonic::storage::utils::total_folder_updates_len;
 use std::fs::File;
 use indicatif::{ProgressBar, ProgressStyle};
 
-
 pub fn run(matches: &clap::ArgMatches) {
     // single file
     let input = matches.value_of("input").unwrap_or("");

@@ -17,11 +17,11 @@ fn main() {
     let matches = App::new("dtftools")
         .version("1.0.0")
         .author("Ricky Han <tectonic@rickyhan.com>")
+        .about("tools for dtf files")
 
         .subcommand(clap::SubCommand::with_name("cat")
             .about(indoc!("
                 Print dtf files to plaintext
-
                 Examples:
                 # filter by symbol and epoch under given folder and output csv
                 dtftools cat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 -c > out
@@ -113,7 +113,6 @@ fn main() {
         .subcommand(clap::SubCommand::with_name("check")
             .about(indoc!("
                 Check dtf file for defect
-
                 Examples:
                 dtftools check -i 1.dtf -c
                 "))
@@ -139,7 +138,6 @@ fn main() {
         .subcommand(clap::SubCommand::with_name("numpy")
             .about(indoc!("
                 Convert dtf files to .npz format
-
                 Examples:
                 dtftools numpy -i 1.dtf -c
                 "))
@@ -162,7 +160,6 @@ fn main() {
         .subcommand(clap::SubCommand::with_name("concat")
                 .about(indoc!("
                     Concatenates two DTF files into a single output file.
-
                     Examples:
                     dtfconcat file1.dtf file2.dtf output.dtf
                     "))
@@ -194,7 +191,6 @@ fn main() {
         .subcommand(clap::SubCommand::with_name("split")
             .about(indoc!("
                 Splits big dtf files into smaller ones
-
                 Examples:
                 dtfsplit -i test.dtf -f test-{}.dtf
                 "))
@@ -228,7 +224,6 @@ fn main() {
     } else if let Some(matches) = matches.subcommand_matches("concat") {
         dtfconcat::run(matches);
     } else {
-        println!("No subcommand match. Use dtftools --help to view help information.");
-        std::process::exit(1);
+        println!("{}", matches.usage());
     }
 }

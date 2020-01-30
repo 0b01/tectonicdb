@@ -35,7 +35,11 @@ pub fn run(matches: &clap::ArgMatches) -> Option<()> {
                 write_header(&mut zip, $fmt, meta.count);
                 for (i, up) in &mut it.enumerate() {
                     if i != 0 && i % 10000 == 0 { bar.inc(10000); }
-                    zip.write(&[up.$e as u8]).ok()?;
+                    if up.$e {
+                        zip.write(&1u8.to_le_bytes()).ok()?;
+                    } else {
+                        zip.write(&0u8.to_le_bytes()).ok()?;
+                    }
                 }
                 it.reset();
                 zip.flush().ok()?;
@@ -46,17 +50,17 @@ pub fn run(matches: &clap::ArgMatches) -> Option<()> {
                 write_header(&mut zip, $fmt, meta.count);
                 for (i, up) in &mut it.enumerate() {
                     if i != 0 && i % 10000 == 0 { bar.inc(10000); }
-                    zip.write(&up.$e.to_be_bytes()).ok()?;
+                    zip.write(&up.$e.to_le_bytes()).ok()?;
                 }
                 it.reset();
                 zip.flush().ok()?;
             }
         };
 
-        write_arr!(num "ts", ">i8",    ts);
-        write_arr!(num "seq", ">i4",   seq);
-        write_arr!(num "price", ">f4", price);
-        write_arr!(num "size", ">f4",  size);
+        write_arr!(num "ts", "<i8",    ts);
+        write_arr!(num "seq", "<i4",   seq);
+        write_arr!(num "price", "<f4", price);
+        write_arr!(num "size", "<f4",  size);
         write_arr!(bool "is_bid", "?",  is_bid);
         write_arr!(bool "is_trade", "?",is_trade);
 
@@ -78,6 +82,4 @@ pub fn write_header(wtr: &mut dyn Write, numpy_type: &str, len: u64) {
     let header_len = header.len();
     let _ = wtr.write(&(header_len as u16).to_le_bytes());
     let _ = wtr.write(header.as_bytes()); // header
-
-
 }
