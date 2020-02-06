@@ -1,6 +1,5 @@
 use std::collections::HashSet;
-use super::candle::Candle;
-use super::{Time, Scale};
+use super::{Candle, Time, Scale};
 use crate::dtf::update::Update;
 use crate::utils::fill_digits;
 use indexmap::IndexMap;

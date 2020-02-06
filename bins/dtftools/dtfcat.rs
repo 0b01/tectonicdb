@@ -1,6 +1,6 @@
 use memmap::MmapOptions;
 use libtectonic::dtf;
-use libtectonic::postprocessing::candle::TimeBars;
+use libtectonic::postprocessing::candle::time_bars::TimeBars;
 use libtectonic::storage::utils::total_folder_updates_len;
 use std::fs::File;
 use indicatif::{ProgressBar, ProgressStyle};

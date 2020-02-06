@@ -1,4 +1,4 @@
-use super::{TimeBars, Candle};
+use super::{time_bars::TimeBars, Candle};
 
 const SYMBOL_STICK: &str = "│";
 const SYMBOL_CANDLE: &str = "┃";

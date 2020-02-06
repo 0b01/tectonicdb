@@ -1,4 +1,4 @@
-use super::candle::Candle;
+use super::Candle;
 use crate::dtf::update::Update;
 
 /// Iterator for Bars sampled by fixed number of tick
@@ -82,11 +82,7 @@ pub struct TickBars {
 }
 
 impl TickBars {
-
-    /// Generate a vector of candles sampled by volume traded.
-    /// let volume interval be 1,000 shares traded, then each candle
-    /// is built from the trade updates that occurred during the interval
-    /// in which 1k shares are traded.
+    /// Generate a vector of candles sampled by ticks.
     pub fn from_updates(ups: &[Update], tick_interval: u32) -> TickBars {
         let v = TickBarsIter::new(ups.iter().copied(), tick_interval).collect();
         TickBars { v }
