@@ -24,6 +24,18 @@ impl<I:Iterator<Item=Update>> VolumeBarsIter<I> {
     }
 }
 
+fn new_candle(trade: Update) -> Candle {
+    Candle {
+        start: trade.ts,
+        end: trade.ts,
+        volume: trade.size,
+        high: trade.price,
+        low: trade.price,
+        close: trade.price,
+        open: trade.price,
+    }
+}
+
 impl<I:Iterator<Item=Update>> Iterator for VolumeBarsIter<I> {
     type Item = Candle;
     fn next(&mut self) -> Option<Self::Item> {
@@ -34,15 +46,7 @@ impl<I:Iterator<Item=Update>> Iterator for VolumeBarsIter<I> {
 
             if let Some(c) = self.current_candle {
                 if c.volume >= self.vol_interval {
-                    self.current_candle = Some(Candle {
-                        start: trade.ts,
-                        end: trade.ts,
-                        volume: trade.size,
-                        high: trade.price,
-                        low: trade.price,
-                        close: trade.price,
-                        open: trade.price,
-                    });
+                    self.current_candle = Some(new_candle(trade));
                     self.epoch += 1;
                     return Some(c);
                 };
@@ -67,15 +71,7 @@ impl<I:Iterator<Item=Update>> Iterator for VolumeBarsIter<I> {
                     open: c.open,
                 })
             } else {
-                Some(Candle {
-                    start: trade.ts,
-                    end: trade.ts,
-                    volume: trade.size,
-                    high: trade.price,
-                    low: trade.price,
-                    close: trade.price,
-                    open: trade.price,
-                })
+                Some(new_candle(trade))
             };
 
         }

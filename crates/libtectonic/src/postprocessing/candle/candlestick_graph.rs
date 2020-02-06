@@ -142,6 +142,7 @@ mod tests {
         let ups = dtf::file_format::get_range_in_file(fname, min_ts, max_ts).unwrap();
         let mut candles = TimeBars::from(ups.as_slice());
         candles.insert_continuation_candles();
+        dbg!(&candles);
         let graph = CandleStickGraph::new(21, candles);
         let plot = graph.draw();
         assert_eq!(plot.replace(" ", "").as_str(), "".to_owned()+

@@ -6,12 +6,12 @@ use crate::utils::fill_digits;
 use indexmap::IndexMap;
 
 /// Iterator for Bars sampled by time, default is 1 minute bar
-pub struct TimeBarsIter<'a, I:Iterator<Item=&'a Update>> {
+pub struct TimeBarsIter<I:Iterator<Item=Update>> {
     it: I,
-    current_candle: Option<(Candle, Time)>,
+    current_candle: Option<Candle>,
 }
 
-impl<'a, I:Iterator<Item=&'a Update>> TimeBarsIter<'a, I> {
+impl<I:Iterator<Item=Update>> TimeBarsIter<I> {
     /// Create a new iterator for time bars
     pub fn new(it: I) -> Self {
         Self {
@@ -21,60 +21,47 @@ impl<'a, I:Iterator<Item=&'a Update>> TimeBarsIter<'a, I> {
     }
 }
 
-impl<'a, I:Iterator<Item=&'a Update>> Iterator for TimeBarsIter<'a, I> {
-    type Item = (Time, Candle);
+fn new_candle(t: Time, trade: Update) -> Candle {
+    Candle {
+        start: t,
+        end: t,
+        volume: trade.size,
+        high: trade.price,
+        low: trade.price,
+        close: trade.price,
+        open: trade.price,
+    }
+}
+
+impl<I:Iterator<Item=Update>> Iterator for TimeBarsIter<I> {
+    type Item = Candle;
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(trade) = self.it.next() {
             if !trade.is_trade {
                 continue;
             }
-            // floor(ts)
-            let ts = (fill_digits(trade.ts) / 1000 / 60 * 60) as Time;
 
-            self.current_candle = Some((if let Some((c, t)) = &self.current_candle {
-                if *t != ts {
+            let ts = (fill_digits(trade.ts) / 1000 / 60 * 60) as Time; // floor(ts)
+
+            self.current_candle = if let Some(c) = &self.current_candle {
+                if c.start != ts {
                     let c = *c;
-                    drop(t);
-                    self.current_candle = Some((Candle {
-                        start: *t,
-                        end: ts,
-                        volume: trade.size,
-                        high: trade.price,
-                        low: trade.price,
-                        close: trade.price,
-                        open: trade.price,
-                    }, ts));
-                    return Some((ts, c));
+                    self.current_candle = Some(new_candle(ts, trade));
+                    return Some(c);
                 } else {
-                    Candle {
+                    Some(Candle {
                         start: ts,
                         end: ts,
                         volume: c.volume + trade.size,
-                        high: if trade.price >= c.high {
-                            trade.price
-                        } else {
-                            c.high
-                        },
-                        low: if trade.price <= c.low {
-                            trade.price
-                        } else {
-                            c.low
-                        },
+                        high: trade.price.max(c.high),
+                        low: trade.price.min(c.low),
                         close: trade.price,
                         open: c.open,
-                    }
+                    })
                 }
             } else {
-                Candle {
-                    start: ts,
-                    end: ts,
-                    volume: trade.size,
-                    high: trade.price,
-                    low: trade.price,
-                    close: trade.price,
-                    open: trade.price,
-                }
-            }, ts));
+                Some(new_candle(ts, trade))
+            };
         }
         None
     }
@@ -90,7 +77,7 @@ pub struct TimeBars {
 impl<'a> From<&'a [Update]> for TimeBars {
     /// Generate a vector of 1-min candles from Updates
     fn from(ups: &[Update]) -> TimeBars {
-        let candles = TimeBarsIter::new(ups.iter()).collect();
+        let candles = TimeBarsIter::new(ups.iter().copied()).map(|c| (c.start, c)).collect();
         return TimeBars::new(candles, 1);
     }
 }
