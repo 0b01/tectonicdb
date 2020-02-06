@@ -8,6 +8,7 @@ use std::fs::File;
 use memmap::MmapOptions;
 
 use libtectonic::dtf;
+use libtectonic::postprocessing::candle::volume_bars::VolumeBarsIter;
 use indicatif::{ProgressBar, ProgressStyle};
 
 pub fn run(matches: &clap::ArgMatches) -> Option<()> {
@@ -29,40 +30,49 @@ pub fn run(matches: &clap::ArgMatches) -> Option<()> {
             .template("[{elapsed_precise}, remaining: {eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
             .progress_chars("##-"));
 
-        macro_rules! write_arr {
-            (bool $name:expr, $fmt:expr, $e:ident) => {
-                zip.get_mut().start_file($name, FileOptions::default().compression_method(compression)).ok()?;
-                write_header(&mut zip, $fmt, meta.count);
-                for (i, up) in &mut it.enumerate() {
-                    if i != 0 && i % 10000 == 0 { bar.inc(10000); }
-                    if up.$e {
-                        zip.write(&1u8.to_le_bytes()).ok()?;
-                    } else {
-                        zip.write(&0u8.to_le_bytes()).ok()?;
+        if matches.is_present("volume") {
+            let vol_interval: f32 = matches.value_of("volume").unwrap().parse().unwrap();
+            let it = VolumeBarsIter::new(&mut it, vol_interval);
+            for ((t0, tn), c) in it {
+                dbg!((t0, tn, c));
+            }
+        } else {
+            macro_rules! write_arr {
+                (bool $name:expr, $fmt:expr, $e:ident) => {
+                    zip.get_mut().start_file($name, FileOptions::default().compression_method(compression)).ok()?;
+                    write_header(&mut zip, $fmt, meta.count);
+                    for (i, up) in &mut it.enumerate() {
+                        if i != 0 && i % 10000 == 0 { bar.inc(10000); }
+                        if up.$e {
+                            zip.write(&1u8.to_le_bytes()).ok()?;
+                        } else {
+                            zip.write(&0u8.to_le_bytes()).ok()?;
+                        }
                     }
+                    it.reset();
+                    zip.flush().ok()?;
+                };
+
+                (num $name:expr, $fmt:expr, $e:ident) => {
+                    zip.get_mut().start_file($name, FileOptions::default().compression_method(compression)).ok()?;
+                    write_header(&mut zip, $fmt, meta.count);
+                    for (i, up) in &mut it.enumerate() {
+                        if i != 0 && i % 10000 == 0 { bar.inc(10000); }
+                        zip.write(&up.$e.to_le_bytes()).ok()?;
+                    }
+                    it.reset();
+                    zip.flush().ok()?;
                 }
-                it.reset();
-                zip.flush().ok()?;
             };
 
-            (num $name:expr, $fmt:expr, $e:ident) => {
-                zip.get_mut().start_file($name, FileOptions::default().compression_method(compression)).ok()?;
-                write_header(&mut zip, $fmt, meta.count);
-                for (i, up) in &mut it.enumerate() {
-                    if i != 0 && i % 10000 == 0 { bar.inc(10000); }
-                    zip.write(&up.$e.to_le_bytes()).ok()?;
-                }
-                it.reset();
-                zip.flush().ok()?;
-            }
-        };
+            write_arr!(num "ts", "<i8",    ts);
+            write_arr!(num "seq", "<i4",   seq);
+            write_arr!(num "price", "<f4", price);
+            write_arr!(num "size", "<f4",  size);
+            write_arr!(bool "is_bid", "?",  is_bid);
+            write_arr!(bool "is_trade", "?",is_trade);
+        }
 
-        write_arr!(num "ts", "<i8",    ts);
-        write_arr!(num "seq", "<i4",   seq);
-        write_arr!(num "price", "<f4", price);
-        write_arr!(num "size", "<f4",  size);
-        write_arr!(bool "is_bid", "?",  is_bid);
-        write_arr!(bool "is_trade", "?",is_trade);
 
         bar.finish();
     }

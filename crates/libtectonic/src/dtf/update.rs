@@ -170,11 +170,9 @@ impl Update {
 
 impl PartialOrd for Update {
     fn partial_cmp(&self, other: &Update) -> Option<Ordering> {
-        let selfts = self.ts;
-        let otherts = other.ts;
-        if selfts > otherts {
+        if self.ts > other.ts {
             Some(Ordering::Greater)
-        } else if selfts == otherts {
+        } else if self.ts == other.ts {
             Some(self.seq.cmp(&other.seq))
         } else {
             Some(Ordering::Less)

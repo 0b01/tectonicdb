@@ -32,14 +32,12 @@ fn main() {
                 # hour candle
                 dtftools cat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 -c -r -g 60 > out
                 # read metadata of file
-                dtftools cat -m -i test.dtf
-                # conver to csv
-                dtftools cat -i test.dtf -c
+                dtftools cat -m test.dtf
+                # convert to csv
+                dtftools cat test.dtf -c
                 "))
             .arg(
                 Arg::with_name("input")
-                    .short("i")
-                    .long("input")
                     .value_name("INPUT")
                     .help("file to read")
                     .required(false)
@@ -58,7 +56,6 @@ fn main() {
                 .long("min")
                 .value_name("MIN")
                 .help("minimum value to filter for")
-                .default_value("0")
                 .required(false)
                 .takes_value(true)
             )
@@ -67,15 +64,19 @@ fn main() {
                 .long("max")
                 .value_name("MAX")
                 .help("maximum value to filter for")
-                .default_value("2147472000000")
                 .required(false)
                 .takes_value(true)
             )
             .arg(
                 Arg::with_name("folder")
                 .long("folder")
+                .conflicts_with("input")
+                .requires("min")
+                .requires("max")
+                .requires("symbol")
                 .value_name("FOLDER")
                 .help("folder to search")
+                .default_value("./")
                 .required(false)
                 .takes_value(true)
             )
@@ -85,50 +86,59 @@ fn main() {
                     .long("show_metadata")
                     .help("read only the metadata"),
             )
-            .arg(Arg::with_name("csv").short("c").long("csv").help(
-                "output csv (default is JSON)",
-            ))
-            // for batching into candles
-            .arg(Arg::with_name("candle")
-                .short("r")
-                .long("candle")
-                .help("output rebinned candles"))
+
+            .arg(Arg::with_name("csv")
+                .long("csv")
+                .conflicts_with("json")
+                .help("set output format as csv"))
+            .arg(Arg::with_name("json")
+                .long("json")
+                .conflicts_with("csv")
+                .help("set output format as json"))
+
+
+            .arg(Arg::with_name("timebars")
+                .short("t")
+                .long("timebars")
+                .help("output rebinned time-candles"))
             .arg(Arg::with_name("aligned")
                 .short("a")
                 .long("aligned")
+                .requires("timebars")
                 .help(indoc!("
                     align with minute mark (\"snap to grid\")
                     --|------|------|------|-->
-                      |
-                      ^ discard up to this point
+                    |
+                    ^ discard up to this point
                 ")))
             .arg(Arg::with_name("minutes")
                 .short("g")
                 .long("minutes")
                 .required(false)
+                .requires("timebars")
                 .value_name("MINUTES")
                 .help("granularity in minute. e.g. -m 60 # hour candle")
-                .takes_value(true)))
+                .takes_value(true))
+        )
 
         .subcommand(clap::SubCommand::with_name("check")
             .about(indoc!("
                 Check dtf file for defect
                 Examples:
-                dtftools check -i 1.dtf -c
+                dtftools check 1.dtf -c
                 "))
             .arg(
                 Arg::with_name("threshold")
                     .short("t")
                     .long("threshold")
                     .help("gap threshold in seconds")
+                    .default_value("60")
                     .value_name("THRESHOLD")
                     .required(false)
                     .takes_value(true)
             )
             .arg(
                 Arg::with_name("input")
-                    .short("i")
-                    .long("input")
                     .value_name("INPUT")
                     .help("file to read")
                     .required(true)
@@ -139,7 +149,7 @@ fn main() {
             .about(indoc!("
                 Convert dtf files to .npz format
                 Examples:
-                dtftools numpy -i 1.dtf -c
+                dtftools numpy 1.dtf -c
                 "))
             .arg(
                 Arg::with_name("compressed")
@@ -148,9 +158,16 @@ fn main() {
                     .help("use Deflated compression")
             )
             .arg(
+                Arg::with_name("volume")
+                    .short("v")
+                    .long("volume")
+                    .value_name("VOL_INTERVAL")
+                    .help("interval used for generating volume bars")
+                    .required(false)
+                    .takes_value(true),
+            )
+            .arg(
                 Arg::with_name("input")
-                    .short("i")
-                    .long("input")
                     .value_name("INPUT")
                     .help("file to read")
                     .required(true)
@@ -192,12 +209,10 @@ fn main() {
             .about(indoc!("
                 Splits big dtf files into smaller ones
                 Examples:
-                dtfsplit -i test.dtf -f test-{}.dtf
+                dtfsplit test.dtf -f test-{}.dtf
                 "))
             .arg(
                 Arg::with_name("input")
-                    .short("i")
-                    .long("input")
                     .value_name("INPUT")
                     .help("file to read")
                     .required(true)

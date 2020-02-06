@@ -12,15 +12,19 @@ pub fn run(matches: &clap::ArgMatches) {
     let symbol = matches.value_of("symbol").unwrap_or("");
     let min = matches.value_of("min").unwrap().parse().unwrap();
     let max = matches.value_of("max").unwrap().parse().unwrap();
+    if min > max {
+        println!("min must be smaller than max");
+        ::std::process::exit(1);
+    }
     let folder = matches.value_of("folder").unwrap_or("./");
     // candle
-    let candle = matches.is_present("candle");
+    let timebars = matches.is_present("timebars");
     let aligned = matches.is_present("aligned");
     let granularity = matches.value_of("minutes").unwrap_or("1");
     // misc
     let print_metadata = matches.is_present("meta");
     let csv = matches.is_present("csv");
-    if input == "" && symbol == "" && (folder == "" && !print_metadata ){
+    if input == "" && symbol == "" && folder == "" && !print_metadata {
         println!("Either supply a single file with -i or specify range.");
         ::std::process::exit(1);
     }
@@ -33,7 +37,7 @@ pub fn run(matches: &clap::ArgMatches) {
             //     println!("{:?}", meta);
             // }
         } else {
-            if candle {
+            if timebars {
                 let ups = dtf::file_format::decode(input, None).unwrap();
                 let mut candles = TimeBars::from(ups.as_slice());
                 candles.insert_continuation_candles();
@@ -69,7 +73,7 @@ pub fn run(matches: &clap::ArgMatches) {
         if print_metadata {
             println!("total updates in folder: {}", total_folder_updates_len(folder).unwrap())
         } else {
-            if candle {
+            if timebars {
                 let ups = libtectonic::dtf::file_format::scan_files_for_range(
                     folder,
                     symbol,
