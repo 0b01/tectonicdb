@@ -14,7 +14,7 @@ pub use self::candle::Candle;
 
 use self::dtf::update::Update;
 
-type Time = u32;
+type Time = u64;
 type Price = f32;
 type Volume = f32;
 type Scale = u16;

@@ -44,7 +44,7 @@ pub fn into_format(result: &[Update], format: GetFormat) -> Option<ReturnType> {
         }
         GetFormat::Csv => {
             ReturnType::String({
-                let mut ret = result.as_csv();
+                let mut ret = result.to_csv();
                 ret.push('\n');
                 Cow::Owned(ret)
             })

@@ -9,14 +9,14 @@ pub trait UpdateVecConvert {
     /// convert into json
     fn as_json(&self) -> String;
     /// convert into csv
-    fn as_csv(&self) -> String;
+    fn to_csv(&self) -> String;
 }
 
 impl UpdateVecConvert for [Update] {
     fn as_json(&self) -> String {
         update_vec_to_json(self)
     }
-    fn as_csv(&self) -> String {
+    fn to_csv(&self) -> String {
         update_vec_to_csv(&self)
     }
 }
@@ -25,14 +25,14 @@ impl UpdateVecConvert for Vec<Update> {
     fn as_json(&self) -> String {
         update_vec_to_json(self)
     }
-    fn as_csv(&self) -> String {
+    fn to_csv(&self) -> String {
         update_vec_to_csv(&self)
     }
 }
 
 
 fn update_vec_to_csv(vecs: &[Update]) -> String {
-    let objects: Vec<String> = vecs.into_iter().map(|up| up.as_csv()).collect();
+    let objects: Vec<String> = vecs.into_iter().map(|up| up.to_csv()).collect();
     objects.join("\n")
 }
 
@@ -155,7 +155,7 @@ impl Update {
     }
 
     /// Convert to csv string
-    pub fn as_csv(&self) -> String {
+    pub fn to_csv(&self) -> String {
         format!(
             r#"{},{},{},{},{},{}"#,
             (self.ts as f64) / 1000_f64,

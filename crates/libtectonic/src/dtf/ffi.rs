@@ -42,7 +42,7 @@ pub extern fn read_dtf_to_csv(fname: *const c_char) -> *mut c_char {
     let fname = c_str.to_str().unwrap();
 
     let ups = decode(fname, None).unwrap();
-    let data = ups.as_csv();
+    let data = ups.to_csv();
 
     let ret = String::from(data);
     let c_str_song = CString::new(ret).unwrap();
@@ -60,7 +60,7 @@ pub extern fn read_dtf_to_csv_with_limit(fname: *const c_char, num: u32) -> *mut
     let fname = c_str.to_str().unwrap();
 
     let ups = decode(fname, Some(num)).unwrap();
-    let data = ups.as_csv();
+    let data = ups.to_csv();
 
     let ret = String::from(data);
     let c_str_song = CString::new(ret).unwrap();

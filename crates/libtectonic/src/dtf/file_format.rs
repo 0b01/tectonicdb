@@ -1314,19 +1314,17 @@ mod tests {
         assert_eq!(it1.next().unwrap(), it2.next().unwrap());
     }
 
-    #[test]
-    fn test_iterator_every() {
-        let fname = "../../test/test-data/bt_btcnav.dtf";
-
-        let count = read_meta(fname).unwrap().count;
-        dbg!(count);
-
-        for i in (0..(count as usize)).step_by(10000) {
-            dbg!(i);
-            let mut it = &mut iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), i);
-            while let Some(_) = it.next() {};
-        }
-    }
+    // #[test]
+    // fn test_iterator_every() {
+    //     let fname = "../../test/test-data/bt_btcnav.dtf";
+    //     let count = read_meta(fname).unwrap().count;
+    //     dbg!(count);
+    //     for i in (0..(count as usize)).step_by(10000) {
+    //         dbg!(i);
+    //         let mut it = &mut iterators::DTFBufReader::with_offset(file_reader(fname).unwrap(), i);
+    //         while let Some(_) = it.next() {};
+    //     }
+    // }
 
     #[test]
     fn test_iterator_with_last_idx() {

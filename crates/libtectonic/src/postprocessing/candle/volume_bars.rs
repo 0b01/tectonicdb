@@ -1,17 +1,15 @@
 use super::candle::Candle;
 use crate::dtf::update::Update;
 
-type Time = u64;
-
 /// interval during which some fixed number of volume occurred
-type Epoch = u64;
+type Epoch = u32;
 
 /// Iterator for Bars sampled by time, default is 1 minute bar
 pub struct VolumeBarsIter<I:Iterator<Item=Update>> {
     it: I,
     epoch: Epoch,
     vol_interval: f32,
-    current_candle: Option<((Time, Time), Candle)>,
+    current_candle: Option<Candle>,
 }
 
 impl<I:Iterator<Item=Update>> VolumeBarsIter<I> {
@@ -27,29 +25,33 @@ impl<I:Iterator<Item=Update>> VolumeBarsIter<I> {
 }
 
 impl<I:Iterator<Item=Update>> Iterator for VolumeBarsIter<I> {
-    type Item = ((Time, Time), Candle);
+    type Item = Candle;
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(trade) = self.it.next() {
             if !trade.is_trade {
                 continue;
             }
 
-            if let Some(((t0, tn), c)) = self.current_candle {
+            if let Some(c) = self.current_candle {
                 if c.volume >= self.vol_interval {
-                    self.current_candle = Some(((trade.ts, trade.ts), Candle {
+                    self.current_candle = Some(Candle {
+                        start: trade.ts,
+                        end: trade.ts,
                         volume: trade.size,
                         high: trade.price,
                         low: trade.price,
                         close: trade.price,
                         open: trade.price,
-                    })) ;
+                    });
                     self.epoch += 1;
-                    return Some(((t0, tn), c));
+                    return Some(c);
                 };
             }
 
-            self.current_candle = Some(if let Some(((t0, _tn), c)) = self.current_candle {
-                ((t0, trade.ts), Candle {
+            self.current_candle = if let Some(c) = self.current_candle {
+                Some(Candle {
+                    start: c.start,
+                    end: trade.ts,
                     volume: c.volume + trade.size,
                     high: if trade.price >= c.high {
                         trade.price
@@ -65,14 +67,16 @@ impl<I:Iterator<Item=Update>> Iterator for VolumeBarsIter<I> {
                     open: c.open,
                 })
             } else {
-                ((trade.ts, trade.ts), Candle {
+                Some(Candle {
+                    start: trade.ts,
+                    end: trade.ts,
                     volume: trade.size,
                     high: trade.price,
                     low: trade.price,
                     close: trade.price,
                     open: trade.price,
                 })
-            });
+            };
 
         }
         if let Some(x) = self.current_candle {
@@ -88,7 +92,7 @@ impl<I:Iterator<Item=Update>> Iterator for VolumeBarsIter<I> {
 #[derive(Clone, Debug, PartialEq)]
 /// utilities for rebinning candlesticks
 pub struct VolumeBars {
-    v: Vec<((Time, Time), Candle)>,
+    v: Vec<Candle>,
 }
 
 impl VolumeBars {
@@ -121,18 +125,22 @@ mod tests {
 
         let ret = VolumeBars::from_updates(&trades, 36.);
 
-        assert_eq!(VolumeBars {v: vec![((0,8), Candle {
+        assert_eq!(VolumeBars {v: vec![Candle {
+                start: 0,
+                end: 8,
                 open: 0.0,
                 high: 8.0,
                 low: 0.0,
                 close: 8.0,
                 volume: 36.0,
-            }), ((9,9), Candle {
+            }, Candle {
+                start: 9,
+                end: 9,
                 open: 9.0,
                 high: 9.0,
                 low: 9.0,
                 close: 9.0,
                 volume: 9.0,
-            })]}, ret);
+            }]}, ret);
     }
 }

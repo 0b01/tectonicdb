@@ -33,8 +33,8 @@ pub fn run(matches: &clap::ArgMatches) -> Option<()> {
         if matches.is_present("volume") {
             let vol_interval: f32 = matches.value_of("volume").unwrap().parse().unwrap();
             let it = VolumeBarsIter::new(&mut it, vol_interval);
-            for ((t0, tn), c) in it {
-                dbg!((t0, tn, c));
+            for c in it {
+                dbg!(c);
             }
         } else {
             macro_rules! write_arr {

@@ -44,7 +44,7 @@ pub fn run(matches: &clap::ArgMatches) {
                 let rebinned = candles
                     .rebin(aligned, granularity.parse().unwrap())
                     .unwrap()
-                    .as_csv();
+                    .to_csv();
                 println!("{}", rebinned)
             } else {
 
@@ -61,7 +61,7 @@ pub fn run(matches: &clap::ArgMatches) {
                 for (i, up) in &mut it.enumerate() {
                     if i != 0 && i % 10000 == 0 { bar.inc(10000); }
                     if csv {
-                        println!("{}", up.as_csv()) // TODO: slooooow
+                        println!("{}", up.to_csv()) // TODO: slooooow
                     } else {
                         println!("[{}]", up.as_json())
                     }
@@ -85,7 +85,7 @@ pub fn run(matches: &clap::ArgMatches) {
                 let rebinned = candles
                     .rebin(aligned, granularity.parse().unwrap())
                     .unwrap()
-                    .as_csv();
+                    .to_csv();
                 println!("{}", rebinned)
             } else {
                 libtectonic::dtf::file_format::scan_files_for_range_for_each(
@@ -95,7 +95,7 @@ pub fn run(matches: &clap::ArgMatches) {
                     max,
                     &mut |up|{
                         if csv {
-                            println!("{}", up.as_csv())
+                            println!("{}", up.to_csv())
                         } else {
                             println!("[{}]", up.as_json())
                         }

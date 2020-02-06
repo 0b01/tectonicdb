@@ -36,6 +36,8 @@ impl<'a, I:Iterator<Item=&'a Update>> Iterator for TimeBarsIter<'a, I> {
                     let c = *c;
                     drop(t);
                     self.current_candle = Some((Candle {
+                        start: *t,
+                        end: ts,
                         volume: trade.size,
                         high: trade.price,
                         low: trade.price,
@@ -45,6 +47,8 @@ impl<'a, I:Iterator<Item=&'a Update>> Iterator for TimeBarsIter<'a, I> {
                     return Some((ts, c));
                 } else {
                     Candle {
+                        start: ts,
+                        end: ts,
                         volume: c.volume + trade.size,
                         high: if trade.price >= c.high {
                             trade.price
@@ -62,6 +66,8 @@ impl<'a, I:Iterator<Item=&'a Update>> Iterator for TimeBarsIter<'a, I> {
                 }
             } else {
                 Candle {
+                    start: ts,
+                    end: ts,
                     volume: trade.size,
                     high: trade.price,
                     low: trade.price,
@@ -109,10 +115,10 @@ impl TimeBars {
     /// convert TimeBars vector to csv
     /// format is
     ///     T,O,H,L,C,V
-    pub fn as_csv(&self) -> String {
+    pub fn to_csv(&self) -> String {
         let csvs: Vec<String> = self.v
             .iter()
-            .map(|(key, candle)| format!("{},{}", key, candle.as_csv()))
+            .map(|(key, candle)| format!("{},{}", key, candle.to_csv()))
             .collect();
 
         csvs.join("\n")
@@ -169,6 +175,8 @@ impl TimeBars {
                     temp.insert(
                         cur,
                         Candle {
+                            start: cur,
+                            end: cur + 60,
                             volume: 0.,
                             high: last_close,
                             low: last_close,
@@ -261,17 +269,15 @@ impl TimeBars {
             }
 
             // accumulate new high, low and volume
-            highacc = if row.high > highacc {
-                row.high
-            } else {
-                highacc
-            };
-            lowacc = if row.low < lowacc { row.low } else { lowacc };
+            highacc = highacc.max(row.high);
+            lowacc = lowacc.min(row.low);
             volumeacc += row.volume;
 
             // if it's the last minute, insert
             if (i % (new_scale as usize)) == ((new_scale as usize) - 1) {
                 let candle = Candle {
+                    start: startacc,
+                    end: ts,
                     open: openacc,
                     high: highacc,
                     low: lowacc,
@@ -368,14 +374,16 @@ mod tests {
     #[test]
     fn test_candle_to_csv() {
         let inp = Candle {
+            start: 0,
+            end: 0,
             open: 0.,
             close: 0.,
             high: 0.,
             low: 0.,
             volume: 0.,
         };
-        let target = "0,0,0,0,0";
-        assert_eq!(inp.as_csv(), target);
+        let target = "0,0,0,0,0,0,0";
+        assert_eq!(inp.to_csv(), target);
     }
 
     #[test]
@@ -386,6 +394,8 @@ mod tests {
             v.insert(
                 j,
                 Candle {
+                    start: j,
+                    end: j + 60,
                     open: 0.,
                     close: 1.,
                     high: 2.,
@@ -400,6 +410,8 @@ mod tests {
         tree.insert(
             1800,
             Candle {
+                start: 1800,
+                end: 5340,
                 open: 0.,
                 high: 2.,
                 low: 0.,
@@ -469,6 +481,8 @@ mod tests {
             v.insert(
                 j,
                 Candle {
+                    start: j,
+                    end: j + 60,
                     open: 0.,
                     close: 1.,
                     high: 2.,
@@ -523,6 +537,8 @@ mod tests {
             candles.insert(
                 j,
                 Candle {
+                    start: j,
+                    end: j + 60,
                     open: 0.,
                     close: 0.,
                     high: 0.,
@@ -541,6 +557,8 @@ mod tests {
         candles.insert(
             10000,
             Candle {
+                start: 10000,
+                end: 18000,
                 open: 0.,
                 close: 0.,
                 high: 0.,
@@ -565,6 +583,8 @@ mod tests {
             candles.insert(
                 j,
                 Candle {
+                    start: j,
+                    end: j + 60,
                     open: 0.,
                     close: 0.,
                     high: 0.,
@@ -597,6 +617,8 @@ mod tests {
             candles.insert(
                 j,
                 Candle {
+                    start: j,
+                    end: j+60,
                     open: 100. * i as Price,
                     close: 100. * i as Price,
                     high: i as Price,
