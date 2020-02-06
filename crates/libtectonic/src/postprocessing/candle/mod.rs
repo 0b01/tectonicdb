@@ -5,6 +5,8 @@ pub mod candle;
 pub mod time_bars;
 /// candles sampled by volume
 pub mod volume_bars;
+/// candles sampled by fixed number of ticks
+pub mod tick_bars;
 /// plot candlesticks in terminal
 pub mod candlestick_graph;
 

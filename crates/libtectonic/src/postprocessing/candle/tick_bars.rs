@@ -1,20 +1,22 @@
 use super::candle::Candle;
 use crate::dtf::update::Update;
 
-/// Iterator for Bars sampled by volume
-pub struct VolumeBarsIter<I:Iterator<Item=Update>> {
+/// Iterator for Bars sampled by fixed number of tick
+pub struct TickBarsIter<I:Iterator<Item=Update>> {
     it: I,
-    vol_interval: f32,
+    tick_interval: u32,
+    elapsed: u32,
     current_candle: Option<Candle>,
 }
 
-impl<I:Iterator<Item=Update>> VolumeBarsIter<I> {
+impl<I:Iterator<Item=Update>> TickBarsIter<I> {
     /// Create a new iterator for time bars
-    pub fn new(it: I, vol_interval: f32) -> Self {
+    pub fn new(it: I, tick_interval: u32) -> Self {
         Self {
             it,
             current_candle: None,
-            vol_interval,
+            tick_interval,
+            elapsed: 0,
         }
     }
 }
@@ -31,17 +33,19 @@ fn new_candle(trade: Update) -> Candle {
     }
 }
 
-impl<I:Iterator<Item=Update>> Iterator for VolumeBarsIter<I> {
+impl<I:Iterator<Item=Update>> Iterator for TickBarsIter<I> {
     type Item = Candle;
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(trade) = self.it.next() {
+            self.elapsed += 1;
             if !trade.is_trade {
                 continue;
             }
 
             if let Some(c) = self.current_candle {
-                if c.volume >= self.vol_interval {
+                if self.elapsed == self.tick_interval + 1 {
                     self.current_candle = Some(new_candle(trade));
+                    self.elapsed = 1;
                     return Some(c);
                 };
             }
@@ -73,19 +77,19 @@ impl<I:Iterator<Item=Update>> Iterator for VolumeBarsIter<I> {
 
 #[derive(Clone, Debug, PartialEq)]
 /// utilities for rebinning candlesticks
-pub struct VolumeBars {
+pub struct TickBars {
     v: Vec<Candle>,
 }
 
-impl VolumeBars {
+impl TickBars {
 
     /// Generate a vector of candles sampled by volume traded.
     /// let volume interval be 1,000 shares traded, then each candle
     /// is built from the trade updates that occurred during the interval
     /// in which 1k shares are traded.
-    pub fn from_updates(ups: &[Update], vol_interval: f32) -> VolumeBars {
-        let v = VolumeBarsIter::new(ups.iter().copied(), vol_interval).collect();
-        VolumeBars { v }
+    pub fn from_updates(ups: &[Update], tick_interval: u32) -> TickBars {
+        let v = TickBarsIter::new(ups.iter().copied(), tick_interval).collect();
+        TickBars { v }
     }
 }
 
@@ -94,7 +98,7 @@ mod tests {
     use super::*;
     use std::f32;
     #[test]
-    fn test_vol_bar() {
+    fn test_tick_bar() {
         let trades = (0..10).map(|i| Update {
             is_trade: true,
             is_bid: true,
@@ -105,16 +109,32 @@ mod tests {
         })
         .collect::<Vec<_>>();
 
-        let ret = VolumeBars::from_updates(&trades, 36.);
+        let ret = TickBars::from_updates(&trades, 3);
 
-        assert_eq!(VolumeBars {v: vec![Candle {
+        assert_eq!(TickBars {v: vec![Candle {
                 start: 0,
-                end: 8,
+                end: 2,
                 open: 0.0,
-                high: 8.0,
+                high: 2.0,
                 low: 0.0,
+                close: 2.0,
+                volume: 3.0,
+            }, Candle {
+                start: 3,
+                end: 5,
+                open: 3.0,
+                high: 5.0,
+                low: 3.0,
+                close: 5.0,
+                volume: 12.0,
+            }, Candle {
+                start: 6,
+                end: 8,
+                open: 6.0,
+                high: 8.0,
+                low: 6.0,
                 close: 8.0,
-                volume: 36.0,
+                volume: 21.0,
             }, Candle {
                 start: 9,
                 end: 9,
