@@ -55,16 +55,12 @@ fn main() {
 
     let influx_host = matches.value_of("influx_host") .map(String::from);
     let influx_db = matches.value_of("influx_db") .map(String::from);
-    let influx_user = matches.value_of("influx_user") .map(String::from).unwrap();
-    let influx_pass = matches.value_of("influx_pass") .map(String::from).unwrap();
     let influx_log_interval = matches.value_of("influx_log_interval").unwrap_or("60").parse().unwrap();
     let influx = match (influx_host, influx_db) {
         (Some(host), Some(db)) => Some(
             libtdbserver::settings::InfluxSettings {
                 host,
                 db,
-                user: influx_user,
-                pass: influx_pass,
                 interval: influx_log_interval,
             }),
         _ => None,
@@ -175,18 +171,6 @@ fn get_matches<'a>() -> ArgMatches<'a> {
                 .takes_value(true)
                 .long("influx-db")
                 .help( "influxdb db",)
-                .requires("influx_host"))
-        .arg(
-            Arg::with_name("influx_user")
-                .takes_value(true)
-                .long("influx-user")
-                .help("influxdb user",)
-                .requires("influx_host"))
-        .arg(
-            Arg::with_name("influx_pass")
-                .takes_value(true)
-                .long("influx-pass")
-                .help("influxdb pass",)
                 .requires("influx_host"))
 
         .arg(

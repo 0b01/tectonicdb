@@ -46,7 +46,5 @@ pub struct Settings {
 pub struct InfluxSettings {
     pub host: String,
     pub db: String,
-    pub user: String,
-    pub pass: String,
     pub interval: u64,
 }

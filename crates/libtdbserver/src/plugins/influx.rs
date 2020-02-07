@@ -30,7 +30,7 @@ pub async fn timer_loop(mut broker: Sender<Event>, settings: Arc<Settings>) {
             });
             match surf::post(&url).body_bytes(buf).await {
                 Err(e) => error!("{}", e),
-                Ok(res) => info!("posted to influxdb"),
+                Ok(_res) => info!("posted to influxdb"),
             }
             // dbg!(res.body_string().await);
         }
