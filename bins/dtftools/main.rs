@@ -76,7 +76,6 @@ fn main() {
                 .requires("symbol")
                 .value_name("FOLDER")
                 .help("folder to search")
-                .default_value("./")
                 .required(false)
                 .takes_value(true)
             )
