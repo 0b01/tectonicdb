@@ -126,6 +126,7 @@ impl Book {
     #[cfg_attr(feature = "count_alloc", count_alloc)]
     fn add(&mut self, up: Update) {
         self.vec.push(up);
+        self.nominal_count += 1;
         self.orderbook.process_update(&up);
         // Saves current store into disk after n items is inserted.
         let len = self.vec.len() as u32;

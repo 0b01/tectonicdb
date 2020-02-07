@@ -72,14 +72,14 @@ To config the Google Cloud Storage and Data Collection Backend integration, the 
 | `GCLOUD_MIN_FILE_SIZE_BYTES`  | 1024 \* 1024 | Files over this size in bytes will be uploaded every 30 seconds                                                                               |
 | `DCB_URL`                     | _unset_      | The URL of the Data Collection Backend's batch ingestion endpoint (leave unset if you don't know what the DCB is or aren't using it)          |
 | `DTF_METADATA_TAGS`           | `""`         | An array of tags that will be included in metadata for DTF files                                                                              |
-| `TECTONICDB_HOST`             | 0.0.0.0      | The host to which the database will bind                                                                                                      |
-| `TECTONICDB_PORT`             | 9001         | The port that the database will listen on                                                                                                     |
-| `TECTONICDB_DTF_FOLDER`       | db           | Name of the directory in which DTF files will be stored                                                                                       |
-| `TECTONICDB_AUTOFLUSH`        | false        | If `true`, recorded orderbook data will automatically be flushed to DTF files every `interval` inserts.                                       |
-| `TECTONICDB_FLUSH_INTERVAL`   | 1000         | Every `interval` inserts, if `autoflush` is enabled, DTF files will be written from memory to disk.                                           |
-| `TECTONICDB_GRANULARITY`      | 0            | Record history granularity level                                                                                                              |
-| `TECTONICDB_LOG_FILE_NAME`    | tdb.log      | Filename of the log file for the database                                                                                                     |
-| `TECTONICDB_Q_CAPACITY`       | 300          | Capacity of the circular queue for recording history                                                                                          |
+| `TDB_HOST`             | 0.0.0.0      | The host to which the database will bind                                                                                                      |
+| `TDB_PORT`             | 9001         | The port that the database will listen on                                                                                                     |
+| `TDB_DTF_FOLDER`       | db           | Name of the directory in which DTF files will be stored                                                                                       |
+| `TDB_AUTOFLUSH`        | false        | If `true`, recorded orderbook data will automatically be flushed to DTF files every `interval` inserts.                                       |
+| `TDB_FLUSH_INTERVAL`   | 1000         | Every `interval` inserts, if `autoflush` is enabled, DTF files will be written from memory to disk.                                           |
+| `TDB_GRANULARITY`      | 0            | Record history granularity level                                                                                                              |
+| `TDB_LOG_FILE_NAME`    | tdb.log      | Filename of the log file for the database                                                                                                     |
+| `TDB_Q_CAPACITY`       | 300          | Capacity of the circular queue for recording history                                                                                          |
 
 ## Client API
 

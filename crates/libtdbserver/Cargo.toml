@@ -34,7 +34,8 @@ serde = { optional = true, version = "1.0.104" }
 config = { optional = true, version = "0.10.1" }
 time = { optional = true, version = "0.2.6" }
 
-influxdb = { optional = true, version = "0.0.5"}
+surf = { optional = true, version = "1.0.3" }
+
 
 alloc_counter = { version = "0.0.4", optional = true }
 arrayvec = "0.5.1"
@@ -45,6 +46,6 @@ version = "0.8.1"
 
 [features]
 default = ["influx"]
-influx = ["influxdb"]
+influx = ["surf"]
 gcs = ["tempdir", "reqwest", "serde", "config", "time"]
 count_alloc = ["alloc_counter"]

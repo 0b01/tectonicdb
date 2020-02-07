@@ -87,9 +87,11 @@ pub enum Event {
         from: Option<SocketAddr>,
         command: Command,
     },
-    History {
-
-    }
+    RecordHistory,
+    FetchSizes {
+        // obname, on disk, in mem
+        tx: Sender<Vec<(BookName, u64, u64)>>,
+    },
 }
 
 /// sometimes returns string, sometimes bytes, error string

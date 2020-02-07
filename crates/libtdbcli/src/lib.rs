@@ -21,8 +21,8 @@ fn key_or_default(key: &str, default: &str) -> String {
 }
 
 fn get_tectonic_conf_from_env() -> (String, String) {
-    let tectonic_hostname: String = key_or_default("TECTONICDB_HOSTNAME", "localhost");
-    let tectonic_port: String     = key_or_default("TECTONICDB_PORT", "9001");
+    let tectonic_hostname: String = key_or_default("TDB_HOSTNAME", "localhost");
+    let tectonic_port: String     = key_or_default("TDB_PORT", "9001");
 
     (tectonic_hostname, tectonic_port)
 }
@@ -30,8 +30,8 @@ fn get_tectonic_conf_from_env() -> (String, String) {
 /// Creates a new connection to TectonicDB, using configuration values from environment
 /// or defaults to localhost:9001 if none are set.
 ///
-/// "TECTONICDB_HOSTNAME", "localhost");
-/// "TECTONICDB_PORT", "9001");
+/// "TDB_HOSTNAME", "localhost");
+/// "TDB_PORT", "9001");
 ///
 pub fn client_from_env() -> TectonicClient {
     let (tectonic_hostname, tectonic_port) = get_tectonic_conf_from_env();
