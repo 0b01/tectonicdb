@@ -24,9 +24,9 @@ bench = false
 path = "bins/tdb/main.rs"
 
 [dependencies]
-libtdbserver = { path = "crates/libtdbserver", version = "0.3.0", features = [] }
-libtectonic = { path = "crates/libtectonic", version = "0.3.0" }
-libtdbcli = { path = "crates/libtdbcli", version = "0.3.0" }
+libtdbserver = { path = "crates/libtdbserver", version = "0.5.0", features = ["influx"] }
+libtectonic = { path = "crates/libtectonic", version = "0.5.0" }
+libtdbcli = { path = "crates/libtdbcli", version = "0.5.0" }
 
 log = "0.4.8"
 fern = "0.5.9"
