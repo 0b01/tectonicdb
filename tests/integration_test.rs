@@ -1,7 +1,7 @@
-extern crate tdb_server;
+extern crate tdb_server_core;
 extern crate tdb_cli;
 
-use tdb_server::async_std::task;
+use tdb_server_core::async_std::task;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -10,7 +10,7 @@ fn it_works() {
     let host = "0.0.0.0";
     let port = "9001";
 
-    let settings = Arc::new(tdb_server::settings::Settings {
+    let settings = Arc::new(tdb_server_core::settings::Settings {
         autoflush: false,
         dtf_folder: "./testdb".to_owned(),
         flush_interval: 1000,
@@ -20,7 +20,7 @@ fn it_works() {
     });
 
     task::block_on(async move {
-        let _server = task::spawn(tdb_server::server::run_server(&host, &port, settings));
+        let _server = task::spawn(tdb_server_core::server::run_server(&host, &port, settings));
 
         let cli = tdb_cli::client_from_env();
         tdb_cli::benchmark(cli, 100_000);

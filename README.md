@@ -51,7 +51,6 @@ The binaries can be found under `target/` folder.
 It's very easy to setup.
 
 ```
-chmod +x tdb-server
 ./tdb-server --help
 ```
 

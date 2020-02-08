@@ -1,5 +1,5 @@
 [package]
-name = "tdb_server"
+name = "tdb_server_core"
 authors = ["Ricky Han <tectonic@rickyhan.com>"]
 description = "tectonicdb server"
 keywords = ["finance", "datastore", "database", "financial", "orderbook"]
