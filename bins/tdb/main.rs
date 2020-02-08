@@ -1,4 +1,4 @@
-extern crate libtdbcli;
+extern crate tdb_cli;
 extern crate clap;
 extern crate fern;
 extern crate chrono;
@@ -7,7 +7,7 @@ extern crate log;
 extern crate linefeed;
 
 
-use libtdbcli::client::TectonicClient;
+use tdb_cli::client::TectonicClient;
 use clap::{App, Arg};
 
 mod interactive;
@@ -82,7 +82,7 @@ fn main() {
             .unwrap_or("10")
             .parse::<usize>()
             .unwrap_or(10);
-        libtdbcli::benchmark(cli, times);
+        tdb_cli::benchmark(cli, times);
     } else if matches.is_present("s") {
         let dbname = matches.value_of("s").unwrap_or("");
         subscribe(cli, dbname);

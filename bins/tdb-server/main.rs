@@ -2,7 +2,7 @@
 extern crate log;
 extern crate fern;
 
-use libtdbserver::prelude::*;
+use tdb_server::prelude::*;
 use clap::{Arg, App, ArgMatches};
 
 fn main() {
@@ -61,7 +61,7 @@ fn main() {
             let influx_log_interval = matches.value_of("influx_log_interval").unwrap_or("60").parse().unwrap();
             match (influx_host, influx_db) {
                 (Some(host), Some(db)) =>
-                    Some(libtdbserver::settings::InfluxSettings {
+                    Some(tdb_server::settings::InfluxSettings {
                         host,
                         db,
                         interval: influx_log_interval,
@@ -73,7 +73,7 @@ fn main() {
         { None }
     };
     let settings = Arc::new(
-        libtdbserver::settings::Settings {
+        tdb_server::settings::Settings {
             autoflush,
             dtf_folder,
             flush_interval: flush_interval.parse().unwrap(),
@@ -93,7 +93,7 @@ fn main() {
          _/_/    _/_/_/    _/_/_/      _/_/    _/_/    _/    _/  _/    _/_/_/
     "##);
 
-    task::block_on(libtdbserver::server::run_server(&host, &port, settings)).unwrap();
+    task::block_on(tdb_server::server::run_server(&host, &port, settings)).unwrap();
 }
 
 fn prepare_logger(verbosity: u8, log_file: &str) {

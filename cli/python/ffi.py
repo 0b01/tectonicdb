@@ -28,7 +28,7 @@ def __csv_to_df(raw_data):
     return df
 
 cwd = path.dirname(path.realpath(__file__))
-lib_path = path.normpath(path.join(cwd, '../../target/debug/liblibtectonic.so'))
+lib_path = path.normpath(path.join(cwd, '../../target/debug/libtdb_core.so'))
 lib = CDLL(lib_path)
 
 class Update(Structure):

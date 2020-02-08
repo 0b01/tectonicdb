@@ -1,5 +1,5 @@
 [package]
-name = "libtectonic"
+name = "tdb_core"
 authors = ["Ricky Han <tectonic@rickyhan.com>"]
 description = "market data server for contiguous order book ticks"
 keywords = ["finance", "datastore", "database", "financial", "orderbook"]

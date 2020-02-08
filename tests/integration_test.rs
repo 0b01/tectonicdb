@@ -1,7 +1,7 @@
-extern crate libtdbserver;
-extern crate libtdbcli;
+extern crate tdb_server;
+extern crate tdb_cli;
 
-use libtdbserver::async_std::task;
+use tdb_server::async_std::task;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -10,7 +10,7 @@ fn it_works() {
     let host = "0.0.0.0";
     let port = "9001";
 
-    let settings = Arc::new(libtdbserver::settings::Settings {
+    let settings = Arc::new(tdb_server::settings::Settings {
         autoflush: false,
         dtf_folder: "./testdb".to_owned(),
         flush_interval: 1000,
@@ -20,12 +20,12 @@ fn it_works() {
     });
 
     task::block_on(async move {
-        let _server = task::spawn(libtdbserver::server::run_server(&host, &port, settings));
+        let _server = task::spawn(tdb_server::server::run_server(&host, &port, settings));
 
-        let cli = libtdbcli::client_from_env();
-        libtdbcli::benchmark(cli, 100_000);
+        let cli = tdb_cli::client_from_env();
+        tdb_cli::benchmark(cli, 100_000);
 
-        let mut cli = libtdbcli::client_from_env();
+        let mut cli = tdb_cli::client_from_env();
         cli.use_db("benchmark").unwrap();
         task::sleep(Duration::from_secs(15)).await;
         let ret = cli.cmd("COUNT ALL IN MEM\n").unwrap();

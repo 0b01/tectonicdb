@@ -9,7 +9,7 @@ use std::fs::File;
 use uuid::Uuid;
 use serde::Serialize;
 
-use libtectonic::storage::file_metadata::{self, FileMetadata};
+use tdb_core::storage::file_metadata::{self, FileMetadata};
 use crate::plugins::gstorage::{
     conf::GStorageConfig,
     metadata::GStorageOpMetadata,

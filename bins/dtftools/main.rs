@@ -1,7 +1,7 @@
 extern crate itertools;
 extern crate clap;
 extern crate byteorder;
-extern crate libtectonic;
+extern crate tdb_core;
 #[macro_use]
 extern crate indoc;
 
@@ -76,7 +76,6 @@ fn main() {
                 .requires("symbol")
                 .value_name("FOLDER")
                 .help("folder to search")
-                .default_value("./")
                 .required(false)
                 .takes_value(true)
             )

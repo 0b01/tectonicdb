@@ -1,7 +1,7 @@
 extern crate byteorder;
 extern crate serde;
 extern crate serde_json;
-extern crate libtectonic;
+extern crate tdb_core;
 #[macro_use] extern crate log;
 
 pub mod error;
@@ -11,7 +11,7 @@ use std::env;
 use crate::client::TectonicClient;
 use crate::error::TectonicError;
 use std::time::SystemTime;
-use libtectonic::dtf::update::Update;
+use tdb_core::dtf::update::Update;
 
 fn key_or_default(key: &str, default: &str) -> String {
    match env::var(key) {

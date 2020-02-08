@@ -1,4 +1,4 @@
-use libtectonic::dtf;
+use tdb_core::dtf;
 use itertools::Itertools;
 
 pub fn run(matches: &clap::ArgMatches) {
