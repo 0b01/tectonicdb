@@ -207,4 +207,6 @@ Language bindings:
 
 # Changelog
 
+* 0.5.0: InfluxDB monitoring plugin and improved command line arguments
+* 0.4.0: iterator-based APIs for handling DTF files and various quality of life improvements
 * 0.3.0: Refactor to async
