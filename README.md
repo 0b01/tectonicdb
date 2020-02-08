@@ -37,9 +37,11 @@ Binaries are available for [download](https://github.com/0b01/tectonicdb/release
 
 2.  **Crates**
 
-    cargo install tectonicdb
+```
+cargo install tectonicdb
+```
 
-This command will download `tdb`, `tdb-server`, `dtftools` from crates.io and build locally.
+This command will download `tdb`, `tdb-server`, `dtftools` binaries from crates.io and build locally.
 
 3.  **GitHub**
 
@@ -50,7 +52,7 @@ To contribute you will need the copy of the source code on your local machine.
     cargo build --release
     cargo run --release tdb-server
 
-The binaries can be found under `target/` folder.
+The binaries can be found under `target/release`.
 
 ## How to use
 
