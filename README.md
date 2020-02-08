@@ -6,6 +6,12 @@
 ![Minimum Rust version](https://img.shields.io/badge/rustc-1.40+-yellow.svg)
 ![Rust stable](https://img.shields.io/badge/rust-stable-green.svg)
 
+| crate | docs.rs | crate.io |
+| - | - | ------ |
+| tectonicdb  | [![doc.rs](https://docs.rs/tectonicdb/badge.svg)](https://docs.rs/crate/tectonicdb) | [![crate.io](https://img.shields.io/crates/v/tectonicdb.svg)](https://crates.io/crates/tectonicdb)  |
+| tdb-core  | [![doc.rs](https://docs.rs/tdb_core/badge.svg)](https://docs.rs/crate/tdb_core) | [![crate.io](https://img.shields.io/crates/v/tdb-core.svg)](https://crates.io/crates/tdb-core)  |
+| tdb-server-core  | [![doc.rs](https://docs.rs/tdb_server_core/badge.svg)](https://docs.rs/crate/tdb_server_core) | [![crate.io](https://img.shields.io/crates/v/tdb-server-core.svg)](https://crates.io/crates/tdb-server-core)  |
+| tdb-cli  | [![doc.rs](https://docs.rs/tdb_cli/badge.svg)](https://docs.rs/crate/tdb_cli) | [![crate.io](https://img.shields.io/crates/v/tdb-cli.svg)](https://crates.io/crates/tdb-cli)  |
 
 tectonicdb is a fast, highly compressed standalone database and streaming protocol for order book ticks.
 
@@ -31,9 +37,9 @@ Binaries are available for [download](https://github.com/0b01/tectonicdb/release
 
 2.  **Crates**
 
-    cargo install tdb tdb-server
+    cargo install tectonicdb
 
-This command will download `tdb` and `tdb-server` from crates.io and build locally.
+This command will download `tdb`, `tdb-server`, `dtftools` from crates.io and build locally.
 
 3.  **GitHub**
 

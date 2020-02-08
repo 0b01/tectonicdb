@@ -121,7 +121,8 @@ impl CandleStickGraph {
 }
 
 
-
+/*
+ *
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -170,3 +171,5 @@ mod tests {
 ".replace(" ", "").as_str());
     }
 }
+
+*/
