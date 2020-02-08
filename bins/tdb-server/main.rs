@@ -53,27 +53,36 @@ fn main() {
         .map(String::from)
         .unwrap_or_else(|| key_or_default("TDB_LOG_FILE_NAME", "tdb.log"));
 
-    let influx_host = matches.value_of("influx_host") .map(String::from);
-    let influx_db = matches.value_of("influx_db") .map(String::from);
-    let influx_log_interval = matches.value_of("influx_log_interval").unwrap_or("60").parse().unwrap();
-    let influx = match (influx_host, influx_db) {
-        (Some(host), Some(db)) => Some(
-            libtdbserver::settings::InfluxSettings {
-                host,
-                db,
-                interval: influx_log_interval,
-            }),
-        _ => None,
+    let influx = {
+        #[cfg(feature = "influx")]
+        {
+            let influx_host = matches.value_of("influx_host") .map(String::from);
+            let influx_db = matches.value_of("influx_db") .map(String::from);
+            let influx_log_interval = matches.value_of("influx_log_interval").unwrap_or("60").parse().unwrap();
+            match (influx_host, influx_db) {
+                (Some(host), Some(db)) =>
+                    Some(libtdbserver::settings::InfluxSettings {
+                        host,
+                        db,
+                        interval: influx_log_interval,
+                    }),
+                _ => None,
+            }
+        }
+        #[cfg(not(feature = "influx"))]
+        { None }
     };
+    let settings = Arc::new(
+        libtdbserver::settings::Settings {
+            autoflush,
+            dtf_folder,
+            flush_interval: flush_interval.parse().unwrap(),
+            granularity: granularity.parse().unwrap(),
+            q_capacity: q_capacity.parse().unwrap(),
+            influx,
+        }
+    );
 
-    let settings = Arc::new(libtdbserver::settings::Settings {
-        autoflush,
-        dtf_folder,
-        flush_interval: flush_interval.parse().unwrap(),
-        granularity: granularity.parse().unwrap(),
-        q_capacity: q_capacity.parse().unwrap(),
-        influx,
-    });
 
     prepare_logger(verbosity, &log_file);
     info!(r##"
@@ -208,8 +217,6 @@ fn get_matches<'a>() -> ArgMatches<'a> {
                 app
             }
         };
-
-
 
         app.get_matches()
 }
