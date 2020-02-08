@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/0b01/tectonicdb.svg?branch=master)](https://travis-ci.org/0b01/tectonicdb)
 [![crate.io](https://img.shields.io/crates/v/tdb-core.svg)](https://crates.io/crates/tdb-core)
-[![doc.rs](https://docs.rs/tdb-core/badge.svg)](https://docs.rs/crate/tdb-core)
+[![doc.rs](https://docs.rs/tdb_core/badge.svg)](https://docs.rs/crate/tdb_core)
 ![Minimum Rust version](https://img.shields.io/badge/rustc-1.40+-yellow.svg)
 ![Rust stable](https://img.shields.io/badge/rust-stable-green.svg)
 
@@ -137,7 +137,7 @@ $ tdb --influx-db market_data --influx-host http://localhost:8086 --influx-log-i
 ...
 ```
 
-TectonicDB will send values `disk={COUNT_DISK},size={COUNT_MEM}` with tag `ob={ORDERBOOK}` to `market_data` measurement which is the same as the dbname.
+TectonicDB will send field values `disk={COUNT_DISK},size={COUNT_MEM}` with tag `ob={ORDERBOOK}` to `market_data` measurement which is the same as the dbname.
 
 Additionally, you can query usage information directly with `INFO` and `PERF` commands:
 
