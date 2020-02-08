@@ -1,15 +1,15 @@
 [package]
-name = "libtdbcli"
+name = "tdb_cli"
 authors = ["Ricky Han <tectonic@rickyhan.com>"]
 description = "client for tectonicdb"
 keywords = ["finance", "datastore", "database", "financial", "orderbook"]
 repository = "https://github.com/0b01/tectonicdb"
 license = "MIT"
 edition = "2018"
-version = "0.3.0"
+version = "0.5.0"
 
 [dependencies]
-libtectonic = { path = "../libtectonic", version = "0.3.0" }
+tdb_core = { path = "../tdb-core", version = "0.5.0" }
 byteorder = "1.3.2"
 log = "0.4.8"
 bufstream = "0.1.4"

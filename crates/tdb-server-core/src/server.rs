@@ -136,7 +136,13 @@ async fn broker_loop(mut events: Receiver<Event>, settings: Arc<Settings>) {
             Event::Command { from, command } => {
                 state.command(command, from).await;
             },
-            Event::History{} => {
+            Event::FetchSizes { mut tx } => {
+                let sizes = state.books.iter().map(|(name, book)|
+                    (name.clone(), book.nominal_count, book.vec.len() as u64)
+                ).collect();
+                tx.send(sizes).await.unwrap();
+            }
+            Event::RecordHistory => {
                 state.record_history();
             }
             Event::NewConnection { addr, stream, shutdown } => {

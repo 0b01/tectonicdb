@@ -4,7 +4,7 @@ use std::thread;
 use std::time::Duration;
 use std::error::Error;
 
-use libtdbcli::client::TectonicClient;
+use tdb_cli::client::TectonicClient;
 
 use linefeed::{Interface, Prompter, ReadResult};
 use linefeed::chars::escape_sequence;

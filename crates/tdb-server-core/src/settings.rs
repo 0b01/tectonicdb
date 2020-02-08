@@ -26,16 +26,25 @@ pub fn key_or_none(key: &str) -> Option<String> {
     }
 }
 
-/// autoflush: boolean. Flush everything to disk at some interval.
-/// dtf_folder: string. folder to save .dtf files
-/// flush_interval: u32. flush at some regular interval.
 #[derive(Clone, Debug, Default)]
 pub struct Settings {
+    /// autoflush: boolean. Flush everything to disk at some interval.
     pub autoflush: bool,
+    /// dtf_folder: string. folder to save .dtf files
     pub dtf_folder: String,
+    /// flush_interval: u32. flush at some regular interval.
     pub flush_interval: u32,
     /// record count history every 3 seconds
     pub granularity: u64,
     /// history circular queue capacity
     pub q_capacity: usize,
+    /// settings for influxdb
+    pub influx: Option<InfluxSettings>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct InfluxSettings {
+    pub host: String,
+    pub db: String,
+    pub interval: u64,
 }

@@ -1,6 +1,6 @@
 use crate::prelude::*;
-use libtectonic::utils;
-use libtectonic::dtf::update::Update;
+use tdb_core::utils;
+use tdb_core::dtf::update::Update;
 
 
 /// Parses a line that looks like

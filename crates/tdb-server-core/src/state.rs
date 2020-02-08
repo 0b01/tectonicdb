@@ -16,8 +16,8 @@ use alloc_counter::{count_alloc, count_alloc_future};
 use crate::prelude::*;
 
 use circular_queue::CircularQueue;
-use libtectonic::dtf::file_format::scan_files_for_range;
-use libtectonic::postprocessing::orderbook::Orderbook;
+use tdb_core::dtf::file_format::scan_files_for_range;
+use tdb_core::postprocessing::orderbook::Orderbook;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 static PRICE_DECIMALS: u8 = 10; // TODO: don't hardcode this
@@ -126,6 +126,7 @@ impl Book {
     #[cfg_attr(feature = "count_alloc", count_alloc)]
     fn add(&mut self, up: Update) {
         self.vec.push(up);
+        self.nominal_count += 1;
         self.orderbook.process_update(&up);
         // Saves current store into disk after n items is inserted.
         let len = self.vec.len() as u32;
@@ -468,7 +469,7 @@ impl TectonicServer {
     async fn send_subs(&mut self, up: Update, book_name: &str) -> Option<()> {
         if let Some(book_sub) = self.subscriptions.get_mut(book_name) {
             for sub in book_sub.iter_mut() {
-                let bytes = libtectonic::utils::encode_insert_into(Some(book_name), &up).ok()?;
+                let bytes = tdb_core::utils::encode_insert_into(Some(book_name), &up).ok()?;
                 sub.1.send(ReturnType::Bytes(bytes)).await.ok()?;
             }
         }

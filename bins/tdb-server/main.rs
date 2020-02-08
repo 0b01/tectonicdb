@@ -2,7 +2,7 @@
 extern crate log;
 extern crate fern;
 
-use libtdbserver::prelude::*;
+use tdb_server_core::prelude::*;
 use clap::{Arg, App, ArgMatches};
 
 fn main() {
@@ -13,19 +13,19 @@ fn main() {
     let host = matches
         .value_of("host")
         .map(String::from)
-        .unwrap_or_else(|| key_or_default("TECTONICDB_HOST", "0.0.0.0"));
+        .unwrap_or_else(|| key_or_default("TDB_HOST", "0.0.0.0"));
     let port = matches
         .value_of("port")
         .map(String::from)
-        .unwrap_or_else(|| key_or_default("TECTONICDB_PORT", "9001"));
+        .unwrap_or_else(|| key_or_default("TDB_PORT", "9001"));
     let dtf_folder = matches
         .value_of("dtf_folder")
         .map(String::from)
-        .unwrap_or_else(|| key_or_default("TECTONICDB_DTF_FOLDER", "db"));
+        .unwrap_or_else(|| key_or_default("TDB_DTF_FOLDER", "db"));
     let verbosity = matches.occurrences_of("v") as u8;
     let autoflush = {
         let cli_setting: bool = matches.is_present("autoflush");
-        let env_setting = key_or_none("TECTONICDB_AUTOFLUSH");
+        let env_setting = key_or_none("TDB_AUTOFLUSH");
         match env_setting {
             Some(s) => match s.as_ref() {
                 "true" | "1" => true,
@@ -38,28 +38,51 @@ fn main() {
     let flush_interval = matches
         .value_of("flush_interval")
         .map(String::from)
-        .unwrap_or_else(|| key_or_default("TECTONICDB_FLUSH_INTERVAL", "1000"));
+        .unwrap_or_else(|| key_or_default("TDB_FLUSH_INTERVAL", "1000"));
     let granularity = matches
         .value_of("granularity")
         .map(String::from)
-        .unwrap_or_else(|| key_or_default("TECTONICDB_GRANULARITY", "0"));
+        .unwrap_or_else(|| key_or_default("TDB_GRANULARITY", "0"));
     let q_capacity = matches
         .value_of("q_capacity")
         .map(String::from)
-        .unwrap_or_else(|| key_or_default("TECTONICDB_Q_CAPACITY", "300"));
+        .unwrap_or_else(|| key_or_default("TDB_Q_CAPACITY", "300"));
 
     let log_file = matches
         .value_of("log_file")
         .map(String::from)
-        .unwrap_or_else(|| key_or_default("TECTONICDB_LOG_FILE_NAME", "tdb.log"));
+        .unwrap_or_else(|| key_or_default("TDB_LOG_FILE_NAME", "tdb.log"));
 
-    let settings = Arc::new(libtdbserver::settings::Settings {
-        autoflush,
-        dtf_folder,
-        flush_interval: flush_interval.parse().unwrap(),
-        granularity: granularity.parse().unwrap(),
-        q_capacity: q_capacity.parse().unwrap(),
-    });
+    let influx = {
+        #[cfg(feature = "influx")]
+        {
+            let influx_host = matches.value_of("influx_host") .map(String::from);
+            let influx_db = matches.value_of("influx_db") .map(String::from);
+            let influx_log_interval = matches.value_of("influx_log_interval").unwrap_or("60").parse().unwrap();
+            match (influx_host, influx_db) {
+                (Some(host), Some(db)) =>
+                    Some(tdb_server_core::settings::InfluxSettings {
+                        host,
+                        db,
+                        interval: influx_log_interval,
+                    }),
+                _ => None,
+            }
+        }
+        #[cfg(not(feature = "influx"))]
+        { None }
+    };
+    let settings = Arc::new(
+        tdb_server_core::settings::Settings {
+            autoflush,
+            dtf_folder,
+            flush_interval: flush_interval.parse().unwrap(),
+            granularity: granularity.parse().unwrap(),
+            q_capacity: q_capacity.parse().unwrap(),
+            influx,
+        }
+    );
+
 
     prepare_logger(verbosity, &log_file);
     info!(r##"
@@ -70,7 +93,7 @@ fn main() {
          _/_/    _/_/_/    _/_/_/      _/_/    _/_/    _/    _/  _/    _/_/_/
     "##);
 
-    task::block_on(libtdbserver::server::run_server(&host, &port, settings)).unwrap();
+    task::block_on(tdb_server_core::server::run_server(&host, &port, settings)).unwrap();
 }
 
 fn prepare_logger(verbosity: u8, log_file: &str) {
@@ -104,7 +127,8 @@ fn prepare_logger(verbosity: u8, log_file: &str) {
 /// Gets configuration values from CLI arguments, falling back to environment variables
 /// if they don't exist and to default values if neither exist.
 fn get_matches<'a>() -> ArgMatches<'a> {
-    App::new("tectonic-server")
+
+    let app = App::new("tectonic-server")
         .version("1.0.0")
         .author("Ricky Han <tectonic@rickyhan.com>")
         .about("tectonic financial datastore")
@@ -138,6 +162,7 @@ fn get_matches<'a>() -> ArgMatches<'a> {
         .arg(Arg::with_name("autoflush").short("a").help(
             "Sets autoflush (default is false)",
         ))
+
         .arg(
             Arg::with_name("flush_interval")
                 .short("i")
@@ -160,6 +185,38 @@ fn get_matches<'a>() -> ArgMatches<'a> {
                 .long("log_file")
                 .value_name("LOG_FILE")
                 .help("Sets the log file to write to"),
-        )
-        .get_matches()
+        );
+
+        let app = {
+            #[cfg(feature="influx")]
+            {
+                app
+                .arg(
+                    Arg::with_name("influx_log_interval")
+                        .takes_value(true)
+                        .long("influx-log-interval")
+                        .help( "influxdb log interval in seconds (default is 60)"))
+                .arg(
+                    Arg::with_name("influx_host")
+                        .takes_value(true)
+                        .long("influx-host")
+                        .help( "influxdb host",)
+                        .requires("influx_log_interval")
+                        .requires("influx_pass")
+                        .requires("influx_user")
+                        .requires("influx_db"))
+                .arg(
+                    Arg::with_name("influx_db")
+                        .takes_value(true)
+                        .long("influx-db")
+                        .help( "influxdb db",)
+                        .requires("influx_host"))
+            }
+            #[cfg(not(feature="influx"))]
+            {
+                app
+            }
+        };
+
+        app.get_matches()
 }

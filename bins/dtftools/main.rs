@@ -1,7 +1,7 @@
 extern crate itertools;
 extern crate clap;
 extern crate byteorder;
-extern crate libtectonic;
+extern crate tdb_core;
 #[macro_use]
 extern crate indoc;
 

@@ -1,12 +1,12 @@
 [package]
-name = "libtectonic"
+name = "tdb_core"
 authors = ["Ricky Han <tectonic@rickyhan.com>"]
 description = "market data server for contiguous order book ticks"
 keywords = ["finance", "datastore", "database", "financial", "orderbook"]
 repository = "https://github.com/0b01/tectonicdb"
 license = "MIT"
 edition = "2018"
-version = "0.3.0"
+version = "0.5.0"
 
 [dependencies]
 csv = "1.1.3"

@@ -9,8 +9,8 @@ services:
       - "9001:9001"
     restart: on-failure
     environment:
-      - TECTONICDB_LOG_FILE_NAME=/dev/null
-      - TECTONICDB_DTF_FOLDER=/export/db
+      - TDB_LOG_FILE_NAME=/dev/null
+      - TDB_DTF_FOLDER=/export/db
     volumes:
       - type: volume
         source: tectonic

@@ -1,7 +1,7 @@
 use memmap::MmapOptions;
-use libtectonic::dtf;
-use libtectonic::postprocessing::candle::time_bars::TimeBars;
-use libtectonic::storage::utils::total_folder_updates_len;
+use tdb_core::dtf;
+use tdb_core::postprocessing::candle::time_bars::TimeBars;
+use tdb_core::storage::utils::total_folder_updates_len;
 use std::fs::File;
 use indicatif::{ProgressBar, ProgressStyle};
 
@@ -74,7 +74,7 @@ pub fn run(matches: &clap::ArgMatches) {
             println!("total updates in folder: {}", total_folder_updates_len(folder).unwrap())
         } else {
             if timebars {
-                let ups = libtectonic::dtf::file_format::scan_files_for_range(
+                let ups = tdb_core::dtf::file_format::scan_files_for_range(
                     folder,
                     symbol,
                     min,
@@ -88,7 +88,7 @@ pub fn run(matches: &clap::ArgMatches) {
                     .to_csv();
                 println!("{}", rebinned)
             } else {
-                libtectonic::dtf::file_format::scan_files_for_range_for_each(
+                tdb_core::dtf::file_format::scan_files_for_range_for_each(
                     folder,
                     symbol,
                     min,

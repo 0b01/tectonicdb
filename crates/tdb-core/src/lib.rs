@@ -1,4 +1,4 @@
-//! libtectonic is a financial data storage library
+//! tdb_core is a financial data storage library
 #![deny(missing_docs)]
 
 extern crate libc;

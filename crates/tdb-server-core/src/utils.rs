@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use std::path::Path;
 use std::fs;
-use libtectonic::dtf;
+use tdb_core::dtf;
 
 pub fn create_dir_if_not_exist(dtf_folder: &str) {
     if !Path::new(dtf_folder).exists() {

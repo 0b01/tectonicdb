@@ -3,10 +3,10 @@ use std::io::{Read, Write, Cursor};
 use std::sync::mpsc::{Receiver, channel};
 use byteorder::{BigEndian, ReadBytesExt};
 use bufstream::BufStream;
-use libtectonic::dtf::update::Update;
+use tdb_core::dtf::update::Update;
 use crate::error::TectonicError;
-use libtectonic::dtf::{update::UpdateVecConvert, file_format::decode_buffer};
-use libtectonic::postprocessing::orderbook::Orderbook;
+use tdb_core::dtf::{update::UpdateVecConvert, file_format::decode_buffer};
+use tdb_core::postprocessing::orderbook::Orderbook;
 
 pub struct TectonicClient {
     pub stream: BufStream<TcpStream>,
@@ -130,7 +130,7 @@ impl TectonicClient {
                 let size = self.stream.read_u64::<BigEndian>().unwrap();
                 let mut buf = vec![0; size as usize];
                 self.stream.read_exact(&mut buf).unwrap();
-                let decoded = libtectonic::utils::decode_insert_into(&buf);
+                let decoded = tdb_core::utils::decode_insert_into(&buf);
                 match decoded {
                     Some((Some(up), Some(_book_name))) => tx.send(up).unwrap(),
                     e => {
@@ -156,7 +156,7 @@ impl TectonicClient {
     /// you can achieve very high throughput by setting discard_result to true
     /// send an insert command without reading the output from tdb server
     pub fn insert(&mut self, book_name: Option<&str>, update: &Update, discard_result: bool) -> Result<bool, TectonicError> {
-        let buf = libtectonic::utils::encode_insert_into(book_name, update)?;
+        let buf = tdb_core::utils::encode_insert_into(book_name, update)?;
         unsafe { self.cmd_bytes_no_check(&buf, discard_result) }
     }
 

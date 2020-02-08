@@ -1,5 +1,5 @@
 use memmap::MmapOptions;
-use libtectonic::dtf;
+use tdb_core::dtf;
 use std::fs::File;
 use indicatif::{ProgressBar, ProgressStyle};
 
@@ -25,8 +25,8 @@ pub fn run(matches: &clap::ArgMatches) {
             let prev = prev.unwrap();
             let gap = (up.ts as i64 - prev.ts as i64).abs();
             if gap > threshold * 1000 {
-                let upts = libtectonic::utils::epoch_to_human(up.ts/1000);
-                let prevts = libtectonic::utils::epoch_to_human(prev.ts/1000);
+                let upts = tdb_core::utils::epoch_to_human(up.ts/1000);
+                let prevts = tdb_core::utils::epoch_to_human(prev.ts/1000);
                 println!("Gap detected: {} = {} - {}, {} - {}", gap, prev.ts, up.ts, prevts, upts);
             }
         }

@@ -1,7 +1,7 @@
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 
 use crate::plugins::gstorage::serde_json::from_str;
-use libtectonic::storage::file_metadata::FileMetadata;
+use tdb_core::storage::file_metadata::FileMetadata;
 
 use std::fmt;
 use std::error;

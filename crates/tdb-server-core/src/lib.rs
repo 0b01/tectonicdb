@@ -1,5 +1,5 @@
 #![recursion_limit="1024"]
-extern crate libtectonic;
+extern crate tdb_core;
 extern crate clap;
 extern crate chrono;
 #[cfg(feature = "gcs")]
