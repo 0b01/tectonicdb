@@ -10,8 +10,8 @@ pub fn run(matches: &clap::ArgMatches) {
     let input = matches.value_of("input").unwrap_or("");
     // or range
     let symbol = matches.value_of("symbol").unwrap_or("");
-    let min = matches.value_of("min").unwrap().parse().unwrap();
-    let max = matches.value_of("max").unwrap().parse().unwrap();
+    let min = matches.value_of("min").unwrap_or("0").parse().unwrap();
+    let max = matches.value_of("max").unwrap_or("9999999999999").parse().unwrap();
     if min > max {
         println!("min must be smaller than max");
         ::std::process::exit(1);
