@@ -118,7 +118,8 @@ fn prepare_logger(verbosity: u8, log_file: &str) {
 /// Gets configuration values from CLI arguments, falling back to environment variables
 /// if they don't exist and to default values if neither exist.
 fn get_matches<'a>() -> ArgMatches<'a> {
-    App::new("tectonic-server")
+
+    let app = App::new("tectonic-server")
         .version("1.0.0")
         .author("Ricky Han <tectonic@rickyhan.com>")
         .about("tectonic financial datastore")
@@ -152,26 +153,6 @@ fn get_matches<'a>() -> ArgMatches<'a> {
         .arg(Arg::with_name("autoflush").short("a").help(
             "Sets autoflush (default is false)",
         ))
-        .arg(
-            Arg::with_name("influx_log_interval")
-                .takes_value(true)
-                .long("influx-log-interval")
-                .help( "influxdb log interval in seconds (default is 60)"))
-        .arg(
-            Arg::with_name("influx_host")
-                .takes_value(true)
-                .long("influx-host")
-                .help( "influxdb host",)
-                .requires("influx_log_interval")
-                .requires("influx_pass")
-                .requires("influx_user")
-                .requires("influx_db"))
-        .arg(
-            Arg::with_name("influx_db")
-                .takes_value(true)
-                .long("influx-db")
-                .help( "influxdb db",)
-                .requires("influx_host"))
 
         .arg(
             Arg::with_name("flush_interval")
@@ -195,6 +176,40 @@ fn get_matches<'a>() -> ArgMatches<'a> {
                 .long("log_file")
                 .value_name("LOG_FILE")
                 .help("Sets the log file to write to"),
-        )
-        .get_matches()
+        );
+
+        let app = {
+            #[cfg(feature="influx")]
+            {
+                app
+                .arg(
+                    Arg::with_name("influx_log_interval")
+                        .takes_value(true)
+                        .long("influx-log-interval")
+                        .help( "influxdb log interval in seconds (default is 60)"))
+                .arg(
+                    Arg::with_name("influx_host")
+                        .takes_value(true)
+                        .long("influx-host")
+                        .help( "influxdb host",)
+                        .requires("influx_log_interval")
+                        .requires("influx_pass")
+                        .requires("influx_user")
+                        .requires("influx_db"))
+                .arg(
+                    Arg::with_name("influx_db")
+                        .takes_value(true)
+                        .long("influx-db")
+                        .help( "influxdb db",)
+                        .requires("influx_host"))
+            }
+            #[cfg(not(feature="influx"))]
+            {
+                app
+            }
+        };
+
+
+
+        app.get_matches()
 }

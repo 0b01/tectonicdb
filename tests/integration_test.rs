@@ -16,6 +16,7 @@ fn it_works() {
         flush_interval: 1000,
         granularity: 1000,
         q_capacity: 1000,
+        influx: None,
     });
 
     task::block_on(async move {

@@ -114,7 +114,32 @@ INSERT 1505177459.685, 139010, t, f, 0.0703620, 7.65064240; INTO dbname
 
 ## Monitoring
 
-There is a history granularity option that sets the interval (in second) to periodically record item count for each orderbook, which then can be retrieved by issuing a `PERF` command.
+TectonicDB supports monitoring/alerting by periodically sending its usage info to an InfluxDB instance:
+
+```bash
+    --influx-db <influx_db>                        influxdb db
+    --influx-host <influx_host>                    influxdb host
+    --influx-log-interval <influx_log_interval>    influxdb log interval in seconds (default is 60)
+```
+
+As a concrete example,
+
+```bash
+...
+$ influx
+> CREATE DATABASE market_data;
+> ^D
+$ tdb --influx-db market_data --influx-host http://localhost:8086 --influx-log-interval 20
+...
+```
+
+TectonicDB will send values `disk={COUNT_DISK},size={COUNT_MEM}` with tag `ob={ORDERBOOK}` to `market_data` measurement which is the same as the dbname.
+
+Additionally, you can query usage information directly with `INFO` and `PERF` commands:
+
+1. `INFO` reports the current tick count in memory and on disk.
+
+2. `PERF` returns recorded tick count history whose granularity can be configured.
 
 ## Logging
 
