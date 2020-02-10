@@ -55,6 +55,7 @@ impl Orderbook {
                     acc_s += s;
                 }
                 let avg = acc_dollar / acc_s;
+                let avg = if avg.is_nan() {self.undiscretize((l+u)/2) as f64} else {avg};
                 (avg, -acc_s)
             } else {
                 let mut acc_dollar = 0.;
@@ -65,6 +66,7 @@ impl Orderbook {
                     acc_s += s;
                 }
                 let avg = acc_dollar / acc_s;
+                let avg = if avg.is_nan() {self.undiscretize((l+u)/2) as f64} else {avg};
                 (avg, acc_s)
             };
             ret.push((p, s));
