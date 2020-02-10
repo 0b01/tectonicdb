@@ -35,31 +35,39 @@ impl Orderbook {
 
     /// create a snapshot of the orderbook with discrete number of levels sampled
     /// by fixed distance
-    pub fn snapshot(&self, levels: u64, percentage: f32) -> Vec<f64> {
+    pub fn snapshot(&self, levels: u64, percentage: f32) -> Vec<(f64, f64)> {
         let mut ret = vec![];
 
-        let mp = self.midprice().unwrap();
-        let lower = mp * (1. - percentage / 2.);
-        let upper = mp * (1. + percentage / 2.);
-        let d = (percentage / levels as f32) * mp;
+        let mp = self.midprice_raw().unwrap();
+        let d = ((mp as f64 * percentage as f64).ceil() as u64 / levels) as u64;
+        let upper = mp + d * levels/2;
+        let lower = mp - d * levels/2;
 
         let mut l = lower;
-        while l <= upper {
-            let mp_ = self.discretize(mp);
+        while l < upper {
             let u = l + d;
-            let u_ = self.discretize(u);
-            let l_ = self.discretize(l);
-            let b = -self.bids.iter()
-                .filter(|&(p, s)| *p <= u_ && *p > l_ && *p < mp_)
-                .map(|(_, s)| *s)
-                .sum::<f64>();
-            let a = self.asks.iter()
-                .filter(|&(p, s)| *p <= u_ && *p > l_ && *p > mp_)
-                .map(|(_, s)| *s)
-                .sum::<f64>();
-
-            ret.push(a+b);
-
+            let (p, s) = if u <= mp {
+                let mut acc_dollar = 0.;
+                let mut acc_s = 0.;
+                for (&p, &s) in &self.bids {
+                    if !(p <= u && p > l && p < mp) { continue; }
+                    acc_dollar += self.undiscretize(p) as f64 * s;
+                    acc_s += s;
+                }
+                let avg = acc_dollar / acc_s;
+                (avg, -acc_s)
+            } else {
+                let mut acc_dollar = 0.;
+                let mut acc_s = 0.;
+                for (&p, &s) in &self.asks {
+                    if !(p <= u && p > l && p > mp) { continue; }
+                    acc_dollar += self.undiscretize(p) as f64 * s;
+                    acc_s += s;
+                }
+                let avg = acc_dollar / acc_s;
+                (avg, acc_s)
+            };
+            ret.push((p, s));
             l = u;
         }
 
@@ -136,6 +144,13 @@ impl Orderbook {
     pub fn best_ask_raw(&self) -> Option<u64> {
         let (ask_p, _ask_s) = self.asks.iter().next()?;
         Some(*ask_p)
+    }
+
+    /// get discretized best ask price
+    pub fn midprice_raw(&self) -> Option<u64> {
+        let bb = self.best_bid_raw()?;
+        let ba = self.best_ask_raw()?;
+        Some((bb + ba) / 2)
     }
 
     /// get undiscretized best bid price
