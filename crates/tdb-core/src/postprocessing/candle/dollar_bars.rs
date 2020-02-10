@@ -1,12 +1,40 @@
-use super::Candle;
+use super::{Candle, Sample};
 use crate::dtf::update::Update;
+
+/// sample by dollar traded
+pub struct DollarSampler {
+    interval: f32,
+    elapsed: f32,
+}
+
+impl DollarSampler {
+    /// create a new Dollar sampler
+    pub fn new(interval: f32) -> Self {
+        Self {
+            elapsed: 0.,
+            interval,
+        }
+    }
+}
+
+impl Sample for DollarSampler {
+    fn is_sample(&mut self, trade: &Update) -> bool {
+        self.elapsed += trade.price * trade.size;
+
+        if self.elapsed > self.interval {
+            self.elapsed = 0.;
+            true
+        } else {
+            false
+        }
+    }
+}
 
 /// Iterator for Bars sampled by dollars traded
 pub struct DollarBarsIter<I:Iterator<Item=Update>> {
     it: I,
-    dollar_interval: f32,
-    elapsed: f32,
     current_candle: Option<Candle>,
+    sampler: DollarSampler,
 }
 
 impl<I:Iterator<Item=Update>> DollarBarsIter<I> {
@@ -14,9 +42,8 @@ impl<I:Iterator<Item=Update>> DollarBarsIter<I> {
     pub fn new(it: I, dollar_interval: f32) -> Self {
         Self {
             it,
-            dollar_interval,
-            elapsed: 0.,
             current_candle: None,
+            sampler: DollarSampler::new(dollar_interval),
         }
     }
 }
@@ -40,12 +67,10 @@ impl<I:Iterator<Item=Update>> Iterator for DollarBarsIter<I> {
             if !trade.is_trade {
                 continue;
             }
-            self.elapsed += trade.price * trade.size;
 
             if let Some(c) = self.current_candle {
-                if self.elapsed >= self.dollar_interval {
+                if self.sampler.is_sample(&trade) {
                     self.current_candle = Some(new_candle(trade));
-                    self.elapsed = 0.;
                     return Some(c);
                 };
             }

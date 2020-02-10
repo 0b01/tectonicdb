@@ -1,12 +1,40 @@
-use super::Candle;
+use super::{Candle, Sample};
 use crate::dtf::update::Update;
+
+/// sample by fixed number of ticks
+pub struct TickSampler {
+    interval: u32,
+    elapsed: u32,
+}
+
+impl TickSampler {
+    /// create a new tick sampler
+    pub fn new(interval: u32) -> Self {
+        Self {
+            elapsed: 0,
+            interval,
+        }
+    }
+}
+
+impl Sample for TickSampler {
+    fn is_sample(&mut self, _update: &Update) -> bool {
+        self.elapsed += 1;
+
+        if self.elapsed == self.interval + 1 {
+            self.elapsed = 1;
+            true
+        } else {
+            false
+        }
+    }
+}
 
 /// Iterator for Bars sampled by fixed number of tick
 pub struct TickBarsIter<I:Iterator<Item=Update>> {
     it: I,
-    tick_interval: u32,
-    elapsed: u32,
     current_candle: Option<Candle>,
+    sampler: TickSampler,
 }
 
 impl<I:Iterator<Item=Update>> TickBarsIter<I> {
@@ -15,8 +43,7 @@ impl<I:Iterator<Item=Update>> TickBarsIter<I> {
         Self {
             it,
             current_candle: None,
-            tick_interval,
-            elapsed: 0,
+            sampler: TickSampler::new(tick_interval),
         }
     }
 }
@@ -37,15 +64,14 @@ impl<I:Iterator<Item=Update>> Iterator for TickBarsIter<I> {
     type Item = Candle;
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(trade) = self.it.next() {
-            self.elapsed += 1;
+            let is_sample = self.sampler.is_sample(&trade);
             if !trade.is_trade {
                 continue;
             }
 
             if let Some(c) = self.current_candle {
-                if self.elapsed == self.tick_interval + 1 {
+                if is_sample {
                     self.current_candle = Some(new_candle(trade));
-                    self.elapsed = 1;
                     return Some(c);
                 };
             }

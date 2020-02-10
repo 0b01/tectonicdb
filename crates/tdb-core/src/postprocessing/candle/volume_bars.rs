@@ -1,11 +1,40 @@
-use super::Candle;
+use super::{Candle, Sample};
 use crate::dtf::update::Update;
+
+/// sample by volume traded
+pub struct VolumeSampler {
+    interval: f32,
+    elapsed: f32,
+}
+
+impl VolumeSampler {
+    /// create a new Volume sampler
+    pub fn new(interval: f32) -> Self {
+        Self {
+            elapsed: 0.,
+            interval,
+        }
+    }
+}
+
+impl Sample for VolumeSampler {
+    fn is_sample(&mut self, trade: &Update) -> bool {
+        self.elapsed += trade.size;
+
+        if self.elapsed > self.interval {
+            self.elapsed = 0.;
+            true
+        } else {
+            false
+        }
+    }
+}
 
 /// Iterator for Bars sampled by volume
 pub struct VolumeBarsIter<I:Iterator<Item=Update>> {
     it: I,
-    vol_interval: f32,
     current_candle: Option<Candle>,
+    sampler: VolumeSampler,
 }
 
 impl<I:Iterator<Item=Update>> VolumeBarsIter<I> {
@@ -14,7 +43,7 @@ impl<I:Iterator<Item=Update>> VolumeBarsIter<I> {
         Self {
             it,
             current_candle: None,
-            vol_interval,
+            sampler: VolumeSampler::new(vol_interval),
         }
     }
 }
@@ -40,7 +69,7 @@ impl<I:Iterator<Item=Update>> Iterator for VolumeBarsIter<I> {
             }
 
             if let Some(c) = self.current_candle {
-                if c.volume >= self.vol_interval {
+                if self.sampler.is_sample(&trade) {
                     self.current_candle = Some(new_candle(trade));
                     return Some(c);
                 };

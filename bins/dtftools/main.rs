@@ -157,15 +157,6 @@ fn main() {
                     .help("use Deflated compression")
             )
             .arg(
-                Arg::with_name("volume")
-                    .short("v")
-                    .long("volume")
-                    .value_name("VOL_INTERVAL")
-                    .help("interval used for generating volume bars")
-                    .required(false)
-                    .takes_value(true),
-            )
-            .arg(
                 Arg::with_name("input")
                     .value_name("INPUT")
                     .help("file to read")

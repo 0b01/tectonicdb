@@ -1,21 +1,60 @@
 use std::collections::HashSet;
-use super::{Candle, Time, Scale};
+use super::{Candle, Time, Scale, Sample};
 use crate::dtf::update::Update;
 use crate::utils::fill_digits;
 use indexmap::IndexMap;
+
+/// sample by Time
+pub struct TimeSampler {
+    s: u64,
+    last: Option<u64>,
+}
+
+impl TimeSampler {
+    /// create a new Time sampler
+    pub fn new(s: u64) -> Self {
+        Self {
+            s,
+            last: None,
+        }
+    }
+}
+
+impl Sample for TimeSampler {
+    fn is_sample(&mut self, trade: &Update) -> bool {
+        let ts = (fill_digits(trade.ts) / 1000 / self.s * self.s) as Time; // floor(ts)
+
+        if self.last.is_none() {
+            self.last = Some(ts);
+            false
+        } else {
+            let last = self.last.unwrap();
+            if last != ts {
+                self.last = Some(ts);
+                true
+            } else {
+                false
+            }
+        }
+    }
+}
 
 /// Iterator for Bars sampled by time, default is 1 minute bar
 pub struct TimeBarsIter<I:Iterator<Item=Update>> {
     it: I,
     current_candle: Option<Candle>,
+    sampler: TimeSampler,
+    seconds: u64,
 }
 
 impl<I:Iterator<Item=Update>> TimeBarsIter<I> {
     /// Create a new iterator for time bars
-    pub fn new(it: I) -> Self {
+    pub fn new(it: I, seconds: u64) -> Self {
         Self {
             it,
             current_candle: None,
+            sampler: TimeSampler::new(seconds),
+            seconds,
         }
     }
 }
@@ -40,10 +79,10 @@ impl<I:Iterator<Item=Update>> Iterator for TimeBarsIter<I> {
                 continue;
             }
 
-            let ts = (fill_digits(trade.ts) / 1000 / 60 * 60) as Time; // floor(ts)
+            let ts = (fill_digits(trade.ts) / 1000 / self.seconds * self.seconds) as Time; // floor(ts)
 
             self.current_candle = if let Some(c) = &self.current_candle {
-                if c.start != ts {
+                if self.sampler.is_sample(&trade) {
                     let c = *c;
                     self.current_candle = Some(new_candle(ts, trade));
                     return Some(c);
@@ -76,7 +115,7 @@ pub struct TimeBars {
 impl<'a> From<&'a [Update]> for TimeBars {
     /// Generate a vector of 1-min candles from Updates
     fn from(ups: &[Update]) -> TimeBars {
-        let candles = TimeBarsIter::new(ups.iter().copied()).map(|c| (c.start, c)).collect();
+        let candles = TimeBarsIter::new(ups.iter().copied(), 60).map(|c| (c.start, c)).collect();
         return TimeBars::new(candles, 1);
     }
 }

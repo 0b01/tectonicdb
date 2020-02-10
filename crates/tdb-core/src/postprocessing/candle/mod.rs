@@ -63,3 +63,8 @@ pub fn draw_updates(ups: &[Update]) -> String {
     candlestick_graph::CandleStickGraph::new(20, candles.clone()).draw()
 }
 
+/// determines whether to sample based on update
+pub trait Sample {
+    /// should a sample be generated after this update
+    fn is_sample(&mut self, update: &Update) -> bool;
+}

@@ -23,15 +23,49 @@ pub struct Orderbook {
 }
 
 impl Orderbook {
-    /// convert price from f64 to u64
+    /// convert price from f32 to u64
     pub fn discretize(&self, p: f32) -> Price {
         (f64::from(p) * 10f64.powf(self.price_decimals as f64)) as Price
     }
 
-    /// convert price from u64 to f64
-    pub fn undiscretize(&self, p: u64) -> f64 {
-        p as f64 / 10f64.powf(self.price_decimals as f64)
+    /// convert price from u64 to f32
+    pub fn undiscretize(&self, p: u64) -> f32 {
+        p as f32 / 10f32.powf(self.price_decimals as f32)
     }
+
+    /// create a snapshot of the orderbook with discrete number of levels sampled
+    /// by fixed distance
+    pub fn snapshot(&self, levels: u64, percentage: f32) -> Vec<f64> {
+        let mut ret = vec![];
+
+        let mp = self.midprice().unwrap();
+        let lower = mp * (1. - percentage / 2.);
+        let upper = mp * (1. + percentage / 2.);
+        let d = (percentage / levels as f32) * mp;
+
+        let mut l = lower;
+        while l <= upper {
+            let mp_ = self.discretize(mp);
+            let u = l + d;
+            let u_ = self.discretize(u);
+            let l_ = self.discretize(l);
+            let b = -self.bids.iter()
+                .filter(|&(p, s)| *p <= u_ && *p > l_ && *p < mp_)
+                .map(|(_, s)| *s)
+                .sum::<f64>();
+            let a = self.asks.iter()
+                .filter(|&(p, s)| *p <= u_ && *p > l_ && *p > mp_)
+                .map(|(_, s)| *s)
+                .sum::<f64>();
+
+            ret.push(a+b);
+
+            l = u;
+        }
+
+        ret
+    }
+
 
     /// Create empty orderbook
     pub fn with_precision(price_decimals: u8) -> Orderbook {
@@ -81,7 +115,7 @@ impl Orderbook {
     }
 
     /// get top of the book, max bid, min ask
-    pub fn top(&self) -> Option<((f64, Size), (f64, Size))> {
+    pub fn top(&self) -> Option<((f32, Size), (f32, Size))> {
         let bid_max = self.bids.iter().next_back()?;
         let ask_min = self.asks.iter().next()?;
         let (bid_p, bid_s) = (self.undiscretize(*bid_max.0), *bid_max.1);
@@ -105,19 +139,19 @@ impl Orderbook {
     }
 
     /// get undiscretized best bid price
-    pub fn best_bid(&self) -> Option<f64> {
+    pub fn best_bid(&self) -> Option<f32> {
         let (bid_p, _bid_s) = self.bids.iter().next_back()?;
         Some(self.undiscretize(*bid_p))
     }
 
     /// get undiscretized best ask price
-    pub fn best_ask(&self) -> Option<f64> {
+    pub fn best_ask(&self) -> Option<f32> {
         let (ask_p, _ask_s) = self.asks.iter().next()?;
         Some(self.undiscretize(*ask_p))
     }
 
     /// get midprice which is (bb + ba)/2
-    pub fn midprice(&self) -> Option<f64> {
+    pub fn midprice(&self) -> Option<f32> {
         let bb = self.best_bid()?;
         let ba = self.best_ask()?;
         Some((bb + ba) / 2.)
