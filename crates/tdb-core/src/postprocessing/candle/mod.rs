@@ -68,3 +68,10 @@ pub trait Sample {
     /// should a sample be generated after this update
     fn is_sample(&mut self, update: &Update) -> bool;
 }
+
+use std::ops::DerefMut;
+impl<T: DerefMut<Target=dyn Sample>> Sample for T {
+  fn is_sample(&mut self, update:&Update) -> bool {
+      self.deref_mut().is_sample(update)
+    }
+}
