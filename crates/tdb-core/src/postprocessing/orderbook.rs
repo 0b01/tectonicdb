@@ -33,50 +33,6 @@ impl Orderbook {
         p as f32 / 10f32.powf(self.price_decimals as f32)
     }
 
-    /// create a snapshot of the orderbook with discrete number of levels sampled
-    /// by fixed distance
-    pub fn snapshot(&self, levels: u64, percentage: f32) -> Vec<(f64, f64)> {
-        let mut ret = vec![];
-
-        let mp = self.midprice_raw().unwrap();
-        let d = ((mp as f64 * percentage as f64).ceil() as u64 / levels) as u64;
-        let upper = mp + d * levels/2;
-        let lower = mp - d * levels/2;
-
-        let mut l = lower;
-        while l < upper {
-            let u = l + d;
-            let (p, s) = if u <= mp {
-                let mut acc_dollar = 0.;
-                let mut acc_s = 0.;
-                for (&p, &s) in &self.bids {
-                    if !(p <= u && p > l && p < mp) { continue; }
-                    acc_dollar += self.undiscretize(p) as f64 * s;
-                    acc_s += s;
-                }
-                let avg = acc_dollar / acc_s;
-                let avg = if avg.is_nan() {self.undiscretize((l+u)/2) as f64} else {avg};
-                (avg, -acc_s)
-            } else {
-                let mut acc_dollar = 0.;
-                let mut acc_s = 0.;
-                for (&p, &s) in &self.asks {
-                    if !(p <= u && p > l && p > mp) { continue; }
-                    acc_dollar += self.undiscretize(p) as f64 * s;
-                    acc_s += s;
-                }
-                let avg = acc_dollar / acc_s;
-                let avg = if avg.is_nan() {self.undiscretize((l+u)/2) as f64} else {avg};
-                (avg, acc_s)
-            };
-            ret.push((p, s));
-            l = u;
-        }
-
-        ret
-    }
-
-
     /// Create empty orderbook
     pub fn with_precision(price_decimals: u8) -> Orderbook {
         Orderbook {

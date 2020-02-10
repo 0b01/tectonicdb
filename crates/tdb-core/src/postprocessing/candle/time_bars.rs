@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use super::{Candle, Time, Scale, Sample};
+use super::{Candle, Time, Scale, Sampler};
 use crate::dtf::update::Update;
 use crate::utils::fill_digits;
 use indexmap::IndexMap;
@@ -20,7 +20,10 @@ impl TimeSampler {
     }
 }
 
-impl Sample for TimeSampler {
+impl Sampler for TimeSampler {
+    fn reset(&mut self) {
+        self.last = None;
+    }
     fn is_sample(&mut self, trade: &Update) -> bool {
         let ts = (fill_digits(trade.ts) / 1000 / self.s * self.s) as Time; // floor(ts)
 

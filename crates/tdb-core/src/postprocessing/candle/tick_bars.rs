@@ -1,4 +1,4 @@
-use super::{Candle, Sample};
+use super::{Candle, Sampler};
 use crate::dtf::update::Update;
 
 /// sample by fixed number of ticks
@@ -17,7 +17,10 @@ impl TickSampler {
     }
 }
 
-impl Sample for TickSampler {
+impl Sampler for TickSampler {
+    fn reset(&mut self) {
+        self.elapsed = 0;
+    }
     fn is_sample(&mut self, _update: &Update) -> bool {
         self.elapsed += 1;
 

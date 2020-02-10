@@ -64,14 +64,19 @@ pub fn draw_updates(ups: &[Update]) -> String {
 }
 
 /// determines whether to sample based on update
-pub trait Sample {
-    /// should a sample be generated after this update
+pub trait Sampler {
+    /// check if a sample should be generated after this update
     fn is_sample(&mut self, update: &Update) -> bool;
+    /// reset sampler state
+    fn reset(&mut self);
 }
 
 use std::ops::DerefMut;
-impl<T: DerefMut<Target=dyn Sample>> Sample for T {
-  fn is_sample(&mut self, update:&Update) -> bool {
-      self.deref_mut().is_sample(update)
+impl<T: DerefMut<Target=dyn Sampler>> Sampler for T {
+    fn is_sample(&mut self, update:&Update) -> bool {
+        self.deref_mut().is_sample(update)
+    }
+    fn reset(&mut self) {
+        self.deref_mut().reset()
     }
 }

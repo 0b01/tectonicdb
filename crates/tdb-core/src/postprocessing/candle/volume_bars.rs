@@ -1,4 +1,4 @@
-use super::{Candle, Sample};
+use super::{Candle, Sampler};
 use crate::dtf::update::Update;
 
 /// sample by volume traded
@@ -17,7 +17,10 @@ impl VolumeSampler {
     }
 }
 
-impl Sample for VolumeSampler {
+impl Sampler for VolumeSampler {
+    fn reset(&mut self) {
+        self.elapsed = 0.;
+    }
     fn is_sample(&mut self, trade: &Update) -> bool {
         self.elapsed += trade.size;
 
