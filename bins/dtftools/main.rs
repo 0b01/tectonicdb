@@ -44,6 +44,15 @@ fn main() {
                     .takes_value(true),
             )
             .arg(
+                Arg::with_name("output")
+                .short("o")
+                .long("output")
+                .value_name("OUTPUT")
+                .help("output file")
+                .required(false)
+                .takes_value(true),
+            )
+            .arg(
                 Arg::with_name("symbol")
                 .long("symbol")
                 .value_name("SYMBOL")

@@ -8,7 +8,6 @@ use std::fs::File;
 use memmap::MmapOptions;
 
 use tdb_core::dtf;
-use tdb_core::postprocessing::candle::volume_bars::VolumeBarsIter;
 use indicatif::{ProgressBar, ProgressStyle};
 
 pub fn run(matches: &clap::ArgMatches) -> Option<()> {

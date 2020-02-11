@@ -1,6 +1,5 @@
 # tectonicdb
 
-[![Build Status](https://travis-ci.org/0b01/tectonicdb.svg?branch=master)](https://travis-ci.org/0b01/tectonicdb)
 [![crate.io](https://img.shields.io/crates/v/tdb-core.svg)](https://crates.io/crates/tdb-core)
 [![doc.rs](https://docs.rs/tdb_core/badge.svg)](https://docs.rs/crate/tdb_core)
 ![Minimum Rust version](https://img.shields.io/badge/rustc-1.40+-yellow.svg)

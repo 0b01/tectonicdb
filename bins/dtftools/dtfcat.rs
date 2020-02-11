@@ -1,9 +1,11 @@
 use memmap::MmapOptions;
-use tdb_core::dtf;
+use tdb_core::dtf::{self, file_format as ff};
 use tdb_core::postprocessing::candle::time_bars::TimeBars;
-use tdb_core::storage::utils::total_folder_updates_len;
 use std::fs::File;
+use std::borrow::Cow;
 use indicatif::{ProgressBar, ProgressStyle};
+use std::sync::mpsc::channel;
+use std::thread;
 
 pub fn run(matches: &clap::ArgMatches) {
     // single file
@@ -71,7 +73,8 @@ pub fn run(matches: &clap::ArgMatches) {
         }
     } else {
         if print_metadata {
-            println!("total updates in folder: {}", total_folder_updates_len(folder).unwrap())
+            println!("total updates in folder: {}",
+                tdb_core::storage::utils::print_total_folder_updates_len(folder).unwrap());
         } else {
             if timebars {
                 let ups = tdb_core::dtf::file_format::scan_files_for_range(
@@ -88,19 +91,50 @@ pub fn run(matches: &clap::ArgMatches) {
                     .to_csv();
                 println!("{}", rebinned)
             } else {
-                tdb_core::dtf::file_format::scan_files_for_range_for_each(
-                    folder,
-                    symbol,
-                    min,
-                    max,
-                    &mut |up|{
-                        if csv {
-                            println!("{}", up.to_csv())
-                        } else {
-                            println!("[{}]", up.as_json())
-                        }
-                    }).unwrap();
+                let output = matches.is_present("output");
+                let folder_ = folder.to_owned();
+                let symbol_ = symbol.to_owned();
+                let (send, recv) = channel();
+
+                let thr = thread::spawn(move || {
+                    let mut len = 0;
+                    let mut last_ts = 0;
+                    let send = send.clone();
+                    tdb_core::dtf::file_format::scan_files_for_range_for_each(
+                        &folder_,
+                        &symbol_,
+                        min,
+                        max,
+                        &mut |up| {
+                            if output {
+                                send.send(*up).unwrap();
+                            } else if csv {
+                                println!("{}", up.to_csv())
+                            } else {
+                                println!("[{}]", up.as_json())
+                            }
+                            len += 1;
+                            last_ts = up.ts;
+                        }).unwrap();
+                    (len, last_ts)
+                });
+
+                if output {
+                    let outfname = matches.value_of("output").unwrap();
+                    let mut wtr = dtf::file_format::file_writer(outfname, true).unwrap();
+                    ff::write_magic_value(&mut wtr).unwrap();
+                    ff::write_symbol(&mut wtr, &symbol).unwrap();
+                    let mut it = recv.iter();
+                    let t = it.by_ref().map(Cow::Owned).peekable();
+                    ff::write_main(&mut wtr, t).unwrap();
+
+                    let (len, last_ts) = thr.join().unwrap();
+                    ff::write_len(&mut wtr, len).unwrap();
+                    ff::write_max_ts(&mut wtr, last_ts).unwrap();
+                }
             }
         }
     };
+
+
 }

@@ -112,7 +112,8 @@ pub fn get_max_ts_sorted(updates: &[Update]) -> u64 {
     updates.last().unwrap().ts
 }
 
-fn file_writer(fname: &str, create: bool) -> Result<BufWriter<File>, io::Error> {
+/// open a file for writing
+pub fn file_writer(fname: &str, create: bool) -> Result<BufWriter<File>, io::Error> {
     let new_file = if create {
         File::create(fname)?
     } else {
@@ -122,11 +123,13 @@ fn file_writer(fname: &str, create: bool) -> Result<BufWriter<File>, io::Error> 
     Ok(BufWriter::new(new_file))
 }
 
-fn write_magic_value(wtr: &mut dyn Write) -> Result<usize, io::Error> {
+/// write magic value
+pub fn write_magic_value(wtr: &mut dyn Write) -> Result<usize, io::Error> {
     wtr.write(MAGIC_VALUE)
 }
 
-fn write_symbol(wtr: &mut dyn Write, symbol: &str) -> Result<usize, io::Error> {
+/// write symbol
+pub fn write_symbol(wtr: &mut dyn Write, symbol: &str) -> Result<usize, io::Error> {
     if symbol.len() > SYMBOL_LEN {
         return Err(io::Error::new(InvalidData,
             format!("Symbol length is longer than {}", SYMBOL_LEN)));
@@ -136,12 +139,14 @@ fn write_symbol(wtr: &mut dyn Write, symbol: &str) -> Result<usize, io::Error> {
     wtr.write(padded_symbol.as_bytes())
 }
 
-fn write_len<T: Write + Seek>(wtr: &mut T, len: u64) -> Result<(), io::Error> {
+/// write length in header
+pub fn write_len<T: Write + Seek>(wtr: &mut T, len: u64) -> Result<(), io::Error> {
     let _ = wtr.seek(SeekFrom::Start(LEN_OFFSET));
     wtr.write_u64::<BigEndian>(len)
 }
 
-fn write_max_ts<T: Write + Seek>(wtr: &mut T, max_ts: u64) -> Result<(), io::Error> {
+/// write max_ts in header
+pub fn write_max_ts<T: Write + Seek>(wtr: &mut T, max_ts: u64) -> Result<(), io::Error> {
     let _ = wtr.seek(SeekFrom::Start(MAX_TS_OFFSET));
     wtr.write_u64::<BigEndian>(max_ts)
 }
@@ -158,9 +163,10 @@ fn write_reference(wtr: &mut dyn Write, ref_ts: u64, ref_seq: u32, len: u16) -> 
     wtr.write_u16::<BigEndian>(len)
 }
 
+use std::ops::Deref;
 /// write a list of updates as batches
 #[cfg_attr(feature="count_alloc", count_alloc)]
-pub fn write_batches<'a, I: Iterator<Item=&'a Update>>(mut wtr: &mut dyn Write, mut ups: Peekable<I>) -> Result<(), io::Error> {
+pub fn write_batches<U: Deref<Target=Update>, I: Iterator<Item=U>>(mut wtr: &mut dyn Write, mut ups: Peekable<I>) -> Result<(), io::Error> {
     lazy_static! {
         static ref BUF: Mutex<RefCell<Vec<u8>>> = Mutex::new(RefCell::new(vec![0; 100_000_000]));
     }
@@ -204,9 +210,10 @@ pub fn write_batches<'a, I: Iterator<Item=&'a Update>>(mut wtr: &mut dyn Write, 
     // wtr.write_all(buf.as_slice())
 }
 
-fn write_main<'a, T: Write + Seek, I: IntoIterator<Item=&'a Update>>(wtr: &mut T, ups: I) -> Result<(), io::Error> {
+/// write main section
+pub fn write_main<'a, D: Deref<Target=Update>, T: Write + Seek, I: Iterator<Item=D>>(wtr: &mut T, ups: Peekable<I>) -> Result<(), io::Error> {
     wtr.seek(SeekFrom::Start(MAIN_OFFSET))?;
-    write_batches(wtr, ups.into_iter().peekable())?;
+    write_batches(wtr, ups)?;
     Ok(())
 }
 
@@ -224,7 +231,7 @@ pub fn encode_buffer<T: Write + Seek>(wtr: &mut T, symbol: &str, ups: &[Update])
         write_magic_value(wtr)?;
         write_symbol(wtr, symbol)?;
         write_metadata(wtr, ups)?;
-        write_main(wtr, ups)?;
+        write_main(wtr, ups.iter().peekable())?;
     }
     Ok(())
 }
@@ -804,7 +811,7 @@ pub fn append(fname: &str, ups: &[Update]) -> Result<(), io::Error> {
     } else {
         wtr.seek(SeekFrom::End(0)).unwrap();
     }
-    write_batches(&mut wtr, ups)?;
+    write_batches(&mut wtr, ups.peekable())?;
     wtr.flush().unwrap();
 
     Ok(())

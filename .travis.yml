@@ -1,7 +1,0 @@
-language: rust
-rust:
-  - stable
-script:
-  - cargo check --verbose --all
-  - cargo test --verbose --all
-  - cargo test --no-default-features --verbose --all
