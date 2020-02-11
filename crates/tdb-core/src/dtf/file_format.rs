@@ -217,6 +217,7 @@ pub fn write_main<'a, D: Deref<Target=Update>, T: Write + Seek, I: Iterator<Item
     Ok(())
 }
 
+
 /// write a list of updates to file
 pub fn encode(fname: &str, symbol: &str, ups: &[Update]) -> Result<(), io::Error> {
     let mut wtr = file_writer(fname, true)?;

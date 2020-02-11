@@ -24,6 +24,7 @@ pub fn run(matches: &clap::ArgMatches) {
     let aligned = matches.is_present("aligned");
     let granularity = matches.value_of("minutes").unwrap_or("1");
     // misc
+    let has_output = matches.is_present("output");
     let print_metadata = matches.is_present("meta");
     let csv = matches.is_present("csv");
     if input == "" && symbol == "" && folder == "" && !print_metadata {
@@ -55,20 +56,50 @@ pub fn run(matches: &clap::ArgMatches) {
                 let mut rdr = std::io::Cursor::new(rdr);
                 let meta = dtf::file_format::read_meta_from_buf(&mut rdr).unwrap();
                 let mut it = dtf::file_format::iterators::DTFBufReader::new(rdr);
-                let bar = ProgressBar::new(meta.count);
-                bar.set_style(ProgressStyle::default_bar()
-                    .template("[{elapsed_precise}, remaining: {eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
-                    .progress_chars("##-"));
 
-                for (i, up) in &mut it.enumerate() {
-                    if i != 0 && i % 10000 == 0 { bar.inc(10000); }
-                    if csv {
-                        println!("{}", up.to_csv()) // TODO: slooooow
-                    } else {
-                        println!("[{}]", up.as_json())
+                let (send, recv) = channel();
+                let thr = thread::spawn(move || {
+                    let bar = ProgressBar::new(meta.count);
+                    bar.set_style(ProgressStyle::default_bar()
+                        .template("[{elapsed_precise}, remaining: {eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
+                        .progress_chars("##-"));
+                    let mut len = 0;
+                    let mut last_ts = 0;
+                    for (i, up) in &mut it
+                      .enumerate()
+                    {
+                        if up.ts > max { break; }
+                        if up.ts < min { continue; }
+                        len += 1;
+                        last_ts = up.ts;
+                        if i != 0 && i % 10000 == 0 { bar.inc(10000); }
+                        if has_output {
+                            send.send(up).unwrap();
+                        } else if csv {
+                            println!("{}", up.to_csv()) // TODO: slooooow
+                        } else {
+                            println!("[{}]", up.as_json())
+                        }
                     }
+                    bar.finish();
+                    (len, last_ts)
+                });
+
+                if has_output {
+                    let outfname = matches.value_of("output").unwrap();
+                    let mut wtr = dtf::file_format::file_writer(outfname, true).unwrap();
+                    ff::write_magic_value(&mut wtr).unwrap();
+                    ff::write_symbol(&mut wtr, &symbol).unwrap();
+                    let mut it = recv.iter();
+                    let t = it.by_ref().map(Cow::Owned).peekable();
+                    ff::write_main(&mut wtr, t).unwrap();
+
+                    let (len, last_ts) = thr.join().unwrap();
+                    ff::write_len(&mut wtr, len).unwrap();
+                    ff::write_max_ts(&mut wtr, last_ts).unwrap();
+                } else {
+                    thr.join().unwrap();
                 }
-                bar.finish();
             }
         }
     } else {
@@ -91,7 +122,6 @@ pub fn run(matches: &clap::ArgMatches) {
                     .to_csv();
                 println!("{}", rebinned)
             } else {
-                let output = matches.is_present("output");
                 let folder_ = folder.to_owned();
                 let symbol_ = symbol.to_owned();
                 let (send, recv) = channel();
@@ -99,14 +129,13 @@ pub fn run(matches: &clap::ArgMatches) {
                 let thr = thread::spawn(move || {
                     let mut len = 0;
                     let mut last_ts = 0;
-                    let send = send.clone();
                     tdb_core::dtf::file_format::scan_files_for_range_for_each(
                         &folder_,
                         &symbol_,
                         min,
                         max,
                         &mut |up| {
-                            if output {
+                            if has_output {
                                 send.send(*up).unwrap();
                             } else if csv {
                                 println!("{}", up.to_csv())
@@ -119,7 +148,7 @@ pub fn run(matches: &clap::ArgMatches) {
                     (len, last_ts)
                 });
 
-                if output {
+                if has_output {
                     let outfname = matches.value_of("output").unwrap();
                     let mut wtr = dtf::file_format::file_writer(outfname, true).unwrap();
                     ff::write_magic_value(&mut wtr).unwrap();
@@ -131,7 +160,10 @@ pub fn run(matches: &clap::ArgMatches) {
                     let (len, last_ts) = thr.join().unwrap();
                     ff::write_len(&mut wtr, len).unwrap();
                     ff::write_max_ts(&mut wtr, last_ts).unwrap();
+                } else {
+                    thr.join().unwrap();
                 }
+
             }
         }
     };

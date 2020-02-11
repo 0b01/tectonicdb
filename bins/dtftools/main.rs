@@ -80,8 +80,6 @@ fn main() {
                 Arg::with_name("folder")
                 .long("folder")
                 .conflicts_with("input")
-                .requires("min")
-                .requires("max")
                 .requires("symbol")
                 .value_name("FOLDER")
                 .help("folder to search")
