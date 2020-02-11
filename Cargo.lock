@@ -1834,12 +1834,12 @@ dependencies = [
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.47 (registry+https://github.com/rust-lang/crates.io-index)",
- "tdb_core 0.5.1",
+ "tdb_core 0.5.2",
 ]
 
 [[package]]
 name = "tdb_core"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "alloc_counter 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "arrayvec 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1881,7 +1881,7 @@ dependencies = [
  "serde_derive 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.47 (registry+https://github.com/rust-lang/crates.io-index)",
  "surf 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "tdb_core 0.5.1",
+ "tdb_core 0.5.2",
  "tempdir 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1889,7 +1889,7 @@ dependencies = [
 
 [[package]]
 name = "tectonicdb"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "byteorder 1.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1906,7 +1906,7 @@ dependencies = [
  "serde_derive 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.47 (registry+https://github.com/rust-lang/crates.io-index)",
  "tdb_cli 0.5.1",
- "tdb_core 0.5.1",
+ "tdb_core 0.5.2",
  "tdb_server_core 0.5.1",
  "zip 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

@@ -2,10 +2,7 @@ use memmap::MmapOptions;
 use tdb_core::dtf::{self, file_format as ff};
 use tdb_core::postprocessing::candle::time_bars::TimeBars;
 use std::fs::File;
-use std::borrow::Cow;
 use indicatif::{ProgressBar, ProgressStyle};
-use std::sync::mpsc::channel;
-use std::thread;
 
 pub fn run(matches: &clap::ArgMatches) {
     // single file
@@ -57,48 +54,31 @@ pub fn run(matches: &clap::ArgMatches) {
                 let meta = dtf::file_format::read_meta_from_buf(&mut rdr).unwrap();
                 let mut it = dtf::file_format::iterators::DTFBufReader::new(rdr);
 
-                let (send, recv) = channel();
-                let thr = thread::spawn(move || {
-                    let bar = ProgressBar::new(meta.count);
-                    bar.set_style(ProgressStyle::default_bar()
-                        .template("[{elapsed_precise}, remaining: {eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
-                        .progress_chars("##-"));
-                    let mut len = 0;
-                    let mut last_ts = 0;
-                    for (i, up) in &mut it
-                      .enumerate()
-                    {
-                        if up.ts > max { break; }
-                        if up.ts < min { continue; }
-                        len += 1;
-                        last_ts = up.ts;
-                        if i != 0 && i % 10000 == 0 { bar.inc(10000); }
-                        if has_output {
-                            send.send(up).unwrap();
-                        } else if csv {
-                            println!("{}", up.to_csv()) // TODO: slooooow
-                        } else {
-                            println!("[{}]", up.as_json())
-                        }
+                let bar = ProgressBar::new(meta.count);
+                bar.set_style(ProgressStyle::default_bar()
+                    .template("[{elapsed_precise}, remaining: {eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
+                    .progress_chars("##-"));
+
+                let mut ret = vec![];
+                for (i, up) in &mut it
+                    .enumerate()
+                {
+                    if up.ts > max { break; }
+                    if up.ts < min { continue; }
+                    if i != 0 && i % 10000 == 0 { bar.inc(10000); }
+                    if has_output {
+                        ret.push(up);
+                    } else if csv {
+                        println!("{}", up.to_csv()) // TODO: slooooow
+                    } else {
+                        println!("[{}]", up.as_json())
                     }
-                    bar.finish();
-                    (len, last_ts)
-                });
+                }
+                bar.finish();
 
                 if has_output {
-                    let outfname = matches.value_of("output").unwrap();
-                    let mut wtr = dtf::file_format::file_writer(outfname, true).unwrap();
-                    ff::write_magic_value(&mut wtr).unwrap();
-                    ff::write_symbol(&mut wtr, &symbol).unwrap();
-                    let mut it = recv.iter();
-                    let t = it.by_ref().map(Cow::Owned).peekable();
-                    ff::write_main(&mut wtr, t).unwrap();
-
-                    let (len, last_ts) = thr.join().unwrap();
-                    ff::write_len(&mut wtr, len).unwrap();
-                    ff::write_max_ts(&mut wtr, last_ts).unwrap();
-                } else {
-                    thr.join().unwrap();
+                    let fname = matches.value_of("output").unwrap();
+                    ff::encode(fname, symbol, &ret).unwrap();
                 }
             }
         }
@@ -122,46 +102,25 @@ pub fn run(matches: &clap::ArgMatches) {
                     .to_csv();
                 println!("{}", rebinned)
             } else {
-                let folder_ = folder.to_owned();
-                let symbol_ = symbol.to_owned();
-                let (send, recv) = channel();
-
-                let thr = thread::spawn(move || {
-                    let mut len = 0;
-                    let mut last_ts = 0;
-                    tdb_core::dtf::file_format::scan_files_for_range_for_each(
-                        &folder_,
-                        &symbol_,
-                        min,
-                        max,
-                        &mut |up| {
-                            if has_output {
-                                send.send(*up).unwrap();
-                            } else if csv {
-                                println!("{}", up.to_csv())
-                            } else {
-                                println!("[{}]", up.as_json())
-                            }
-                            len += 1;
-                            last_ts = up.ts;
-                        }).unwrap();
-                    (len, last_ts)
-                });
+                let mut ret = vec![];
+                tdb_core::dtf::file_format::scan_files_for_range_for_each(
+                    &folder,
+                    &symbol,
+                    min,
+                    max,
+                    &mut |up| {
+                        if has_output {
+                            ret.push(*up);
+                        } else if csv {
+                            println!("{}", up.to_csv())
+                        } else {
+                            println!("[{}]", up.as_json())
+                        }
+                    }).unwrap();
 
                 if has_output {
-                    let outfname = matches.value_of("output").unwrap();
-                    let mut wtr = dtf::file_format::file_writer(outfname, true).unwrap();
-                    ff::write_magic_value(&mut wtr).unwrap();
-                    ff::write_symbol(&mut wtr, &symbol).unwrap();
-                    let mut it = recv.iter();
-                    let t = it.by_ref().map(Cow::Owned).peekable();
-                    ff::write_main(&mut wtr, t).unwrap();
-
-                    let (len, last_ts) = thr.join().unwrap();
-                    ff::write_len(&mut wtr, len).unwrap();
-                    ff::write_max_ts(&mut wtr, last_ts).unwrap();
-                } else {
-                    thr.join().unwrap();
+                    let fname = matches.value_of("output").unwrap();
+                    ff::encode(fname, symbol, &ret).unwrap();
                 }
 
             }
