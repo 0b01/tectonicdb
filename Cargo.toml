@@ -57,3 +57,8 @@ members = [
 [[test]]
 name = "integration"
 path = "tests/integration_test.rs"
+
+[features]
+
+default = ["influx"]
+influx = []

@@ -67,7 +67,7 @@ fn main() {
                         interval: influx_log_interval,
                     }),
                 _ => None,
-            }
+        }
         }
         #[cfg(not(feature = "influx"))]
         { None }
@@ -202,8 +202,6 @@ fn get_matches<'a>() -> ArgMatches<'a> {
                         .long("influx-host")
                         .help( "influxdb host",)
                         .requires("influx_log_interval")
-                        .requires("influx_pass")
-                        .requires("influx_user")
                         .requires("influx_db"))
                 .arg(
                     Arg::with_name("influx_db")
