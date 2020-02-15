@@ -13,11 +13,13 @@ pub async fn timer_loop(mut broker: Sender<Event>, settings: Arc<Settings>) {
     let dur = time::Duration::from_secs(influx.interval);
     let url = format!("{}/write?db={}", influx.host, influx.db);
     info!("InfluxDB enabled: {}, {}", influx.host, influx.db);
+
+    let mut buf = String::new();
     loop {
         let (tx, mut rx) = mpsc::channel(2048);
         broker.send(Event::FetchSizes { tx }).await.unwrap();
         while let Some(sizes) = rx.next().await {
-            let mut buf = String::new();
+            buf.clear();
             sizes.iter().for_each(|(ob, sz_disk, sz_mem)| {
                 buf += &influx.db;
                 buf += ",ob=";
@@ -28,7 +30,7 @@ pub async fn timer_loop(mut broker: Sender<Event>, settings: Arc<Settings>) {
                 buf += &sz_mem.to_string();
                 buf += "\n";
             });
-            match surf::post(&url).body_bytes(buf).await {
+            match surf::post(&url).body_bytes(&buf).await {
                 Err(e) => error!("{}", e),
                 Ok(_res) => info!("posted to influxdb"),
             }
