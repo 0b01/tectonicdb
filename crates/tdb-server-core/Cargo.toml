@@ -15,7 +15,7 @@ circular-queue = "0.2.3"
 
 async-std = "1.5.0"
 futures = "0.3.4"
-ctrlc = "3.1.3"
+ctrlc = "3.1.4"
 byteorder = "1.3.4"
 
 serde_derive = "1.0.104"
@@ -23,17 +23,17 @@ serde_json = "1.0.48"
 
 log = "0.4.8"
 clap = "2.33.0"
-fern = "0.5.9"
-chrono = "0.4.10"
+fern = "0.6.0"
+chrono = "0.4.11"
 
 openssl-probe = "0.1.2"
 lazy_static = "1.4.0"
 
 tempdir = { optional = true, version = "0.3.7" }
-reqwest = { optional = true, version = "0.10.1" }
+reqwest = { optional = true, version = "0.10.4" }
 serde = { optional = true, version = "1.0.104" }
 config = { optional = true, version = "0.10.1" }
-time = { optional = true, version = "0.2.6" }
+time = { optional = true, version = "0.2.9" }
 
 surf = { optional = true, version = "1.0.3" }
 

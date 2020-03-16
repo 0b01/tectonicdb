@@ -15,14 +15,14 @@ bitflags = "1.2.1"
 byteorder = "1.3.4"
 indexmap = "1.3.2"
 
-chrono = "0.4.10"
-fern = "0.5.9"
+chrono = "0.4.11"
+fern = "0.6.0"
 log = "0.4.8"
 
 serde = "1.0.104"
 serde_derive = "1.0.104"
 serde_json = "1.0.48"
-libc = "0.2.66"
+libc = "0.2.67"
 
 alloc_counter = { version = "0.0.4", optional = true }
 arrayvec = "0.5.1"
