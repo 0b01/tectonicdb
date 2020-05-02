@@ -33,7 +33,7 @@ tempdir = { optional = true, version = "0.3.7" }
 reqwest = { optional = true, version = "0.10.4" }
 serde = { optional = true, version = "1.0.106" }
 config = { optional = true, version = "0.10.1" }
-time = { optional = true, version = "0.2.10" }
+time = { optional = true, version = "0.2.14" }
 
 surf = { optional = true, version = "1.0.3" }
 
