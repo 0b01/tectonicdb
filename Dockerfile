@@ -16,44 +16,27 @@ RUN curl https://sh.rustup.rs -sSf | \
 
 WORKDIR ~
 
-# Build the `tectonic-server` application.
+# Build the `tdb-server` application.
 RUN PKG_CONFIG_PATH=/usr/local/musl/lib/pkgconfig \
     LDFLAGS=-L/usr/local/musl/lib \
-    cargo build --bin tectonic-server --target x86_64-unknown-linux-musl --release
+    cargo build --bin tdb-server --target x86_64-unknown-linux-musl --release
 
-# Build the `dtfcat` application.
+# Build the `tdb` application.
 RUN PKG_CONFIG_PATH=/usr/local/musl/lib/pkgconfig \
     LDFLAGS=-L/usr/local/musl/lib \
-    cargo build --bin dtfcat --target x86_64-unknown-linux-musl --release
+    cargo build --bin tdb --target x86_64-unknown-linux-musl --release
 
-# Build the `dtfsplit` application.
-RUN PKG_CONFIG_PATH=/usr/local/musl/lib/pkgconfig \
-    LDFLAGS=-L/usr/local/musl/lib \
-    cargo build --bin dtfsplit --target x86_64-unknown-linux-musl --release
-
-# Build the `dtfconcat` application.
-RUN PKG_CONFIG_PATH=/usr/local/musl/lib/pkgconfig \
-    LDFLAGS=-L/usr/local/musl/lib \
-    cargo build --bin dtfconcat --target x86_64-unknown-linux-musl --release
-
-# Now, we need to build the _real_ Docker container, copying in `tectonic-server`
+# Now, we need to build the _real_ Docker container, copying in `tdb-server`
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates && update-ca-certificates
+ENV IMAGE_NAME=tectonicdb
 COPY --from=builder \
-    /home/rust/src/target/x86_64-unknown-linux-musl/release/tectonic-server \
+    /home/rust/src/target/x86_64-unknown-linux-musl/release/tdb-server \
     /usr/local/bin/
 
 COPY --from=builder \
-    /home/rust/src/target/x86_64-unknown-linux-musl/release/dtfcat \
-    /usr/local/bin/
-
-COPY --from=builder \
-    /home/rust/src/target/x86_64-unknown-linux-musl/release/dtfsplit \
-    /usr/local/bin/
-
-COPY --from=builder \
-    /home/rust/src/target/x86_64-unknown-linux-musl/release/dtfconcat \
+    /home/rust/src/target/x86_64-unknown-linux-musl/release/tdb \
     /usr/local/bin/
 
 # Initialize the application
-CMD /usr/local/bin/tectonic-server -vv
+CMD /usr/local/bin/tdb-server -vv
