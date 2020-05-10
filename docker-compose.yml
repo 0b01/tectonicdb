@@ -17,8 +17,7 @@ services:
         target: /export
         volume:
           nocopy: true
-    command: /usr/local/bin/tectonic-server -vv
+    command: /usr/local/bin/tdb-server -vv
 
 volumes:
   tectonic:
-
