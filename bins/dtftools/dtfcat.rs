@@ -32,10 +32,10 @@ pub fn run(matches: &clap::ArgMatches) {
         if print_metadata {
             println!("{}", dtf::file_format::read_meta(input).unwrap());
 
-            // let rdr = dtf::file_format::file_reader(input).expect("cannot open file");
-            // for meta in dtf::file_format::iterators::DTFMetadataReader::new(rdr) {
-            //     println!("{:?}", meta);
-            // }
+            let rdr = dtf::file_format::file_reader(input).expect("cannot open file");
+            for meta in dtf::file_format::iterators::DTFMetadataReader::new(rdr) {
+                println!("{:?}", meta);
+            }
         } else {
             if timebars {
                 let ups = dtf::file_format::decode(input, None).unwrap();

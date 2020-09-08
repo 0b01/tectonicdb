@@ -660,11 +660,11 @@ pub mod iterators {
                 None
             }
         }
-        fn read_one(&mut self) -> Update {
-            let up = read_one_update(&mut self.rdr, &self.current_meta.as_ref().unwrap()).unwrap();
+        fn read_one(&mut self) -> Option<Update> {
+            let up = read_one_update(&mut self.rdr, self.current_meta.as_ref()?).ok()?;
             self.i_up += 1;
             self.i_up_in_file += 1;
-            up
+            Some(up)
         }
     }
 
@@ -686,7 +686,7 @@ pub mod iterators {
             {
                 self.next_block()?;
             }
-            Some(self.read_one())
+            self.read_one()
         }
     }
 }

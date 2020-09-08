@@ -11,6 +11,7 @@ mod dtfcheck;
 mod dtfcat;
 mod dtfsplit;
 mod dtfconcat;
+mod dtfrepair;
 use clap::{Arg, App};
 
 fn main() {
@@ -206,7 +207,7 @@ fn main() {
             .about(indoc!("
                 Splits big dtf files into smaller ones
                 Examples:
-                dtfsplit test.dtf -f test-{}.dtf
+                dtftools split test.dtf -f test-{}.dtf
                 "))
             .arg(
                 Arg::with_name("input")
@@ -223,6 +224,26 @@ fn main() {
                     .required(true)
                     .takes_value(true),
             ))
+        .subcommand(clap::SubCommand::with_name("repair")
+            .about(indoc!("
+                Examples:
+                dtftools repair test.dtf -o test-repaired.dtf
+                "))
+            .arg(
+                Arg::with_name("input")
+                    .value_name("INPUT")
+                    .help("file to read")
+                    .required(true)
+                    .takes_value(true))
+            .arg(
+                Arg::with_name("output")
+                .short("o")
+                .long("output")
+                .value_name("OUTPUT")
+                .help("output file")
+                .required(false)
+                .takes_value(true),
+            ))
     .get_matches();
 
     if let Some(matches) = matches.subcommand_matches("cat") {
@@ -235,6 +256,8 @@ fn main() {
         dtfsplit::run(matches);
     } else if let Some(matches) = matches.subcommand_matches("concat") {
         dtfconcat::run(matches);
+    } else if let Some(matches) = matches.subcommand_matches("repair") {
+        dtfrepair::run(matches);
     } else {
         println!("{}", matches.usage());
     }
