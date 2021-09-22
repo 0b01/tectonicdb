@@ -12,6 +12,8 @@ use std::time::Duration;
 extern crate tempdir;
 use self::tempdir::TempDir;
 
+use lazy_static::lazy_static;
+
 use crate::plugins::gstorage::GStorageConfig;
 use crate::plugins::gstorage::upload::{self, GStorageFile};
 

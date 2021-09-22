@@ -4,7 +4,7 @@ use self::chrono::{ NaiveDateTime, DateTime, Utc };
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::{Error, Seek, SeekFrom, Write, Cursor};
 use std::io::BufWriter;
-type BookName = arrayvec::ArrayString<[u8; 64]>;
+type BookName = arrayvec::ArrayString<64>;
 
 /// fill digits 123 => 12300 etc..
 /// 151044287500 => 1510442875000

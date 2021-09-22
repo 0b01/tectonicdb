@@ -53,14 +53,8 @@ impl GStorageFile {
 
     }
 
-    fn file_content(&self) -> Result<Body, io::Error> {
-        let file = File::open(&self.fname)?;
-        let body = Body::new(file);
-        Ok(body)
-    }
-
     pub fn upload(&mut self) -> Result<GStorageOpMetadata, Box<dyn error::Error>> {
-        let start_ts = time::now();
+        let start_ts = time::Instant::now().elapsed().whole_milliseconds();
 
         let uri = format!(
             "https://www.googleapis.com/upload/storage/v1/b/{}/o?uploadType=media&name={}/{}",
@@ -69,12 +63,13 @@ impl GStorageFile {
             self.remote_name
         );
 
-        let body = self.file_content();
+        let file = File::open(&self.fname)?;
 
-        let client = reqwest::Client::new();
+        let client = reqwest::blocking::Client::new();
+
         let mut res = client
             .post(&uri)
-            .body(body?)
+            .body(file)
             .send()?;
 
         if res.status().is_success() {
@@ -82,14 +77,14 @@ impl GStorageFile {
             let _ = res.read_to_string(&mut content);
 
             // get end time
-            let finish_ts = time::now();
+            let finish_ts = time::Instant::now().elapsed().whole_milliseconds();
 
             self.uploaded = true;
 
             Ok(GStorageOpMetadata::new(
                 content,
-                start_ts.to_timespec().sec as u32,
-                finish_ts.to_timespec().sec as u32,
+                start_ts as u32,
+                finish_ts as u32,
             )?)
         } else {
             Err(Box::new(io::Error::new(

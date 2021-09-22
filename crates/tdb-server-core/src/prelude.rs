@@ -27,7 +27,7 @@ pub use async_std::{
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 pub use arrayvec::ArrayString;
-pub type BookName = ArrayString<[u8; 64]>;
+pub type BookName = ArrayString<64>;
 
 pub use std::net::SocketAddr;
 
