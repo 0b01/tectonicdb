@@ -1,3 +1,4 @@
+.git
 ./target/*
 Dockerfile
 circle.yml
@@ -5,3 +6,8 @@ circle.yml
 .gitignore
 LICENSE
 docs
+test
+tests
+db
+*.log
+*.dtf
