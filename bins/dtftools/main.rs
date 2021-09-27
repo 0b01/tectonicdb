@@ -25,17 +25,17 @@ fn main() {
                 Print dtf files to plaintext
                 Examples:
                 # filter by symbol and epoch under given folder and output csv
-                dtftools cat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 -c > out
+                dtftools cat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 --csv > out
                 # count number of updates across files
                 dtftools cat --folder ./test/zrx -m
                 # same as above but rebin into minute candle
-                dtftools cat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 -c -r > out
+                dtftools cat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 --csv --timebars > out
                 # hour candle
-                dtftools cat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 -c -r -g 60 > out
+                dtftools cat --folder ./test/zrx --symbol bnc_zrx_btc --min 1514764800000 --max 1514851200000 --csv --timebars -minutes 60 > out
                 # read metadata of file
                 dtftools cat -m test.dtf
                 # convert to csv
-                dtftools cat test.dtf -c
+                dtftools cat test.dtf --csv
                 "))
             .arg(
                 Arg::with_name("input")

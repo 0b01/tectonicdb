@@ -60,7 +60,7 @@ pub fn run(matches: &clap::ArgMatches) -> Option<()> {
                 it.reset();
                 zip.flush().ok()?;
             }
-        };
+        }
 
         write_arr!(num "ts", "<i8",    ts);
         write_arr!(num "seq", "<i4",   seq);
