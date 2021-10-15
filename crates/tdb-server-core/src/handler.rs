@@ -29,6 +29,11 @@ impl ReturnType {
     {
         ReturnType::Error(string.into())
     }
+
+    pub fn missing_db(db_name: &BookName) -> ReturnType {
+        //NB On change update match in client as well
+        ReturnType::error(format!("No db named {}", db_name))
+    }
 }
 
 
@@ -226,7 +231,7 @@ mod tests {
             addr
         ));
         assert_eq!(
-            ReturnType::Error("DB bnc_btc_eth not found.".into()),
+            ReturnType::Error("No db named bnc_btc_eth".into()),
             resp
         );
     }

@@ -272,17 +272,19 @@ impl TectonicServer {
                     .unwrap_or_else(|| Arc::clone(&self.conn(addr).unwrap().book_entry));
                 match self.insert(up, &book_name).await {
                     Some(()) => ReturnType::string(""),
-                    None => ReturnType::Error(Cow::Owned(format!("DB {} not found.", &book_name))),
+                    None => ReturnType::missing_db(&book_name),
                 }
             }
             Insert(None, _) => ReturnType::error("Unable to parse line"),
-            Create(dbname) => match self.create(&dbname) {
+            Create(dbname) => {
+                match self.create(&dbname) {
                     Some(()) => ReturnType::string(format!("Created orderbook `{}`.", &dbname)),
                     None => ReturnType::error(format!("Unable to create orderbook `{}`.", &dbname)),
-                },
+                }
+            }
             Subscribe(dbname) => {
                 self.sub(&dbname, addr);
-                ReturnType::string(format!("Subscribed to {}", dbname))
+                ReturnType::string(format!("Subscribed to {}", &dbname))
             }
             // Subscription => {
             //     let message = state.rx.as_ref().unwrap().try_recv();
@@ -303,20 +305,20 @@ impl TectonicServer {
             Load(dbname) => {
                 match self.load_db(&dbname, addr) {
                     Some(_) => ReturnType::string(format!("Loaded orderbook `{}`.", &dbname)),
-                    None => ReturnType::error(format!("No db named `{}`", dbname)),
+                    None => ReturnType::missing_db(&dbname),
                 }
             }
             Use(dbname) => {
                 match self.use_db(&dbname, addr) {
                     Some(_) => ReturnType::string(format!("SWITCHED TO orderbook `{}`.", &dbname)),
-                    None => ReturnType::error(format!("No db named `{}`", dbname)),
+                    None => ReturnType::missing_db(&dbname),
                 }
             }
             Exists(dbname) => {
                 if self.exists(&dbname) {
                     ReturnType::ok()
                 } else {
-                    ReturnType::error(format!("No db named `{}`", dbname))
+                    ReturnType::missing_db(&dbname)
                 }
             }
             Get(cnt, fmt, rng, loc) =>

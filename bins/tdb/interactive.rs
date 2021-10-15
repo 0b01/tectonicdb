@@ -118,7 +118,7 @@ pub fn run(cli: &mut TectonicClient) -> io::Result<()> {
             _ => {
                 match cli.cmd(&line) {
                     Err(e) => {
-                        println!("{}", e.description());
+                        println!("{}", e);
                     }
                     Ok(msg) => {
                         println!("{}", msg);
