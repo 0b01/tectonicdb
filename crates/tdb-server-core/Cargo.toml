@@ -35,7 +35,7 @@ serde = { optional = true, version = "1.0.110" }
 config = { optional = true, version = "0.11.0" }
 time = { optional = true, version = "0.3.4" }
 
-surf = { optional = true, version = "2.3.1" }
+surf = { optional = true, version = "2.3.2" }
 
 
 alloc_counter = { version = "0.0.4", optional = true }
