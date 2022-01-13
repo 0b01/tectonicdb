@@ -26,7 +26,7 @@ clap = "2.33.1"
 fern = "0.6.0"
 chrono = "0.4.11"
 
-openssl-probe = "0.1.2"
+openssl-probe = "0.1.5"
 lazy_static = "1.4.0"
 
 tempdir = { optional = true, version = "0.3.7" }
