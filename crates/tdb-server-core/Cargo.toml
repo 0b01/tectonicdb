@@ -33,7 +33,7 @@ tempdir = { optional = true, version = "0.3.7" }
 reqwest = { features=["blocking", "json"], optional = true, version = "0.11.6" }
 serde = { optional = true, version = "1.0.110" }
 config = { optional = true, version = "0.11.0" }
-time = { optional = true, version = "0.3.4" }
+time = { optional = true, version = "0.3.14" }
 
 surf = { optional = true, version = "2.3.1" }
 
