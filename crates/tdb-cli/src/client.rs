@@ -74,8 +74,8 @@ impl TectonicClient {
             let res = std::str::from_utf8(&buf).unwrap().to_owned();
             if success {
                 Ok(res)
-            } else if res.contains("ERR: DB") {
-                let book_name = res.split(" ").nth(2).unwrap();
+            } else if res.starts_with("ERR: No db named") {
+                let book_name = res.split(" ").nth(4).unwrap();
                 Err(TectonicError::DBNotFoundError(book_name.to_owned()))
             } else  {
                 Err(TectonicError::ServerError(res))
